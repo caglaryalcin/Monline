@@ -53,17 +53,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshController.current?.abort();
     const controller = new AbortController();
     refreshController.current = controller;
-    if (!authService.isValid()) {
-      setUser(null);
-      setIsAdmin(false);
-      isAdminRef.current = undefined;
-      setIsLoading(false);
-      return;
-    }
-    const owner = authService.getModel()?.id;
+    let owner = authService.getModel()?.id;
     const timeout = setTimeout(() => controller.abort(), 15_000);
     try {
-      await authService.refresh(controller.signal);
+      if (!authService.isValid()) {
+        // A new tab has no sessionStorage, but shares the HttpOnly session cookie.
+        // Validate that cookie before adopting it; do not make temporary sessions persistent.
+        const restored = await authService.restoreSession(controller.signal);
+        if (!restored || controller.signal.aborted || authService.isValid()) return;
+        owner = restored.record.id;
+        sessionOwner.current = owner;
+        isAdminRef.current = undefined;
+        queryClient.clear();
+        authService.saveSession(restored.token, restored.record, restored.remember === true);
+      } else {
+        await authService.refresh(controller.signal);
+      }
       if (controller.signal.aborted || authService.getModel()?.id !== owner) return;
       const record = authService.getModel();
       if (record) {
@@ -88,7 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearTimeout(timeout);
       if (refreshController.current === controller) setIsLoading(false);
     }
-  }, [fetchIsAdmin]);
+  }, [fetchIsAdmin, queryClient]);
 
   useEffect(() => {
     // Listen to changes in the authStore (e.g. token expiration, manual clear)

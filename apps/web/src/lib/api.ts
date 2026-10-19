@@ -33,7 +33,7 @@ async function performRequest<T = void>(
 
   async function doFetch(url: string) {
     const headers = new Headers(customHeaders);
-    if (!headers.has("Authorization"))
+    if (!headers.has("Authorization") && client.authStore.token)
       headers.set("Authorization", `Bearer ${client.authStore.token}`);
     if (!headers.has("Content-Type") && !(rest.body instanceof FormData))
       headers.set("Content-Type", "application/json");

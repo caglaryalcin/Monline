@@ -77,6 +77,31 @@ describe("authService", () => {
     expect(api.post).toHaveBeenCalledWith("/api/auth/refresh", undefined, { signal });
     expect(client.authStore.save).toHaveBeenCalledWith("refreshed", response.record, false);
   });
+
+  it("validates a cookie session without committing it before the caller checks cancellation", async () => {
+    const response = { token: "cookie", record: { id: "user-1" }, remember: false };
+    vi.mocked(api.post).mockResolvedValue(response);
+    const signal = new AbortController().signal;
+    await expect(authService.restoreSession(signal)).resolves.toEqual(response);
+    expect(api.post).toHaveBeenCalledWith("/api/auth/refresh", undefined, { signal });
+    expect(client.authStore.save).not.toHaveBeenCalled();
+  });
+
+  it("treats an absent or expired cookie as logged out and preserves other errors", async () => {
+    vi.mocked(api.post).mockRejectedValueOnce({ status: 401 });
+    await expect(authService.restoreSession()).resolves.toBeNull();
+    const networkError = new Error("Network unavailable");
+    vi.mocked(api.post).mockRejectedValueOnce(networkError);
+    await expect(authService.restoreSession()).rejects.toBe(networkError);
+  });
+
+  it("does not save an aborted refresh response", async () => {
+    vi.mocked(api.post).mockResolvedValue({ token: "late", record: { id: "user-1" } });
+    const controller = new AbortController();
+    controller.abort();
+    await authService.refresh(controller.signal);
+    expect(client.authStore.save).not.toHaveBeenCalled();
+  });
   it("preserves the server's remembered session policy on login and refresh", async () => {
     const response = { token: "remembered", record: { id: "user-1" }, remember: true };
     vi.mocked(api.post).mockResolvedValue(response);

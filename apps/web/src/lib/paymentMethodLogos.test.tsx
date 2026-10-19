@@ -60,5 +60,5 @@ it("tries the next logo when loading fails and resets when the bank changes", ()
   expect(screen.queryByRole("img")).not.toBeInTheDocument();
   expect(screen.getByText("E")).toBeInTheDocument();
   rerender(<PaymentMethodLogo method={method("Akbank")} size={48} />);
-  expect(screen.getByRole("img")).toHaveAttribute("src", "https://icon.horse/icon/akbank.com");
+  expect(screen.getByRole("img")).toHaveAttribute("src", "/assets/logos/banks/akbank.svg");
 });

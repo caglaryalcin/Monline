@@ -97,6 +97,18 @@ it("bootstraps an administrator with the Monline accent and private credentials"
   expect(signup.status).toBe(201);
   expect(signup.data.record.color_theme).toBe("monline");
   expect(signup.data.record.password).toBeUndefined();
+  const setupCookie = signup.headers.get("set-cookie").split(";")[0];
+  const restoredSetup = await fetch(base + "/api/auth/refresh", {
+    method: "POST",
+    headers: { Cookie: setupCookie, Origin: base },
+  });
+  expect(restoredSetup.status).toBe(200);
+  expect(await restoredSetup.json()).toMatchObject({
+    token: signup.data.token,
+    remember: false,
+    record: { id: signup.data.record.id },
+  });
+  expect(restoredSetup.headers.get("set-cookie")).not.toContain("Max-Age=");
   const seededCategories = await request("/api/data/categories", {
     token: signup.data.token,
   });
@@ -186,6 +198,48 @@ it("honors login persistence and preserves the preference when refreshing", asyn
         })
       ).status,
     ).toBe(401);
+  }
+});
+it("restores cookie sessions only through a same-origin refresh request", async () => {
+  for (const remember of [false, true]) {
+    const login = await request("/api/auth/login", {
+      method: "POST",
+      body: { identity: "owner@example.test", password, remember },
+    });
+    const cookie = login.headers.get("set-cookie").split(";")[0];
+    const restored = await fetch(base + "/api/auth/refresh", {
+      method: "POST",
+      headers: { Cookie: cookie, Origin: base },
+    });
+    expect(restored.status).toBe(200);
+    expect(await restored.json()).toMatchObject({
+      token: login.data.token,
+      remember,
+      record: { id: owner.record.id },
+    });
+    expect(restored.headers.get("set-cookie").includes("Max-Age=")).toBe(
+      remember,
+    );
+    for (const origin of [undefined, "https://untrusted.example"]) {
+      const blocked = await fetch(base + "/api/auth/refresh", {
+        method: "POST",
+        headers: { Cookie: cookie, ...(origin ? { Origin: origin } : {}) },
+      });
+      expect(blocked.status).toBe(403);
+    }
+    const bearerRequired = await fetch(base + "/api/auth/is-admin", {
+      headers: { Cookie: cookie },
+    });
+    expect(bearerRequired.status).toBe(403);
+    await request("/api/auth/logout", {
+      method: "POST",
+      token: login.data.token,
+    });
+    const expired = await fetch(base + "/api/auth/refresh", {
+      method: "POST",
+      headers: { Cookie: cookie, Origin: base },
+    });
+    expect(expired.status).toBe(401);
   }
 });
 it("enforces registration policy and account ownership", async () => {

@@ -139,7 +139,8 @@ function createAuth(repository) {
       const bearer = req.get("Authorization")?.replace(/^Bearer\s+/i, "") || "";
       req.sessionToken =
         bearer ||
-        (req.path.startsWith("/api/files/")
+        (req.path.startsWith("/api/files/") ||
+        (req.method === "POST" && req.path === "/api/auth/refresh")
           ? cookieValue(req, "monline_session")
           : "");
       const userId = resolve(req.sessionToken);

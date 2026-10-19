@@ -83,7 +83,7 @@ export function FixerTab() {
     mutationFn: () => fixerService.updateRates(),
     onSuccess: (data) => {
       qc.invalidateQueries();
-      toast.success(t("update_exchange") + ` (${data.updated})`);
+      toast.success(t("exchange_rates_updated", { updatedCount: data.updated }));
     },
     onError: (err: Error) => toast.error(err.message || t("error")),
   });

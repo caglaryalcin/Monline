@@ -65,7 +65,7 @@ const BANKS: { aliases: string[]; domain: string; bundled?: string }[] = [
   { aliases: ["halkbank", "halk bank", "halk bankasi"], domain: "halkbank.com.tr" },
   { aliases: ["is bankasi", "is bank", "isbankasi", "isbank"], domain: "isbank.com.tr" },
   { aliases: ["yapi kredi", "yapikredi", "yapi ve kredi"], domain: "yapikredi.com.tr" },
-  { aliases: ["akbank"], domain: "akbank.com" },
+  { aliases: ["akbank"], domain: "akbank.com", bundled: "akbank" },
   { aliases: ["qnb", "finansbank"], domain: "qnb.com.tr" },
   { aliases: ["teb", "turk ekonomi bankasi", "cepteteb"], domain: "teb.com.tr" },
   { aliases: ["ing", "ingbank"], domain: "ing.com.tr" },

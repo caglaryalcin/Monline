@@ -44,11 +44,11 @@ GitHub Actions publishes **AMD64 and ARM64** images to `ghcr.io/caglaryalcin/mon
 
 | Trigger                    | Image tags        |
 | -------------------------- | ----------------- |
-| Release tag, e.g. `v1.0.0` | `1.0.0`, `latest` |
+| Release tag, e.g. `v1.0.1` | `1.0.1`, `latest` |
 
 Images are published only for version tags; pushes to `main` do not publish images. Release tags must match the root, frontend and server package versions. Prereleases publish only their full version and leave `latest` unchanged. Publishing uses GitHub's built-in `GITHUB_TOKEN`.
 
-For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.0.0`, omit `build`, and run `docker compose up -d`. Authenticate to GHCR before pulling private images. Keep the package private unless you intend to publish it publicly.
+For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.0.1`, omit `build`, and run `docker compose up -d`. Authenticate to GHCR before pulling private images. Keep the package private unless you intend to publish it publicly.
 
 ## License
 

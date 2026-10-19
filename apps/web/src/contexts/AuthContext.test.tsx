@@ -11,6 +11,8 @@ function render(ui: React.ReactElement) {
 // --- Mocks ---
 const mockIsValid = vi.fn().mockReturnValue(false);
 const mockRefresh = vi.fn().mockResolvedValue(undefined);
+const mockRestoreSession = vi.fn().mockResolvedValue(null);
+const mockSaveSession = vi.fn();
 const mockGetModel = vi.fn().mockReturnValue(null);
 const mockClear = vi.fn();
 const mockLoginWithPassword = vi.fn();
@@ -21,6 +23,8 @@ vi.mock("@/services/auth", () => ({
   authService: {
     isValid: () => mockIsValid(),
     refresh: () => mockRefresh(),
+    restoreSession: (signal: AbortSignal) => mockRestoreSession(signal),
+    saveSession: (...args: unknown[]) => mockSaveSession(...args),
     getModel: () => mockGetModel(),
     clear: () => mockClear(),
     loginWithPassword: (...a: unknown[]) => mockLoginWithPassword(...a),
@@ -84,6 +88,8 @@ describe("AuthContext", () => {
   beforeEach(() => {
     mockIsValid.mockReturnValue(false);
     mockRefresh.mockResolvedValue(undefined);
+    mockRestoreSession.mockReset().mockResolvedValue(null);
+    mockSaveSession.mockReset();
     mockGetModel.mockReturnValue(null);
     mockApiGet.mockResolvedValue({ isAdmin: false });
     mockClear.mockClear();
@@ -112,6 +118,87 @@ describe("AuthContext", () => {
       expect(screen.getByTestId("loading").textContent).toBe("false");
     });
     expect(screen.getByTestId("user").textContent).toBe("null");
+  });
+
+  it.each([false, true])(
+    "restores a new tab from its cookie while preserving remember=%s",
+    async (remember) => {
+      const record = { id: "cookie-user", email: "cookie@example.test" };
+      let changed: (token: string, model: unknown) => void = () => {};
+      mockOnChange.mockImplementation((callback) => {
+        changed = callback;
+        return vi.fn();
+      });
+      mockRestoreSession.mockResolvedValue({ token: "cookie-session", record, remember });
+      mockSaveSession.mockImplementation((token, model) => {
+        mockGetModel.mockReturnValue(model);
+        mockIsValid.mockReturnValue(true);
+        changed(token, model);
+      });
+      mockApiGet.mockResolvedValue({ isAdmin: true });
+      render(
+        <AuthProvider>
+          <Consumer />
+        </AuthProvider>,
+      );
+      await waitFor(() => expect(screen.getByTestId("loading")).toHaveTextContent("false"));
+      expect(mockSaveSession).toHaveBeenCalledWith("cookie-session", record, remember);
+      expect(screen.getByTestId("user")).toHaveTextContent("cookie@example.test");
+      expect(screen.getByTestId("admin")).toHaveTextContent("true");
+      expect(mockRestoreSession.mock.calls[0][0].aborted).toBe(false);
+    },
+  );
+
+  it("does not restore a pending cookie session after logout", async () => {
+    let complete: (session: unknown) => void = () => {};
+    mockRestoreSession.mockReturnValue(
+      new Promise((resolve) => {
+        complete = resolve;
+      }),
+    );
+    render(
+      <AuthProvider>
+        <Consumer />
+      </AuthProvider>,
+    );
+    act(() => {
+      screen.getByRole("button", { name: "Logout" }).click();
+    });
+    await act(async () => {
+      complete({ token: "late-session", record: { id: "old-user" } });
+    });
+    expect(mockSaveSession).not.toHaveBeenCalled();
+    expect(screen.getByTestId("user")).toHaveTextContent("null");
+  });
+
+  it("does not replace a newer login with a delayed cookie response", async () => {
+    let complete: (session: unknown) => void = () => {};
+    let changed: (token: string, model: unknown) => void = () => {};
+    mockOnChange.mockImplementation((callback) => {
+      changed = callback;
+      return vi.fn();
+    });
+    mockRestoreSession.mockReturnValue(
+      new Promise((resolve) => {
+        complete = resolve;
+      }),
+    );
+    render(
+      <AuthProvider>
+        <Consumer />
+      </AuthProvider>,
+    );
+    const newer = { id: "new-user", email: "new@example.test" };
+    act(() => {
+      mockGetModel.mockReturnValue(newer);
+      mockIsValid.mockReturnValue(true);
+      changed("new-session", newer);
+    });
+    await act(async () => {
+      complete({ token: "old-session", record: { id: "old-user" } });
+    });
+    expect(mockSaveSession).not.toHaveBeenCalled();
+    expect(screen.getByTestId("user")).toHaveTextContent("new@example.test");
   });
 
   it("sets user when session is valid and model exists", async () => {

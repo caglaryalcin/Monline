@@ -3,7 +3,10 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { FixerTab } from "./FixerTab";
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (k: string) => k }),
+  useTranslation: () => ({
+    t: (k: string, options?: { updatedCount?: number }) =>
+      k === "exchange_rates_updated" ? `${options?.updatedCount} currency rates updated` : k,
+  }),
 }));
 
 // Default: user has id. Some tests will override this.
@@ -257,13 +260,13 @@ describe("FixerTab", () => {
     expect(mockToastError).toHaveBeenCalledWith("error");
   });
 
-  it("updateRatesMut onSuccess calls toast.success with update_exchange and count", () => {
+  it("updateRatesMut onSuccess explains that the count is updated currency rates", () => {
     render(<FixerTab />);
     act(() => {
       latestUpdateRatesOpts().onSuccess?.({ updated: 5 });
     });
     expect(mockInvalidateQueries).toHaveBeenCalledWith();
-    expect(mockToastSuccess).toHaveBeenCalledWith("update_exchange (5)");
+    expect(mockToastSuccess).toHaveBeenCalledWith("5 currency rates updated");
   });
 
   it("updateRatesMut onError calls toast.error with err.message when provided", () => {

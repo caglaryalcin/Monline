@@ -74,9 +74,19 @@ export const authService = {
     const response = await api.post<TotpLoginVerifyResponse>("/api/auth/refresh", undefined, {
       signal,
     });
-    if (client.authStore.token === previousToken)
+    if (!signal?.aborted && client.authStore.token === previousToken)
       client.authStore.save(response.token, response.record, response.remember === true);
     return response;
+  },
+
+  restoreSession: async (signal?: AbortSignal) => {
+    try {
+      return await api.post<TotpLoginVerifyResponse>("/api/auth/refresh", undefined, { signal });
+    } catch (error) {
+      if (error && typeof error === "object" && "status" in error && error.status === 401)
+        return null;
+      throw error;
+    }
   },
 
   register: (data: {
