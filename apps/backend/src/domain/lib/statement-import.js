@@ -193,6 +193,9 @@ function importStatement(app, owner, statement, body, now = new Date()) {
           subscription.getString("record_type") === "credit")
       )
         fail("statement_import_currency");
+      const category = group.category ?? subscription?.getString("category");
+      if (!category || !relationIds.category.has(category))
+        fail("statement_import_category_required");
       const cycle =
         !group.subscription_id && cycles.find((c) => c.id === config.cycle);
       if (

@@ -714,6 +714,9 @@ routerAdd("POST", "/api/external/subscriptions", function (e) {
       return e.json(400, {
         error: policyError,
       });
+    require(
+      domainPath + "/lib/subscription-category.js",
+    ).requireSubscriptionCategory(repository, record);
     repository.save(record);
     return e.json(200, {
       id: record.id,
@@ -723,8 +726,8 @@ routerAdd("POST", "/api/external/subscriptions", function (e) {
       next_payment: nextPayment,
     });
   } catch (err) {
-    return e.json(500, {
-      error: String(err),
+    return e.json(err.status || 500, {
+      error: err.message || String(err),
     });
   }
 });
@@ -1655,14 +1658,17 @@ routerAdd("PUT", "/api/external/subscriptions/{id}", function (e) {
       return e.json(400, {
         error: policyError,
       });
+    require(
+      domainPath + "/lib/subscription-category.js",
+    ).requireSubscriptionCategory(repository, record);
     repository.save(record);
     return e.json(200, {
       success: true,
       id: record.id,
     });
   } catch (err) {
-    return e.json(500, {
-      error: String(err),
+    return e.json(err.status || 500, {
+      error: err.message || String(err),
     });
   }
 });
@@ -1726,13 +1732,17 @@ routerAdd("DELETE", "/api/external/categories/{id}", function (e) {
       return e.json(403, {
         error: "Forbidden",
       });
+    require(domainPath + "/lib/subscription-category.js").requireUnusedCategory(
+      repository,
+      record,
+    );
     repository.delete(record);
     return e.json(200, {
       success: true,
     });
   } catch (err) {
-    return e.json(500, {
-      error: String(err),
+    return e.json(err.status || 500, {
+      error: err.message || String(err),
     });
   }
 });
@@ -2306,14 +2316,17 @@ routerAdd("PATCH", "/api/external/subscriptions/{id}/status", function (e) {
         error: "inactive field is required",
       });
     record.set("inactive", body.inactive === true);
+    require(
+      domainPath + "/lib/subscription-category.js",
+    ).requireSubscriptionCategory(repository, record);
     repository.save(record);
     return e.json(200, {
       success: true,
       inactive: record.get("inactive"),
     });
   } catch (err) {
-    return e.json(500, {
-      error: String(err),
+    return e.json(err.status || 500, {
+      error: err.message || String(err),
     });
   }
 });

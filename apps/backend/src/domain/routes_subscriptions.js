@@ -60,7 +60,8 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
     }
   }
   function findOrCreateCategory(name) {
-    if (!name) return "";
+    if (typeof name !== "string" || !name.trim()) return "";
+    name = name.trim();
     if (categoryCache[name] !== undefined) return categoryCache[name];
     const id = findOrCreate(
       "categories",
@@ -319,6 +320,11 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
         });
         continue;
       }
+      if (!categoryId) {
+        results.skipped++;
+        results.errors.push({ index: i, name, reason: "Category is required" });
+        continue;
+      }
       if (!cycleId) {
         results.errors.push({
           index: i,
@@ -469,6 +475,9 @@ routerAdd("POST", "/api/subscription/renew", (e) => {
   if (sub.get("user") !== e.auth.id) {
     throw new ForbiddenError("Not your subscription");
   }
+  require(
+    domainPath + "/lib/subscription-category.js",
+  ).requireSubscriptionCategory(repository, sub);
   if (recordTypes.isCredit(sub.get("record_type"))) {
     return e.json(400, {
       error: "Credits cannot be renewed",

@@ -4,7 +4,15 @@ const net = require("node:net");
 const os = require("node:os");
 const path = require("node:path");
 
-let child, directory, base, owner, other, currency, cycle, subscription;
+let child,
+  directory,
+  base,
+  owner,
+  other,
+  currency,
+  cycle,
+  subscription,
+  category;
 const password = "Monline-test-password-2026";
 async function request(endpoint, { token, body, method = "GET" } = {}) {
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -112,6 +120,7 @@ it("bootstraps an administrator with the Monline accent and private credentials"
   const seededCategories = await request("/api/data/categories", {
     token: signup.data.token,
   });
+  category = seededCategories.data.items[0];
   expect(
     seededCategories.data.items.map((category) => category.name).sort(),
   ).toEqual(
@@ -442,6 +451,7 @@ it("saves a subscription, expands relations and protects its uploaded logo", asy
     price: "12.50",
     frequency: "1",
     currency: currency.id,
+    category: category.id,
     cycle: cycle.id,
     next_payment: new Date().toISOString().slice(0, 10),
   }))
@@ -484,6 +494,221 @@ it("saves a subscription, expands relations and protects its uploaded logo", asy
   });
   expect(image.status).toBe(200);
   expect(Buffer.from(await image.arrayBuffer())).toEqual(png);
+});
+it("requires an owned category for all subscription writes and prevents deleting used categories", async () => {
+  const values = {
+    name: "Category validation",
+    price: 10,
+    frequency: 1,
+    currency: currency.id,
+    cycle: cycle.id,
+    next_payment: new Date().toISOString().slice(0, 10),
+  };
+  const foreign = (
+    await request("/api/data/categories", { token: other.token })
+  ).data.items[0].id;
+  for (const selection of [undefined, "", " ", "missing-category", foreign]) {
+    for (const multipart of [false, true]) {
+      let body = {
+        ...values,
+        ...(selection === undefined ? {} : { category: selection }),
+      };
+      if (multipart) {
+        const form = new FormData();
+        for (const [key, value] of Object.entries(body))
+          form.set(key, String(value));
+        body = form;
+      }
+      const rejected = await request("/api/data/subscriptions", {
+        token: owner.token,
+        method: "POST",
+        body,
+      });
+      expect(rejected.status).toBe(400);
+    }
+  }
+  const id = subscription.id;
+  for (const multipart of [false, true]) {
+    const body = multipart ? new FormData() : { category: "" };
+    if (multipart) body.set("category", "");
+    expect(
+      (
+        await request(`/api/data/subscriptions/${id}`, {
+          token: owner.token,
+          method: "PATCH",
+          body,
+        })
+      ).status,
+    ).toBe(400);
+  }
+  const key = await request("/api/api-keys", {
+    token: owner.token,
+    method: "POST",
+    body: {
+      name: "Category checks",
+      permissions: ["subscriptions:write", "categories:write"],
+    },
+  });
+  expect(key.status).toBe(200);
+  const external = { ...values, currency_id: currency.id, cycle_id: cycle.id };
+  expect(
+    (
+      await request("/api/external/subscriptions", {
+        token: key.data.key,
+        method: "POST",
+        body: external,
+      })
+    ).status,
+  ).toBe(400);
+  const batch = await request("/api/external/subscriptions/batch", {
+    token: key.data.key,
+    method: "POST",
+    body: { items: [external, { ...external, category_id: category.id }] },
+  });
+  expect(batch.status).toBe(200);
+  expect(batch.data.errors).toHaveLength(1);
+  expect(batch.data.created).toHaveLength(1);
+  expect(
+    (
+      await request(`/api/external/subscriptions/${id}`, {
+        token: key.data.key,
+        method: "PUT",
+        body: { category_id: "" },
+      })
+    ).status,
+  ).toBe(400);
+  for (const endpoint of [
+    `/api/data/categories/${category.id}`,
+    `/api/external/categories/${category.id}`,
+  ]) {
+    const blocked = await request(endpoint, {
+      token: endpoint.includes("external") ? key.data.key : owner.token,
+      method: "DELETE",
+    });
+    expect(blocked.status).toBe(400);
+  }
+  const imported = await request("/api/subscriptions/import", {
+    token: owner.token,
+    method: "POST",
+    body: {
+      subscriptions: [
+        {
+          name: "Uncategorized import",
+          price: 2,
+          currency: "EUR",
+          cycle: "Monthly",
+        },
+      ],
+    },
+  });
+  expect(imported.status).toBe(200);
+  expect(imported.data.imported).toBe(0);
+  expect(imported.data.skipped).toBe(1);
+
+  // Simulate an old uncategorized record without weakening production validation.
+  const db = new (require("node:sqlite").DatabaseSync)(
+    path.join(directory, "monline.db"),
+  );
+  try {
+    db.prepare("UPDATE subscriptions SET category='' WHERE id=?").run(id);
+  } finally {
+    db.close();
+  }
+  expect(
+    (
+      await request(`/api/data/subscriptions/${id}`, {
+        token: owner.token,
+        method: "PATCH",
+        body: { notes: "Needs category" },
+      })
+    ).status,
+  ).toBe(400);
+  expect(
+    (
+      await request("/api/subscription/clone", {
+        token: owner.token,
+        method: "POST",
+        body: { id },
+      })
+    ).status,
+  ).toBe(400);
+  const legacyBackup = (
+    await request("/api/account/export", { token: owner.token })
+  ).data;
+  for (const file of legacyBackup.files) {
+    const response = await fetch(
+      `${base}/api/files/${file.collection}/${file.recordId}/${encodeURIComponent(file.name)}`,
+      { headers: { Authorization: `Bearer ${owner.token}` } },
+    );
+    expect(response.ok).toBe(true);
+    file.base64 = Buffer.from(await response.arrayBuffer()).toString("base64");
+  }
+  expect(
+    (
+      await request("/api/data/users", {
+        token: owner.token,
+        method: "POST",
+        body: {
+          email: "legacy-backup@example.test",
+          name: "Legacy restore",
+          password,
+          passwordConfirm: password,
+        },
+      })
+    ).status,
+  ).toBe(201);
+  const restoreUser = (
+    await request("/api/auth/login", {
+      method: "POST",
+      body: { identity: "legacy-backup@example.test", password },
+    })
+  ).data;
+  const restoreResponse = await request("/api/account/import", {
+    token: restoreUser.token,
+    method: "POST",
+    body: { backup: legacyBackup },
+  });
+  expect(restoreResponse, JSON.stringify(restoreResponse.data)).toMatchObject({
+    status: 200,
+  });
+  const legacy = (
+    await request("/api/data/subscriptions", { token: restoreUser.token })
+  ).data.items.find((row) => row.name === subscription.name);
+  expect(legacy.category).toBe("");
+  expect(
+    (
+      await request(`/api/data/subscriptions/${legacy.id}`, {
+        token: restoreUser.token,
+        method: "PATCH",
+        body: { notes: "Choose category first" },
+      })
+    ).status,
+  ).toBe(400);
+  expect(
+    (
+      await request(`/api/data/users/${restoreUser.record.id}`, {
+        token: restoreUser.token,
+        method: "DELETE",
+      })
+    ).status,
+  ).toBe(204);
+  expect(
+    (
+      await request(`/api/data/subscriptions/${id}`, {
+        token: owner.token,
+        method: "PATCH",
+        body: { category: category.id },
+      })
+    ).status,
+  ).toBe(200);
+  await request(`/api/data/subscriptions/${batch.data.created[0].id}`, {
+    token: owner.token,
+    method: "DELETE",
+  });
+  await request(`/api/api-keys/${key.data.id}`, {
+    token: owner.token,
+    method: "DELETE",
+  });
 });
 it("preserves payments and file references in account backups", async () => {
   const today = new Date().toISOString().slice(0, 10);
@@ -582,6 +807,7 @@ it("retains the statement import marker and its initial date when changing a pla
       groups: [
         {
           transaction_ids: ["row-1"],
+          category: category.id,
           new_subscription: {
             name: "Chatgpt",
             cycle: cycle.id,
@@ -654,6 +880,7 @@ it.each([false, true])(
       groups: [
         {
           transaction_ids: ["history-row"],
+          category: category.id,
           new_subscription: { name, cycle: cycle.id, frequency: 1, active },
           historical_payments: {
             confirmed: true,
@@ -759,6 +986,7 @@ it.each(["before", "future", "unconfirmed", "statement-date"])(
           groups: [
             {
               transaction_ids: ["invalid-row"],
+              category: category.id,
               new_subscription: {
                 name,
                 cycle: cycle.id,
@@ -822,6 +1050,7 @@ it.each([false, true])(
       price: 69.9,
       cycle: cycle.id,
       currency: currency.id,
+      category: category.id,
       frequency: 1,
       start_date: dateAt(-3),
       next_payment: dateAt(1),
@@ -1002,6 +1231,7 @@ it("rolls back the subscription and all past payments if a later payment cannot 
         price: 10,
         frequency: 1,
         currency: currency.id,
+        category: category.id,
         cycle: cycle.id,
         start_date: start,
         next_payment: new Date(
@@ -1072,6 +1302,9 @@ it.each(["payments"])(
       date.setUTCDate(date.getUTCDate() + offset);
       return date.toISOString().slice(0, 10);
     };
+    const otherCategory = (
+      await request("/api/data/categories", { token: other.token })
+    ).data.items[0];
     const makeSub = async (credit) => {
       const result = await request("/api/data/subscriptions", {
         token: other.token,
@@ -1081,6 +1314,7 @@ it.each(["payments"])(
           price: 10,
           frequency: 1,
           currency: otherCurrency.id,
+          category: otherCategory.id,
           cycle: cycle.id,
           next_payment: dateAt(1),
         },
@@ -1308,6 +1542,13 @@ it("imports category and payment method selections, preserves omitted values, an
       active: false,
     },
   };
+  const missingCategory = await request(endpoint, {
+    token: owner.token,
+    method: "POST",
+    body: { utc_offset_minutes: 0, groups: [{ ...first, category: "" }] },
+  });
+  expect(missingCategory.status).toBe(400);
+  expect(missingCategory.data.error).toBe("statement_import_category_required");
   const imported = await request(endpoint, {
     token: owner.token,
     method: "POST",
@@ -1395,9 +1636,9 @@ it("imports category and payment method selections, preserves omitted values, an
     price: 15,
     inactive: true,
   });
-  expect((await submit([{ ...existing, category: "" }])).status).toBe(200);
+  expect((await submit([{ ...existing, category: "" }])).status).toBe(400);
   expect((await listSubs()).find((sub) => sub.id === saved.id).category).toBe(
-    "",
+    replacement,
   );
   expect(await readPayments()).toEqual(beforePayments);
 });

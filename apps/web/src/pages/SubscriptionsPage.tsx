@@ -99,7 +99,7 @@ export function SubscriptionsPage() {
         ),
       );
     },
-    onError: (_error, { id }, context) => {
+    onError: (error, { id }, context) => {
       const previousInactive = context?.previousInactive;
       if (previousInactive !== undefined) {
         queryClient.setQueryData<Subscription[]>(queryKeys.subscriptions.all(userId), (current) =>
@@ -108,7 +108,11 @@ export function SubscriptionsPage() {
           ),
         );
       }
-      toast.error(t("subscription_status_error"));
+      toast.error(
+        t(
+          error.message === "category_required" ? "category_required" : "subscription_status_error",
+        ),
+      );
     },
     onSettled: (_data, _error, { id }) =>
       Promise.all([
@@ -137,7 +141,8 @@ export function SubscriptionsPage() {
         queryKey: queryKeys.subscriptions.all(userId),
       });
     },
-    onError: () => toast.error(t("unknown_error")),
+    onError: (error: Error) =>
+      toast.error(t(error.message === "category_required" ? "category_required" : "unknown_error")),
   });
 
   const renewMutation = useMutation({
@@ -148,7 +153,8 @@ export function SubscriptionsPage() {
         queryKey: queryKeys.subscriptions.all(userId),
       });
     },
-    onError: () => toast.error(t("unknown_error")),
+    onError: (error: Error) =>
+      toast.error(t(error.message === "category_required" ? "category_required" : "unknown_error")),
   });
 
   const filteredSubscriptions = useFilteredSubscriptions({

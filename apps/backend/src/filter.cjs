@@ -2,20 +2,44 @@
 // API queries are interpolated into SQL without validation.
 const { BadRequestError } = require("./errors.cjs");
 function compileFilter(input, fields, bindings = {}) {
-  if (!input || input === "1=1") return { sql: "1=1", values: [] };
+  if (input == null || input === "" || input === "1=1")
+    return { sql: "1=1", values: [] };
+  if (typeof input !== "string" || input.length > 8192)
+    throw new BadRequestError("Filter too complex");
   const tokens = [];
   let offset = 0;
+  // Quoted literals are scanned separately; escaped quotes never trigger regex backtracking.
   const pattern =
-    /\s*(\{:\w+\}|&&|\|\||!=|>=|<=|[=~><()]|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|-?\d+(?:\.\d+)?|[A-Za-z_]\w*)/y;
+    /(\{:\w+\}|&&|\|\||!=|>=|<=|[=~><()]|-?\d+(?:\.\d+)?|[A-Za-z_]\w*)/y;
   while (offset < input.length) {
-    if (!input.slice(offset).trim()) break;
-    pattern.lastIndex = offset;
-    const match = pattern.exec(input);
-    if (!match) throw new BadRequestError("Invalid filter");
-    tokens.push(match[1]);
-    offset = pattern.lastIndex;
+    while (offset < input.length && /\s/.test(input[offset])) offset++;
+    if (offset === input.length) break;
+    const quote = input[offset];
+    if (quote === '"' || quote === "'") {
+      const start = offset++;
+      let closed = false;
+      while (offset < input.length) {
+        const character = input[offset++];
+        if (character === "\\") {
+          if (offset === input.length) break;
+          offset++;
+        } else if (character === quote) {
+          closed = true;
+          break;
+        }
+      }
+      if (!closed) throw new BadRequestError("Invalid filter");
+      tokens.push(input.slice(start, offset));
+    } else {
+      pattern.lastIndex = offset;
+      const match = pattern.exec(input);
+      if (!match) throw new BadRequestError("Invalid filter");
+      tokens.push(match[1]);
+      offset = pattern.lastIndex;
+    }
+    if (tokens.length > 250) throw new BadRequestError("Filter too complex");
   }
-  if (tokens.length > 250) throw new BadRequestError("Filter too complex");
+  if (!tokens.length) return { sql: "1=1", values: [] };
   let cursor = 0;
   const values = [];
   const literal = () => {

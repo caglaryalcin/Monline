@@ -343,14 +343,18 @@ function ImportForm({
       history[group.key]?.enabled &&
       !history[group.key].valid,
   );
+  const categoryNeedsReview = groups.filter(
+    (group) =>
+      group.rows.some((row) => selected.has(row.id)) &&
+      !categories.some((category) => category.id === group.category),
+  );
   const canImport =
     selected.size > 0 &&
     groups.every((group) => {
       if (!group.rows.some((row) => selected.has(row.id))) return true;
       const currency = currencies.find((c) => c.code === group.currency);
       if (!currency) return false;
-      if (group.category && !categories.some((category) => category.id === group.category))
-        return false;
+      if (!categories.some((category) => category.id === group.category)) return false;
       if (
         group.payment_method &&
         !paymentMethods.some((method) => method.id === group.payment_method)
@@ -423,6 +427,7 @@ function ImportForm({
         );
       }
       const known = [
+        "statement_import_category_required",
         "statement_import_invalid",
         "statement_import_currency",
         "statement_import_ambiguous",
@@ -450,6 +455,9 @@ function ImportForm({
           group.rows.filter((row) => selected.has(row.id)).at(-1)?.date || "",
         );
         const groupSelected = group.rows.some((row) => selected.has(row.id));
+        const categoryMissing =
+          groupSelected && !categories.some((category) => category.id === group.category);
+        const categoryErrorId = `${importHintId}-category-${encodeURIComponent(group.key)}`;
         const selectedSubscription = subscriptions.find((sub) => sub.id === group.target);
         const groupLogo = selectedSubscription ?? { name: group.name, url: "" };
         const selectedByDate = new Map<string, ReviewTransaction[]>();
@@ -685,20 +693,28 @@ function ImportForm({
                 )}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="grid content-start gap-1 text-sm">
-                    <span>{t("category")}</span>
+                    <span>{t("category")} *</span>
                     <ThemedSelect
                       aria-label={t("category")}
-                      className={selectClass}
+                      required
+                      aria-invalid={categoryMissing}
+                      aria-describedby={categoryMissing ? categoryErrorId : undefined}
+                      className={cn(selectClass, categoryMissing && "border-destructive")}
                       value={group.category}
                       onChange={(event) => update(group.key, { category: event.target.value })}
                     >
-                      <option value="" hidden />
+                      <option value="" hidden disabled />
                       {categories.map((category) => (
                         <option key={category.id} value={category.id}>
                           {categoryLabel(category, t)}
                         </option>
                       ))}
                     </ThemedSelect>
+                    {categoryMissing && (
+                      <span id={categoryErrorId} className="text-xs text-destructive">
+                        {t("category_required")}
+                      </span>
+                    )}
                   </label>
                   <label className="grid content-start gap-1 text-sm">
                     <span>{t("payment_method")}</span>
@@ -772,28 +788,31 @@ function ImportForm({
       )}
       {!canImport && selected.size > 0 && (
         <div id={importHintId} role="status" className="space-y-2 text-sm text-destructive">
-          {historyNeedsReview.length ? (
-            historyNeedsReview.map((group) => (
-              <button
-                key={group.key}
-                type="button"
-                className="block text-left underline underline-offset-4 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={() => {
-                  const section = groupRefs.current.get(group.key);
-                  const target =
-                    section?.querySelector<HTMLElement>(
-                      "[data-backfill-confirmation]:not(:disabled)",
-                    ) ?? section?.querySelector<HTMLElement>('[role="switch"]');
-                  target?.scrollIntoView({ block: "center", behavior: "smooth" });
-                  target?.focus({ preventScroll: true });
-                }}
-              >
-                {group.name}: {t("backfill_confirm_required")}
-              </button>
-            ))
-          ) : (
-            <p>{t("statement_import_invalid")}</p>
-          )}
+          {categoryNeedsReview.map((group) => (
+            <p key={group.key}>
+              {group.name}: {t("category_required")}
+            </p>
+          ))}
+          {historyNeedsReview.length
+            ? historyNeedsReview.map((group) => (
+                <button
+                  key={group.key}
+                  type="button"
+                  className="block text-left underline underline-offset-4 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  onClick={() => {
+                    const section = groupRefs.current.get(group.key);
+                    const target =
+                      section?.querySelector<HTMLElement>(
+                        "[data-backfill-confirmation]:not(:disabled)",
+                      ) ?? section?.querySelector<HTMLElement>('[role="switch"]');
+                    target?.scrollIntoView({ block: "center", behavior: "smooth" });
+                    target?.focus({ preventScroll: true });
+                  }}
+                >
+                  {group.name}: {t("backfill_confirm_required")}
+                </button>
+              ))
+            : !categoryNeedsReview.length && <p>{t("statement_import_invalid")}</p>}
         </div>
       )}
       <div className="flex flex-wrap justify-end gap-2 border-t pt-4">

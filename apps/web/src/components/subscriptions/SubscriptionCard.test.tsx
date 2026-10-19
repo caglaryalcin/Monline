@@ -99,6 +99,26 @@ function getSubscription(overrides: Partial<Subscription> = {}): Subscription {
 }
 
 describe("SubscriptionCard", () => {
+  it.each(["grid", "list"] as const)(
+    "hides the payment method for inactive subscriptions in %s layout",
+    (layout) => {
+      const actions = {
+        onEdit: vi.fn(),
+        onClone: vi.fn(),
+        onRenew: vi.fn(),
+        onHistory: vi.fn(),
+        onDelete: vi.fn(),
+      };
+      const sub = getSubscription();
+      const { rerender } = render(<SubscriptionCard sub={sub} layout={layout} {...actions} />);
+      expect(screen.getByAltText("Visa")).toBeInTheDocument();
+      rerender(<SubscriptionCard sub={{ ...sub, inactive: true }} layout={layout} {...actions} />);
+      expect(screen.queryByAltText("Visa")).not.toBeInTheDocument();
+      expect(screen.queryByText("Visa")).not.toBeInTheDocument();
+      rerender(<SubscriptionCard sub={sub} layout={layout} {...actions} />);
+      expect(screen.getByAltText("Visa")).toBeInTheDocument();
+    },
+  );
   it("bases progress on the current billing period regardless of the subscription's age", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 9, 18, 12));
@@ -571,7 +591,7 @@ describe("SubscriptionCard", () => {
       "src",
       "https://icon.horse/icon/netflix.com",
     );
-    expect(screen.getByText("UM")).toBeInTheDocument();
+    expect(screen.queryByText("UM")).not.toBeInTheDocument();
     expect(screen.queryByText("billing_cycle")).not.toBeInTheDocument();
     expect(screen.queryByTitle("open_url")).not.toBeInTheDocument();
   });

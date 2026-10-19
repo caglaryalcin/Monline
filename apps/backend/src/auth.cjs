@@ -1,5 +1,6 @@
 const crypto = require("node:crypto");
 const bcrypt = require("bcryptjs");
+const escapeHtml = require("escape-html");
 const {
   BadRequestError,
   UnauthorizedError,
@@ -271,7 +272,7 @@ function createAuth(repository) {
     app.get("/api/auth/reset", (req, res) => {
       if (!resolve(String(req.query.token || ""), "reset"))
         throw new BadRequestError("Invalid or expired reset link");
-      const token = String(req.query.token);
+      const token = escapeHtml(String(req.query.token));
       res.set(
         "Content-Security-Policy",
         "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'",

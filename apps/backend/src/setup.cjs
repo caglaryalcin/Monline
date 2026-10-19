@@ -3,6 +3,7 @@ const { DataRecord } = require("./storage.cjs");
 const { validatePassword } = require("./auth.cjs");
 const { BadRequestError, HttpError } = require("./errors.cjs");
 const { smtpTestMessage } = require("./email-templates.cjs");
+const { isValidEmail } = require("./email.cjs");
 
 const LANGUAGES = new Set([
   "en",
@@ -33,7 +34,6 @@ const CURRENCIES = new Set([
   "AUD",
   "CHF",
 ]);
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function invalid(field) {
   throw new BadRequestError("setup_invalid", {
@@ -60,7 +60,7 @@ function validateSmtp(smtp) {
       /[\x00\r\n]/.test(smtp[field])
     )
       invalid("smtp" + field[0].toUpperCase() + field.slice(1));
-  if (!emailPattern.test(smtp.senderAddress) || typeof smtp.tls !== "boolean")
+  if (!isValidEmail(smtp.senderAddress) || typeof smtp.tls !== "boolean")
     invalid("smtpSenderAddress");
 }
 
@@ -84,7 +84,7 @@ function validate(body) {
     /[\x00-\x1f]/.test(username)
   )
     invalid("username");
-  if (email.length > 254 || !emailPattern.test(email)) invalid("email");
+  if (!isValidEmail(email)) invalid("email");
   validatePassword(body.password);
   if (body.password !== body.passwordConfirm) invalid("passwordConfirm");
   if (!LANGUAGES.has(body.language)) invalid("language");
@@ -127,7 +127,7 @@ function registerSetupApi(app, repository, auth) {
       throw new HttpError(409, "setup_restore_busy");
     const email =
       typeof req.body?.email === "string" ? req.body.email.trim() : "";
-    if (email.length > 254 || !emailPattern.test(email)) invalid("email");
+    if (!isValidEmail(email)) invalid("email");
     if (req.body.language !== undefined && !LANGUAGES.has(req.body.language))
       invalid("language");
     validateSmtp(req.body?.smtp);

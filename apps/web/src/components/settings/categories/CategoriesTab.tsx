@@ -65,7 +65,8 @@ export function CategoriesTab() {
       });
       toast.success(t("success_delete"));
     },
-    onError: () => toast.error(t("error")),
+    onError: (error: Error) =>
+      toast.error(t(error?.message === "category_in_use" ? "category_in_use" : "error")),
   });
 
   const handleAdd = () => {
@@ -82,10 +83,7 @@ export function CategoriesTab() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-start justify-end">
         {!isAdding && (
-          <Button
-            onClick={() => setIsAdding(true)}
-            className="rounded-xl"
-          >
+          <Button onClick={() => setIsAdding(true)} className="rounded-xl">
             <Plus className="w-4 h-4 mr-2" />
             {t("add")}
           </Button>

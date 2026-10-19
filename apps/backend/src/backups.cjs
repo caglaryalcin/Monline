@@ -6,6 +6,7 @@ const { Transform } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 const multer = require("multer");
 const tar = require("tar");
+const { rateLimit } = require("express-rate-limit");
 const { schema, identifier } = require("./storage.cjs");
 const { BadRequestError, ForbiddenError, HttpError } = require("./errors.cjs");
 
@@ -232,6 +233,14 @@ function replaceDatabase(repository, input) {
 
 function registerBackupApi(app, repository, auth) {
   let busy = false;
+  const uploadDirectories = new WeakMap();
+  const backupLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: { message: "Too many backup requests. Please try again later." },
+  });
   const requireEmptySetup = () => {
     if (repository.countRecords("users") > 0)
       throw new HttpError(409, "setup_already_complete");
@@ -249,7 +258,7 @@ function registerBackupApi(app, repository, auth) {
       return next(new ForbiddenError("Admin access required"));
     next();
   };
-  app.get("/api/db/backup", admin, async (req, res, next) => {
+  app.get("/api/db/backup", admin, backupLimiter, async (req, res, next) => {
     if (repository.databaseOperation)
       return res
         .status(409)
@@ -277,8 +286,9 @@ function registerBackupApi(app, repository, auth) {
     storage: multer.diskStorage({
       destination(req, file, callback) {
         try {
-          req.backupWork = temporaryDirectory(repository);
-          callback(null, req.backupWork);
+          const work = temporaryDirectory(repository);
+          uploadDirectories.set(req, work);
+          callback(null, work);
         } catch (error) {
           callback(error);
         }
@@ -293,6 +303,7 @@ function registerBackupApi(app, repository, auth) {
     app.post(
       route,
       guard,
+      backupLimiter,
       (req, res, next) => {
         if (busy || repository.databaseOperation)
           return res.status(409).json({
@@ -306,19 +317,24 @@ function registerBackupApi(app, repository, auth) {
           if (!error) return next();
           busy = false;
           repository.databaseOperation = null;
-          if (req.backupWork)
-            fs.rmSync(req.backupWork, { recursive: true, force: true });
+          const work = uploadDirectories.get(req);
+          if (work) fs.rmSync(work, { recursive: true, force: true });
+          uploadDirectories.delete(req);
           next(error);
         });
       },
       async (req, res) => {
         let input;
         let preserveWork = false;
-        const work = req.backupWork;
+        const work = uploadDirectories.get(req);
         try {
-          if (!req.file) throw new BadRequestError("Select a Monline backup");
+          if (!req.file || !work)
+            throw new BadRequestError("Select a Monline backup");
+          // Multer always writes this server-selected name in a private temp directory.
+          // Never use a path or original filename supplied by the upload metadata.
+          const uploadPath = path.join(work, "upload");
           const header = Buffer.alloc(16);
-          const descriptor = fs.openSync(req.file.path, "r");
+          const descriptor = fs.openSync(uploadPath, "r");
           try {
             fs.readSync(descriptor, header, 0, 16, 0);
           } finally {
@@ -329,9 +345,9 @@ function registerBackupApi(app, repository, auth) {
             throw new BadRequestError("setup_restore_full_required");
           const extracted = path.join(work, "extracted");
           fs.mkdirSync(extracted, { mode: 0o700 });
-          if (!legacy) await unpack(req.file.path, extracted);
+          if (!legacy) await unpack(uploadPath, extracted);
           input = validateDatabase(
-            legacy ? req.file.path : path.join(extracted, "monline.db"),
+            legacy ? uploadPath : path.join(extracted, "monline.db"),
           );
           if (setupOnly) {
             requireEmptySetup();
@@ -388,6 +404,7 @@ function registerBackupApi(app, repository, auth) {
           input?.close();
           if (work && !preserveWork)
             fs.rmSync(work, { recursive: true, force: true });
+          uploadDirectories.delete(req);
           busy = false;
           repository.databaseOperation = null;
         }

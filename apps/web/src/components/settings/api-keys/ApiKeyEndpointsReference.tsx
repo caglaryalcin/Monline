@@ -35,7 +35,7 @@ const SUBSCRIPTION_CREATE_BODY = `{
   "notify_days_before": 3,     // optional
   "notes": "...",              // optional
   "url": "https://...",        // optional
-  "category_id": "<id>",       // optional
+  "category_id": "<id>",       // required
   "payment_method_id": "<id>", // optional
   "payer_id": "<id>"           // optional
 }`;

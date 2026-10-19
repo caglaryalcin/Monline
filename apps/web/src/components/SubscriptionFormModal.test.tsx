@@ -241,7 +241,7 @@ describe("SubscriptionFormModal", () => {
         sub={null}
         userId="user-1"
         currencies={[getCurrency()]}
-        categories={[]}
+        categories={[getCategory()]}
         paymentMethods={[]}
         household={[]}
         onClose={vi.fn()}
@@ -254,6 +254,8 @@ describe("SubscriptionFormModal", () => {
     });
     fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "25" } });
     fireEvent.click(screen.getByTestId("select-item-biennial"));
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
     await waitFor(() => expect(mocks.createSubscription).toHaveBeenCalledTimes(1));
     expect(mocks.createSubscription.mock.calls[0][0]).toMatchObject({
@@ -273,7 +275,7 @@ describe("SubscriptionFormModal", () => {
           sub={null}
           userId="user-1"
           currencies={[getCurrency()]}
-          categories={[]}
+          categories={[getCategory()]}
           paymentMethods={[]}
           household={[]}
           onClose={vi.fn()}
@@ -294,6 +296,7 @@ describe("SubscriptionFormModal", () => {
           target: { files: [file] },
         });
       }
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
       fireEvent.click(screen.getByRole("button", { name: "backfill_save" }));
       await waitFor(() => expect(mocks.createSubscription).toHaveBeenCalledTimes(1));
       const body = mocks.createSubscription.mock.calls[0][0];
@@ -316,7 +319,7 @@ describe("SubscriptionFormModal", () => {
           sub={editing ? getSubscription() : null}
           userId="user-1"
           currencies={[getCurrency()]}
-          categories={[]}
+          categories={[getCategory()]}
           paymentMethods={[]}
           household={[]}
           onClose={vi.fn()}
@@ -337,6 +340,8 @@ describe("SubscriptionFormModal", () => {
       fireEvent.click(screen.getByText("auto_renew", { selector: "label" }));
       expect(switches[0]).toBeChecked();
       expect(switches[2]).not.toBeChecked();
+      if (screen.queryByTestId("select-item-cat-1"))
+        fireEvent.click(screen.getByTestId("select-item-cat-1"));
       fireEvent.click(screen.getByRole("button", { name: "save" }));
       const save = editing ? mocks.updateSubscription : mocks.createSubscription;
       await waitFor(() => expect(save).toHaveBeenCalled());
@@ -352,7 +357,7 @@ describe("SubscriptionFormModal", () => {
         sub={null}
         userId="user-1"
         currencies={[getCurrency()]}
-        categories={[]}
+        categories={[getCategory()]}
         household={[
           getHousehold(),
           getHousehold({ id: "default-person", name: "Default person", is_main: true }),
@@ -369,6 +374,8 @@ describe("SubscriptionFormModal", () => {
       target: { value: "Test service" },
     });
     fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "25" } });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
     await waitFor(() => expect(mocks.createSubscription).toHaveBeenCalled());
     expect(mocks.createSubscription.mock.calls[0][0]).toMatchObject({
@@ -414,6 +421,8 @@ describe("SubscriptionFormModal", () => {
     expect(screen.queryByRole("button", { name: /^start_date:/ })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^next_payment:/ })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "5000" } });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
     await waitFor(() => expect(mocks.updateSubscription).toHaveBeenCalled());
     const payload = mocks.updateSubscription.mock.calls[0][1];
@@ -426,7 +435,7 @@ describe("SubscriptionFormModal", () => {
         sub={getSubscription()}
         userId="user-1"
         currencies={[getCurrency()]}
-        categories={[]}
+        categories={[getCategory()]}
         paymentMethods={[]}
         household={[]}
         onClose={vi.fn()}
@@ -460,6 +469,8 @@ describe("SubscriptionFormModal", () => {
     });
     fireEvent.click(screen.getAllByRole("checkbox")[1]);
     fireEvent.click(screen.getAllByRole("checkbox")[2]);
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -510,6 +521,8 @@ describe("SubscriptionFormModal", () => {
     fireEvent.change(fileInput, {
       target: { files: [file] },
     });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -548,6 +561,8 @@ describe("SubscriptionFormModal", () => {
     expect(screen.queryByText("auto_renew")).not.toBeInTheDocument();
     expect(screen.queryByText("auto_mark_paid")).not.toBeInTheDocument();
 
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => expect(mocks.updateSubscription).toHaveBeenCalled());
@@ -592,6 +607,8 @@ describe("SubscriptionFormModal", () => {
     });
     fireEvent.click(screen.getByTestId("select-item-triennial"));
     fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "10" } });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => expect(mocks.createSubscription).toHaveBeenCalled());
@@ -630,6 +647,8 @@ describe("SubscriptionFormModal", () => {
     expect(document.querySelector('input[name="frequency"]')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "10" } });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => expect(mocks.createSubscription).toHaveBeenCalled());
@@ -741,6 +760,8 @@ describe("SubscriptionFormModal", () => {
     expect(document.querySelector('input[name="payments_completed"]')).toHaveValue(2);
     expect(screen.getByText("finite_auto_renew_hint")).toBeInTheDocument();
 
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -773,6 +794,8 @@ describe("SubscriptionFormModal", () => {
       />,
     );
 
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     expect(await screen.findByText("end_date_after_next_payment")).toBeInTheDocument();
@@ -794,6 +817,8 @@ describe("SubscriptionFormModal", () => {
     );
 
     fireEvent.click(screen.getByTestId("select-item-date"));
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
     expect(await screen.findByText("required")).toBeInTheDocument();
 
@@ -801,6 +826,8 @@ describe("SubscriptionFormModal", () => {
     fireEvent.change(document.querySelector('input[name="payment_limit"]') as HTMLInputElement, {
       target: { value: "0" },
     });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
     expect(await screen.findByText("positive_payment_limit")).toBeInTheDocument();
 
@@ -811,6 +838,8 @@ describe("SubscriptionFormModal", () => {
       document.querySelector('input[name="payments_completed"]') as HTMLInputElement,
       { target: { value: "3" } },
     );
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
     expect(await screen.findByText("payments_completed_reactivate")).toBeInTheDocument();
 
@@ -818,6 +847,8 @@ describe("SubscriptionFormModal", () => {
       document.querySelector('input[name="payments_completed"]') as HTMLInputElement,
       { target: { value: "4" } },
     );
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
     expect(await screen.findByText("payments_completed_range")).toBeInTheDocument();
     expect(mocks.updateSubscription).not.toHaveBeenCalled();
@@ -841,6 +872,8 @@ describe("SubscriptionFormModal", () => {
       />,
     );
 
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -883,6 +916,8 @@ describe("SubscriptionFormModal", () => {
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "10" } });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -910,6 +945,8 @@ describe("SubscriptionFormModal", () => {
     );
 
     // Submit without changing any logo
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -942,6 +979,8 @@ describe("SubscriptionFormModal", () => {
       target: { value: "Spotify" },
     });
     fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "10" } });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -1740,6 +1779,8 @@ describe("SubscriptionFormModal", () => {
     fireEvent.change(nameInput, { target: { value: "" } });
 
     // Submit — triggers Zod validation which populates errors.*
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     // errors.* fields should be shown (at least one "required" error message)
@@ -1847,7 +1888,7 @@ describe("SubscriptionFormModal", () => {
         sub={null}
         userId="user-1"
         currencies={[getCurrency()]}
-        categories={[]}
+        categories={[getCategory()]}
         paymentMethods={[]}
         household={[]}
         onClose={vi.fn()}
@@ -1859,6 +1900,8 @@ describe("SubscriptionFormModal", () => {
       target: { value: "Spotify" },
     });
     fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "10" } });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -1888,6 +1931,8 @@ describe("SubscriptionFormModal", () => {
       target: { value: "Spotify" },
     });
     fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "10" } });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -1915,6 +1960,8 @@ describe("SubscriptionFormModal", () => {
     fireEvent.change(screen.getByLabelText("currency-input"), {
       target: { value: "-5" },
     });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -1947,6 +1994,8 @@ describe("SubscriptionFormModal", () => {
     fireEvent.change(document.querySelector('input[name="frequency"]') as HTMLInputElement, {
       target: { value: "" },
     });
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -1974,6 +2023,8 @@ describe("SubscriptionFormModal", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /^next_payment:/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Clear" }));
+    if (screen.queryByTestId("select-item-cat-1"))
+      fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
 
     await waitFor(() => {
@@ -2073,5 +2124,32 @@ describe("SubscriptionFormModal", () => {
     // The component renders correctly with the subscription name; the date
     // fields are processed through toDateOnly's slice(0,10) fallback (line 53).
     expect(screen.getByDisplayValue("Netflix")).toBeInTheDocument();
+  });
+  it.each([false, true])("requires an explicit category when editing=%s", async (editing) => {
+    render(
+      <SubscriptionFormModal
+        sub={editing ? getSubscription({ category: "" }) : null}
+        userId="user-1"
+        currencies={[getCurrency()]}
+        categories={[getCategory()]}
+        paymentMethods={[getPaymentMethod()]}
+        household={[getHousehold()]}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+    fireEvent.change(document.querySelector('input[name="name"]') as HTMLInputElement, {
+      target: { value: "Category test" },
+    });
+    fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "20" } });
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("category_required");
+    expect(mocks.createSubscription).not.toHaveBeenCalled();
+    expect(mocks.updateSubscription).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("select-item-cat-1"));
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    await waitFor(() =>
+      expect(editing ? mocks.updateSubscription : mocks.createSubscription).toHaveBeenCalled(),
+    );
   });
 });

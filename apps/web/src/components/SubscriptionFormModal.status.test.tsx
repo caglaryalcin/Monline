@@ -21,6 +21,10 @@ vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 describe("new subscription status switches", () => {
   beforeEach(() => {
+    Element.prototype.hasPointerCapture = () => false;
+    Element.prototype.setPointerCapture = () => {};
+    Element.prototype.releasePointerCapture = () => {};
+    Element.prototype.scrollIntoView = () => {};
     vi.stubGlobal(
       "ResizeObserver",
       class {
@@ -54,7 +58,7 @@ describe("new subscription status switches", () => {
               user: "user-1",
             },
           ]}
-          categories={[]}
+          categories={[{ id: "cat-1", name: "AI", user: "user-1" }]}
           paymentMethods={[]}
           household={[]}
           onClose={vi.fn()}
@@ -75,6 +79,8 @@ describe("new subscription status switches", () => {
       if (inactive) await userEvent.click(paused);
       fireEvent.change(screen.getByLabelText(/name/), { target: { value: "Status test" } });
       fireEvent.change(screen.getByLabelText(/price/), { target: { value: "25" } });
+      await userEvent.click(screen.getByRole("combobox", { name: "category" }));
+      await userEvent.click(screen.getByRole("option", { name: "AI" }));
       await userEvent.click(screen.getByRole("button", { name: "save" }));
       await waitFor(() => expect(saved).toHaveBeenCalledOnce());
       expect(mocks.create).toHaveBeenCalledExactlyOnceWith(

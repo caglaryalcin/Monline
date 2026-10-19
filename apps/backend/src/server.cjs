@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const express = require("express");
 const multer = require("multer");
+const { rateLimit } = require("express-rate-limit");
 const { migrateLegacy } = require("./migrate.cjs");
 const { Repository, DataRecord } = require("./storage.cjs");
 const { createAuth } = require("./auth.cjs");
@@ -34,15 +35,34 @@ async function main() {
     next();
   });
   app.get("/api/health", (req, res) => res.json({ code: 200, status: "ok" }));
+  app.use(
+    rateLimit({
+      windowMs: 60 * 1000,
+      limit: 600,
+      standardHeaders: "draft-8",
+      legacyHeaders: false,
+      message: { message: "Too many requests. Please try again later." },
+    }),
+  );
   app.use(auth.middleware);
-  app.use("/api/account/import", (req, res, next) => {
-    try {
-      auth.requireUser(req);
-      express.json({ limit: "100mb" })(req, res, next);
-    } catch (error) {
-      next(error);
-    }
-  });
+  app.use(
+    "/api/account/import",
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      limit: 20,
+      standardHeaders: "draft-8",
+      legacyHeaders: false,
+      message: { message: "Too many import requests. Please try again later." },
+    }),
+    (req, res, next) => {
+      try {
+        auth.requireUser(req);
+        express.json({ limit: "100mb" })(req, res, next);
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
   app.use(express.json({ limit: "2mb" }));
   app.use(express.urlencoded({ extended: false, limit: "16kb" }));
   registerBackupApi(app, repository, auth);
@@ -184,7 +204,7 @@ function seed(repository) {
         repository.findCollectionByNameOrId("admin_settings"),
       );
       settings.set("open_registrations", false);
-      settings.set("latest_version", "1.0.1");
+      settings.set("latest_version", "1.0.2");
       settings.set("smtp_port", 587);
       repository.save(settings);
     }

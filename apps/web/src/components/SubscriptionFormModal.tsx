@@ -85,7 +85,7 @@ export function SubscriptionFormModal({
     cycles,
     selectedCurrency,
     formState: { errors, isSubmitting },
-  } = useSubscriptionForm({ sub, currencies, household, paymentMethods });
+  } = useSubscriptionForm({ sub, currencies, categories, household, paymentMethods });
 
   const watchedNotify = watch("notify");
   const watchedInactive = watch("inactive");
@@ -527,13 +527,19 @@ export function SubscriptionFormModal({
           {/* Category + Payer */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="subscription-category">{t("category")}</Label>
+              <Label htmlFor="subscription-category">{t("category")} *</Label>
               <Controller
                 name="category"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger id="subscription-category" aria-label={t("category")}>
+                  <Select required value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger
+                      id="subscription-category"
+                      aria-label={t("category")}
+                      aria-required="true"
+                      aria-invalid={!!errors.category}
+                      aria-describedby={errors.category ? "subscription-category-error" : undefined}
+                    >
                       <SelectValue placeholder="" />
                     </SelectTrigger>
                     <SelectContent>
@@ -546,6 +552,15 @@ export function SubscriptionFormModal({
                   </Select>
                 )}
               />
+              {errors.category && (
+                <p
+                  id="subscription-category-error"
+                  role="alert"
+                  className="text-sm text-destructive"
+                >
+                  {errors.category.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>{t("payer")}</Label>

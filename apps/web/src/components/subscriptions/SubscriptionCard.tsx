@@ -167,7 +167,7 @@ export function SubscriptionCard({
   const periodLabel = formatBillingPeriod(t, cycleName, sub.frequency || 1);
   const category = sub.expand?.category;
   const payer = sub.expand?.payer;
-  const paymentMethod = sub.expand?.payment_method;
+  const paymentMethod = sub.inactive ? undefined : sub.expand?.payment_method;
   const credit = isCredit(sub);
 
   const shouldConvert = !!(

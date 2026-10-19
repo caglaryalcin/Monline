@@ -3,6 +3,7 @@ const path = require("node:path");
 const bcrypt = require("bcryptjs");
 const { DataRecord, schema, identifier } = require("./storage.cjs");
 const { validatePassword } = require("./auth.cjs");
+const { isValidEmail } = require("./email.cjs");
 const {
   BadRequestError,
   ForbiddenError,
@@ -239,7 +240,7 @@ function registerDataApi(app, repository, auth) {
       const email = String(body.email ?? record.getString("email"))
         .trim()
         .toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      if (!isValidEmail(email))
         throw new BadRequestError("Invalid email", {
           email: { message: "Invalid email" },
         });
@@ -300,7 +301,13 @@ function registerDataApi(app, repository, auth) {
     const collection = collectionFor(req);
     if (!writable.has(collection.name) && collection.name !== "bank_statements")
       throw new ForbiddenError();
-    repository.delete(findOwned(req, collection));
+    const record = findOwned(req, collection);
+    if (collection.name === "categories")
+      require("./domain/lib/subscription-category.js").requireUnusedCategory(
+        repository,
+        record,
+      );
+    repository.delete(record);
     res.status(204).end();
   });
   app.get("/api/files/:collection/:id/:name", (req, res) => {

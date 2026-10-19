@@ -10,7 +10,7 @@ import { findBillingPreset } from "@/lib/billingPeriods";
 import { queryKeys } from "@/lib/queryKeys";
 import { nextStatementPaymentDate } from "@/lib/statementPaymentDate";
 import { cyclesService } from "@/services/cycles";
-import type { Currency, Cycle, Household, PaymentMethod, Subscription } from "@/types";
+import type { Category, Currency, Cycle, Household, PaymentMethod, Subscription } from "@/types";
 
 const fetchCycles = () => cyclesService.list();
 const NO_CYCLES: Cycle[] = [];
@@ -48,6 +48,7 @@ export type SubscriptionFormValues = z.infer<typeof _schemaShape>;
 interface UseSubscriptionFormInput {
   sub: Subscription | null;
   currencies: Currency[];
+  categories: Category[];
   household: Household[];
   paymentMethods?: PaymentMethod[];
 }
@@ -66,6 +67,7 @@ const toDateOnly = (value: string | null | undefined): string => {
 export function useSubscriptionForm({
   sub,
   currencies,
+  categories,
   household,
   paymentMethods,
 }: UseSubscriptionFormInput) {
@@ -95,7 +97,10 @@ export function useSubscriptionForm({
       start_date: z.string(),
       payment_method: z.string(),
       payer: z.string(),
-      category: z.string(),
+      category: z
+        .string()
+        .trim()
+        .refine((id) => categories.some((category) => category.id === id), t("category_required")),
       notes: z.string(),
       // Kept for old records/backups; the user no longer enters a URL.
       url: z.string(),

@@ -38,17 +38,19 @@ Data persists in `monline-volume`, mounted at `/data`. The database and uploaded
 
 ## Docker images
 
+HTTP requests are limited per client IP and running instance: 600 requests per minute, 10 combined instance backup/restore requests per 15 minutes, and 20 account import requests per 15 minutes. Sign-in and verification retain their stricter limits. `/api/health` remains available independently of these limits.
+
 Monline checks its official GitHub releases automatically. Newer stable versions appear in the sidebar with a release-notes link. Checks are cached for one hour. Install updates by pulling the new Docker image and recreating the container.
 
 GitHub Actions publishes **AMD64 and ARM64** images to `ghcr.io/caglaryalcin/monline`:
 
 | Trigger                    | Image tags        |
 | -------------------------- | ----------------- |
-| Release tag, e.g. `v1.0.1` | `1.0.1`, `latest` |
+| Release tag, e.g. `v1.0.2` | `1.0.2`, `latest` |
 
 Images are published only for version tags; pushes to `main` do not publish images. Release tags must match the root, frontend and server package versions. Prereleases publish only their full version and leave `latest` unchanged. Publishing uses GitHub's built-in `GITHUB_TOKEN`.
 
-For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.0.1`, omit `build`, and run `docker compose up -d`. Authenticate to GHCR before pulling private images. Keep the package private unless you intend to publish it publicly.
+For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.0.2`, omit `build`, and run `docker compose up -d`. Authenticate to GHCR before pulling private images. Keep the package private unless you intend to publish it publicly.
 
 ## License
 

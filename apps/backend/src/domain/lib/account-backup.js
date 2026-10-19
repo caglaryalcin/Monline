@@ -1,4 +1,4 @@
-const { Record, security } = require("../../runtime.cjs");
+const { Record, security, files: fileHelpers } = require("../../runtime.cjs");
 // Explicit field lists keep authentication secrets and unrelated users out of account backups.
 const PROFILE = [
   "name",
@@ -425,7 +425,7 @@ function importAccount(app, userId, backup, restoreSettings) {
         if (field === FILE_FIELDS[name]) {
           const file = files[fileKey(name, row.id, field)];
           if (file)
-            record.set(field, files.fileFromBytes(file.bytes, file.name));
+            record.set(field, fileHelpers.fileFromBytes(file.bytes, file.name));
         } else if (field === "subscription_id")
           record.set(field, subscriptionId(row[field]));
         else if (field === "cycle")

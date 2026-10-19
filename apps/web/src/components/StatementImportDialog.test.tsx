@@ -91,6 +91,38 @@ afterEach(() => {
 });
 
 describe("statement import logos", () => {
+  it.each([false, true])(
+    "requires a category for selected import groups (existing=%s)",
+    async (existing) => {
+      const user = userEvent.setup();
+      const post = vi
+        .spyOn(api, "post")
+        .mockResolvedValue({ subscriptions_created: 1, payments_imported: 1, payments_skipped: 0 });
+      openImport(
+        existing
+          ? [{ id: "netflix", name: "Netflix", currency: "try", category: "" } as Subscription]
+          : [],
+      );
+      const category = await screen.findByRole("combobox", { name: "category" });
+      const submit = screen.getByRole("button", { name: "statement_import_submit" });
+      expect(category).toHaveAttribute("aria-invalid", "true");
+      expect(category).toHaveAccessibleDescription("category_required");
+      expect(submit).toBeDisabled();
+      await user.click(submit);
+      expect(post).not.toHaveBeenCalled();
+      await user.click(category);
+      await user.click(screen.getByRole("option", { name: "Streaming" }));
+      expect(submit).toBeEnabled();
+      await user.click(submit);
+      expect(post).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          groups: [expect.objectContaining({ category: "cat-streaming" })],
+        }),
+      );
+    },
+  );
+
   it("automatically uses an existing inactive subscription and shows its saved logo without a selector", async () => {
     openImport([
       {
@@ -201,6 +233,10 @@ describe("statement import logos", () => {
       screen.queryByRole("combobox", { name: "statement_import_target" }),
     ).not.toBeInTheDocument();
     await user.click(screen.getByRole("checkbox", { name: "statement_import_active" }));
+    for (const category of screen.getAllByRole("combobox", { name: "category" })) {
+      await user.click(category);
+      await user.click(screen.getByRole("option", { name: "Streaming" }));
+    }
     await user.click(screen.getByRole("button", { name: "statement_import_submit" }));
     expect(post).toHaveBeenCalledWith(
       "/api/statements/statement-1/import",
@@ -225,6 +261,8 @@ describe("statement import logos", () => {
     openImport([]);
     await screen.findByRole("textbox", { name: "statement_subscription" });
     await user.click(screen.getByRole("switch", { name: "statement_import_history" }));
+    await user.click(screen.getByRole("combobox", { name: "category" }));
+    await user.click(screen.getByRole("option", { name: "Streaming" }));
     const submit = screen.getByRole("button", { name: "statement_import_submit" });
     expect(submit).toBeDisabled();
     expect(submit).toHaveClass("disabled:bg-muted", "disabled:text-muted-foreground");
@@ -241,6 +279,10 @@ describe("statement import logos", () => {
     expect(submit).toBeEnabled();
     expect(submit).not.toHaveAttribute("aria-describedby");
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    for (const category of screen.getAllByRole("combobox", { name: "category" })) {
+      await user.click(category);
+      await user.click(screen.getByRole("option", { name: "Streaming" }));
+    }
     await user.click(screen.getByRole("button", { name: "statement_import_submit" }));
     expect(post).toHaveBeenCalledWith(
       "/api/statements/statement-1/import",
@@ -280,6 +322,10 @@ describe("statement import logos", () => {
     });
     openImport([], [row, { ...row, id: "row-2", subscription_service: "YouTube Member" }]);
     await screen.findByRole("heading", { name: "YouTube Member" });
+    for (const category of screen.getAllByRole("combobox", { name: "category" })) {
+      await user.click(category);
+      await user.click(screen.getByRole("option", { name: "Streaming" }));
+    }
     const switches = screen.getAllByRole("switch", { name: "statement_import_history" });
     await user.click(switches[0]);
     await user.click(switches[1]);
