@@ -1,0 +1,459 @@
+import {
+  Calendar,
+  Copy,
+  Edit,
+  ExternalLink,
+  History,
+  Hourglass,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
+import type { CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
+
+import { PaymentMethodIcon } from "@/components/PaymentMethodIcon";
+import { SubscriptionLogo } from "@/components/SubscriptionLogo";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { formatBillingPeriod } from "@/lib/billingPeriods";
+import { categoryLabel } from "@/lib/categoryLabel";
+import { isCredit } from "@/lib/recordTypes";
+import { automaticStartDate } from "@/lib/subscriptionStartDate";
+import {
+  cn,
+  daysUntil,
+  formatDate,
+  formatPrice,
+  subscriptionProgress,
+  toMainCurrency,
+  toMonthly,
+} from "@/lib/utils";
+import type { Currency, Subscription } from "@/types";
+
+interface SubscriptionActionsProps {
+  sub: Subscription;
+  className?: string;
+  onEdit: () => void;
+  onClone: () => void;
+  onRenew: () => void;
+  onHistory: () => void;
+  onDelete: () => void;
+}
+
+function SubscriptionActions({
+  sub,
+  className,
+  onEdit,
+  onClone,
+  onRenew,
+  onHistory,
+  onDelete,
+}: SubscriptionActionsProps) {
+  const { t } = useTranslation();
+  const credit = isCredit(sub);
+
+  return (
+    <div
+      className={cn(
+        "flex items-center space-x-1 rounded-full border bg-background/80 p-1 shadow-sm backdrop-blur transition-opacity",
+        className,
+      )}
+    >
+      {sub.url && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 rounded-full text-muted-foreground"
+          onClick={() => window.open(sub.url, "_blank")}
+          title={t("open_url")}
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 rounded-full text-muted-foreground"
+        onClick={onEdit}
+        title={t("edit")}
+      >
+        <Edit className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 rounded-full text-muted-foreground"
+        onClick={onClone}
+        title={t("clone")}
+      >
+        <Copy className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 rounded-full text-muted-foreground"
+        onClick={onHistory}
+        title={t("history")}
+      >
+        <History className="h-3.5 w-3.5" />
+      </Button>
+      {/* Renewing an inactive subscription is a no-op on the backend — it
+          refuses to advance a paused or finished schedule — so offering the
+          action here would just be a button that does nothing. */}
+      {!sub.inactive && !credit && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 rounded-full text-muted-foreground"
+          onClick={onRenew}
+          title={t("renew")}
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 rounded-full text-muted-foreground"
+        onClick={onDelete}
+        title={t("delete")}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+}
+
+// ── SubscriptionCard ──────────────────────────────────────────────────────────
+
+export function SubscriptionCard({
+  sub,
+  mainCurrency,
+  currencies,
+  convertCurrency,
+  showMonthly,
+  showProgress,
+  onEdit,
+  onClone,
+  onRenew,
+  onHistory,
+  onDelete,
+  layout = "grid",
+  onToggleActive,
+  statusPending = false,
+  statusDisabled = false,
+}: {
+  sub: Subscription;
+  mainCurrency?: Currency;
+  convertCurrency?: boolean;
+  currencies?: Currency[];
+  showMonthly?: boolean;
+  showProgress?: boolean;
+  onEdit: () => void;
+  onClone: () => void;
+  onRenew: () => void;
+  onHistory: () => void;
+  onDelete: () => void;
+  layout?: "grid" | "list";
+  onToggleActive?: () => void;
+  statusPending?: boolean;
+  statusDisabled?: boolean;
+}) {
+  const { t } = useTranslation();
+  const currency = currencies?.find((entry) => entry.id === sub.currency) ?? sub.expand?.currency;
+  const cycleName = sub.expand?.cycle?.name ?? "Monthly";
+  const periodLabel = formatBillingPeriod(t, cycleName, sub.frequency || 1);
+  const category = sub.expand?.category;
+  const payer = sub.expand?.payer;
+  const paymentMethod = sub.expand?.payment_method;
+  const credit = isCredit(sub);
+
+  const shouldConvert = !!(
+    convertCurrency &&
+    mainCurrency &&
+    currency &&
+    !currency.is_main &&
+    Number.isFinite(currency.rate) &&
+    currency.rate > 0
+  );
+  const rawPrice =
+    showMonthly && !credit ? toMonthly(sub.price, cycleName, sub.frequency || 1) : sub.price;
+  const price = shouldConvert ? toMainCurrency(rawPrice, currency) : rawPrice;
+  const displayCurrency = shouldConvert ? mainCurrency : currency;
+  const symbol = displayCurrency?.symbol ?? "$";
+  const showOriginalPrice =
+    shouldConvert ||
+    (showMonthly && !credit && (cycleName !== "Monthly" || (sub.frequency || 1) !== 1));
+  const originalPriceDetails = showOriginalPrice ? (
+    <p className="mt-1 text-xs tabular-nums text-muted-foreground">
+      {formatPrice(sub.price, currency?.symbol ?? symbol, { currencyCode: currency?.code })}
+      {" / "}
+      {credit ? t("one_time") : periodLabel}
+    </p>
+  ) : null;
+  const days = daysUntil(sub.next_payment);
+  const nextPaymentDay = sub.next_payment?.slice(0, 10) || "";
+  const periodStart = automaticStartDate(nextPaymentDay, cycleName, sub.frequency || 1);
+  const progress = showProgress ? subscriptionProgress(periodStart, nextPaymentDay) : 0;
+  const remainingLabel =
+    days > 0
+      ? t("billing_days_remaining", { count: days })
+      : days === 0
+        ? t("today")
+        : t("billing_days_overdue", { count: Math.abs(days) });
+  const statusToggle = onToggleActive ? (
+    <Switch
+      type="button"
+      className="shadow-sm"
+      checked={!sub.inactive}
+      onCheckedChange={onToggleActive}
+      disabled={statusDisabled || statusPending}
+      aria-label={`${sub.name}: ${t("active")}`}
+      aria-busy={statusPending}
+      title={t(sub.inactive ? "subscription_activate" : "subscription_deactivate")}
+    />
+  ) : null;
+
+  if (layout === "list") {
+    return (
+      <div
+        className={cn(
+          "group relative flex flex-col gap-3 rounded-xl border bg-card/60 p-3 backdrop-blur-sm transition-colors xl:flex-row xl:items-center",
+          sub.inactive && "grayscale bg-muted/40 text-muted-foreground",
+        )}
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-background font-bold shadow-sm">
+            <SubscriptionLogo
+              sub={sub}
+              className={cn(
+                "h-full w-full object-contain p-1 transition-[filter,opacity] duration-200",
+                sub.inactive && "grayscale opacity-60",
+              )}
+            />
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate font-semibold">{sub.name}</h3>
+              {credit ? (
+                <Badge className="shrink-0 bg-green-500/15 text-green-700 dark:text-green-400">
+                  {t("credit_income")}
+                </Badge>
+              ) : null}
+              {sub.inactive ? (
+                <span className="shrink-0 rounded-md border bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("inactive_label")}
+                </span>
+              ) : null}
+            </div>
+            <p className="truncate text-xs text-muted-foreground">
+              {category ? categoryLabel(category, t) : t("category")}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 xl:contents">
+          <div className="flex shrink-0 items-start gap-5">
+            <div className="min-w-[7rem] text-left sm:text-right">
+              <p
+                className={cn(
+                  "font-mono font-bold tracking-tight whitespace-nowrap",
+                  sub.inactive
+                    ? "text-muted-foreground"
+                    : credit && "text-green-600 dark:text-green-400",
+                )}
+              >
+                {credit ? "+" : ""}
+                {formatPrice(price, symbol, { currencyCode: displayCurrency?.code })}
+              </p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                {credit ? t("one_time") : showMonthly ? t("monthly") : periodLabel}
+              </p>
+              {originalPriceDetails}
+            </div>
+            {statusToggle && <div className="shrink-0 pt-0.5">{statusToggle}</div>}
+          </div>
+
+          <div className="hidden min-w-[8.5rem] text-sm md:block">
+            {sub.next_payment && !sub.inactive ? (
+              <>
+                <p className="text-xs text-muted-foreground">
+                  {t(credit ? "received_on" : "next_payment")}
+                </p>
+                <p className="font-medium">{formatDate(sub.next_payment)}</p>
+              </>
+            ) : null}
+          </div>
+
+          <div className="hidden min-w-[7rem] items-center gap-2 text-xs text-muted-foreground lg:flex">
+            {paymentMethod ? <PaymentMethodIcon method={paymentMethod} /> : null}
+            {payer ? (
+              <span className="truncate font-medium text-foreground/80">{payer.name}</span>
+            ) : null}
+          </div>
+
+          <SubscriptionActions
+            sub={sub}
+            className="shrink-0"
+            onEdit={onEdit}
+            onClone={onClone}
+            onRenew={onRenew}
+            onHistory={onHistory}
+            onDelete={onDelete}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "group relative rounded-2xl border bg-card/60 backdrop-blur-sm p-4 transition-all duration-300 flex flex-col justify-between overflow-hidden",
+        sub.inactive && "grayscale bg-muted/40 text-muted-foreground",
+      )}
+    >
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-[min(100%,8rem)] flex-1 items-center gap-2.5">
+          <div className="h-10 w-10 shrink-0 rounded-xl overflow-hidden bg-background shadow-sm border flex items-center justify-center text-xl font-bold">
+            <SubscriptionLogo
+              sub={sub}
+              className={cn(
+                "h-full w-full object-contain p-1 transition-[filter,opacity] duration-200",
+                sub.inactive && "grayscale opacity-60",
+              )}
+            />
+          </div>
+          <div className="min-w-0">
+            <h3
+              className={cn(
+                "font-bold text-lg leading-tight line-clamp-1 transition-colors",
+                sub.inactive ? "text-muted-foreground" : "",
+              )}
+            >
+              {sub.name}
+            </h3>
+            {credit && (
+              <Badge className="mr-2 mt-1 bg-green-500/15 text-green-700 dark:text-green-400">
+                {t("credit_income")}
+              </Badge>
+            )}
+            {category && (
+              <span className="text-xs font-medium text-muted-foreground mr-2">
+                {categoryLabel(category, t)}
+              </span>
+            )}
+            {sub.inactive && (
+              <span className="text-[10px] uppercase font-bold tracking-wider rounded-md border bg-muted text-muted-foreground px-1.5 py-0.5">
+                {t("inactive_label")}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="ml-auto flex shrink-0 items-start gap-5">
+          <div className="text-right">
+            <p
+              className={cn(
+                "font-extrabold text-xl font-mono tracking-tight whitespace-nowrap",
+                sub.inactive
+                  ? "text-muted-foreground"
+                  : credit
+                    ? "text-green-600 dark:text-green-400"
+                    : "text-foreground",
+              )}
+            >
+              {credit ? "+" : ""}
+              {formatPrice(price, symbol, { currencyCode: displayCurrency?.code })}
+            </p>
+            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider whitespace-nowrap">
+              {credit ? t("one_time") : showMonthly ? t("monthly") : periodLabel}
+            </p>
+            {originalPriceDetails}
+          </div>
+          {statusToggle && <div className="shrink-0 pt-0.5">{statusToggle}</div>}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {sub.next_payment && !sub.inactive && (
+          <div className="flex items-center justify-between text-sm bg-background/50 border rounded-xl px-3 py-2">
+            <span className="text-muted-foreground flex items-center gap-1.5">
+              <Calendar className="w-4 h-4" /> {t(credit ? "received_on" : "next_payment")}
+            </span>
+            <div className="font-medium text-foreground flex items-center gap-2">
+              {formatDate(sub.next_payment)}
+              {days >= 0 && (
+                <span
+                  className={cn(
+                    "text-xs px-2 py-0.5 rounded-full",
+                    days <= 3
+                      ? "bg-orange-500/10 text-orange-600 font-bold"
+                      : "bg-primary/10 text-primary font-semibold",
+                  )}
+                >
+                  {days} {t("days_short")}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!credit && ((sub.payment_limit ?? 0) > 0 || sub.end_date) && (
+          <div className="flex items-center gap-1.5 px-1 text-xs font-medium text-muted-foreground">
+            <Hourglass className="h-3.5 w-3.5" />
+            {(sub.payment_limit ?? 0) > 0
+              ? t("payments_progress", {
+                  completed: sub.payments_completed ?? 0,
+                  total: sub.payment_limit,
+                })
+              : t(sub.inactive ? "ended_on" : "ends_on", { date: formatDate(sub.end_date!) })}
+          </div>
+        )}
+
+        {showProgress && !credit && !!periodStart && !sub.inactive && (
+          <div className="space-y-1.5">
+            <div className="flex justify-between text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-1">
+              <span>
+                {t("billing_cycle")} <span aria-hidden="true">→</span>
+              </span>
+              <span className={days <= 3 ? "text-orange-500 font-bold" : ""}>{remainingLabel}</span>
+            </div>
+            <Progress
+              value={progress}
+              aria-label={t("billing_cycle")}
+              aria-valuetext={remainingLabel}
+              title={t("billing_progress_hint")}
+              className="subscription-billing-progress h-2 rounded-full bg-accent"
+              style={{ "--billing-progress": `${progress}%` } as CSSProperties}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-5">
+        <div className="flex min-w-0 basis-24 flex-1 items-center gap-2 text-xs text-muted-foreground">
+          {paymentMethod && <PaymentMethodIcon method={paymentMethod} />}
+          {payer && (
+            <span className="truncate font-medium text-foreground/80">
+              {t("pays")} {payer.name}
+            </span>
+          )}
+        </div>
+
+        <SubscriptionActions
+          sub={sub}
+          className="ml-auto shrink-0"
+          onEdit={onEdit}
+          onClone={onClone}
+          onRenew={onRenew}
+          onHistory={onHistory}
+          onDelete={onDelete}
+        />
+      </div>
+    </div>
+  );
+}

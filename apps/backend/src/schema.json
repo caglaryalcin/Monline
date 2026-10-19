@@ -1,0 +1,1808 @@
+[
+  {
+    "name": "users",
+    "legacyId": "_pb_users_auth_",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "password",
+        "type": "password",
+        "hidden": true,
+        "required": true,
+        "min": 8,
+        "max": 0
+      },
+      {
+        "name": "email",
+        "type": "email",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "emailVisibility",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "verified",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 255
+      },
+      {
+        "name": "avatar",
+        "type": "file",
+        "hidden": false,
+        "required": false,
+        "maxSize": 0,
+        "mimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/svg+xml",
+          "image/gif",
+          "image/webp"
+        ],
+        "maxSelect": 1
+      },
+      {
+        "name": "created",
+        "type": "autodate",
+        "hidden": false
+      },
+      {
+        "name": "updated",
+        "type": "autodate",
+        "hidden": false
+      },
+      {
+        "name": "language",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 10
+      },
+      {
+        "name": "dark_theme",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "display_currency",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 20
+      },
+      {
+        "name": "totp_secret",
+        "type": "text",
+        "hidden": true,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "custom_css",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "global_currency_prefix",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 10
+      },
+      {
+        "name": "convert_currency",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "monthly_budget",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "show_logo_on_card",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "show_price_on_card",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "show_cycle_on_card",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "show_payment_method_on_card",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "show_category_on_card",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "show_payer_on_card",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "show_next_payment_on_card",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "sort_order",
+        "type": "select",
+        "hidden": false,
+        "required": false,
+        "values": [
+          "name",
+          "price",
+          "next_payment",
+          "date_added",
+          "category",
+          "payment_method",
+          "payer"
+        ],
+        "maxSelect": 0
+      },
+      {
+        "name": "sort_direction",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 4
+      },
+      {
+        "name": "calendar_view",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 10
+      },
+      {
+        "name": "main_currency",
+        "type": "relation",
+        "hidden": false,
+        "required": false,
+        "maxSelect": 1,
+        "collectionId": "pbc_3379852803",
+        "cascadeDelete": false
+      },
+      {
+        "name": "monthly_price",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "show_original_price",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "hide_disabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "disabled_to_bottom",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "subscription_progress",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "mobile_navigation",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "remove_background",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "totp_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "budget",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "dark_theme_mode",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 2
+      },
+      {
+        "name": "totp_backup_codes",
+        "type": "text",
+        "hidden": true,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "color_theme",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "payment_tracking",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "totp_configured",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "totp_login_challenge_hash",
+        "type": "text",
+        "hidden": true,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "totp_login_challenge_expires",
+        "type": "date",
+        "hidden": true,
+        "required": false,
+        "min": "",
+        "max": ""
+      },
+      {
+        "name": "oidc_subject",
+        "type": "text",
+        "hidden": true,
+        "required": false,
+        "min": 0,
+        "max": 0
+      }
+    ],
+    "sql": "CREATE TABLE \"users\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"password\" TEXT NOT NULL DEFAULT '', \"email\" TEXT NOT NULL DEFAULT '', \"emailVisibility\" INTEGER NOT NULL DEFAULT 0, \"verified\" INTEGER NOT NULL DEFAULT 0, \"name\" TEXT NOT NULL DEFAULT '', \"avatar\" TEXT NOT NULL DEFAULT '', \"created\" TEXT NOT NULL DEFAULT '', \"updated\" TEXT NOT NULL DEFAULT '', \"language\" TEXT NOT NULL DEFAULT '', \"dark_theme\" INTEGER NOT NULL DEFAULT 0, \"display_currency\" TEXT NOT NULL DEFAULT '', \"totp_secret\" TEXT NOT NULL DEFAULT '', \"custom_css\" TEXT NOT NULL DEFAULT '', \"global_currency_prefix\" TEXT NOT NULL DEFAULT '', \"convert_currency\" INTEGER NOT NULL DEFAULT 0, \"monthly_budget\" REAL NOT NULL DEFAULT 0, \"show_logo_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_price_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_cycle_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_payment_method_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_category_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_payer_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_next_payment_on_card\" INTEGER NOT NULL DEFAULT 0, \"sort_order\" TEXT NOT NULL DEFAULT '', \"sort_direction\" TEXT NOT NULL DEFAULT '', \"calendar_view\" TEXT NOT NULL DEFAULT '', \"main_currency\" TEXT NOT NULL DEFAULT '', \"monthly_price\" INTEGER NOT NULL DEFAULT 0, \"show_original_price\" INTEGER NOT NULL DEFAULT 0, \"hide_disabled\" INTEGER NOT NULL DEFAULT 0, \"disabled_to_bottom\" INTEGER NOT NULL DEFAULT 0, \"subscription_progress\" INTEGER NOT NULL DEFAULT 0, \"mobile_navigation\" INTEGER NOT NULL DEFAULT 0, \"remove_background\" INTEGER NOT NULL DEFAULT 0, \"totp_enabled\" INTEGER NOT NULL DEFAULT 0, \"budget\" REAL NOT NULL DEFAULT 0, \"dark_theme_mode\" REAL NOT NULL DEFAULT 0, \"totp_backup_codes\" TEXT NOT NULL DEFAULT '', \"color_theme\" TEXT NOT NULL DEFAULT '', \"payment_tracking\" INTEGER NOT NULL DEFAULT 0, \"totp_configured\" INTEGER NOT NULL DEFAULT 0, \"totp_login_challenge_hash\" TEXT NOT NULL DEFAULT '', \"totp_login_challenge_expires\" TEXT NOT NULL DEFAULT '', \"oidc_subject\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "cycles",
+    "legacyId": "pbc_1168897642",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      }
+    ],
+    "sql": "CREATE TABLE \"cycles\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "exchange_log",
+    "legacyId": "pbc_1707952233",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "last_update",
+        "type": "date",
+        "hidden": false,
+        "required": false,
+        "min": "",
+        "max": ""
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      }
+    ],
+    "sql": "CREATE TABLE \"exchange_log\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"last_update\" TEXT NOT NULL DEFAULT '', \"provider\" TEXT NOT NULL DEFAULT '', \"status\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "admin_settings",
+    "legacyId": "pbc_1443811924",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "open_registrations",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "disable_login",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "update_notification",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "latest_version",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "oidc_display_name",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "oidc_client_id",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "oidc_client_secret",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "oidc_issuer_url",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "oidc_redirect_uri",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "oidc_scopes",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "smtp_host",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "smtp_port",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "smtp_user",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "smtp_pass",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "smtp_email",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "smtp_from_name",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "smtp_encryption",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 10
+      },
+      {
+        "name": "smtp_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "max_users",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": null
+      },
+      {
+        "name": "require_email_validation",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "server_url",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "oidc_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "oidc_provider_name",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "oidc_redirect_url",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      }
+    ],
+    "sql": "CREATE TABLE \"admin_settings\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"open_registrations\" INTEGER NOT NULL DEFAULT 0, \"disable_login\" INTEGER NOT NULL DEFAULT 0, \"update_notification\" INTEGER NOT NULL DEFAULT 0, \"latest_version\" TEXT NOT NULL DEFAULT '', \"oidc_display_name\" TEXT NOT NULL DEFAULT '', \"oidc_client_id\" TEXT NOT NULL DEFAULT '', \"oidc_client_secret\" TEXT NOT NULL DEFAULT '', \"oidc_issuer_url\" TEXT NOT NULL DEFAULT '', \"oidc_redirect_uri\" TEXT NOT NULL DEFAULT '', \"oidc_scopes\" TEXT NOT NULL DEFAULT '', \"smtp_host\" TEXT NOT NULL DEFAULT '', \"smtp_port\" REAL NOT NULL DEFAULT 0, \"smtp_user\" TEXT NOT NULL DEFAULT '', \"smtp_pass\" TEXT NOT NULL DEFAULT '', \"smtp_email\" TEXT NOT NULL DEFAULT '', \"smtp_from_name\" TEXT NOT NULL DEFAULT '', \"smtp_encryption\" TEXT NOT NULL DEFAULT '', \"smtp_enabled\" INTEGER NOT NULL DEFAULT 0, \"max_users\" REAL NOT NULL DEFAULT 0, \"require_email_validation\" INTEGER NOT NULL DEFAULT 0, \"server_url\" TEXT NOT NULL DEFAULT '', \"oidc_enabled\" INTEGER NOT NULL DEFAULT 0, \"oidc_provider_name\" TEXT NOT NULL DEFAULT '', \"oidc_redirect_url\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "currencies",
+    "legacyId": "pbc_3379852803",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "symbol",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 10
+      },
+      {
+        "name": "code",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 3
+      },
+      {
+        "name": "rate",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "is_main",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      }
+    ],
+    "sql": "CREATE TABLE \"currencies\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"symbol\" TEXT NOT NULL DEFAULT '', \"code\" TEXT NOT NULL DEFAULT '', \"rate\" REAL NOT NULL DEFAULT 0, \"is_main\" INTEGER NOT NULL DEFAULT 0, \"user\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "household",
+    "legacyId": "pbc_820562264",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      },
+      {
+        "name": "is_main",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      }
+    ],
+    "sql": "CREATE TABLE \"household\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"is_main\" INTEGER NOT NULL DEFAULT 0)"
+  },
+  {
+    "name": "categories",
+    "legacyId": "pbc_3292755704",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "order",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "color",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 7
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      },
+      {
+        "name": "translation_key",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 50
+      }
+    ],
+    "sql": "CREATE TABLE \"categories\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"order\" REAL NOT NULL DEFAULT 0, \"color\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"translation_key\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "payment_methods",
+    "legacyId": "pbc_568792081",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "icon",
+        "type": "file",
+        "hidden": false,
+        "required": false,
+        "maxSize": 2097152,
+        "mimeTypes": [
+          "image/png",
+          "image/jpeg",
+          "image/svg+xml",
+          "image/webp"
+        ],
+        "maxSelect": 1
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      },
+      {
+        "name": "order",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "is_main",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      }
+    ],
+    "sql": "CREATE TABLE \"payment_methods\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"icon\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"order\" REAL NOT NULL DEFAULT 0, \"is_main\" INTEGER NOT NULL DEFAULT 0)"
+  },
+  {
+    "name": "frequencies",
+    "legacyId": "pbc_3638391244",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "value",
+        "type": "number",
+        "hidden": false,
+        "required": true,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "cycle",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "pbc_1168897642",
+        "cascadeDelete": false
+      }
+    ],
+    "sql": "CREATE TABLE \"frequencies\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"value\" REAL NOT NULL DEFAULT 0, \"cycle\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "subscriptions",
+    "legacyId": "pbc_3980638064",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "price",
+        "type": "number",
+        "hidden": false,
+        "required": true,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "frequency",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "next_payment",
+        "type": "date",
+        "hidden": false,
+        "required": false,
+        "min": "",
+        "max": ""
+      },
+      {
+        "name": "auto_renew",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "start_date",
+        "type": "date",
+        "hidden": false,
+        "required": false,
+        "min": "",
+        "max": ""
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "url",
+        "type": "url",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "notify",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "notify_days_before",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "inactive",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "cancellation_date",
+        "type": "date",
+        "hidden": false,
+        "required": false,
+        "min": "",
+        "max": ""
+      },
+      {
+        "name": "logo",
+        "type": "file",
+        "hidden": false,
+        "required": false,
+        "maxSize": 5242880,
+        "mimeTypes": [
+          "image/png",
+          "image/jpeg",
+          "image/svg+xml",
+          "image/webp",
+          "image/gif"
+        ],
+        "maxSelect": 1
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      },
+      {
+        "name": "currency",
+        "type": "relation",
+        "hidden": false,
+        "required": false,
+        "maxSelect": 1,
+        "collectionId": "pbc_3379852803",
+        "cascadeDelete": false
+      },
+      {
+        "name": "cycle",
+        "type": "relation",
+        "hidden": false,
+        "required": false,
+        "maxSelect": 1,
+        "collectionId": "pbc_1168897642",
+        "cascadeDelete": false
+      },
+      {
+        "name": "payment_method",
+        "type": "relation",
+        "hidden": false,
+        "required": false,
+        "maxSelect": 1,
+        "collectionId": "pbc_568792081",
+        "cascadeDelete": false
+      },
+      {
+        "name": "payer",
+        "type": "relation",
+        "hidden": false,
+        "required": false,
+        "maxSelect": 1,
+        "collectionId": "pbc_820562264",
+        "cascadeDelete": false
+      },
+      {
+        "name": "category",
+        "type": "relation",
+        "hidden": false,
+        "required": false,
+        "maxSelect": 1,
+        "collectionId": "pbc_3292755704",
+        "cascadeDelete": false
+      },
+      {
+        "name": "replacement_subscription",
+        "type": "relation",
+        "hidden": false,
+        "required": false,
+        "maxSelect": 1,
+        "collectionId": "pbc_3980638064",
+        "cascadeDelete": false
+      },
+      {
+        "name": "auto_mark_paid",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "record_type",
+        "type": "select",
+        "hidden": false,
+        "required": false,
+        "values": [
+          "expense",
+          "credit"
+        ],
+        "maxSelect": 1
+      },
+      {
+        "name": "end_date",
+        "type": "date",
+        "hidden": false,
+        "required": false,
+        "min": "",
+        "max": ""
+      },
+      {
+        "name": "payment_limit",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": null
+      },
+      {
+        "name": "payments_completed",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": null
+      },
+      {
+        "name": "statement_imported",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      }
+    ],
+    "sql": "CREATE TABLE \"subscriptions\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"price\" REAL NOT NULL DEFAULT 0, \"frequency\" REAL NOT NULL DEFAULT 0, \"next_payment\" TEXT NOT NULL DEFAULT '', \"auto_renew\" INTEGER NOT NULL DEFAULT 0, \"start_date\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"url\" TEXT NOT NULL DEFAULT '', \"notify\" INTEGER NOT NULL DEFAULT 0, \"notify_days_before\" REAL NOT NULL DEFAULT 0, \"inactive\" INTEGER NOT NULL DEFAULT 0, \"cancellation_date\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"cycle\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"replacement_subscription\" TEXT NOT NULL DEFAULT '', \"auto_mark_paid\" INTEGER NOT NULL DEFAULT 0, \"record_type\" TEXT NOT NULL DEFAULT '', \"end_date\" TEXT NOT NULL DEFAULT '', \"payment_limit\" REAL NOT NULL DEFAULT 0, \"payments_completed\" REAL NOT NULL DEFAULT 0, \"statement_imported\" INTEGER NOT NULL DEFAULT 0)"
+  },
+  {
+    "name": "notifications_config",
+    "legacyId": "pbc_2605967945",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "email_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "email_to",
+        "type": "email",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "discord_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "discord_webhook_url",
+        "type": "url",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "telegram_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "telegram_bot_token",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "telegram_chat_id",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "gotify_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "gotify_url",
+        "type": "url",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "gotify_token",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "pushover_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "pushover_user_key",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "pushover_api_token",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "ntfy_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "ntfy_url",
+        "type": "url",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "ntfy_topic",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "ntfy_auth_token",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "pushplus_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "pushplus_token",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "mattermost_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "mattermost_webhook_url",
+        "type": "url",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "webhook_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "webhook_url",
+        "type": "url",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "serverchan_enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "serverchan_send_key",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      },
+      {
+        "name": "reminders",
+        "type": "json",
+        "hidden": false,
+        "required": false,
+        "maxSize": 0
+      }
+    ],
+    "sql": "CREATE TABLE \"notifications_config\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"email_enabled\" INTEGER NOT NULL DEFAULT 0, \"email_to\" TEXT NOT NULL DEFAULT '', \"discord_enabled\" INTEGER NOT NULL DEFAULT 0, \"discord_webhook_url\" TEXT NOT NULL DEFAULT '', \"telegram_enabled\" INTEGER NOT NULL DEFAULT 0, \"telegram_bot_token\" TEXT NOT NULL DEFAULT '', \"telegram_chat_id\" TEXT NOT NULL DEFAULT '', \"gotify_enabled\" INTEGER NOT NULL DEFAULT 0, \"gotify_url\" TEXT NOT NULL DEFAULT '', \"gotify_token\" TEXT NOT NULL DEFAULT '', \"pushover_enabled\" INTEGER NOT NULL DEFAULT 0, \"pushover_user_key\" TEXT NOT NULL DEFAULT '', \"pushover_api_token\" TEXT NOT NULL DEFAULT '', \"ntfy_enabled\" INTEGER NOT NULL DEFAULT 0, \"ntfy_url\" TEXT NOT NULL DEFAULT '', \"ntfy_topic\" TEXT NOT NULL DEFAULT '', \"ntfy_auth_token\" TEXT NOT NULL DEFAULT '', \"pushplus_enabled\" INTEGER NOT NULL DEFAULT 0, \"pushplus_token\" TEXT NOT NULL DEFAULT '', \"mattermost_enabled\" INTEGER NOT NULL DEFAULT 0, \"mattermost_webhook_url\" TEXT NOT NULL DEFAULT '', \"webhook_enabled\" INTEGER NOT NULL DEFAULT 0, \"webhook_url\" TEXT NOT NULL DEFAULT '', \"serverchan_enabled\" INTEGER NOT NULL DEFAULT 0, \"serverchan_send_key\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"reminders\" TEXT DEFAULT 'null')"
+  },
+  {
+    "name": "fixer_settings",
+    "legacyId": "pbc_3621548455",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "enabled",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "api_key",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "provider",
+        "type": "select",
+        "hidden": false,
+        "required": false,
+        "values": [
+          "fixer",
+          "apilayer"
+        ],
+        "maxSelect": 0
+      },
+      {
+        "name": "base_currency",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 3
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      },
+      {
+        "name": "api_key_configured",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      }
+    ],
+    "sql": "CREATE TABLE \"fixer_settings\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"enabled\" INTEGER NOT NULL DEFAULT 0, \"api_key\" TEXT NOT NULL DEFAULT '', \"provider\" TEXT NOT NULL DEFAULT '', \"base_currency\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"api_key_configured\" INTEGER NOT NULL DEFAULT 0)"
+  },
+  {
+    "name": "yearly_costs",
+    "legacyId": "pbc_1041153520",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "year",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "month",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "total",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      }
+    ],
+    "sql": "CREATE TABLE \"yearly_costs\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"year\" REAL NOT NULL DEFAULT 0, \"month\" REAL NOT NULL DEFAULT 0, \"total\" REAL NOT NULL DEFAULT 0, \"user\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "notification_log",
+    "legacyId": "pbc_280945527",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "subscription_id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "user_id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "reminder_key",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "sent_date",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      }
+    ],
+    "sql": "CREATE TABLE \"notification_log\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"subscription_id\" TEXT NOT NULL DEFAULT '', \"user_id\" TEXT NOT NULL DEFAULT '', \"reminder_key\" TEXT NOT NULL DEFAULT '', \"sent_date\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "payment_records",
+    "legacyId": "pbc_3952655166",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      },
+      {
+        "name": "subscription_id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "due_date",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "paid_at",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "auto_paid",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "amount",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "proof",
+        "type": "file",
+        "hidden": false,
+        "required": false,
+        "maxSize": 15728640,
+        "mimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/gif",
+          "application/pdf"
+        ],
+        "maxSelect": 1
+      },
+      {
+        "name": "statement_sources",
+        "type": "json",
+        "hidden": false,
+        "required": false
+      }
+    ],
+    "sql": "CREATE TABLE \"payment_records\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"subscription_id\" TEXT NOT NULL DEFAULT '', \"due_date\" TEXT NOT NULL DEFAULT '', \"paid_at\" TEXT NOT NULL DEFAULT '', \"auto_paid\" INTEGER NOT NULL DEFAULT 0, \"amount\" REAL NOT NULL DEFAULT 0, \"notes\" TEXT NOT NULL DEFAULT '', \"proof\" TEXT NOT NULL DEFAULT '', \"statement_sources\" TEXT DEFAULT 'null')"
+  },
+  {
+    "name": "api_keys",
+    "legacyId": "pbc_3577178630",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "key_hash",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "key_prefix",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "permissions",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "last_used_at",
+        "type": "date",
+        "hidden": false,
+        "required": false,
+        "min": "",
+        "max": ""
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 0,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      },
+      {
+        "name": "created_at",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      }
+    ],
+    "sql": "CREATE TABLE \"api_keys\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"key_hash\" TEXT NOT NULL DEFAULT '', \"key_prefix\" TEXT NOT NULL DEFAULT '', \"permissions\" TEXT NOT NULL DEFAULT '', \"last_used_at\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"created_at\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "subscription_history",
+    "legacyId": "pbc_1501712328",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "subscription_id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "event_type",
+        "type": "select",
+        "hidden": false,
+        "required": true,
+        "values": [
+          "created",
+          "price_changed",
+          "cycle_changed",
+          "currency_changed",
+          "paused",
+          "resumed"
+        ],
+        "maxSelect": 1
+      },
+      {
+        "name": "effective_date",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "old_price",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "new_price",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "old_cycle",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "new_cycle",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "old_frequency",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "new_frequency",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": null,
+        "max": null
+      },
+      {
+        "name": "old_currency",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "new_currency",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "note",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "created",
+        "type": "autodate",
+        "hidden": false
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      }
+    ],
+    "sql": "CREATE TABLE \"subscription_history\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"subscription_id\" TEXT NOT NULL DEFAULT '', \"event_type\" TEXT NOT NULL DEFAULT '', \"effective_date\" TEXT NOT NULL DEFAULT '', \"old_price\" REAL NOT NULL DEFAULT 0, \"new_price\" REAL NOT NULL DEFAULT 0, \"old_cycle\" TEXT NOT NULL DEFAULT '', \"new_cycle\" TEXT NOT NULL DEFAULT '', \"old_frequency\" REAL NOT NULL DEFAULT 0, \"new_frequency\" REAL NOT NULL DEFAULT 0, \"old_currency\" TEXT NOT NULL DEFAULT '', \"new_currency\" TEXT NOT NULL DEFAULT '', \"note\" TEXT NOT NULL DEFAULT '', \"created\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "bank_statements",
+    "legacyId": "pbc_1162144631",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "hidden": false,
+        "required": true,
+        "maxSelect": 1,
+        "collectionId": "_pb_users_auth_",
+        "cascadeDelete": true
+      },
+      {
+        "name": "bank",
+        "type": "select",
+        "hidden": false,
+        "required": true,
+        "values": [
+          "enpara",
+          "denizbank",
+          "garanti"
+        ],
+        "maxSelect": 1
+      },
+      {
+        "name": "file_name",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 255
+      },
+      {
+        "name": "file_hash",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 64,
+        "max": 64
+      },
+      {
+        "name": "period",
+        "type": "text",
+        "hidden": false,
+        "required": true,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "page_count",
+        "type": "number",
+        "hidden": false,
+        "required": true,
+        "min": 1,
+        "max": 80
+      },
+      {
+        "name": "transactions",
+        "type": "json",
+        "hidden": false,
+        "required": true,
+        "maxSize": 2000000
+      },
+      {
+        "name": "created",
+        "type": "autodate",
+        "hidden": false
+      }
+    ],
+    "sql": "CREATE TABLE \"bank_statements\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"bank\" TEXT NOT NULL DEFAULT '', \"file_name\" TEXT NOT NULL DEFAULT '', \"file_hash\" TEXT NOT NULL DEFAULT '', \"period\" TEXT NOT NULL DEFAULT '', \"page_count\" REAL NOT NULL DEFAULT 0, \"transactions\" TEXT DEFAULT 'null', \"created\" TEXT NOT NULL DEFAULT '')"
+  }
+]

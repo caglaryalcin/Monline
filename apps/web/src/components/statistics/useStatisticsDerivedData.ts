@@ -1,0 +1,110 @@
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+
+import type {
+  StatisticsCategoryDetails,
+  StatisticsGroupBy,
+  StatisticsPieDatum,
+} from "@/components/statistics/statistics.types";
+import { categoryLabel } from "@/lib/categoryLabel";
+import { buildCostHistory } from "@/lib/costHistory";
+import { isExpense } from "@/lib/recordTypes";
+import { toMonthly } from "@/lib/utils";
+import type { Currency, Subscription, YearlyCost } from "@/types";
+
+interface UseStatisticsDerivedDataParams {
+  subscriptions: Subscription[];
+  currencies: Currency[];
+  yearlyCosts: YearlyCost[];
+  groupBy: StatisticsGroupBy;
+}
+
+export function useStatisticsDerivedData({
+  subscriptions,
+  currencies,
+  yearlyCosts,
+  groupBy,
+}: UseStatisticsDerivedDataParams) {
+  const { t } = useTranslation();
+  const currentYear = new Date().getFullYear(), currentMonth = new Date().getMonth();
+  return useMemo(() => {
+    const otherLabel = t("category_default_other", { defaultValue: "Other" });
+    const mainCurrency = currencies.find((currency) => currency.is_main);
+    const mainRate = mainCurrency?.rate ?? 1;
+    const mainSymbol = mainCurrency?.symbol ?? "$";
+    const mainCode = mainCurrency?.code;
+
+    const recurringSubscriptions = subscriptions.filter(isExpense).map((subscription) => {
+      const currency = subscription.expand?.currency;
+      const cycleName = subscription.expand?.cycle?.name ?? "Monthly";
+      const monthly = toMonthly(subscription.price, cycleName, subscription.frequency || 1);
+      const rate = currency?.rate ?? 1;
+      const value = (monthly / rate) * mainRate;
+
+      return {
+        subscription,
+        value,
+      };
+    });
+
+    const groupedData = recurringSubscriptions.reduce<Record<string, number>>(
+      (accumulator, { subscription, value }) => {
+        let key = otherLabel;
+        if (groupBy === "category" && subscription.expand?.category) {
+          key = categoryLabel(subscription.expand.category, t);
+        } else if (groupBy === "payment" && subscription.expand?.payment_method) {
+          key = subscription.expand.payment_method.name;
+        } else if (groupBy === "member" && subscription.expand?.payer) {
+          key = subscription.expand.payer.name;
+        }
+
+        accumulator[key] = (accumulator[key] || 0) + value;
+        return accumulator;
+      },
+      {},
+    );
+
+    const categoryDetails = recurringSubscriptions.reduce<StatisticsCategoryDetails>(
+      (accumulator, { subscription, value }) => {
+        const categoryName = subscription.expand?.category ? categoryLabel(subscription.expand.category, t) : otherLabel;
+        const details = accumulator[categoryName] ?? [];
+
+        details.push({
+          id: subscription.id,
+          name: subscription.name,
+          value: Number(value.toFixed(2)),
+        });
+        accumulator[categoryName] = details;
+
+        return accumulator;
+      },
+      {},
+    );
+
+    Object.values(categoryDetails).forEach((details) =>
+      details.sort(
+        (left, right) => right.value - left.value || left.name.localeCompare(right.name),
+      ),
+    );
+
+    const pieData: StatisticsPieDatum[] = Object.entries(groupedData)
+      .map(([name, value]) => ({
+        name,
+        value: Number(value.toFixed(2)),
+      }))
+      .sort((left, right) => right.value - left.value);
+
+    const totalMonthly = Object.values(groupedData).reduce((total, value) => total + value, 0);
+    const lineData = buildCostHistory(yearlyCosts, totalMonthly, new Date(currentYear, currentMonth, 1));
+
+    return {
+      categoryDetails,
+      lineData,
+      mainCode,
+      mainSymbol,
+      pieData,
+      totalMonthly,
+      totalYearly: totalMonthly * 12,
+    };
+  }, [currencies, groupBy, subscriptions, yearlyCosts, t, currentYear, currentMonth]);
+}

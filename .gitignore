@@ -1,0 +1,39 @@
+# PocketBase binary
+pocketbase
+
+# Application data and preserved legacy data
+pb_data/
+monline_data/
+
+# Node
+node_modules/
+dist/
+coverage/
+apps/backend/coverage/
+
+# Environment
+.env*
+!.env.example
+!.env.*.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Reference
+docs/
+DOCKER.md
+
+# Frontend build artifacts
+apps/backend/pb_public/
+apps/backend/public/
+
+# Local build outputs
+monline.tar
+
+# Agent tool state
+.commandcode/
+
+# Windows runtime and local logs
+pocketbase.exe
+.local/

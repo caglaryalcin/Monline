@@ -1,0 +1,28 @@
+{
+  "name": "Monline",
+  "short_name": "Monline",
+  "description": "Track subscriptions, budgets, and recurring payments on your own server.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f3ee",
+  "theme_color": "#d8ff68",
+  "icons": [
+    {
+      "src": "/assets/logos/logo.png",
+      "sizes": "any",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/logos/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/logos/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

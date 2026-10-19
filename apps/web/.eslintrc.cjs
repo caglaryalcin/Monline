@@ -1,0 +1,40 @@
+module.exports = {
+  root: true,
+  env: { browser: true, es2022: true },
+  parser: "@typescript-eslint/parser",
+  parserOptions: { ecmaVersion: "latest", sourceType: "module" },
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react-hooks/recommended",
+    "prettier",
+  ],
+  plugins: ["@typescript-eslint", "react-hooks", "react-refresh", "simple-import-sort"],
+  ignorePatterns: ["dist", "node_modules", "*.config.ts", "*.config.js"],
+  overrides: [
+    {
+      files: ["**/*.test.ts", "**/*.test.tsx"],
+      // Test doubles deliberately supply partial browser and component objects.
+      // Application code and TypeScript checking retain their strict rules.
+      rules: { "@typescript-eslint/no-explicit-any": "off" },
+    },
+  ],
+  rules: {
+    // react-refresh is a HMR concern, not a code-quality rule.
+    // Legitimate patterns (AuthContext, shadcn CVA exports) would all trigger it.
+    "react-refresh/only-export-components": "off",
+
+    // TypeScript
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+    ],
+    "@typescript-eslint/consistent-type-imports": ["warn", { prefer: "type-imports" }],
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
+
+    // General
+    "no-console": ["warn", { allow: ["error", "warn"] }],
+  },
+};

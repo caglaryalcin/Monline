@@ -1,0 +1,82 @@
+{
+  "en": {
+    "subject": "Monline — SMTP Test",
+    "body": "Your Monline SMTP configuration is working correctly.",
+    "logoAlt": "Monline logo"
+  },
+  "tr": {
+    "subject": "Monline — SMTP Testi",
+    "body": "Monline SMTP yapılandırmanız doğru şekilde çalışıyor.",
+    "logoAlt": "Monline logosu"
+  },
+  "de": {
+    "subject": "Monline — SMTP-Test",
+    "body": "Ihre Monline-SMTP-Konfiguration funktioniert korrekt.",
+    "logoAlt": "Monline-Logo"
+  },
+  "pt_BR": {
+    "subject": "Monline — Teste de SMTP",
+    "body": "Sua configuração SMTP do Monline está funcionando corretamente.",
+    "logoAlt": "Logotipo do Monline"
+  },
+  "es": {
+    "subject": "Monline — Prueba de SMTP",
+    "body": "La configuración SMTP de Monline funciona correctamente.",
+    "logoAlt": "Logotipo de Monline"
+  },
+  "fr": {
+    "subject": "Monline — Test SMTP",
+    "body": "Votre configuration SMTP Monline fonctionne correctement.",
+    "logoAlt": "Logo Monline"
+  },
+  "it": {
+    "subject": "Monline — Test SMTP",
+    "body": "La configurazione SMTP di Monline funziona correttamente.",
+    "logoAlt": "Logo di Monline"
+  },
+  "nl": {
+    "subject": "Monline — SMTP-test",
+    "body": "Uw SMTP-configuratie voor Monline werkt correct.",
+    "logoAlt": "Monline-logo"
+  },
+  "pl": {
+    "subject": "Monline — Test SMTP",
+    "body": "Konfiguracja SMTP Monline działa prawidłowo.",
+    "logoAlt": "Logo Monline"
+  },
+  "ru": {
+    "subject": "Monline — Проверка SMTP",
+    "body": "Настройки SMTP Monline работают правильно.",
+    "logoAlt": "Логотип Monline"
+  },
+  "zh_CN": {
+    "subject": "Monline — SMTP 测试",
+    "body": "您的 Monline SMTP 配置运行正常。",
+    "logoAlt": "Monline 标志"
+  },
+  "ja": {
+    "subject": "Monline — SMTP テスト",
+    "body": "Monline の SMTP 設定は正常に動作しています。",
+    "logoAlt": "Monline ロゴ"
+  },
+  "ko": {
+    "subject": "Monline — SMTP 테스트",
+    "body": "Monline SMTP 설정이 정상적으로 작동합니다.",
+    "logoAlt": "Monline 로고"
+  },
+  "uk": {
+    "subject": "Monline — Перевірка SMTP",
+    "body": "Налаштування SMTP Monline працюють правильно.",
+    "logoAlt": "Логотип Monline"
+  },
+  "cs": {
+    "subject": "Monline — Test SMTP",
+    "body": "Konfigurace SMTP Monline funguje správně.",
+    "logoAlt": "Logo Monline"
+  },
+  "da": {
+    "subject": "Monline — SMTP-test",
+    "body": "Din SMTP-konfiguration til Monline fungerer korrekt.",
+    "logoAlt": "Monline-logo"
+  }
+}

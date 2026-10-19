@@ -1,0 +1,644 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.monline-app {
+  --monline-header-height: 64px;
+  padding-top: env(safe-area-inset-top);
+}
+
+.sidebar-footer-link {
+  @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] border border-border text-muted-foreground transition-colors;
+}
+
+.sidebar-footer-link:is(:hover, :focus-visible) {
+  @apply border-primary bg-primary/10 text-primary outline-none;
+}
+
+.sidebar-footer-link:focus-visible {
+  @apply ring-2 ring-ring/30 ring-offset-2 ring-offset-background;
+}
+
+.monline-page {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  overscroll-behavior-y: contain;
+}
+
+.monline-calendar-month {
+  container-type: inline-size;
+}
+
+@container (min-width: 600px) {
+  .calendar-payment-name {
+    @apply not-sr-only min-w-0 flex-1 truncate text-[11px] font-medium leading-tight;
+  }
+}
+
+@container (min-width: 1000px) {
+  .calendar-payment-amount {
+    @apply not-sr-only ml-auto shrink-0 text-[10px] tabular-nums opacity-70;
+  }
+}
+
+@media (min-width: 768px) {
+  .monline-app {
+    --monline-header-height: 78px;
+  }
+  .monline-page {
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 1024px) {
+  .monline-page {
+    padding-bottom: max(2.5rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Prevent form focus from zooming the page on mobile browsers. */
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --background: 50 21% 95%;
+    --light-text: 93.333333 6.766917% 26.078431%; /* #42473E */
+    --foreground: var(--light-text);
+    --card: 0 0% 100%;
+    --card-foreground: var(--light-text);
+    --popover: 0 0% 100%;
+    --popover-foreground: var(--light-text);
+    --primary: 75.496689 100% 70.392157%;
+    --primary-foreground: var(--light-text);
+    --secondary: 60 10% 92%;
+    --secondary-foreground: var(--light-text);
+    --muted: 60 10% 92%;
+    --muted-foreground: 87 4% 40%;
+    --accent: 70 22% 90%;
+    --accent-foreground: var(--light-text);
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 60 11% 88%;
+    --input: 60 11% 84%;
+    --ring: 75.496689 100% 70.392157%;
+    --radius: 0.875rem;
+    --shadow-premium: 0 8px 30px -14px rgba(27, 29, 25, 0.12);
+    --chart-1: 187 123 54;
+    --chart-2: 139 104 176;
+    --chart-3: 55 139 171;
+    --chart-4: 114 143 62;
+    --chart-5: 196 111 99;
+    --chart-6: 51 145 134;
+    --chart-7: 94 118 181;
+    --chart-8: 183 109 145;
+    --chart-9: 171 144 79;
+    --chart-10: 106 134 155;
+  }
+
+  .dark {
+    color-scheme: dark;
+    /* #1C1C1E in HSL is approx 240 4% 11% */
+    --background: 200 6% 10%;
+    --foreground: 0 0% 98%;
+    /* slightly lighter for cards and popovers */
+    --card: 200 5% 13%;
+    --card-foreground: 0 0% 98%;
+    --popover: 200 5% 13%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 75.496689 100% 70.392157%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    /* secondary, muted, accent */
+    --secondary: 90 5% 19%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 90 5% 19%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 90 7% 21%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 50.6%;
+    --destructive-foreground: 0 0% 98%;
+    /* borders and inputs */
+    --border: 90 4% 25%;
+    --input: 90 4% 28%;
+    --ring: 75.496689 100% 70.392157%;
+    --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    --chart-1: 229 177 102;
+    --chart-2: 180 151 219;
+    --chart-3: 111 186 216;
+    --chart-4: 193 217 122;
+    --chart-5: 223 146 131;
+    --chart-6: 108 189 171;
+    --chart-7: 145 166 224;
+    --chart-8: 219 146 181;
+    --chart-9: 208 187 128;
+    --chart-10: 155 182 203;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary;
+    caret-color: transparent;
+  }
+  code,
+  kbd,
+  pre,
+  samp {
+    @apply font-mono;
+  }
+  input:not([type]),
+  input:is(
+    [type="text"],
+    [type="email"],
+    [type="password"],
+    [type="search"],
+    [type="tel"],
+    [type="url"],
+    [type="number"],
+    [type="date"],
+    [type="time"],
+    [type="datetime-local"],
+    [type="month"],
+    [type="week"]
+  ),
+  textarea,
+  [contenteditable=""],
+  [contenteditable="true"],
+  [contenteditable="plaintext-only"] {
+    caret-color: hsl(var(--foreground));
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  :where(
+    input,
+    button,
+    a,
+    [role="button"],
+    [role="tab"],
+    [role="menuitem"],
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    svg
+  ) {
+    caret-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Sidebar surfaces follow the same light/dark preference as the page. */
+.settings-content {
+  container-type: inline-size;
+}
+.settings-item-grid,
+.settings-display-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+.settings-security-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 32px;
+}
+@container (min-width: 420px) {
+  .settings-item-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (min-width: 480px) {
+  .settings-display-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.reminder-schedule-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+@container (min-width: 680px) {
+  .settings-security-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .settings-item-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .reminder-schedule-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.monline-sidebar-toggle {
+  display: none;
+  position: absolute;
+  z-index: 50;
+  top: calc(var(--monline-header-height) - 0.5px);
+  right: -0.5px;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #d5d7cf;
+  border-radius: 12px;
+  background: #fff;
+  color: #5c6259;
+  box-shadow: 7px 7px 16px rgba(54, 58, 51, 0.12);
+  cursor: pointer;
+  transform: translate(50%, -50%);
+}
+.dark .monline-sidebar-toggle {
+  border-color: #413f3f;
+  background: #202326;
+  color: #d8d3d0;
+  box-shadow: 7px 7px 16px rgba(18, 20, 22, 0.34);
+}
+.monline-sidebar-toggle:hover {
+  border-color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.14);
+  color: color-mix(in srgb, hsl(var(--primary)) 60%, hsl(var(--foreground)));
+}
+.dark .monline-sidebar-toggle:hover {
+  color: #d8d3d0;
+}
+.monline-sidebar-toggle:active {
+  transform: translate(50%, -50%) scale(0.96);
+}
+.monline-sidebar-toggle:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 3px;
+}
+.monline-sidebar-toggle-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  transition: transform 0.22s ease;
+}
+.monline-sidebar-collapsed .monline-sidebar-toggle-icon {
+  transform: rotate(180deg);
+}
+.monline-sidebar-resize-handle {
+  display: none;
+  position: absolute;
+  z-index: 40;
+  top: 0;
+  bottom: 0;
+  right: -5px;
+  width: 10px;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+.monline-sidebar-resize-handle::after {
+  content: "";
+  position: absolute;
+  inset: 0 4px;
+  background: transparent;
+  transition: background-color 150ms ease;
+}
+.monline-sidebar-resize-handle:focus-visible::after,
+html[data-sidebar-resizing] .monline-sidebar-resize-handle::after {
+  background: hsl(var(--primary));
+}
+html[data-sidebar-resizing],
+html[data-sidebar-resizing] * {
+  cursor: col-resize !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+html[data-sidebar-resizing] .monline-sidebar {
+  transition: none;
+}
+@media (min-width: 1024px) {
+  .monline-sidebar-toggle {
+    display: grid;
+  }
+  .monline-sidebar {
+    width: var(--monline-sidebar-width, 260px);
+  }
+  .monline-sidebar-collapsed .monline-sidebar {
+    width: 80px;
+  }
+  .monline-sidebar-resize-handle {
+    display: block;
+  }
+}
+html[data-theme-changing],
+html[data-theme-changing] *,
+html[data-theme-changing] *::before,
+html[data-theme-changing] *::after {
+  transition: none !important;
+}
+.monline-sidebar {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+}
+.dark .monline-sidebar {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.monline-sidebar nav a[aria-current="page"] {
+  box-shadow: none;
+}
+.monline-sidebar button:focus-visible,
+.monline-sidebar a:focus-visible {
+  outline-offset: 3px;
+}
+
+/* Muted theme colors stay visible on the spending cards. */
+.summary-card {
+  border-color: rgb(var(--summary-accent) / 0.3);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+.summary-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(145deg, transparent, rgb(var(--summary-accent) / 0.11));
+  opacity: 1;
+  transition: opacity 180ms ease;
+}
+.summary-card-icon {
+  color: rgb(var(--summary-accent));
+  background: rgb(var(--summary-accent) / 0.16);
+}
+.monline-distribution .recharts-pie-label-text {
+  fill: hsl(var(--foreground));
+  font-size: 12px;
+}
+.header-theme-toggle {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #e5e5dd;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #ffffff, #e8e8e4);
+  color: #5c6057;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
+}
+.header-theme-toggle::before {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 20px;
+  background: currentColor;
+  -webkit-mask: url("/assets/theme-moon.png") center / contain no-repeat;
+  mask: url("/assets/theme-moon.png") center / contain no-repeat;
+  transition: transform 120ms ease;
+}
+.header-theme-toggle-icon {
+  display: none;
+}
+.dark .header-theme-toggle {
+  border-color: #413f3f;
+  background: linear-gradient(145deg, #23282c, #1e2125);
+  color: #d8d3d0;
+}
+.dark .header-theme-toggle::before {
+  -webkit-mask-image: url("/assets/theme-sun.png");
+  mask-image: url("/assets/theme-sun.png");
+}
+.header-theme-toggle:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
+}
+.header-theme-toggle:focus-visible {
+  outline: 3px solid hsl(var(--ring));
+  outline-offset: 4px;
+}
+.header-theme-toggle:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.header-subscription-heartbeat {
+  position: relative;
+  background-color: #22c55e;
+}
+.statement-table :disabled {
+  opacity: 1;
+  cursor: default;
+}
+.header-subscription-heartbeat::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-color: #22c55e;
+  animation: subscription-ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+.subscription-billing-progress {
+  isolation: isolate;
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.08);
+}
+.subscription-billing-progress > div {
+  border-radius: inherit;
+  background: linear-gradient(90deg, hsl(var(--primary) / 0.65), hsl(var(--primary)));
+  animation: subscription-billing-fill 1.2s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.subscription-billing-progress::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: var(--billing-progress, 0%);
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 35%,
+    rgb(0 0 0 / 0.25) 43%,
+    rgb(255 255 255 / 0.95) 50%,
+    rgb(0 0 0 / 0.15) 57%,
+    transparent 65%
+  );
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  animation: subscription-billing-flow 2s linear 1.2s infinite backwards;
+}
+@keyframes subscription-billing-fill {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(calc(var(--billing-progress, 0%) - 100%));
+  }
+}
+@keyframes subscription-billing-flow {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+@keyframes subscription-ping {
+  from {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.8);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .subscription-billing-progress > div {
+    animation: none;
+    transition: none;
+  }
+  .subscription-billing-progress::after {
+    animation: none;
+    display: none;
+  }
+  .header-theme-toggle,
+  .header-theme-toggle::before {
+    transition: none;
+    transform: none !important;
+  }
+  .header-subscription-heartbeat::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .summary-card,
+  .summary-card::before {
+    transition: none;
+  }
+}
+
+/* Cyan history line stays readable in both themes. */
+.history-chart-card {
+  --history-line: #0891b2;
+}
+.dark .history-chart-card {
+  --history-line: #22d3ee;
+}
+
+/* Custom scrollbar - thinner and sleeker */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full transition-colors;
+}
+
+/* Native wheel/drag scrolling with a quiet, rounded thumb and no arrow buttons. */
+.monline-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+  scrollbar-gutter: stable;
+  scroll-behavior: auto;
+}
+.monline-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.monline-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.monline-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.35);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  transition: none;
+}
+.monline-scroll::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+@supports not selector(::-webkit-scrollbar) {
+  .monline-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+  }
+}
+
+/* Fit five- and six-week months into the available desktop viewport. */
+@media (min-width: 1024px) and (min-height: 800px) {
+  .monline-calendar-content {
+    padding: 16px 24px !important;
+  }
+  .monline-calendar-page {
+    height: 100%;
+    gap: 12px;
+  }
+  .monline-calendar-page > :not(.monline-calendar-month) {
+    flex-shrink: 0;
+  }
+  .monline-calendar-stat {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  .monline-calendar-stat > div:first-child {
+    padding: 10px;
+  }
+  .monline-calendar-month {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .monline-calendar-month-header {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+  .monline-calendar-month-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .monline-calendar-weekdays > div {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+  .monline-calendar-days {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .monline-calendar-grid {
+    min-height: 100%;
+    grid-template-rows: repeat(var(--calendar-weeks), minmax(min-content, auto));
+  }
+  .monline-calendar-grid > button {
+    min-height: 0;
+    padding: 6px;
+  }
+  .monline-calendar-grid > button > div:first-child {
+    margin-bottom: 4px;
+  }
+  .monline-calendar-grid > button > div:first-child > span:first-child {
+    height: 24px;
+    width: 24px;
+  }
+}

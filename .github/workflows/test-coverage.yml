@@ -1,0 +1,30 @@
+name: Test Coverage
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - name: Install dependencies
+        run: |
+          bun install --frozen-lockfile
+          cd apps/web && bun install --frozen-lockfile
+          cd ../backend && bun install --frozen-lockfile --ignore-scripts
+      - name: Frontend coverage
+        run: bun run test:front:coverage
+      - name: Backend domain coverage
+        run: bun run test:back:coverage

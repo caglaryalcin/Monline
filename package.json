@@ -1,0 +1,43 @@
+{
+  "name": "monline",
+  "version": "1.0.0",
+  "description": "Self-hosted subscription tracker built with React, Node.js, SQLite, and Docker.",
+  "private": true,
+  "packageManager": "bun@1.4.3",
+  "license": "GPL-3.0-only",
+  "author": {
+    "name": "Caglar Yalcin",
+    "url": "https://github.com/caglaryalcin"
+  },
+  "keywords": [
+    "budget",
+    "bun",
+    "docker",
+    "react",
+    "self-hosted",
+    "subscription-tracker",
+    "subscriptions",
+    "sqlite"
+  ],
+  "engines": {
+    "bun": ">=1.4.3",
+    "node": ">=24.13.0"
+  },
+  "scripts": {
+    "dev": "concurrently -n web,server -c blue,green \"bun run dev:web\" \"bun run dev:server\"",
+    "dev:web": "cd apps/web && bun run dev",
+    "build": "cd apps/web && bun run build",
+    "lint": "cd apps/web && bun run lint",
+    "test": "bun run test:front && bun run test:back",
+    "test:run": "bun run test",
+    "test:coverage": "bun run test:front:coverage && bun run test:back:coverage",
+    "test:front": "cd apps/web && bun run test:run",
+    "test:front:coverage": "cd apps/web && bun run test:coverage",
+    "test:back": "cd apps/backend && node ../web/node_modules/vitest/vitest.mjs run --config vitest.config.mjs",
+    "test:back:coverage": "cd apps/backend && node ../web/node_modules/vitest/vitest.mjs run --config vitest.config.mjs --coverage",
+    "dev:server": "node apps/backend/src/server.cjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5"
+  }
+}

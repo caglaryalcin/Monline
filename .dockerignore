@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# Docs & scripts
+docs/
+scripts/
+*.md
+
+# Node modules
+node_modules/
+apps/web/node_modules/
+
+# Persistent data (never ship user data)
+apps/backend/pb_data/
+apps/backend/monline_data/
+apps/backend/node_modules/
+
+# Preserved legacy binaries (never ship)
+apps/backend/pocketbase
+apps/backend/pocketbase.exe
+
+# Built frontend assets (built inside Docker)
+apps/backend/pb_public/
+apps/backend/public/
+
+# Lock files for root (not needed in image)
+package-lock.json
+apps/web/package-lock.json
+
+# IDE & OS
+.vscode/
+.DS_Store
+*.swp
+*.swo
+
+# Env files
+.env*
+!.env.example
+!.env.*.example
+
+# Local logs, backups, downloaded binaries, and development state
+.local/

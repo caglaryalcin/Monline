@@ -1,0 +1,601 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+
+import type * as CalendarTypes from "@/components/calendar/types";
+import type * as Utils from "@/lib/utils";
+import type { Currency, PaymentRecord, Subscription } from "@/types";
+
+const mocks = vi.hoisted(() => ({
+  getColorForSub: vi.fn(() => "bg-blue-500/15"),
+  getLogoUrl: vi.fn((sub: Subscription): string | null => {
+    if (sub.id === "sub-1") {
+      return "https://cdn.example.com/netflix.png";
+    }
+
+    if (sub.id === "sub-2") {
+      return "https://cdn.example.com/spotify.png";
+    }
+
+    return null;
+  }),
+  getPaymentRecord: vi.fn(),
+  toDateStr: vi.fn(
+    (date: Date) =>
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
+  ),
+  toMain: vi.fn((price: number) => price),
+  formatPrice: vi.fn((price: number, symbol: string) => `${price.toFixed(2)} ${symbol}`),
+}));
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { resolvedLanguage: "en", language: "en", changeLanguage: vi.fn() },
+  }),
+}));
+
+vi.mock("@/components/calendar/types", async (importOriginal) => {
+  const actual = await importOriginal<typeof CalendarTypes>();
+  return {
+    ...actual,
+    getColorForSub: mocks.getColorForSub,
+    getLogoUrl: mocks.getLogoUrl,
+    getPaymentRecord: mocks.getPaymentRecord,
+    toDateStr: mocks.toDateStr,
+    toMain: mocks.toMain,
+  };
+});
+
+vi.mock("@/lib/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof Utils>();
+  return {
+    ...actual,
+    formatPrice: mocks.formatPrice,
+  };
+});
+
+import { CalendarMonthCard } from "./CalendarMonthCard";
+
+function getCurrency(overrides: Partial<Currency> = {}): Currency {
+  return {
+    id: "cur-1",
+    code: "USD",
+    name: "US Dollar",
+    symbol: "$",
+    rate: 1,
+    is_main: true,
+    user: "user-1",
+    ...overrides,
+  };
+}
+
+function getSubscription(overrides: Partial<Subscription> = {}): Subscription {
+  return {
+    id: "sub-1",
+    name: "Netflix",
+    price: 10,
+    currency: "cur-1",
+    frequency: 1,
+    cycle: "monthly",
+    next_payment: "2026-04-10",
+    auto_renew: true,
+    start_date: "2026-01-01",
+    notify: true,
+    notify_days_before: 3,
+    inactive: false,
+    user: "user-1",
+    ...overrides,
+  };
+}
+
+describe("CalendarMonthCard", () => {
+  it.each([
+    {
+      year: 2026,
+      month: 10,
+      day: 27,
+      type: "prev" as const,
+      expected: "2026-09-27",
+      date: new Date(2026, 8, 27, 12),
+    },
+    {
+      year: 2026,
+      month: 9,
+      day: 3,
+      type: "next" as const,
+      expected: "2026-10-03",
+      date: new Date(2026, 9, 3, 12),
+    },
+    {
+      year: 2026,
+      month: 1,
+      day: 31,
+      type: "prev" as const,
+      expected: "2025-12-31",
+      date: new Date(2025, 11, 31, 12),
+    },
+    {
+      year: 2025,
+      month: 12,
+      day: 1,
+      type: "next" as const,
+      expected: "2026-01-01",
+      date: new Date(2026, 0, 1, 12),
+    },
+  ])(
+    "opens adjacent cell $expected with its actual month and year",
+    async ({ year, month, day, type, expected, date }) => {
+      const onAddHistorical = vi.fn();
+      render(
+        <CalendarMonthCard
+          onSelectMonth={vi.fn()}
+          month={month}
+          year={year}
+          now={new Date(2026, 9, 17, 12)}
+          daysInMonth={31}
+          isCurrentMonth={false}
+          loading={false}
+          selectedDay={null}
+          allCells={[{ day, type }]}
+          entriesByDay={{}}
+          currencyById={new Map()}
+          paymentTracking={false}
+          paymentRecords={[]}
+          onPrev={vi.fn()}
+          onNext={vi.fn()}
+          onGoToday={vi.fn()}
+          onSelectDay={vi.fn()}
+          onSelectDate={vi.fn()}
+          onAddHistorical={onAddHistorical}
+        />,
+      );
+      const cell = screen.getByText(String(day)).closest("button")!;
+      expect(cell).not.toBeDisabled();
+      expect(cell).toHaveAttribute("data-calendar-date", expected);
+      fireEvent.contextMenu(cell);
+      fireEvent.click(await screen.findByRole("menuitem", { name: "historical_add" }));
+      expect(onAddHistorical).toHaveBeenCalledWith(date);
+    },
+  );
+  it("shows every payment even in a six-week calendar", () => {
+    render(
+      <CalendarMonthCard
+        onSelectMonth={vi.fn()}
+        month={8}
+        year={2026}
+        now={new Date(2026, 7, 1)}
+        daysInMonth={31}
+        isCurrentMonth
+        loading={false}
+        selectedDay={null}
+        allCells={Array.from({ length: 42 }, (_, index) =>
+          index < 6
+            ? { day: 26 + index, type: "prev" as const }
+            : index < 37
+              ? { day: index - 5, type: "current" as const }
+              : { day: index - 36, type: "next" as const },
+        )}
+        entriesByDay={{
+          1: Array.from({ length: 8 }, (_, index) => ({
+            sub: getSubscription({ id: `sub-${index}`, name: `Subscription ${index}` }),
+            date: new Date(2026, 7, 1),
+          })),
+        }}
+        mainCurrency={getCurrency()}
+        currencyById={new Map([["cur-1", getCurrency()]])}
+        paymentTracking={false}
+        paymentRecords={[]}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onGoToday={vi.fn()}
+        onSelectDay={vi.fn()}
+      />,
+    );
+    for (let index = 0; index < 8; index++) {
+      expect(screen.getByText(`Subscription ${index}`)).toBeVisible();
+    }
+    expect(screen.queryByText(/\+\d+ more/)).not.toBeInTheDocument();
+  });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders the month header and delegates navigation controls", () => {
+    const onPrev = vi.fn();
+    const onNext = vi.fn();
+    const onGoToday = vi.fn();
+
+    const { container } = render(
+      <CalendarMonthCard
+        onSelectMonth={vi.fn()}
+        month={4}
+        year={2026}
+        now={new Date(2026, 2, 20)}
+        daysInMonth={30}
+        isCurrentMonth={false}
+        loading={false}
+        selectedDay={null}
+        allCells={[{ day: 1, type: "current" }]}
+        entriesByDay={{}}
+        mainCurrency={getCurrency()}
+        currencyById={new Map([["cur-1", getCurrency()]])}
+        paymentTracking={false}
+        paymentRecords={[]}
+        onPrev={onPrev}
+        onNext={onNext}
+        onGoToday={onGoToday}
+        onSelectDay={vi.fn()}
+      />,
+    );
+
+    expect(container).toHaveTextContent("apr 1 - 30, 2026");
+    expect(screen.queryByText(/events?/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "prev_month" }));
+    fireEvent.click(screen.getByRole("button", { name: "next_month" }));
+    fireEvent.click(screen.getByRole("button", { name: "today" }));
+
+    expect(onPrev).toHaveBeenCalledTimes(1);
+    expect(onNext).toHaveBeenCalledTimes(1);
+    expect(onGoToday).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders all day entries, payment states and selection behavior", () => {
+    const onSelectDay = vi.fn();
+    const subscriptionA = getSubscription({ id: "sub-1", name: "Netflix", price: 10 });
+    const subscriptionB = getSubscription({ id: "sub-2", name: "Spotify", price: 20 });
+    const subscriptionC = getSubscription({ id: "sub-3", name: "Drive", price: 30 });
+    const subscriptionD = getSubscription({ id: "sub-4", name: "Cloud", price: 40 });
+    const paymentRecords: PaymentRecord[] = [
+      {
+        id: "pr-1",
+        subscription_id: "sub-1",
+        user: "user-1",
+        due_date: "2026-04-10",
+        paid_at: "2026-04-10T08:00:00Z",
+      },
+    ];
+
+    mocks.getPaymentRecord.mockImplementation((records: PaymentRecord[], subscriptionId: string) =>
+      records.find((record) => record.subscription_id === subscriptionId),
+    );
+
+    const { container } = render(
+      <CalendarMonthCard
+        onSelectMonth={vi.fn()}
+        month={4}
+        year={2026}
+        now={new Date(2026, 3, 15)}
+        daysInMonth={30}
+        isCurrentMonth={true}
+        loading={false}
+        selectedDay={10}
+        allCells={[
+          { day: 30, type: "prev" },
+          { day: 10, type: "current" },
+          { day: 11, type: "current" },
+        ]}
+        entriesByDay={{
+          10: [
+            { sub: subscriptionA, date: new Date(2026, 3, 10) },
+            { sub: subscriptionB, date: new Date(2026, 3, 10) },
+            { sub: subscriptionC, date: new Date(2026, 3, 10) },
+            { sub: subscriptionD, date: new Date(2026, 3, 10) },
+          ],
+        }}
+        mainCurrency={getCurrency()}
+        currencyById={new Map([["cur-1", getCurrency()]])}
+        paymentTracking
+        paymentRecords={paymentRecords}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onGoToday={vi.fn()}
+        onSelectDay={onSelectDay}
+      />,
+    );
+
+    expect(screen.getByText("10.00 $")).toBeInTheDocument();
+    expect(screen.getByText("Netflix")).toBeInTheDocument();
+    expect(screen.getByText("Spotify")).toBeInTheDocument();
+    expect(screen.getByText("Drive")).toBeInTheDocument();
+    expect(screen.getByText("Cloud")).toBeInTheDocument();
+    expect(screen.queryByText(/\+\d+ more/)).not.toBeInTheDocument();
+    expect(container.querySelector("img")).not.toBeNull();
+    expect(mocks.getPaymentRecord).toHaveBeenCalledWith(paymentRecords, "sub-1", "2026-04-10");
+
+    fireEvent.click(container.querySelector('[data-calendar-date="2026-04-10"]')!);
+    expect(onSelectDay).toHaveBeenCalledWith(null);
+
+    fireEvent.click(screen.getByRole("button", { name: "11" }));
+    expect(onSelectDay).toHaveBeenCalledWith(11);
+
+    // Cover disabled/other-month button click (line 172)
+    const otherMonthButton = screen.getByRole("button", { name: "30" });
+    fireEvent.click(otherMonthButton);
+    expect(onSelectDay).not.toHaveBeenCalledWith(30);
+  });
+
+  it("keeps the calendar header free of event counts", () => {
+    render(
+      <CalendarMonthCard
+        onSelectMonth={vi.fn()}
+        month={4}
+        year={2026}
+        now={new Date(2026, 2, 20)}
+        daysInMonth={30}
+        isCurrentMonth={false}
+        loading={false}
+        selectedDay={null}
+        allCells={[{ day: 1, type: "current" }]}
+        entriesByDay={{}}
+        mainCurrency={getCurrency()}
+        currencyById={new Map([["cur-1", getCurrency()]])}
+        paymentTracking={false}
+        paymentRecords={[]}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onGoToday={vi.fn()}
+        onSelectDay={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(/events?/)).not.toBeInTheDocument();
+  });
+
+  it("hides the stats badge and today button when already on the current month with zero stats", () => {
+    render(
+      <CalendarMonthCard
+        onSelectMonth={vi.fn()}
+        month={4}
+        year={2026}
+        now={new Date(2026, 3, 20)}
+        daysInMonth={30}
+        isCurrentMonth={true}
+        loading={false}
+        selectedDay={null}
+        allCells={[{ day: 20, type: "current" }]}
+        entriesByDay={{}}
+        mainCurrency={getCurrency()}
+        currencyById={new Map([["cur-1", getCurrency()]])}
+        paymentTracking={false}
+        paymentRecords={[]}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onGoToday={vi.fn()}
+        onSelectDay={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(/events?/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "today" })).not.toBeInTheDocument();
+  });
+
+  it("highlights today and hides entries while loading", () => {
+    render(
+      <CalendarMonthCard
+        onSelectMonth={vi.fn()}
+        month={4}
+        year={2026}
+        now={new Date(2026, 3, 10)}
+        daysInMonth={30}
+        isCurrentMonth={true}
+        loading={true}
+        selectedDay={null}
+        allCells={[{ day: 10, type: "current" }]}
+        entriesByDay={{
+          10: [{ sub: getSubscription(), date: new Date(2026, 3, 10) }],
+        }}
+        mainCurrency={getCurrency()}
+        currencyById={new Map([["cur-1", getCurrency()]])}
+        paymentTracking={false}
+        paymentRecords={[]}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onGoToday={vi.fn()}
+        onSelectDay={vi.fn()}
+      />,
+    );
+
+    const dayBadge = screen.getByText("10");
+    const todayCell = dayBadge.closest("button");
+    expect(todayCell).toHaveClass("border-primary", "ring-inset", "ring-primary");
+    expect(todayCell).not.toHaveClass("bg-primary/10");
+    expect(todayCell).toHaveAttribute("aria-current", "date");
+    expect(dayBadge).toHaveClass("rounded-full", "bg-primary", "text-primary-foreground");
+    expect(screen.queryByText("Netflix")).not.toBeInTheDocument();
+  });
+
+  it("renders image logo directly without paymentTracking and handles onError", () => {
+    const subscriptionA = getSubscription({ id: "sub-1", name: "Netflix", price: 10 });
+    mocks.getLogoUrl.mockReturnValue("https://cdn.example.com/netflix.png");
+
+    render(
+      <CalendarMonthCard
+        onSelectMonth={vi.fn()}
+        month={4}
+        year={2026}
+        now={new Date(2026, 3, 15)}
+        daysInMonth={30}
+        isCurrentMonth={true}
+        loading={false}
+        selectedDay={10}
+        allCells={[{ day: 10, type: "current" }]}
+        entriesByDay={{
+          10: [{ sub: subscriptionA, date: new Date(2026, 3, 10) }],
+        }}
+        mainCurrency={getCurrency()}
+        currencyById={new Map([["cur-1", getCurrency()]])}
+        paymentTracking={false}
+        paymentRecords={[]}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onGoToday={vi.fn()}
+        onSelectDay={vi.fn()}
+      />,
+    );
+
+    const img = document.querySelector("img") as HTMLImageElement;
+    fireEvent.error(img);
+    expect(img).toHaveAttribute("src", "https://icons.duckduckgo.com/ip3/netflix.com.ico");
+  });
+
+  it("shows overdue payment indicator when payment tracking is enabled and the entry is unpaid", () => {
+    const subscription = getSubscription({ id: "sub-overdue", name: "Overdue" });
+    mocks.getLogoUrl.mockReturnValue("https://cdn.example.com/overdue.png");
+    mocks.getPaymentRecord.mockReturnValue(undefined);
+
+    const { container } = render(
+      <CalendarMonthCard
+        onSelectMonth={vi.fn()}
+        month={4}
+        year={2026}
+        now={new Date(2026, 3, 15)}
+        daysInMonth={30}
+        isCurrentMonth={true}
+        loading={false}
+        selectedDay={null}
+        allCells={[{ day: 10, type: "current" }]}
+        entriesByDay={{
+          10: [{ sub: subscription, date: new Date(2026, 3, 10) }],
+        }}
+        mainCurrency={getCurrency()}
+        currencyById={new Map([["cur-1", getCurrency()]])}
+        paymentTracking
+        paymentRecords={[]}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onGoToday={vi.fn()}
+        onSelectDay={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("overdue")).toBeInTheDocument();
+    expect(container.querySelector("img")).toBeNull();
+    expect(screen.getByText("O")).toBeInTheDocument();
+  });
+
+  it("renders the logo with no payment status icon when tracking is enabled for a future unpaid entry", () => {
+    const subscription = getSubscription({
+      id: "sub-future",
+      name: "Future",
+      url: "https://example.com",
+    });
+    mocks.getLogoUrl.mockReturnValue("https://cdn.example.com/future.png");
+    mocks.getPaymentRecord.mockReturnValue(undefined);
+
+    const { container } = render(
+      <CalendarMonthCard
+        onSelectMonth={vi.fn()}
+        month={4}
+        year={2026}
+        now={new Date(2026, 3, 10)}
+        daysInMonth={30}
+        isCurrentMonth={true}
+        loading={false}
+        selectedDay={null}
+        allCells={[{ day: 20, type: "current" }]}
+        entriesByDay={{
+          20: [{ sub: subscription, date: new Date(2026, 3, 20) }],
+        }}
+        mainCurrency={getCurrency()}
+        currencyById={new Map([["cur-1", getCurrency()]])}
+        paymentTracking
+        paymentRecords={[]}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onGoToday={vi.fn()}
+        onSelectDay={vi.fn()}
+      />,
+    );
+
+    expect(container.querySelector(".text-red-500")).toBeNull();
+    expect(container.querySelector(".text-green-500")).toBeNull();
+    expect(container.querySelector("img")).not.toBeNull();
+  });
+
+  it("renders the fallback initial and hides the entry price when there is no logo or main currency", () => {
+    const subscription = getSubscription({
+      id: "sub-no-logo",
+      name: "Archive",
+      price: 15,
+    });
+    mocks.getLogoUrl.mockReturnValue(null);
+
+    render(
+      <CalendarMonthCard
+        onSelectMonth={vi.fn()}
+        month={4}
+        year={2026}
+        now={new Date(2026, 3, 15)}
+        daysInMonth={30}
+        isCurrentMonth={true}
+        loading={false}
+        selectedDay={null}
+        allCells={[{ day: 10, type: "current" }]}
+        entriesByDay={{
+          10: [{ sub: subscription, date: new Date(2026, 3, 10) }],
+        }}
+        mainCurrency={undefined}
+        currencyById={new Map([["cur-1", getCurrency()]])}
+        paymentTracking={false}
+        paymentRecords={[]}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onGoToday={vi.fn()}
+        onSelectDay={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("A")).toBeInTheDocument();
+    expect(screen.getByText("Archive")).toBeInTheDocument();
+    expect(screen.queryByText("15.00 $")).not.toBeInTheDocument();
+  });
+
+  it("keeps credits out of the day total and marks their amount as incoming", () => {
+    mocks.getLogoUrl.mockReturnValue(null);
+    const expense = getSubscription({ id: "sub-expense", name: "Netflix", price: 20 });
+    const credit = getSubscription({
+      id: "sub-credit",
+      name: "Bonus",
+      price: 500,
+      record_type: "credit",
+    });
+
+    render(
+      <CalendarMonthCard
+        onSelectMonth={vi.fn()}
+        month={4}
+        year={2026}
+        now={new Date(2026, 3, 15)}
+        daysInMonth={30}
+        isCurrentMonth={true}
+        loading={false}
+        selectedDay={null}
+        allCells={[{ day: 10, type: "current" }]}
+        entriesByDay={{
+          10: [
+            { sub: expense, date: new Date(2026, 3, 10) },
+            { sub: credit, date: new Date(2026, 3, 10) },
+          ],
+        }}
+        mainCurrency={getCurrency()}
+        currencyById={new Map([["cur-1", getCurrency()]])}
+        paymentTracking={false}
+        paymentRecords={[]}
+        onPrev={vi.fn()}
+        onNext={vi.fn()}
+        onGoToday={vi.fn()}
+        onSelectDay={vi.fn()}
+      />,
+    );
+
+    // The day badge sums the $20 expense only — the $500 credit is income, so
+    // it never inflates what the day appears to cost.
+    expect(screen.queryByText("520.00 $")).not.toBeInTheDocument();
+    // Both the day badge and the expense row read "20.00 $".
+    expect(screen.getAllByText("20.00 $")).toHaveLength(1);
+    // The credit still shows its own amount, marked as incoming.
+    expect(
+      screen.getByText((_, element) => element?.textContent === "+500.00 $"),
+    ).toBeInTheDocument();
+  });
+});

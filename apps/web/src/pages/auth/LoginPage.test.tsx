@@ -1,0 +1,312 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+
+import { SS_KEYS } from "@/lib/constants";
+
+const mocks = vi.hoisted(() => ({
+  navigate: vi.fn(),
+  login: vi.fn(),
+  toastError: vi.fn(),
+  isTotpRequiredError: vi.fn(),
+  fetchMock: vi.fn(),
+  isRegistrationOpen: vi.fn(),
+  getOidcConfig: vi.fn(),
+}));
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { resolvedLanguage: "en", language: "en", changeLanguage: vi.fn() },
+  }),
+}));
+
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ to, children }: { to: string; children: React.ReactNode }) => (
+    <a href={to}>{children}</a>
+  ),
+  useNavigate: () => mocks.navigate,
+}));
+
+vi.mock("@/components/AppLogo", () => ({
+  LogoWithName: () => <div>logo</div>,
+}));
+
+vi.mock("@/contexts/AuthContext", () => ({
+  useAuth: () => ({
+    login: mocks.login,
+  }),
+}));
+
+vi.mock("@/lib/toast", () => ({
+  toast: {
+    error: mocks.toastError,
+  },
+}));
+
+vi.mock("@/services/auth", () => ({
+  isTotpRequiredError: mocks.isTotpRequiredError,
+}));
+
+vi.mock("@/services/registration", () => ({
+  registrationService: {
+    isOpen: mocks.isRegistrationOpen,
+  },
+}));
+
+vi.mock("@/services/oidc", () => ({
+  oidcService: {
+    getConfig: mocks.getOidcConfig,
+  },
+}));
+
+vi.mock("@/components/auth/OIDCLoginButton", () => ({
+  OIDCLoginButton: ({ providerName }: { providerName: string }) => (
+    <button type="button">sso:{providerName}</button>
+  ),
+}));
+
+import { LoginPage } from "./LoginPage";
+
+describe("LoginPage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    sessionStorage.clear();
+    mocks.fetchMock.mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ hasUsers: true }),
+    });
+    mocks.login.mockResolvedValue(undefined);
+    mocks.isTotpRequiredError.mockReturnValue(false);
+    mocks.isRegistrationOpen.mockResolvedValue(true);
+    mocks.getOidcConfig.mockResolvedValue({ enabled: false, providerName: "" });
+    vi.stubGlobal("fetch", mocks.fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("logs the user in and redirects to the dashboard", async () => {
+    render(<LoginPage />);
+
+    fireEvent.change(screen.getByLabelText("email"), {
+      target: { value: "daniel@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "login" }));
+
+    await waitFor(() => {
+      expect(mocks.login).toHaveBeenCalledWith("daniel@example.com", "password123", false);
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith({
+      to: "/dashboard",
+      replace: true,
+    });
+  });
+
+  it("starts unchecked and sends the selected remember preference", async () => {
+    render(<LoginPage />);
+    const checkbox = screen.getByRole("checkbox", { name: /remember_me/ });
+    expect(checkbox).not.toBeChecked();
+    fireEvent.click(checkbox);
+    fireEvent.change(screen.getByLabelText("email"), { target: { value: "daniel@example.com" } });
+    fireEvent.change(screen.getByLabelText("password"), { target: { value: "password123" } });
+    fireEvent.click(screen.getByRole("button", { name: "login" }));
+    await waitFor(() =>
+      expect(mocks.login).toHaveBeenCalledWith("daniel@example.com", "password123", true),
+    );
+  });
+
+  it("stores the TOTP challenge and redirects to /totp when MFA is required", async () => {
+    const challenge = {
+      challenge: "challenge-123",
+      expiresAt: "2099-01-01T00:00:00.000Z",
+      userId: "user-1",
+    };
+    mocks.login.mockRejectedValue({ challenge });
+    mocks.isTotpRequiredError.mockReturnValue(true);
+
+    render(<LoginPage />);
+
+    fireEvent.change(screen.getByLabelText("email"), {
+      target: { value: "daniel@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "login" }));
+
+    await waitFor(() => {
+      expect(sessionStorage.getItem(SS_KEYS.TOTP_LOGIN_CHALLENGE)).toBe(JSON.stringify(challenge));
+    });
+    expect(mocks.navigate).toHaveBeenCalledWith({
+      to: "/totp",
+      replace: true,
+    });
+  });
+
+  it("redirects to setup when bootstrap reports there are no users", async () => {
+    mocks.fetchMock.mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({ hasUsers: false }),
+    });
+
+    render(<LoginPage />);
+
+    await waitFor(() => {
+      expect(mocks.navigate).toHaveBeenCalledWith({
+        to: "/setup",
+        replace: true,
+      });
+    });
+  });
+
+  it("shows unknown_error translation when a non-Error is thrown during login", async () => {
+    mocks.login.mockRejectedValue("unexpected-string-error");
+    mocks.isTotpRequiredError.mockReturnValue(false);
+
+    render(<LoginPage />);
+
+    fireEvent.change(screen.getByLabelText("email"), {
+      target: { value: "daniel@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "login" }));
+
+    await waitFor(() => {
+      expect(mocks.toastError).toHaveBeenCalledWith("unknown_error");
+    });
+  });
+
+  it("shows the error message when an Error instance is thrown during login", async () => {
+    mocks.login.mockRejectedValue(new Error("invalid credentials"));
+    mocks.isTotpRequiredError.mockReturnValue(false);
+
+    render(<LoginPage />);
+
+    fireEvent.change(screen.getByLabelText("email"), {
+      target: { value: "daniel@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "login" }));
+
+    await waitFor(() => {
+      expect(mocks.toastError).toHaveBeenCalledWith("invalid credentials");
+    });
+  });
+
+  it("shows validation error for invalid email format on submit", async () => {
+    render(<LoginPage />);
+
+    const emailInput = screen.getByLabelText("email");
+    fireEvent.change(emailInput, { target: { value: "not-valid" } });
+    fireEvent.blur(emailInput);
+    fireEvent.change(screen.getByLabelText("password"), {
+      target: { value: "pw" },
+    });
+    fireEvent.submit(document.querySelector("form")!);
+
+    await waitFor(() => {
+      expect(screen.getByText("validation_invalid_email")).toBeInTheDocument();
+    });
+  });
+
+  it("shows password required error when password field is empty on submit", async () => {
+    render(<LoginPage />);
+
+    const emailInput = screen.getByLabelText("email");
+    fireEvent.change(emailInput, { target: { value: "user@example.com" } });
+    fireEvent.blur(emailInput);
+    // Leave password empty
+    fireEvent.submit(document.querySelector("form")!);
+
+    await waitFor(() => {
+      expect(screen.getByText("required")).toBeInTheDocument();
+    });
+  });
+
+  it("does not redirect when bootstrap fetch returns non-ok response", async () => {
+    mocks.fetchMock.mockResolvedValue({ ok: false });
+
+    render(<LoginPage />);
+
+    // Wait for fetch to complete
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+
+  it("does not redirect when bootstrap fetch throws", async () => {
+    mocks.fetchMock.mockRejectedValue(new Error("network error"));
+
+    render(<LoginPage />);
+
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(mocks.navigate).not.toHaveBeenCalled();
+  });
+
+  it("offers the signup link while the instance accepts registrations", async () => {
+    render(<LoginPage />);
+
+    expect(await screen.findByText("create_account")).toBeInTheDocument();
+  });
+
+  it("hides the signup link once registrations are closed", async () => {
+    mocks.isRegistrationOpen.mockResolvedValue(false);
+    render(<LoginPage />);
+
+    await waitFor(() => expect(mocks.isRegistrationOpen).toHaveBeenCalled());
+    expect(screen.queryByText("create_account")).not.toBeInTheDocument();
+  });
+
+  it("does not render the link before the server has answered", () => {
+    // Never resolves, so the component stays in its unknown state.
+    mocks.isRegistrationOpen.mockReturnValue(new Promise(() => {}));
+    render(<LoginPage />);
+
+    expect(screen.queryByText("create_account")).not.toBeInTheDocument();
+  });
+
+  it("falls back to offering the link when the check is unreachable", async () => {
+    // The create request is still refused server-side, so the worst case is a
+    // clear error instead of a signup path nobody can find.
+    mocks.isRegistrationOpen.mockRejectedValue(new Error("offline"));
+    render(<LoginPage />);
+
+    expect(await screen.findByText("create_account")).toBeInTheDocument();
+  });
+
+  it("shows the SSO button when OIDC is enabled", async () => {
+    mocks.getOidcConfig.mockResolvedValue({
+      enabled: true,
+      providerName: "Authentik",
+    });
+
+    render(<LoginPage />);
+
+    expect(await screen.findByText("sso:Authentik")).toBeInTheDocument();
+    expect(screen.getByText("or")).toBeInTheDocument();
+  });
+
+  it("hides the SSO button when OIDC is disabled", async () => {
+    render(<LoginPage />);
+
+    await waitFor(() => expect(mocks.getOidcConfig).toHaveBeenCalled());
+    expect(screen.queryByText("or")).not.toBeInTheDocument();
+  });
+
+  it("hides the SSO button when the OIDC config request fails", async () => {
+    mocks.getOidcConfig.mockRejectedValue(new Error("network error"));
+
+    render(<LoginPage />);
+
+    await waitFor(() => expect(mocks.getOidcConfig).toHaveBeenCalled());
+    expect(screen.queryByText("or")).not.toBeInTheDocument();
+  });
+});

@@ -1,0 +1,58 @@
+import i18n from "i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
+import { initReactI18next } from "react-i18next";
+
+import { LS_KEYS } from "@/lib/constants";
+
+import cs from "./locales/cs.json";
+import da from "./locales/da.json";
+import de from "./locales/de.json";
+import en from "./locales/en.json";
+import es from "./locales/es.json";
+import fr from "./locales/fr.json";
+import it from "./locales/it.json";
+import ja from "./locales/ja.json";
+import ko from "./locales/ko.json";
+import nl from "./locales/nl.json";
+import pl from "./locales/pl.json";
+import pt_br from "./locales/pt_br.json";
+import ru from "./locales/ru.json";
+import tr from "./locales/tr.json";
+import uk from "./locales/uk.json";
+import zh_cn from "./locales/zh_cn.json";
+import { statementTranslations } from "./statementTranslations";
+
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources: {
+      en: { translation: { ...en, ...statementTranslations.en } },
+      pt_BR: { translation: pt_br },
+      de: { translation: { ...de, ...statementTranslations.de } },
+      es: { translation: es },
+      fr: { translation: fr },
+      it: { translation: it },
+      nl: { translation: nl },
+      pl: { translation: pl },
+      ru: { translation: ru },
+      zh_CN: { translation: zh_cn },
+      ja: { translation: ja },
+      ko: { translation: ko },
+      tr: { translation: { ...tr, ...statementTranslations.tr } },
+      uk: { translation: uk },
+      cs: { translation: cs },
+      da: { translation: da },
+    },
+    fallbackLng: "en",
+    interpolation: { escapeValue: false },
+    detection: {
+      order: ["localStorage", "navigator"],
+      caches: ["localStorage"],
+      lookupLocalStorage: LS_KEYS.LANGUAGE,
+    },
+  });
+
+export default i18n;
+
+export { SUPPORTED_LANGUAGES } from "./languages";
