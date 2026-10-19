@@ -145,9 +145,16 @@ it("bootstraps an administrator with the Monline accent and private credentials"
     token: signup.data.token,
   });
   const methodNames = seededMethods.data.items.map((method) => method.name);
-  expect(methodNames).toHaveLength(29);
+  expect(methodNames).toHaveLength(31);
   expect(methodNames).toEqual(
-    expect.arrayContaining(["Denizbank", "Enpara", "Garanti", "Akbank"]),
+    expect.arrayContaining([
+      "Denizbank",
+      "Enpara",
+      "Garanti",
+      "Akbank",
+      "Yapı Kredi",
+      "İş Bankası",
+    ]),
   );
   for (const removed of [
     "Neteller",

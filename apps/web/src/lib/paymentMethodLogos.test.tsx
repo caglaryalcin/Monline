@@ -39,6 +39,17 @@ it("prefers bundled bank assets, then two remote sources", () => {
     "https://icons.duckduckgo.com/ip3/enpara.com.ico",
   ]);
 });
+it.each([
+  ["Yapı Kredi", "yapikredi.svg"],
+  ["yapikredi World", "yapikredi.svg"],
+  ["İş Bankası", "isbank.jpg"],
+  ["isbankasi Maximum", "isbank.jpg"],
+])("uses a bundled logo for %s and preserves custom uploads", (name, asset) => {
+  expect(paymentMethodLogoSources(method(name))[0]).toBe(`/assets/logos/banks/${asset}`);
+  expect(paymentMethodLogoSources(method(name, "custom-card.png"))).toEqual([
+    "/uploaded/custom-card.png",
+  ]);
+});
 it("keeps uploaded icons and payment network logos, and never guesses arbitrary names", () => {
   expect(paymentMethodLogoSources(method("Akbank", "my-card.png"))).toEqual([
     "/uploaded/my-card.png",

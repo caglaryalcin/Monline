@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { findLogoService } from "@/lib/logoServices";
-import { automaticLogoUrls } from "@/lib/subscriptionLogo";
+import { automaticLogoUrls, isLegacyWorkspaceLogo } from "@/lib/subscriptionLogo";
 import { cn } from "@/lib/utils";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Subscription } from "@/types";
@@ -52,11 +52,14 @@ export function SubscriptionLogo({
 }) {
   const saved =
     sub.logo && sub.id ? subscriptionsService.logoUrl({ id: sub.id, logo: sub.logo }) : null;
+  const automatic = automaticLogoUrls(sub);
+  const legacyWorkspace = isLegacyWorkspaceLogo({ name: sub.name, logo: sub.logo });
   const sources = [
     ...new Set([
       ...(previewUrl ? [previewUrl] : []),
+      ...(legacyWorkspace ? automatic.slice(0, 1) : []),
       ...(saved ? [saved] : []),
-      ...automaticLogoUrls(sub),
+      ...automatic,
     ]),
   ];
   return (

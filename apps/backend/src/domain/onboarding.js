@@ -281,6 +281,8 @@ onRecordAfterCreateSuccess((e) => {
     "Enpara",
     "Garanti",
     "Akbank",
+    "Yapı Kredi",
+    "İş Bankası",
   ];
   for (const name of defaultPayments) {
     const record = new Record(pmCol);

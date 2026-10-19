@@ -3,6 +3,10 @@ import type { Subscription } from "@/types";
 
 export function automaticLogoUrls(sub: Pick<Subscription, "name" | "url">): string[] {
   const service = findLogoService(sub.name);
+  // Older Workspace records can still point to google.com. The local brand
+  // asset does not depend on that URL and never discloses a private hostname.
+  const workspaceLogo =
+    service?.iconSlug === "googleworkspace" && service.logoUrl ? [service.logoUrl] : [];
   let domain = "";
   if (sub.url) {
     try {
@@ -15,12 +19,23 @@ export function automaticLogoUrls(sub: Pick<Subscription, "name" | "url">): stri
   }
   if (!domain) domain = service?.domain ?? publicLogoDomain(sub.name);
   // Do not send local NAS addresses, credentials, paths, or query strings to a favicon service.
-  if (!publicLogoDomain(domain)) return [];
+  if (!publicLogoDomain(domain)) return workspaceLogo;
   return [
-    ...(domain === service?.domain && service.logoUrl ? [service.logoUrl] : []),
+    ...workspaceLogo,
+    ...(domain === service?.domain && service.logoUrl && !workspaceLogo.length
+      ? [service.logoUrl]
+      : []),
     `https://icon.horse/icon/${encodeURIComponent(domain)}`,
     `https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`,
   ];
+}
+
+/** Names produced by the old automatic search and its generic logo fallback. */
+export function isLegacyWorkspaceLogo(sub: Pick<Subscription, "name" | "logo">): boolean {
+  if (findLogoService(sub.name)?.iconSlug !== "googleworkspace" || !sub.logo) return false;
+  return /^(?:[a-f0-9]{16}_)?logo(?:[-_](?:workspace[._-]google[._-]com|googleworkspace|google))?(?:_[a-z0-9]{10,})?\.(?:webp|png|svg|ico|jpe?g)$/i.test(
+    sub.logo,
+  );
 }
 
 /** A bare public hostname. Never infer a website from an unknown plain name. */

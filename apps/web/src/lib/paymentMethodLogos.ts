@@ -54,18 +54,26 @@ const PAYMENT_ICON_MAP: Record<string, string> = {
 
 // Domain references: https://www.tbb.org.tr/banka-ve-sektor-bilgileri/banka-bilgileri/bankalar/internet-adresleri
 const BANKS: { aliases: string[]; domain: string; bundled?: string }[] = [
-  { aliases: ["enpara"], domain: "enpara.com", bundled: "enpara" },
-  { aliases: ["denizbank", "deniz bank"], domain: "denizbank.com", bundled: "denizbank" },
-  { aliases: ["garanti", "garantibbva"], domain: "garantibbva.com.tr", bundled: "garanti" },
+  { aliases: ["enpara"], domain: "enpara.com", bundled: "enpara.svg" },
+  { aliases: ["denizbank", "deniz bank"], domain: "denizbank.com", bundled: "denizbank.svg" },
+  { aliases: ["garanti", "garantibbva"], domain: "garantibbva.com.tr", bundled: "garanti.svg" },
   { aliases: ["ziraat dinamik"], domain: "ziraatdinamik.com.tr" },
   { aliases: ["ziraat katilim", "ziraatkatilim"], domain: "ziraatkatilim.com.tr" },
   { aliases: ["ziraat", "ziraatbank"], domain: "ziraatbank.com.tr" },
   { aliases: ["vakif katilim", "vakifkatilim"], domain: "vakifkatilim.com.tr" },
   { aliases: ["vakifbank", "vakif bank", "vakiflar bankasi"], domain: "vakifbank.com.tr" },
   { aliases: ["halkbank", "halk bank", "halk bankasi"], domain: "halkbank.com.tr" },
-  { aliases: ["is bankasi", "is bank", "isbankasi", "isbank"], domain: "isbank.com.tr" },
-  { aliases: ["yapi kredi", "yapikredi", "yapi ve kredi"], domain: "yapikredi.com.tr" },
-  { aliases: ["akbank"], domain: "akbank.com", bundled: "akbank" },
+  {
+    aliases: ["is bankasi", "is bank", "isbankasi", "isbank"],
+    domain: "isbank.com.tr",
+    bundled: "isbank.jpg",
+  },
+  {
+    aliases: ["yapi kredi", "yapikredi", "yapi ve kredi"],
+    domain: "yapikredi.com.tr",
+    bundled: "yapikredi.svg",
+  },
+  { aliases: ["akbank"], domain: "akbank.com", bundled: "akbank.svg" },
   { aliases: ["qnb", "finansbank"], domain: "qnb.com.tr" },
   { aliases: ["teb", "turk ekonomi bankasi", "cepteteb"], domain: "teb.com.tr" },
   { aliases: ["ing", "ingbank"], domain: "ing.com.tr" },
@@ -112,7 +120,7 @@ export function paymentMethodLogoSources(method: PaymentMethod): string[] {
   );
   if (bank)
     return [
-      ...(bank.bundled ? ["/assets/logos/banks/" + bank.bundled + ".svg"] : []),
+      ...(bank.bundled ? ["/assets/logos/banks/" + bank.bundled] : []),
       "https://icon.horse/icon/" + bank.domain,
       "https://icons.duckduckgo.com/ip3/" + bank.domain + ".ico",
     ];

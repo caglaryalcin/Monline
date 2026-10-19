@@ -9,6 +9,18 @@ vi.mock("@/services/subscriptions", () => ({
 }));
 
 describe("subscription logos", () => {
+  it("replaces a saved legacy Google icon and still honors a newly selected custom preview", () => {
+    const sub = {
+      id: "sub",
+      name: "Google Workspace",
+      url: "https://google.com",
+      logo: "0123456789abcdef_logo-workspace.google.com.webp",
+    };
+    const { rerender } = render(<SubscriptionLogo sub={sub} />);
+    expect(screen.getByRole("img")).toHaveAttribute("src", "/assets/logos/google-workspace.png");
+    rerender(<SubscriptionLogo sub={sub} previewUrl="blob:custom-workspace-preview" />);
+    expect(screen.getByRole("img")).toHaveAttribute("src", "blob:custom-workspace-preview");
+  });
   it("shows the Workspace logo in previews without overriding a custom uploaded logo", () => {
     const { rerender } = render(<SubscriptionLogo sub={{ name: "Google Workspace", url: "" }} />);
     expect(screen.getByRole("img")).toHaveAttribute("src", "/assets/logos/google-workspace.png");

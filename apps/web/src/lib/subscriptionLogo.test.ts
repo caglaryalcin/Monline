@@ -1,6 +1,34 @@
-import { automaticLogoUrls } from "./subscriptionLogo";
+import { automaticLogoUrls, isLegacyWorkspaceLogo } from "./subscriptionLogo";
 
 describe("automatic subscription icons", () => {
+  it.each([
+    "https://google.com",
+    "https://www.google.com/workspace",
+    "https://workspace.google.com",
+    "https://nas.local",
+  ])("keeps Workspace's bundled logo first for legacy URL %s", (url) => {
+    expect(automaticLogoUrls({ name: "Google Workspace", url })[0]).toBe(
+      "/assets/logos/google-workspace.png",
+    );
+  });
+  it.each([
+    "0123456789abcdef_logo-workspace.google.com.webp",
+    "logo-google.webp",
+    "logo-googleworkspace.png",
+    "logo.webp",
+    "logo_workspace_google_com_abcdefghij.webp",
+  ])("recognizes the legacy automatic Workspace filename %s", (logo) => {
+    expect(isLegacyWorkspaceLogo({ name: "Google Workspace", logo })).toBe(true);
+    expect(isLegacyWorkspaceLogo({ name: "Google One", logo })).toBe(false);
+  });
+  it("keeps custom uploaded Workspace filenames intact", () => {
+    expect(
+      isLegacyWorkspaceLogo({
+        name: "Google Workspace",
+        logo: "0123456789abcdef_custom-company-logo.webp",
+      }),
+    ).toBe(false);
+  });
   it.each(["Google Workspace", "Google Workspace Business Standard", "G Suite", "GSuite"])(
     "uses the bundled Workspace logo for %s",
     (name) => {
