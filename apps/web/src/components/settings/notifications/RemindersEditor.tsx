@@ -1,4 +1,4 @@
-import { Clock, Plus, X } from "lucide-react";
+import { Clock, Plus, Save, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { DAY_OPTIONS } from "@/components/settings/notifications/config";
@@ -15,9 +15,15 @@ import type { NotificationReminder } from "@/types";
 export function RemindersEditor({
   reminders,
   onChange,
+  onSave,
+  isSaving = false,
+  saveDisabled = false,
 }: {
   reminders: NotificationReminder[];
   onChange: (reminders: NotificationReminder[]) => void;
+  onSave?: () => void;
+  isSaving?: boolean;
+  saveDisabled?: boolean;
 }) {
   const { t } = useTranslation();
 
@@ -125,6 +131,19 @@ export function RemindersEditor({
               </button>
             </div>
           ))}
+        </div>
+      )}
+      {onSave && (
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            onClick={onSave}
+            disabled={isSaving || saveDisabled}
+            className="h-8 rounded-xl gap-1.5 text-xs"
+          >
+            <Save className="w-4 h-4" />
+            {isSaving ? t("saving", "Saving…") : t("save", "Save")}
+          </Button>
         </div>
       )}
     </div>

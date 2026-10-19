@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Mail, SendHorizontal } from "lucide-react";
-import { useId, useState } from "react";
+import { forwardRef, useEffect, useId, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { SettingsDisclosureButton } from "@/components/settings/shared/SettingsDisclosureButton";
@@ -16,13 +16,28 @@ import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { serverSettingsService } from "@/services/serverSettings";
 
-export function SMTPTab({
-  embedded = false,
-  inline = false,
-}: {
-  embedded?: boolean;
-  inline?: boolean;
-}) {
+function smtpConnectionSettings(data: Record<string, unknown>) {
+  const settings = { ...data };
+  delete settings.enabled;
+  return settings;
+}
+
+export interface SMTPTabHandle {
+  save: () => Promise<Record<string, unknown>>;
+}
+
+export const SMTPTab = forwardRef<
+  SMTPTabHandle,
+  {
+    embedded?: boolean;
+    inline?: boolean;
+    channelEnabled?: boolean;
+    isSaving?: boolean;
+  }
+>(function SMTPTab(
+  { embedded = false, inline = false, channelEnabled = false, isSaving = false },
+  ref,
+) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
   const contentId = useId();
@@ -43,8 +58,13 @@ export function SMTPTab({
 
   const smtpQuery = useQuery({
     queryKey: queryKeys.admin.smtp(),
-    queryFn: async () => {
-      const data = await serverSettingsService.getSmtp();
+    queryFn: serverSettingsService.getSmtp,
+    // The shared header controls activation. Toggling it must preserve SMTP drafts.
+    select: inline ? smtpConnectionSettings : undefined,
+  });
+  useEffect(() => {
+    const data = smtpQuery.data;
+    if (data) {
       setForm({
         enabled: !!data.enabled,
         host: (data.host as string) || "",
@@ -57,9 +77,8 @@ export function SMTPTab({
         senderName: (data.senderName as string) || "",
       });
       setHasExistingPassword(!!(data as Record<string, unknown>).hasPassword);
-      return data;
-    },
-  });
+    }
+  }, [smtpQuery.data]);
 
   const set = <K extends keyof SMTPFormValues>(field: K, value: SMTPFormValues[K]) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -81,15 +100,25 @@ export function SMTPTab({
     }
   };
 
+  const persist = async () => {
+    if (smtpQuery.isPending || smtpQuery.isError) throw new Error(t("error_save"));
+    const body: Record<string, unknown> = { ...form };
+    if (inline) body.enabled = channelEnabled;
+    if (!form.password) delete body.password;
+    await serverSettingsService.updateSmtp(body);
+    if (form.password) setHasExistingPassword(true);
+    setForm((prev) => ({ ...prev, password: "" }));
+    const settings = { ...body };
+    delete settings.password;
+    return { ...settings, hasPassword: !!form.password || hasExistingPassword };
+  };
+  useImperativeHandle(ref, () => ({ save: persist }));
+
   const save = async () => {
     setSaving(true);
     try {
-      const body: Record<string, unknown> = { ...form };
-      if (!form.password) delete body.password;
-      await serverSettingsService.updateSmtp(body);
+      await persist();
       toast.success(t("saved"));
-      if (form.password) setHasExistingPassword(true);
-      setForm((prev) => ({ ...prev, password: "" }));
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : t("error"));
     } finally {
@@ -162,7 +191,7 @@ export function SMTPTab({
           embedded ? (form.enabled ? "space-y-6 border-t border-inherit p-4" : "") : "space-y-8"
         }
       >
-        {!embedded && (
+        {!embedded && !inline && (
           <SMTPStatusCard
             enabled={form.enabled}
             onEnabledChange={(value) => {
@@ -173,8 +202,18 @@ export function SMTPTab({
           />
         )}
 
-        {form.enabled && (
-          <fieldset disabled={saving || testing} className="space-y-8">
+        {(form.enabled || inline) && (
+          <fieldset
+            disabled={
+              saving ||
+              isSaving ||
+              testing ||
+              smtpQuery.isPending ||
+              smtpQuery.isError ||
+              (inline && !channelEnabled)
+            }
+            className="space-y-8"
+          >
             <SMTPServerSection form={form} setField={set} />
 
             <Separator />
@@ -187,14 +226,19 @@ export function SMTPTab({
           </fieldset>
         )}
 
-        {(!embedded || form.enabled) && (
+        {!inline && (!embedded || form.enabled) && (
           <div className="flex items-center gap-3 flex-wrap pt-2">
             <Button
               onClick={save}
-              disabled={saving || testing || smtpQuery.isPending || smtpQuery.isError}
+              disabled={
+                saving ||
+                testing ||
+                smtpQuery.isPending ||
+                smtpQuery.isError ||
+                (inline && !channelEnabled)
+              }
               className="rounded-xl"
             >
-              {inline && "SMTP · "}
               {saving ? t("saving") : t("save")}
             </Button>
             {form.enabled && !inline && (
@@ -213,4 +257,4 @@ export function SMTPTab({
       </div>
     </div>
   );
-}
+});

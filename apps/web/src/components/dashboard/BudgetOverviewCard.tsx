@@ -47,15 +47,15 @@ export function BudgetOverviewCard({
   const progress = available > 0 ? Math.min(100, (total / available) * 100) : 0;
   const ready = !isLoading && !hasError;
   return (
-    <Card className="flex flex-col overflow-hidden rounded-3xl border shadow-sm xl:min-h-[740px]">
-      <CardHeader className="border-b bg-muted/30 pb-4">
+    <Card className="monline-budget-card flex flex-col overflow-hidden rounded-3xl border shadow-sm">
+      <CardHeader className="shrink-0 border-b bg-muted/30 pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-lg">{t("budget_overview")}</CardTitle>
           <span className="text-xs capitalize text-muted-foreground">{month}</span>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col gap-5 pt-5">
-        <div className="space-y-1">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-5 pt-5">
+        <div className="shrink-0 space-y-1">
           <p className="text-sm text-muted-foreground">{t("budget_this_month")}</p>
           <p className="text-3xl font-bold tracking-tight">
             {budget > 0 ? formatValue(budget) : t("no_budget_set")}
@@ -78,7 +78,7 @@ export function BudgetOverviewCard({
           </p>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid shrink-0 grid-cols-2 gap-3">
               <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-3">
                 <p className="text-xs text-muted-foreground">{t("budget_paid")}</p>
                 <p className="mt-1 text-lg font-bold tabular-nums text-green-700 dark:text-green-400">
@@ -91,7 +91,7 @@ export function BudgetOverviewCard({
               </div>
             </div>
             {available > 0 && (
-              <div className="space-y-2">
+              <div className="shrink-0 space-y-2">
                 <Progress
                   value={progress}
                   aria-label={t("budget_month_total")}
@@ -118,8 +118,8 @@ export function BudgetOverviewCard({
                 </div>
               </div>
             )}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2 border-t pt-4">
+            <div className="flex min-h-0 flex-col gap-3 xl:flex-1">
+              <div className="flex shrink-0 items-center justify-between gap-2 border-t pt-4">
                 <h3 className="text-sm font-semibold">{t("budget_month_subscriptions")}</h3>
                 <span className="rounded-md bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
                   {entries.length}
@@ -127,7 +127,7 @@ export function BudgetOverviewCard({
               </div>
               {entries.length ? (
                 <ul
-                  className="monline-scroll max-h-96 space-y-1 overflow-y-auto overscroll-contain pr-1"
+                  className="monline-scroll min-h-0 max-h-96 space-y-1 overflow-y-auto overscroll-contain pr-1 xl:max-h-none xl:flex-1"
                   aria-label={t("budget_month_subscriptions")}
                 >
                   {entries.map((entry) => (
@@ -187,7 +187,7 @@ export function BudgetOverviewCard({
           </>
         )}
         {ready && (
-          <p className="mt-auto border-t pt-3 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-auto shrink-0 border-t pt-3 text-xs leading-relaxed text-muted-foreground">
             {t("budget_month_note")}
           </p>
         )}

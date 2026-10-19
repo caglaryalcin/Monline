@@ -167,7 +167,7 @@ describe("ProviderCard", () => {
     expect(screen.getByDisplayValue("draft@example.test")).toBeVisible();
     expect(onChange).not.toHaveBeenCalled();
   });
-  it("lets an administrator configure SMTP while personal email notifications remain disabled", async () => {
+  it("expands disabled channels without activating them and keeps testing disabled", async () => {
     const onChange = vi.fn();
     render(
       <ProviderCard
@@ -176,7 +176,6 @@ describe("ProviderCard", () => {
         onChange={onChange}
         onTest={vi.fn()}
         isTesting={false}
-        allowConfigureDisabled
       >
         <div>SMTP settings</div>
       </ProviderCard>,
@@ -189,6 +188,33 @@ describe("ProviderCard", () => {
     expect(screen.getByRole("button", { name: "Test" })).toBeDisabled();
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  it.each(PROVIDERS.filter((item) => item.id !== "email"))(
+    "expands and collapses disabled $label settings without changing activation",
+    async (channel) => {
+      const onChange = vi.fn();
+      render(
+        <ProviderCard
+          provider={channel}
+          formData={{}}
+          onChange={onChange}
+          onTest={vi.fn()}
+          isTesting={false}
+        />,
+      );
+      const header = screen.getByRole("button", { name: channel.label });
+      expect(header).toHaveAttribute("aria-expanded", "false");
+      await userEvent.click(
+        screen.getByRole("button", { name: `${channel.label} · expand_settings` }),
+      );
+      expect(header).toHaveAttribute("aria-expanded", "true");
+      expect(screen.getByRole("switch")).not.toBeChecked();
+      expect(screen.getByRole("button", { name: "Test" })).toBeDisabled();
+      await userEvent.click(header);
+      expect(header).toHaveAttribute("aria-expanded", "false");
+      expect(onChange).not.toHaveBeenCalled();
+    },
+  );
 
   it("toggles settings from the header label, description and keyboard", async () => {
     const user = userEvent.setup();
@@ -214,7 +240,7 @@ describe("ProviderCard", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("keeps the provider switch independent from the header disclosure", async () => {
+  it("opens the card when changing activation so its Save button remains reachable", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
@@ -230,7 +256,25 @@ describe("ProviderCard", () => {
     await user.click(header);
     await user.click(screen.getByRole("switch"));
     expect(onChange).toHaveBeenCalledExactlyOnceWith("email_enabled", false);
-    expect(header).toHaveAttribute("aria-expanded", "false");
+    expect(header).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("allows saving a disabled channel without enabling its test button", async () => {
+    const onSave = vi.fn();
+    render(
+      <ProviderCard
+        provider={provider}
+        formData={{}}
+        onChange={vi.fn()}
+        onTest={vi.fn()}
+        onSave={onSave}
+        isTesting={false}
+      />,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Email" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "Test" })).toBeDisabled();
   });
 
   it("restores collapsed and expanded choices after navigating away, separately per account and provider", async () => {

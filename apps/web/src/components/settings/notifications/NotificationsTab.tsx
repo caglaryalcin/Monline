@@ -1,18 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DEFAULT_REMINDERS, PROVIDERS } from "@/components/settings/notifications/config";
 import { ProviderCard } from "@/components/settings/notifications/ProviderCard";
 import { RemindersEditor } from "@/components/settings/notifications/RemindersEditor";
-import { SMTPTab } from "@/components/settings/smtp/SMTPTab";
-import { Button } from "@/components/ui/button";
+import { SMTPTab, type SMTPTabHandle } from "@/components/settings/smtp/SMTPTab";
 import { useAuth } from "@/contexts/AuthContext";
 import { LS_KEYS } from "@/lib/constants";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { notificationsService } from "@/services/notifications";
+import { serverSettingsService } from "@/services/serverSettings";
 import type { NotificationReminder, NotificationsConfig } from "@/types";
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -32,37 +31,83 @@ export function NotificationsTab() {
 
   const [formData, setFormData] = useState<Partial<NotificationsConfig>>({});
   const [reminders, setReminders] = useState<NotificationReminder[]>(DEFAULT_REMINDERS);
+  const hydratedUser = useRef<string | null>(null);
+  const smtpForm = useRef<SMTPTabHandle>(null);
+
+  const smtpQuery = useQuery({
+    queryKey: queryKeys.admin.smtp(),
+    queryFn: serverSettingsService.getSmtp,
+    enabled: isAdmin,
+  });
 
   useEffect(() => {
-    if (config) {
-      setFormData(config);
+    if (
+      !isLoading &&
+      !(isAdmin && smtpQuery.isPending) &&
+      hydratedUser.current !== (user?.id ?? "")
+    ) {
+      hydratedUser.current = user?.id ?? "";
+      setFormData(
+        isAdmin
+          ? {
+              ...config,
+              email_enabled: !!config?.email_enabled && !!smtpQuery.data?.enabled,
+            }
+          : (config ?? {}),
+      );
       setReminders(
-        Array.isArray(config.reminders) && config.reminders.length > 0
+        Array.isArray(config?.reminders) && config.reminders.length > 0
           ? config.reminders
           : DEFAULT_REMINDERS,
       );
     }
-  }, [config]);
+  }, [config, isLoading, isAdmin, smtpQuery.isPending, smtpQuery.data, user?.id]);
 
   const handleChange = (key: keyof NotificationsConfig, value: unknown) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
   const saveMut = useMutation({
-    mutationFn: async () => {
-      const data = { ...formData, reminders, user: user?.id };
-      if (config?.id) {
-        return notificationsService.updateConfig(config.id, data);
-      } else {
-        return notificationsService.createConfig(data);
+    mutationFn: async ({
+      section,
+      data,
+    }: {
+      section: string;
+      data: Partial<NotificationsConfig>;
+    }) => {
+      if (!user?.id) throw new Error("Authentication required");
+      let smtpSettings: Record<string, unknown> | undefined;
+      if (section === "email" && isAdmin) {
+        if (!smtpForm.current) throw new Error("SMTP settings are unavailable");
+        smtpSettings = await smtpForm.current.save();
       }
+      const record = config?.id
+        ? await notificationsService.updateConfig(config.id, data)
+        : await notificationsService.createConfig({ ...data, user: user.id });
+      return { record, smtpSettings };
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.notificationsConfig(user?.id ?? "") });
+    onSuccess: ({ record, smtpSettings }) => {
+      // Keep other cards' drafts intact and reuse the first created record.
+      qc.setQueryData(queryKeys.notificationsConfig(user?.id ?? ""), record);
+      if (smtpSettings) qc.setQueryData(queryKeys.admin.smtp(), smtpSettings);
       toast.success(t("success_save", "Saved successfully"));
     },
     onError: () => toast.error(t("error_save", "Error saving")),
   });
+
+  const handleSave = (section: string) => {
+    if (saveMut.isPending) return;
+    if (section === "reminders") {
+      saveMut.mutate({ section, data: { reminders } });
+      return;
+    }
+    const provider = PROVIDERS.find((item) => item.id === section)!;
+    const data = Object.fromEntries([
+      [provider.enabledKey, !!formData[provider.enabledKey]],
+      ...provider.fields.map(({ key }) => [key, formData[key] ?? ""]),
+    ]);
+    saveMut.mutate({ section, data });
+  };
 
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
 
@@ -82,7 +127,7 @@ export function NotificationsTab() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (isAdmin && smtpQuery.isPending)) {
     return (
       <div className="space-y-4">
         <div className="h-24 rounded-2xl bg-muted/30 animate-pulse" />
@@ -100,7 +145,15 @@ export function NotificationsTab() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Reminder schedule */}
-      {enabledCount > 0 && <RemindersEditor reminders={reminders} onChange={setReminders} />}
+      {enabledCount > 0 && (
+        <RemindersEditor
+          reminders={reminders}
+          onChange={setReminders}
+          onSave={() => handleSave("reminders")}
+          isSaving={saveMut.isPending && saveMut.variables?.section === "reminders"}
+          saveDisabled={saveMut.isPending}
+        />
+      )}
 
       {/* Channels section */}
       <div className="space-y-3">
@@ -135,27 +188,30 @@ export function NotificationsTab() {
                 }
                 formData={formData}
                 onChange={handleChange}
+                onSave={() => handleSave(provider.id)}
+                isSaving={saveMut.isPending && saveMut.variables?.section === provider.id}
+                saveDisabled={
+                  saveMut.isPending ||
+                  !user?.id ||
+                  (provider.id === "email" && isAdmin && smtpQuery.isError)
+                }
                 onTest={() => handleTest(provider.id)}
                 isTesting={testingProvider === provider.id}
-                allowConfigureDisabled={provider.id === "email" && isAdmin}
+                toggleDisabled={
+                  saveMut.isPending || (provider.id === "email" && isAdmin && smtpQuery.isError)
+                }
               >
-                {provider.id === "email" && isAdmin && <SMTPTab inline />}
+                {provider.id === "email" && isAdmin && (
+                  <SMTPTab
+                    ref={smtpForm}
+                    inline
+                    channelEnabled={!!formData.email_enabled}
+                    isSaving={saveMut.isPending}
+                  />
+                )}
               </ProviderCard>
             ))}
         </div>
-      </div>
-
-      {/* Save */}
-      <div className="flex justify-end pb-12">
-        <Button
-          size="lg"
-          onClick={() => saveMut.mutate()}
-          disabled={saveMut.isPending}
-          className="rounded-xl shadow-lg shadow-primary/20 min-w-32"
-        >
-          <Save className="w-5 h-5 mr-2" />
-          {saveMut.isPending ? t("saving", "Saving…") : t("save", "Save Changes")}
-        </Button>
       </div>
     </div>
   );

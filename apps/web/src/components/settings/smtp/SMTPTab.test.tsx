@@ -1,12 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createRef } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { serverSettingsService } from "@/services/serverSettings";
 
-import { SMTPTab } from "./SMTPTab";
+import { SMTPTab, type SMTPTabHandle } from "./SMTPTab";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -55,20 +57,65 @@ describe("SMTPTab", () => {
       host: "smtp.example.test",
     });
     vi.mocked(serverSettingsService.updateSmtp).mockResolvedValue(undefined);
+    const smtpForm = createRef<SMTPTabHandle>();
     render(
       <QueryClientProvider client={queryClient}>
-        <SMTPTab inline />
+        <SMTPTab ref={smtpForm} inline channelEnabled />
       </QueryClientProvider>,
     );
     await waitFor(() => expect(screen.getByDisplayValue("smtp.example.test")).toBeVisible());
     expect(screen.queryByRole("switch", { name: "SMTP" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("switch", { name: "enabled" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "send_test_email" })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "SMTP · save" }));
+    expect(screen.queryByRole("button", { name: /save/ })).not.toBeInTheDocument();
+    await act(async () => {
+      await smtpForm.current!.save();
+    });
     await waitFor(() =>
       expect(serverSettingsService.updateSmtp).toHaveBeenCalledWith(
         expect.objectContaining({ host: "smtp.example.test", enabled: true }),
       ),
     );
+  });
+
+  it("shows disabled SMTP settings without an inner activation switch", async () => {
+    vi.mocked(serverSettingsService.getSmtp).mockResolvedValue({
+      enabled: false,
+      host: "smtp.example.test",
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <SMTPTab inline channelEnabled={false} />
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByDisplayValue("smtp.example.test")).toBeVisible();
+    expect(screen.queryByRole("switch", { name: "disabled" })).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue("smtp.example.test")).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /save/ })).not.toBeInTheDocument();
+  });
+
+  it("preserves SMTP draft fields when the shared header changes activation", async () => {
+    vi.mocked(serverSettingsService.getSmtp).mockResolvedValue({
+      enabled: true,
+      host: "smtp.example.test",
+    });
+    const view = render(
+      <QueryClientProvider client={queryClient}>
+        <SMTPTab inline channelEnabled />
+      </QueryClientProvider>,
+    );
+    await screen.findByDisplayValue("smtp.example.test");
+    await userEvent.clear(screen.getByDisplayValue("smtp.example.test"));
+    await userEvent.type(screen.getByPlaceholderText("smtp.example.com"), "draft.example.test");
+    await userEvent.type(screen.getByPlaceholderText("password"), "draft-password");
+    queryClient.setQueryData(queryKeys.admin.smtp(), { enabled: false, host: "smtp.example.test" });
+    view.rerender(
+      <QueryClientProvider client={queryClient}>
+        <SMTPTab inline channelEnabled={false} />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByDisplayValue("draft.example.test")).toHaveValue("draft.example.test");
+    expect(screen.getByPlaceholderText("password")).toHaveValue("draft-password");
   });
 
   it("renders correctly and loads data", async () => {
@@ -93,7 +140,7 @@ describe("SMTPTab", () => {
     });
 
     // Check if form is populated
-    expect(screen.getByDisplayValue("smtp.mail.com")).toBeInTheDocument();
+    expect(await screen.findByDisplayValue("smtp.mail.com")).toBeInTheDocument();
     expect(screen.getByDisplayValue("user")).toBeInTheDocument();
   });
   it("shows a closed SMTP provider card, persists its switch, and hides disabled settings", async () => {
@@ -215,7 +262,7 @@ describe("SMTPTab", () => {
     });
 
     // Type a password
-    const pwdInput = screen.getByPlaceholderText("password");
+    const pwdInput = await screen.findByPlaceholderText("password");
     await userEvent.type(pwdInput, "newpass");
 
     const saveBtn = screen.getByRole("button", { name: "save" });
@@ -275,7 +322,7 @@ describe("SMTPTab", () => {
       expect(serverSettingsService.getSmtp).toHaveBeenCalled();
     });
 
-    const sendTestBtn = screen.getByRole("button", { name: "send_test_email" });
+    const sendTestBtn = await screen.findByRole("button", { name: "send_test_email" });
     await userEvent.click(sendTestBtn);
 
     await waitFor(() => {
@@ -294,7 +341,7 @@ describe("SMTPTab", () => {
       expect(serverSettingsService.getSmtp).toHaveBeenCalled();
     });
 
-    const sendTestBtn = screen.getByRole("button", { name: "send_test_email" });
+    const sendTestBtn = await screen.findByRole("button", { name: "send_test_email" });
     await userEvent.click(sendTestBtn);
 
     await waitFor(() => {
@@ -312,7 +359,7 @@ describe("SMTPTab", () => {
       expect(serverSettingsService.getSmtp).toHaveBeenCalled();
     });
 
-    const sendTestBtn = screen.getByRole("button", { name: "send_test_email" });
+    const sendTestBtn = await screen.findByRole("button", { name: "send_test_email" });
     await userEvent.click(sendTestBtn);
 
     await waitFor(() => {

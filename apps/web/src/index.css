@@ -33,6 +33,18 @@
   overscroll-behavior-y: contain;
 }
 
+@media (min-width: 1280px) {
+  .monline-page.monline-dashboard-content {
+    padding-bottom: max(30px, env(safe-area-inset-bottom));
+  }
+  .monline-budget-card {
+    height: calc(
+      100dvh - var(--monline-header-height, 78px) - 2.5rem - 30px - env(safe-area-inset-top)
+    );
+    min-height: 480px;
+  }
+}
+
 .monline-calendar-month {
   container-type: inline-size;
 }

@@ -269,6 +269,7 @@ export function Layout() {
           className={cn(
             "monline-page min-h-0 min-w-0 flex-1 overflow-y-auto w-full max-w-[1600px] mx-auto p-4 md:p-8 lg:p-10",
             pathname.startsWith("/calendar") && "monline-calendar-content",
+            pathname === "/dashboard" && "monline-dashboard-content",
           )}
         >
           <Suspense fallback={<PageLoading />}>
