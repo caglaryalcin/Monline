@@ -251,7 +251,8 @@ describe("SubscriptionCard", () => {
     expect(screen.getByText("next_payment")).toBeInTheDocument();
     expect(screen.queryByText("next")).not.toBeInTheDocument();
     expect(screen.getByText("Apr 10, 2026")).toBeInTheDocument();
-    expect(screen.getAllByText("3 days_short")).toHaveLength(1);
+    expect(screen.queryByText("3 days_short")).not.toBeInTheDocument();
+    expect(screen.getByText("billing_days_remaining")).toBeInTheDocument();
     expect(screen.getByText("billing_cycle")).toBeInTheDocument();
     expect(screen.getByText("pays Daniel")).toBeInTheDocument();
     expect(screen.getByAltText("Netflix")).toHaveAttribute(
@@ -358,12 +359,13 @@ describe("SubscriptionCard", () => {
     expect(screen.getByText("MC")).toBeInTheDocument();
   });
 
-  it("hides the days badge when daysUntil returns a negative value", () => {
+  it("keeps the overdue information in the billing progress", () => {
     mocks.daysUntil.mockReturnValue(-5);
 
     render(
       <SubscriptionCard
         sub={getSubscription()}
+        showProgress
         onEdit={vi.fn()}
         onClone={vi.fn()}
         onRenew={vi.fn()}
@@ -372,8 +374,10 @@ describe("SubscriptionCard", () => {
       />,
     );
 
-    // Negative days means days >= 0 is false — no badge rendered
-    expect(screen.queryByText(/-5d/)).not.toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuetext",
+      "billing_days_overdue",
+    );
   });
 
   it("uses sub.price directly when showMonthly is false (line 100 false branch)", () => {
@@ -459,7 +463,7 @@ describe("SubscriptionCard", () => {
     expect(mocks.toMainCurrency).not.toHaveBeenCalled();
   });
 
-  it("renders primary-colored days badge when days > 3 (line 166 false branch)", () => {
+  it("shows remaining days only in the billing progress", () => {
     mocks.daysUntil.mockReturnValue(10);
     mocks.subscriptionProgress.mockReturnValue(50);
 
@@ -478,10 +482,12 @@ describe("SubscriptionCard", () => {
       />,
     );
 
-    // days > 3 → badge uses "bg-primary/10" class (not orange)
-    const badges = screen.getAllByText("10 days_short");
-    // The first occurrence is the badge span in the next-payment row
-    expect(badges[0]).not.toHaveClass("bg-orange-500/10");
+    expect(screen.queryByText("10 days_short")).not.toBeInTheDocument();
+    expect(screen.getByText("billing_days_remaining")).not.toHaveClass("text-orange-500");
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuetext",
+      "billing_days_remaining",
+    );
   });
 
   it("uses PAYMENT_ICON_MAP src when payment method has no icon but name is in map", () => {

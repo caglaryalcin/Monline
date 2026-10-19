@@ -383,21 +383,7 @@ export function SubscriptionCard({
             <span className="text-muted-foreground flex items-center gap-1.5">
               <Calendar className="w-4 h-4" /> {t(credit ? "received_on" : "next_payment")}
             </span>
-            <div className="font-medium text-foreground flex items-center gap-2">
-              {formatDate(sub.next_payment)}
-              {days >= 0 && (
-                <span
-                  className={cn(
-                    "text-xs px-2 py-0.5 rounded-full",
-                    days <= 3
-                      ? "bg-orange-500/10 text-orange-600 font-bold"
-                      : "bg-primary/10 text-primary font-semibold",
-                  )}
-                >
-                  {days} {t("days_short")}
-                </span>
-              )}
-            </div>
+            <div className="font-medium text-foreground">{formatDate(sub.next_payment)}</div>
           </div>
         )}
 
@@ -415,11 +401,20 @@ export function SubscriptionCard({
 
         {showProgress && !credit && !!periodStart && !sub.inactive && (
           <div className="space-y-1.5">
-            <div className="flex justify-between text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-1">
+            <div className="flex items-center justify-between text-[10px] font-medium text-muted-foreground uppercase tracking-wider px-1">
               <span>
                 {t("billing_cycle")} <span aria-hidden="true">→</span>
               </span>
-              <span className={days <= 3 ? "text-orange-500 font-bold" : ""}>{remainingLabel}</span>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5",
+                  days <= 3
+                    ? "bg-orange-500/10 text-orange-600 font-bold"
+                    : "bg-primary/10 text-primary font-semibold",
+                )}
+              >
+                {remainingLabel}
+              </span>
             </div>
             <Progress
               value={progress}
