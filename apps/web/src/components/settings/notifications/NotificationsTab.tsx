@@ -69,7 +69,11 @@ export function NotificationsTab() {
   const handleTest = async (providerId: string) => {
     setTestingProvider(providerId);
     try {
-      await notificationsService.test(providerId);
+      const provider = PROVIDERS.find((item) => item.id === providerId)!;
+      const draft = Object.fromEntries(
+        provider.fields.map(({ key }) => [key, formData[key] ?? ""]),
+      );
+      await notificationsService.test(providerId, draft);
       toast.success(t("notification_sent", "Test notification sent!"));
     } catch {
       toast.error(t("error_sending_notification", "Error sending notification"));

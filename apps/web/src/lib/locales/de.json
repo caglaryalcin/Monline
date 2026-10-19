@@ -490,6 +490,7 @@
   "provider_gotify_desc": "Push-Benachrichtigungen an Ihren Gotify-Server senden.",
   "provider_pushover_desc": "Benachrichtigungen über Pushover senden.",
   "provider_ntfy_desc": "Push-Benachrichtigungen an Ihr ntfy-Topic senden.",
+  "ntfy_auth_hint": "Verwenden Sie Benutzername und Passwort oder ein Token. Wenn beides angegeben ist, hat das Token Vorrang. Für anonymen Zugriff alle drei Felder leer lassen.",
   "provider_pushplus_desc": "Benachrichtigungen über Pushplus (WeChat) empfangen.",
   "provider_mattermost_desc": "Benachrichtigungen an Mattermost per Webhook senden.",
   "provider_serverchan_desc": "Nachrichten über ServerChan (SendKey) senden.",

@@ -388,6 +388,7 @@
   "provider_gotify_desc": "Odesílat push notifikace na server Gotify.",
   "provider_pushover_desc": "Odesílat upozornění přes službu Pushover.",
   "provider_ntfy_desc": "Odesílat push notifikace do tématu ntfy.",
+  "ntfy_auth_hint": "Použijte uživatelské jméno a heslo nebo token. Pokud zadáte obojí, má přednost token. Pro anonymní přístup nechte všechna tři pole prázdná.",
   "provider_pushplus_desc": "Přijímat notifikace přes Pushplus (WeChat).",
   "provider_mattermost_desc": "Odesílat upozornění do Mattermost přes webhook.",
   "provider_serverchan_desc": "Odesílat zprávy přes ServerChan (SendKey).",

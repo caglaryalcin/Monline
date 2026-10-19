@@ -1,4 +1,5 @@
 const { MailerMessage, httpClient } = require("../../runtime.cjs");
+const { ntfyRequest } = require("./ntfy.js");
 async function sendDiscord(webhookUrl, title, message) {
   await httpClient.send({
     url: webhookUrl,
@@ -60,16 +61,8 @@ async function sendPushover(userKey, apiToken, title, message) {
     }),
   });
 }
-async function sendNtfy(serverUrl, topic, title, message) {
-  const url = (serverUrl || "https://ntfy.sh") + "/" + topic;
-  await httpClient.send({
-    url: url,
-    method: "POST",
-    headers: {
-      Title: title,
-    },
-    body: message,
-  });
+async function sendNtfy(serverUrl, topic, title, message, auth) {
+  await httpClient.send(ntfyRequest(serverUrl, topic, title, message, auth));
 }
 async function sendPushPlus(token, title, message) {
   await httpClient.send({
@@ -201,7 +194,11 @@ async function dispatchToAllProviders(
     const topic = notifConfig.getString("ntfy_topic");
     if (topic)
       try {
-        await sendNtfy(url, topic, title, message);
+        await sendNtfy(url, topic, title, message, {
+          username: notifConfig.getString("ntfy_username"),
+          password: notifConfig.getString("ntfy_password"),
+          token: notifConfig.getString("ntfy_auth_token"),
+        });
       } catch (e) {
         console.log("[Monline] ntfy err:", e);
       }

@@ -42,8 +42,16 @@ vi.mock("react-i18next", () => ({
 }));
 
 vi.mock("@/components/settings/notifications/ProviderCard", () => ({
-  ProviderCard: ({ provider, onChange, onTest, isTesting, children }: any) => (
+  ProviderCard: ({ provider, formData, onChange, onTest, isTesting, children }: any) => (
     <div data-testid={`provider-${provider.id}`}>
+      {provider.fields.map(({ key }: { key: string }) => (
+        <input
+          key={key}
+          aria-label={key}
+          value={formData[key] ?? ""}
+          onChange={(event) => onChange(key, event.target.value)}
+        />
+      ))}
       <span data-testid={`is-testing-${provider.id}`}>{String(isTesting)}</span>
       <button data-testid={`test-${provider.id}`} onClick={() => onTest()}>
         test
@@ -222,7 +230,7 @@ describe("NotificationsTab", () => {
     render(<NotificationsTab />, { wrapper: Wrapper });
     await waitFor(() => expect(screen.getByTestId("test-email")).toBeInTheDocument());
     await userEvent.click(screen.getByTestId("test-email"));
-    await waitFor(() => expect(testNotif).toHaveBeenCalledWith("email"));
+    await waitFor(() => expect(testNotif).toHaveBeenCalledWith("email", { email_to: "" }));
     expect(toastSuccess).toHaveBeenCalled();
   });
 
@@ -233,6 +241,66 @@ describe("NotificationsTab", () => {
     await waitFor(() => expect(screen.getByTestId("test-email")).toBeInTheDocument());
     await userEvent.click(screen.getByTestId("test-email"));
     await waitFor(() => expect(toastError).toHaveBeenCalled());
+  });
+
+  it("tests unsaved Telegram values without saving or sending other channel secrets", async () => {
+    getConfig.mockResolvedValue({
+      id: "cfg-1",
+      user: "user-1",
+      telegram_enabled: true,
+      telegram_bot_token: "old-token",
+      telegram_chat_id: "old-chat",
+      gotify_token: "unrelated-secret",
+    });
+    const { Wrapper } = createQueryClientWrapper();
+    render(<NotificationsTab />, { wrapper: Wrapper });
+    await screen.findByDisplayValue("old-token");
+    await userEvent.clear(screen.getByLabelText("telegram_bot_token"));
+    await userEvent.type(screen.getByLabelText("telegram_bot_token"), "draft-token");
+    await userEvent.clear(screen.getByLabelText("telegram_chat_id"));
+    await userEvent.type(screen.getByLabelText("telegram_chat_id"), "draft-chat");
+    await userEvent.click(screen.getByTestId("test-telegram"));
+    expect(testNotif).toHaveBeenCalledWith("telegram", {
+      telegram_bot_token: "draft-token",
+      telegram_chat_id: "draft-chat",
+    });
+    expect(createConfig).not.toHaveBeenCalled();
+    expect(updateConfig).not.toHaveBeenCalled();
+  });
+
+  it("tests new ntfy credentials before the first save, then persists them only on Save", async () => {
+    const { Wrapper } = createQueryClientWrapper();
+    render(<NotificationsTab />, { wrapper: Wrapper });
+    await screen.findByTestId("test-ntfy");
+    await userEvent.click(screen.getByTestId("enable-ntfy"));
+    for (const [key, value] of Object.entries({
+      ntfy_topic: "private-topic",
+      ntfy_username: "demo-user",
+      ntfy_password: "demo-password",
+    })) {
+      await userEvent.type(screen.getByLabelText(key), value);
+    }
+    await userEvent.click(screen.getByTestId("test-ntfy"));
+    expect(testNotif).toHaveBeenCalledWith("ntfy", {
+      ntfy_url: "",
+      ntfy_topic: "private-topic",
+      ntfy_username: "demo-user",
+      ntfy_password: "demo-password",
+      ntfy_auth_token: "",
+    });
+    expect(createConfig).not.toHaveBeenCalled();
+    expect(updateConfig).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "save" }));
+    await waitFor(() =>
+      expect(createConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ntfy_enabled: true,
+          ntfy_topic: "private-topic",
+          ntfy_username: "demo-user",
+          ntfy_password: "demo-password",
+        }),
+      ),
+    );
   });
 
   it("marks only the tested provider as in-flight during the request", async () => {

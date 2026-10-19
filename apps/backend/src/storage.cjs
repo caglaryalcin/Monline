@@ -166,6 +166,17 @@ class Repository {
       this.connection.exec(
         "ALTER TABLE payment_methods ADD COLUMN is_main INTEGER NOT NULL DEFAULT 0",
       );
+    const notificationColumns = new Set(
+      this.connection
+        .prepare('PRAGMA table_info("notifications_config")')
+        .all()
+        .map((column) => column.name),
+    );
+    for (const name of ["ntfy_username", "ntfy_password"])
+      if (!notificationColumns.has(name))
+        this.connection.exec(
+          `ALTER TABLE notifications_config ADD COLUMN ${identifier(name)} TEXT NOT NULL DEFAULT ''`,
+        );
     this.repairStatementImportMarkers();
     this.repairMainPaymentMethods();
     if (

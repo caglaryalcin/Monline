@@ -388,6 +388,7 @@
   "provider_gotify_desc": "Gotify 서버에 푸시 알림을 보내세요.",
   "provider_pushover_desc": "Pushover 서비스로 알림을 보내세요.",
   "provider_ntfy_desc": "ntfy 토픽에 푸시 알림을 보내세요.",
+  "ntfy_auth_hint": "사용자 이름과 비밀번호 또는 토큰을 사용하세요. 둘 다 입력하면 토큰이 우선 적용됩니다. 익명으로 접근하려면 세 필드를 모두 비워 두세요.",
   "provider_pushplus_desc": "Pushplus(WeChat)를 통해 알림을 받으세요.",
   "provider_mattermost_desc": "webhook을 통해 Mattermost 채널에 알림을 보내세요.",
   "provider_serverchan_desc": "ServerChan(SendKey)으로 메시지를 보내세요.",

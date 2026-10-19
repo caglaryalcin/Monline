@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { Mail } from "lucide-react";
 
 import type { ProviderConfig } from "@/components/settings/notifications/config";
+import { PROVIDERS } from "@/components/settings/notifications/config";
 import { LS_KEYS } from "@/lib/constants";
 import type { NotificationsConfig } from "@/types";
 
@@ -14,6 +15,21 @@ vi.mock("react-i18next", () => ({
 
 describe("ProviderCard", () => {
   beforeEach(() => localStorage.clear());
+  it("renders labelled ntfy authentication inputs with masked secrets and authentication guidance", () => {
+    render(
+      <ProviderCard
+        provider={PROVIDERS.find((item) => item.id === "ntfy")!}
+        formData={{ ntfy_enabled: true, ntfy_username: "demo", ntfy_password: "demo-password" }}
+        onChange={vi.fn()}
+        onTest={vi.fn()}
+        isTesting={false}
+      />,
+    );
+    expect(screen.getByLabelText("username")).toHaveValue("demo");
+    expect(screen.getByLabelText("password")).toHaveAttribute("type", "password");
+    expect(screen.getByLabelText("token")).toHaveAttribute("type", "password");
+    expect(screen.getByText("ntfy_auth_hint")).toBeInTheDocument();
+  });
   const provider: ProviderConfig = {
     id: "email",
     label: "Email",

@@ -388,6 +388,7 @@
   "provider_gotify_desc": "Stuur pushmeldingen naar uw Gotify-server.",
   "provider_pushover_desc": "Stuur waarschuwingen via de Pushover-service.",
   "provider_ntfy_desc": "Stuur pushmeldingen naar uw ntfy-onderwerp.",
+  "ntfy_auth_hint": "Gebruik een gebruikersnaam en wachtwoord of een token. Als beide zijn ingevuld, krijgt het token voorrang. Laat alle drie de velden leeg voor anonieme toegang.",
   "provider_pushplus_desc": "Ontvang meldingen via Pushplus (WeChat).",
   "provider_mattermost_desc": "Stuur waarschuwingen naar Mattermost via webhook.",
   "provider_serverchan_desc": "Stuur berichten via ServerChan (SendKey).",

@@ -388,6 +388,7 @@
   "provider_gotify_desc": "Envoyez des notifications push à votre serveur Gotify.",
   "provider_pushover_desc": "Envoyez des alertes via le service Pushover.",
   "provider_ntfy_desc": "Envoyez des notifications push à votre topic ntfy.",
+  "ntfy_auth_hint": "Utilisez un nom d’utilisateur et un mot de passe, ou un jeton. Si les deux sont renseignés, le jeton est prioritaire. Laissez les trois champs vides pour un accès anonyme.",
   "provider_pushplus_desc": "Recevez des notifications via Pushplus (WeChat).",
   "provider_mattermost_desc": "Envoyez des alertes à Mattermost via webhook.",
   "provider_serverchan_desc": "Envoyez des messages via ServerChan (SendKey).",

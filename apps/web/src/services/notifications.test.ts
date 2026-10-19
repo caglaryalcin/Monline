@@ -76,4 +76,13 @@ describe("notificationsService", () => {
       provider: "email",
     });
   });
+
+  it("sends draft credentials in a separate test payload, including empty values", async () => {
+    const draft = { ntfy_username: "demo", ntfy_password: "test-password", ntfy_auth_token: "" };
+    await notificationsService.test("ntfy", draft);
+    expect(api.post).toHaveBeenCalledWith("/api/notifications/test", {
+      provider: "ntfy",
+      config: draft,
+    });
+  });
 });

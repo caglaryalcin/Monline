@@ -1194,6 +1194,22 @@
         "max": 0
       },
       {
+        "name": "ntfy_username",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
+        "name": "ntfy_password",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 0
+      },
+      {
         "name": "ntfy_auth_token",
         "type": "text",
         "hidden": false,
@@ -1270,7 +1286,7 @@
         "maxSize": 0
       }
     ],
-    "sql": "CREATE TABLE \"notifications_config\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"email_enabled\" INTEGER NOT NULL DEFAULT 0, \"email_to\" TEXT NOT NULL DEFAULT '', \"discord_enabled\" INTEGER NOT NULL DEFAULT 0, \"discord_webhook_url\" TEXT NOT NULL DEFAULT '', \"telegram_enabled\" INTEGER NOT NULL DEFAULT 0, \"telegram_bot_token\" TEXT NOT NULL DEFAULT '', \"telegram_chat_id\" TEXT NOT NULL DEFAULT '', \"gotify_enabled\" INTEGER NOT NULL DEFAULT 0, \"gotify_url\" TEXT NOT NULL DEFAULT '', \"gotify_token\" TEXT NOT NULL DEFAULT '', \"pushover_enabled\" INTEGER NOT NULL DEFAULT 0, \"pushover_user_key\" TEXT NOT NULL DEFAULT '', \"pushover_api_token\" TEXT NOT NULL DEFAULT '', \"ntfy_enabled\" INTEGER NOT NULL DEFAULT 0, \"ntfy_url\" TEXT NOT NULL DEFAULT '', \"ntfy_topic\" TEXT NOT NULL DEFAULT '', \"ntfy_auth_token\" TEXT NOT NULL DEFAULT '', \"pushplus_enabled\" INTEGER NOT NULL DEFAULT 0, \"pushplus_token\" TEXT NOT NULL DEFAULT '', \"mattermost_enabled\" INTEGER NOT NULL DEFAULT 0, \"mattermost_webhook_url\" TEXT NOT NULL DEFAULT '', \"webhook_enabled\" INTEGER NOT NULL DEFAULT 0, \"webhook_url\" TEXT NOT NULL DEFAULT '', \"serverchan_enabled\" INTEGER NOT NULL DEFAULT 0, \"serverchan_send_key\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"reminders\" TEXT DEFAULT 'null')"
+    "sql": "CREATE TABLE \"notifications_config\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"email_enabled\" INTEGER NOT NULL DEFAULT 0, \"email_to\" TEXT NOT NULL DEFAULT '', \"discord_enabled\" INTEGER NOT NULL DEFAULT 0, \"discord_webhook_url\" TEXT NOT NULL DEFAULT '', \"telegram_enabled\" INTEGER NOT NULL DEFAULT 0, \"telegram_bot_token\" TEXT NOT NULL DEFAULT '', \"telegram_chat_id\" TEXT NOT NULL DEFAULT '', \"gotify_enabled\" INTEGER NOT NULL DEFAULT 0, \"gotify_url\" TEXT NOT NULL DEFAULT '', \"gotify_token\" TEXT NOT NULL DEFAULT '', \"pushover_enabled\" INTEGER NOT NULL DEFAULT 0, \"pushover_user_key\" TEXT NOT NULL DEFAULT '', \"pushover_api_token\" TEXT NOT NULL DEFAULT '', \"ntfy_enabled\" INTEGER NOT NULL DEFAULT 0, \"ntfy_url\" TEXT NOT NULL DEFAULT '', \"ntfy_topic\" TEXT NOT NULL DEFAULT '', \"ntfy_username\" TEXT NOT NULL DEFAULT '', \"ntfy_password\" TEXT NOT NULL DEFAULT '', \"ntfy_auth_token\" TEXT NOT NULL DEFAULT '', \"pushplus_enabled\" INTEGER NOT NULL DEFAULT 0, \"pushplus_token\" TEXT NOT NULL DEFAULT '', \"mattermost_enabled\" INTEGER NOT NULL DEFAULT 0, \"mattermost_webhook_url\" TEXT NOT NULL DEFAULT '', \"webhook_enabled\" INTEGER NOT NULL DEFAULT 0, \"webhook_url\" TEXT NOT NULL DEFAULT '', \"serverchan_enabled\" INTEGER NOT NULL DEFAULT 0, \"serverchan_send_key\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"reminders\" TEXT DEFAULT 'null')"
   },
   {
     "name": "fixer_settings",

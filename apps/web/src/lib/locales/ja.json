@@ -388,6 +388,7 @@
   "provider_gotify_desc": "GotifyサーバーにPush通知を送信します。",
   "provider_pushover_desc": "Pushoverサービスでアラートを送信します。",
   "provider_ntfy_desc": "ntfyトピックにPush通知を送信します。",
+  "ntfy_auth_hint": "ユーザー名とパスワード、またはトークンを使用してください。両方が入力されている場合はトークンが優先されます。匿名アクセスの場合は3つとも空欄にしてください。",
   "provider_pushplus_desc": "Pushplus（WeChat）で通知を受け取ります。",
   "provider_mattermost_desc": "webhook経由でMattermostチャンネルにアラートを送信します。",
   "provider_serverchan_desc": "ServerChan（SendKey）でメッセージを送信します。",

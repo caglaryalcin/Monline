@@ -220,6 +220,9 @@ export interface NotificationsConfig {
   ntfy_enabled?: boolean;
   ntfy_url?: string;
   ntfy_topic?: string;
+  ntfy_username?: string;
+  ntfy_password?: string;
+  ntfy_auth_token?: string;
   // Pushplus
   pushplus_enabled?: boolean;
   pushplus_token?: string;

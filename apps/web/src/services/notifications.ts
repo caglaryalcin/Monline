@@ -22,6 +22,9 @@ export const notificationsService = {
   updateConfig: (id: string, data: Partial<NotificationsConfig>) =>
     client.collection("notifications_config").update<NotificationsConfig>(id, data),
 
-  test: (provider: string) =>
-    api.post<{ message: string }>("/api/notifications/test", { provider }),
+  test: (provider: string, config?: Partial<NotificationsConfig>) =>
+    api.post<{ success: boolean }>("/api/notifications/test", {
+      provider,
+      ...(config === undefined ? {} : { config }),
+    }),
 };

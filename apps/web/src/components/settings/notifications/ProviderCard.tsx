@@ -1,4 +1,4 @@
-import { Mail } from "lucide-react";
+import { SendHorizontal } from "lucide-react";
 import { type ReactNode, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -130,8 +130,11 @@ export function ProviderCard({
             >
               {provider.fields.map((field) => (
                 <div key={field.key} className="space-y-1.5">
-                  <Label className="text-xs">{t(field.labelKey, field.labelKey)}</Label>
+                  <Label htmlFor={`${contentId}-${field.key}`} className="text-xs">
+                    {t(field.labelKey, field.labelKey)}
+                  </Label>
                   <Input
+                    id={`${contentId}-${field.key}`}
                     type={field.type}
                     disabled={!isEnabled}
                     value={(formData[field.key] as string) || ""}
@@ -143,6 +146,10 @@ export function ProviderCard({
               ))}
             </div>
 
+            {provider.hintKey && (
+              <p className="text-xs text-muted-foreground">{t(provider.hintKey)}</p>
+            )}
+
             {children && <div className="border-t border-inherit pt-4">{children}</div>}
             <div className="flex justify-end">
               <Button
@@ -152,7 +159,7 @@ export function ProviderCard({
                 disabled={isTesting || !isEnabled}
                 className="h-8 rounded-xl gap-1.5 text-xs"
               >
-                <Mail className="w-4 h-4" />
+                <SendHorizontal className="w-4 h-4" />
                 {isTesting ? t("sending", "Sending…") : t("test_notification", "Test")}
               </Button>
             </div>

@@ -506,6 +506,7 @@
   "provider_gotify_desc": "Gotify sunucunuza push bildirimi gönderin.",
   "provider_pushover_desc": "Pushover hizmeti aracılığıyla uyarı gönderin.",
   "provider_ntfy_desc": "ntfy konunuza push bildirimi gönderin.",
+  "ntfy_auth_hint": "Kullanıcı adı ve parola veya erişim belirteci kullanın. İkisi de girilirse erişim belirteci kullanılır. Anonim erişim için üçünü de boş bırakın.",
   "provider_pushplus_desc": "Pushplus (WeChat) aracılığıyla bildirim alın.",
   "provider_mattermost_desc": "Webhook aracılığıyla Mattermost kanalına uyarı gönderin.",
   "provider_serverchan_desc": "ServerChan (SendKey) aracılığıyla mesaj gönderin.",

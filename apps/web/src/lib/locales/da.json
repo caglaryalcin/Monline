@@ -388,6 +388,7 @@
   "provider_gotify_desc": "Send push-notifikationer til din Gotify-server.",
   "provider_pushover_desc": "Send advarsler via Pushover-tjenesten.",
   "provider_ntfy_desc": "Send push-notifikationer til dit ntfy-emne.",
+  "ntfy_auth_hint": "Brug brugernavn og adgangskode eller et token. Hvis begge er angivet, bruges tokenet. Lad alle tre felter være tomme for anonym adgang.",
   "provider_pushplus_desc": "Modtag notifikationer via Pushplus (WeChat).",
   "provider_mattermost_desc": "Send advarsler til Mattermost via webhook.",
   "provider_serverchan_desc": "Send beskeder via ServerChan (SendKey).",

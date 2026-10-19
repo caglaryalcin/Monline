@@ -177,6 +177,89 @@ it("bootstraps an administrator with the Monline accent and private credentials"
     (await request("/api/auth/is-admin", { token: owner.token })).data.isAdmin,
   ).toBe(true);
 });
+it("tests unsaved ntfy credentials over HTTP without persisting them and saves them only on request", async () => {
+  const received = [];
+  const listener = require("node:http").createServer(async (req, res) => {
+    const chunks = [];
+    for await (const chunk of req) chunks.push(chunk);
+    received.push({
+      url: req.url,
+      headers: req.headers,
+      body: Buffer.concat(chunks).toString("utf8"),
+    });
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end('{"id":"local-test"}');
+  });
+  await new Promise((resolve) => listener.listen(0, "127.0.0.1", resolve));
+  try {
+    const endpoint = "/api/data/notifications_config";
+    const config = {
+      ntfy_url: `http://127.0.0.1:${listener.address().port}/`,
+      ntfy_topic: "test-topic",
+      ntfy_username: "demo",
+      ntfy_password: "draft-password",
+      ntfy_auth_token: "",
+    };
+    const before = (await request(endpoint, { token: owner.token })).data.items;
+    expect(
+      (
+        await request("/api/notifications/test", {
+          token: owner.token,
+          method: "POST",
+          body: { provider: "ntfy", config },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (await request(endpoint, { token: owner.token })).data.items,
+    ).toEqual(before);
+    expect(received[0]).toMatchObject({
+      url: "/test-topic",
+      headers: {
+        authorization:
+          "Basic " + Buffer.from("demo:draft-password").toString("base64"),
+      },
+    });
+    const saved = await request(endpoint, {
+      token: owner.token,
+      method: "POST",
+      body: { ...config, ntfy_enabled: false, ntfy_password: "saved-password" },
+    });
+    expect(saved.status).toBe(201);
+    expect(saved.data.ntfy_username).toBe("demo");
+    expect(saved.data.ntfy_password).toBe("saved-password");
+    expect(
+      (
+        await request("/api/notifications/test", {
+          token: owner.token,
+          method: "POST",
+          body: { provider: "ntfy", config },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (await request(endpoint + "/" + saved.data.id, { token: owner.token }))
+        .data.ntfy_password,
+    ).toBe("saved-password");
+    expect(
+      (
+        await request("/api/notifications/test", {
+          token: owner.token,
+          method: "POST",
+          body: { provider: "ntfy" },
+        })
+      ).status,
+    ).toBe(200);
+    expect(received[2].headers.authorization).toBe(
+      "Basic " + Buffer.from("demo:saved-password").toString("base64"),
+    );
+    expect(received).toHaveLength(3);
+  } finally {
+    listener.closeAllConnections();
+    await new Promise((resolve) => listener.close(resolve));
+  }
+});
+
 it("honors login persistence and preserves the preference when refreshing", async () => {
   for (const remember of [false, true]) {
     const login = await request("/api/auth/login", {

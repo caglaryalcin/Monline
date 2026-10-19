@@ -6,6 +6,25 @@ const {
 } = require("../runtime.cjs");
 const domainPath = __dirname;
 const { smtpTestMessage } = require("../email-templates.cjs");
+const { ntfyRequest } = require("./lib/ntfy.js");
+const providerFields = {
+  email: ["email_to"],
+  discord: ["discord_webhook_url"],
+  telegram: ["telegram_bot_token", "telegram_chat_id"],
+  gotify: ["gotify_url", "gotify_token"],
+  pushover: ["pushover_user_key", "pushover_api_token"],
+  ntfy: [
+    "ntfy_url",
+    "ntfy_topic",
+    "ntfy_username",
+    "ntfy_password",
+    "ntfy_auth_token",
+  ],
+  pushplus: ["pushplus_token"],
+  mattermost: ["mattermost_webhook_url"],
+  webhook: ["webhook_url"],
+  serverchan: ["serverchan_send_key"],
+};
 // ================================================================
 // ROUTE: POST /api/notifications/test — send a test notification
 // ================================================================
@@ -14,34 +33,55 @@ routerAdd("POST", "/api/notifications/test", async (e) => {
     return e.json(401, {
       error: "Authentication required",
     });
-  const body = e.requestInfo().body;
+  const body = e.requestInfo().body || {};
   const provider = body.provider;
   if (!provider)
     return e.json(400, {
       error: "provider is required",
     });
+  if (typeof provider !== "string" || !Object.hasOwn(providerFields, provider))
+    return e.json(400, { error: "Unknown notification provider" });
   let config;
-  try {
-    const records = repository.findRecordsByFilter(
-      "notifications_config",
-      "user = {:userId}",
-      "",
-      1,
-      0,
-      {
-        userId: e.auth.id,
-      },
-    );
-    if (records.length === 0)
-      return e.json(404, {
-        error: "No notification config found",
+  if (Object.hasOwn(body, "config")) {
+    const draft = body.config;
+    if (
+      !draft ||
+      typeof draft !== "object" ||
+      Array.isArray(draft) ||
+      Object.entries(draft).some(
+        ([key, value]) =>
+          !providerFields[provider].includes(key) ||
+          typeof value !== "string" ||
+          value.length > 8192,
+      )
+    )
+      return e.json(400, { error: "Invalid notification test configuration" });
+    // A supplied draft is authoritative. Never mix it with saved secrets or save it.
+    config = {
+      getString: (key) => (Object.hasOwn(draft, key) ? draft[key] : ""),
+    };
+  } else
+    try {
+      const records = repository.findRecordsByFilter(
+        "notifications_config",
+        "user = {:userId}",
+        "",
+        1,
+        0,
+        {
+          userId: e.auth.id,
+        },
+      );
+      if (records.length === 0)
+        return e.json(404, {
+          error: "No notification config found",
+        });
+      config = records[0];
+    } catch (err) {
+      return e.json(500, {
+        error: "Failed to load config",
       });
-    config = records[0];
-  } catch (err) {
-    return e.json(500, {
-      error: "Failed to load config",
-    });
-  }
+    }
   const title = "🔔 Monline — Test Notification";
   const message = "This is a test notification from Monline.";
   try {
@@ -141,14 +181,13 @@ routerAdd("POST", "/api/notifications/test", async (e) => {
           return e.json(400, {
             error: "Topic not configured",
           });
-        await httpClient.send({
-          url: ntfyUrl + "/" + topic,
-          method: "POST",
-          headers: {
-            Title: title,
-          },
-          body: message,
-        });
+        await httpClient.send(
+          ntfyRequest(ntfyUrl, topic, title, message, {
+            username: config.getString("ntfy_username"),
+            password: config.getString("ntfy_password"),
+            token: config.getString("ntfy_auth_token"),
+          }),
+        );
         break;
       }
       case "pushplus": {
@@ -254,6 +293,8 @@ routerAdd("POST", "/api/notifications/test", async (e) => {
         });
     }
   } catch (err) {
+    if (err.code === "ntfy_invalid_credentials")
+      return e.json(400, { error: err.message });
     return e.json(500, {
       error: "Failed to send: " + String(err),
     });

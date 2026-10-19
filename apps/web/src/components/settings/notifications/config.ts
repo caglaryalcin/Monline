@@ -10,12 +10,13 @@ import {
 } from "lucide-react";
 import type { ElementType } from "react";
 
-import type { NotificationReminder,NotificationsConfig } from "@/types";
+import type { NotificationReminder, NotificationsConfig } from "@/types";
 
 export type ProviderConfig = {
   id: string;
   label: string;
   descriptionKey: string;
+  hintKey?: string;
   icon: ElementType;
   colorClass: string;
   bgClass: string;
@@ -132,6 +133,7 @@ export const PROVIDERS: ProviderConfig[] = [
     id: "ntfy",
     label: "ntfy.sh",
     descriptionKey: "provider_ntfy_desc",
+    hintKey: "ntfy_auth_hint",
     icon: Bell,
     colorClass: "text-[#31b88e]",
     bgClass: "bg-[#31b88e]/10",
@@ -150,6 +152,9 @@ export const PROVIDERS: ProviderConfig[] = [
         type: "text",
         placeholder: "mytopic",
       },
+      { key: "ntfy_username", labelKey: "username", type: "text" },
+      { key: "ntfy_password", labelKey: "password", type: "password" },
+      { key: "ntfy_auth_token", labelKey: "token", type: "password" },
     ],
   },
   {
@@ -189,9 +194,7 @@ export const PROVIDERS: ProviderConfig[] = [
     bgClass: "bg-[#54b324]/10",
     borderClass: "border-[#54b324]/30",
     enabledKey: "serverchan_enabled",
-    fields: [
-      { key: "serverchan_send_key", labelKey: "send_key", type: "password" },
-    ],
+    fields: [{ key: "serverchan_send_key", labelKey: "send_key", type: "password" }],
   },
   {
     id: "webhook",

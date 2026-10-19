@@ -512,6 +512,7 @@
   "provider_gotify_desc": "Send push notifications to your Gotify server.",
   "provider_pushover_desc": "Send alerts via Pushover service.",
   "provider_ntfy_desc": "Send push notifications to your ntfy topic.",
+  "ntfy_auth_hint": "Use a username and password, or a token. If both are entered, the token takes precedence. Leave all three empty for anonymous access.",
   "provider_pushplus_desc": "Receive notifications via Pushplus WeChat service.",
   "provider_mattermost_desc": "Send alerts to a Mattermost channel via webhook.",
   "provider_serverchan_desc": "Send messages via ServerChan (SendKey).",

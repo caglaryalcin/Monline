@@ -388,6 +388,7 @@
   "provider_gotify_desc": "向您的 Gotify 服务器发送推送通知。",
   "provider_pushover_desc": "通过 Pushover 服务发送提醒。",
   "provider_ntfy_desc": "向您的 ntfy 主题发送推送通知。",
+  "ntfy_auth_hint": "使用用户名和密码或令牌。如果两者都填写，则优先使用令牌。匿名访问请将这三个字段全部留空。",
   "provider_pushplus_desc": "通过 Pushplus（微信）接收通知。",
   "provider_mattermost_desc": "通过 webhook 向 Mattermost 频道发送提醒。",
   "provider_serverchan_desc": "通过 Server酱（SendKey）发送消息。",

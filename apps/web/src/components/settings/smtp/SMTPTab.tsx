@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Mail } from "lucide-react";
+import { Mail, SendHorizontal } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -204,7 +204,7 @@ export function SMTPTab({
                 disabled={testing || saving}
                 className="rounded-xl"
               >
-                <Mail className="mr-2 h-4 w-4" />
+                <SendHorizontal className="mr-2 h-4 w-4" />
                 {testing ? t("sending") : t("send_test_email")}
               </Button>
             )}
