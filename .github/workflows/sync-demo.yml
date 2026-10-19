@@ -1,0 +1,39 @@
+name: Update Cloudflare demo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monline-demo-dispatch
+  cancel-in-progress: true
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch exact source revision
+        env:
+          DEMO_SYNC_TOKEN: ${{ secrets.DEMO_SYNC_TOKEN }}
+          SOURCE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$DEMO_SYNC_TOKEN" ]]; then
+            echo "::notice::DEMO_SYNC_TOKEN is not configured. monline-demo checks Monline automatically every 15 minutes. Add a token scoped only to caglaryalcin/monline-demo with Contents: write to also trigger updates immediately."
+            exit 0
+          fi
+          curl --fail-with-body --silent --show-error \
+            --retry 4 \
+            --retry-all-errors \
+            --retry-delay 2 \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer $DEMO_SYNC_TOKEN" \
+            --header "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/caglaryalcin/monline-demo/dispatches \
+            --data "{\"event_type\":\"sync-source\",\"client_payload\":{\"source_sha\":\"$SOURCE_SHA\"}}"
