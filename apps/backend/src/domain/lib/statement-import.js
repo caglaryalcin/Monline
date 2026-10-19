@@ -65,6 +65,7 @@ function importStatement(app, owner, statement, body, now = new Date()) {
             paid_utc_offset_minutes: body.paid_offsets?.[id],
           },
           now,
+          { limitToPastYear: false },
         );
         return { row, values };
       })

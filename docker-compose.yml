@@ -2,7 +2,7 @@ name: monline
 services:
   app:
     build: .
-    image: monline:1.0.3
+    image: monline:1.0.4
     container_name: monline
     restart: unless-stopped
     ports:

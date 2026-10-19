@@ -3,7 +3,6 @@ import { Check, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { historicalDateRange } from "@/components/calendar/HistoricalPaymentDialog";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { BackfillPaymentsEditor } from "@/components/subscriptions/BackfillPaymentsEditor";
 import { Button } from "@/components/ui/button";
@@ -17,12 +16,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { ThemedSelect } from "@/components/ui/themed-select";
 import { api } from "@/lib/api";
-import type { BackfillSelection } from "@/lib/backfillPayments";
+import { type BackfillSelection, localToday } from "@/lib/backfillPayments";
 import { CYCLE_NAME_KEYS } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { queryKeys } from "@/lib/queryKeys";
 import { nextStatementPaymentDate } from "@/lib/statementPaymentDate";
-import type { ReviewTransaction } from "@/lib/statements";
+import { type ReviewTransaction, validStatementDate } from "@/lib/statements";
 import { isStatementOnlyTransaction } from "@/lib/statementSubscriptions";
 import { statementSubscriptionSuggestions } from "@/lib/statementSubscriptionSuggestions";
 import { cn } from "@/lib/utils";
@@ -262,8 +261,8 @@ function ImportForm({
 }) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
-  const range = historicalDateRange();
-  const eligible = (row: ReviewTransaction) => row.date >= range.min && row.date <= range.max;
+  const today = localToday();
+  const eligible = (row: ReviewTransaction) => validStatementDate(row.date) && row.date <= today;
   const cycleOptions = cycles.filter((cycle) => cycle.name !== "One-Time");
   const [selected, setSelected] = useState(
     () =>
@@ -439,7 +438,15 @@ function ImportForm({
         "backfill_invalid_schedule",
         "backfill_too_many",
       ];
-      setError(t(known.includes(code) ? code : "statement_import_failed"));
+      setError(
+        t(
+          code === "historical_invalid_date"
+            ? "statement_import_date_range"
+            : known.includes(code)
+              ? code
+              : "statement_import_failed",
+        ),
+      );
     } finally {
       setBusy(false);
     }

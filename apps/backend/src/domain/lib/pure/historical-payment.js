@@ -6,7 +6,7 @@ function validDate(value) {
     Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === value
   );
 }
-function validateHistoricalPayment(body, now) {
+function validateHistoricalPayment(body, now, { limitToPastYear = true } = {}) {
   var offset = body.utc_offset_minutes;
   var paidOffset =
     body.paid_utc_offset_minutes == null
@@ -27,7 +27,7 @@ function validateHistoricalPayment(body, now) {
   );
   var start = new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10);
   for (var date of [body.due_date, body.paid_date]) {
-    if (!validDate(date) || date < start || date > end)
+    if (!validDate(date) || (limitToPastYear && date < start) || date > end)
       throw new Error("historical_invalid_date");
   }
   if (

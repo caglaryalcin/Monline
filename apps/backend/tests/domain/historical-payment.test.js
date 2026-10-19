@@ -20,6 +20,36 @@ describe("historical payment validation", () => {
       notes: "receipt",
     });
   });
+  it("allows older statement dates without allowing future or invalid dates", () => {
+    const statement = {
+      ...input,
+      due_date: "2025-07-03",
+      paid_date: "2025-07-03",
+      amount: 489.6,
+    };
+    expect(
+      validateHistoricalPayment(statement, now, { limitToPastYear: false }),
+    ).toMatchObject({
+      due_date: "2025-07-03",
+      paid_at: "2025-07-02T21:00:00.000Z",
+      amount: 489.6,
+    });
+    expect(() => validateHistoricalPayment(statement, now)).toThrow(
+      "historical_invalid_date",
+    );
+    for (const date of ["2026-10-18", "2025-02-30", "not-a-date"]) {
+      expect(() =>
+        validateHistoricalPayment({ ...statement, due_date: date }, now, {
+          limitToPastYear: false,
+        }),
+      ).toThrow("historical_invalid_date");
+      expect(() =>
+        validateHistoricalPayment({ ...statement, paid_date: date }, now, {
+          limitToPastYear: false,
+        }),
+      ).toThrow("historical_invalid_date");
+    }
+  });
   it.each([
     "2025-10-16",
     "2026-10-18",

@@ -91,6 +91,51 @@ afterEach(() => {
 });
 
 describe("statement import logos", () => {
+  it("selects and imports a statement payment older than one year", async () => {
+    const user = userEvent.setup();
+    const post = vi
+      .spyOn(api, "post")
+      .mockResolvedValue({ subscriptions_created: 0, payments_imported: 1, payments_skipped: 0 });
+    openImport(
+      [
+        {
+          id: "netflix",
+          name: "Netflix",
+          currency: "try",
+          category: "cat-streaming",
+        } as Subscription,
+      ],
+      [{ ...row, date: "2025-07-21" }],
+    );
+    const checkbox = await screen.findByRole("checkbox", { name: /2025-07-21/ });
+    expect(checkbox).toBeEnabled();
+    expect(checkbox).toBeChecked();
+    await user.click(checkbox);
+    expect(checkbox).not.toBeChecked();
+    await user.click(checkbox);
+    await user.click(screen.getByRole("button", { name: "statement_import_submit" }));
+    expect(post).toHaveBeenCalledWith(
+      "/api/statements/statement-1/import",
+      expect.objectContaining({
+        groups: [
+          expect.objectContaining({ transaction_ids: [row.id], subscription_id: "netflix" }),
+        ],
+      }),
+    );
+  });
+
+  it.each(["2026-10-20", "2025-02-30"])(
+    "keeps an invalid or future payment disabled (%s)",
+    async (date) => {
+      openImport([], [{ ...row, date }]);
+      const checkbox = await screen.findByRole("checkbox", { name: new RegExp(date) });
+      expect(checkbox).toBeDisabled();
+      expect(checkbox).not.toBeChecked();
+      expect(screen.getByText("statement_import_date_range")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "statement_import_submit" })).toBeDisabled();
+    },
+  );
+
   it.each([false, true])(
     "requires a category for selected import groups (existing=%s)",
     async (existing) => {

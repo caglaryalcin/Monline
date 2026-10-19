@@ -840,6 +840,93 @@ it("retains the statement import marker and its initial date when changing a pla
     ).amount,
   ).toBe(8000);
 });
+it("imports statement payments older than one year with original dates and amounts, deduplicates them and rejects future dates", async () => {
+  const year = new Date().getUTCFullYear();
+  const date = `${year - 2}-07-03`;
+  const future = `${year + 1}-07-03`;
+  const statement = await request("/api/statements", {
+    token: owner.token,
+    method: "POST",
+    body: {
+      bank: "enpara",
+      file_name: "older-statement.pdf",
+      file_hash: require("node:crypto")
+        .createHash("sha256")
+        .update("older-statement-test")
+        .digest("hex"),
+      period: date.slice(0, 7),
+      page_count: 1,
+      transactions: [date, future].map((day, index) => ({
+        id: `old-row-${index}`,
+        date: day,
+        amount: 489.6,
+        currency: "EUR",
+        kind: "charge",
+        page: 1,
+        installment: "",
+        merchant: "OPENAI *CHATGPT SUBSCR",
+        subscription_service: "Older statement subscription",
+        subscription_match: "manual",
+      })),
+    },
+  });
+  expect(statement.status).toBe(201);
+  const endpoint = `/api/statements/${statement.data.id}/import`;
+  const group = {
+    transaction_ids: ["old-row-0"],
+    category: category.id,
+    new_subscription: {
+      name: "Older statement subscription",
+      cycle: cycle.id,
+      frequency: 1,
+      active: false,
+    },
+  };
+  const body = { utc_offset_minutes: 0, groups: [group] };
+  const imported = await request(endpoint, {
+    token: owner.token,
+    method: "POST",
+    body,
+  });
+  expect(imported.status).toBe(200);
+  expect(imported.data).toMatchObject({
+    subscriptions_created: 1,
+    payments_imported: 1,
+    payments_skipped: 0,
+  });
+  const repeated = await request(endpoint, {
+    token: owner.token,
+    method: "POST",
+    body,
+  });
+  expect(repeated.status).toBe(200);
+  expect(repeated.data).toMatchObject({
+    subscriptions_created: 0,
+    payments_imported: 0,
+    payments_skipped: 1,
+  });
+  const rejected = await request(endpoint, {
+    token: owner.token,
+    method: "POST",
+    body: { ...body, groups: [{ ...group, transaction_ids: ["old-row-1"] }] },
+  });
+  expect(rejected.status).toBe(400);
+  expect(rejected.data.error).toBe("historical_invalid_date");
+  const sub = (
+    await request("/api/data/subscriptions", { token: owner.token })
+  ).data.items.find((s) => s.name === group.new_subscription.name);
+  const payments = (
+    await request("/api/data/payment_records", { token: owner.token })
+  ).data.items.filter((p) => p.subscription_id === sub.id);
+  expect(payments).toHaveLength(1);
+  expect(payments[0]).toMatchObject({
+    due_date: date,
+    paid_at: `${date}T00:00:00.000Z`,
+    amount: 489.6,
+    auto_paid: false,
+  });
+});
+
 it.each([false, true])(
   "imports reviewed statement history independently of active status (%s)",
   async (active) => {

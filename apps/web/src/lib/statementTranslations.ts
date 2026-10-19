@@ -26,8 +26,7 @@ export const statementTranslations = {
       "Ekstrede seçtiğin ödemeler kendi tarih ve tutarlarıyla aktarılır. İstersen ödeme dönemine göre bugüne kadarki eksik ödemeleri ayrıca kontrol edip ekleyebilirsin. Aktif abonelik oluşturma seçeneği bundan bağımsızdır; kapalıysa yeni abonelik pasif kalır.",
     statement_import_existing_note:
       "Mevcut aboneliğinin fiyatı ve aktif/pasif durumu korunur. Seçtiğin kategori ve ödeme yöntemi aboneliğe kaydedilir. Seçilen geçmiş ödemeler eklenir; sonraki ödeme tarihi mevcut ayın bir sonraki ayına güncellenir.",
-    statement_import_date_range:
-      "Yalnızca son bir yıl içindeki ve bugüne kadar olan ödemeler aktarılabilir.",
+    statement_import_date_range: "Ödeme tarihi geçerli olmalı ve bugünden sonra olmamalıdır.",
     statement_import_submit: "{{count}} işlemi aktar",
     statement_import_result:
       "{{created}} yeni abonelik oluşturuldu, {{imported}} ödeme takvime aktarıldı. Daha önce kaydedilmiş {{skipped}} ödeme atlandı.",
@@ -185,7 +184,7 @@ export const statementTranslations = {
       "Selected statement charges keep their original dates and amounts. Optionally review and add missing payments through today using the billing cycle. Creating an active subscription is independent; new subscriptions remain inactive when it is off.",
     statement_import_existing_note:
       "Your existing subscription’s price and active/inactive status are kept. Your category and payment method selections are saved to the subscription. Selected historical payments are added, and the next payment date is updated to the month after the current month.",
-    statement_import_date_range: "Only payments from the past year through today can be imported.",
+    statement_import_date_range: "The payment date must be valid and cannot be after today.",
     statement_import_submit: "Import {{count}} transactions",
     statement_import_result:
       "Created {{created}} subscriptions and imported {{imported}} calendar payments. Skipped {{skipped}} previously recorded payments.",
@@ -349,7 +348,7 @@ export const statementTranslations = {
     statement_import_existing_note:
       "Preis und Aktivstatus des bestehenden Abos bleiben erhalten. Deine Auswahl für Kategorie und Zahlungsmethode wird im Abo gespeichert. Vergangene Zahlungen werden ergänzt und der nächste Zahlungstermin auf den Monat nach dem aktuellen Monat gesetzt.",
     statement_import_date_range:
-      "Nur Zahlungen aus dem letzten Jahr bis einschließlich heute können übernommen werden.",
+      "Das Zahlungsdatum muss gültig sein und darf nicht nach dem heutigen Tag liegen.",
     statement_import_submit: "{{count}} Umsätze übernehmen",
     statement_import_result:
       "{{created}} Abos erstellt und {{imported}} Kalenderzahlungen übernommen. {{skipped}} bereits erfasste Zahlungen übersprungen.",

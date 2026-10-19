@@ -66,6 +66,7 @@ const SelectContent = React.forwardRef<
       ref={ref}
       className={cn(
         "relative z-50 max-h-[min(24rem,var(--radix-select-content-available-height))] max-w-[calc(100vw-1.5rem)] min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        "[&:has([data-select-scroll-button])>[data-select-scroll-slot]]:flex",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className,
@@ -73,7 +74,19 @@ const SelectContent = React.forwardRef<
       position={position}
       {...props}
     >
-      <SelectScrollUpButton />
+      {/* Radix removes scroll buttons at the ends. Keep both slots while the list
+          overflows so an option cannot move underneath the pointer. */}
+      <div
+        data-select-scroll-slot="up"
+        aria-hidden="true"
+        className="relative hidden h-6 shrink-0 items-center justify-center"
+      >
+        <ChevronUp className="h-4 w-4 text-muted-foreground/40" />
+        <SelectScrollUpButton
+          data-select-scroll-button="up"
+          className="absolute inset-0 h-full w-full bg-popover"
+        />
+      </div>
       <SelectPrimitive.Viewport
         className={cn(
           "p-1",
@@ -83,7 +96,17 @@ const SelectContent = React.forwardRef<
       >
         {children}
       </SelectPrimitive.Viewport>
-      <SelectScrollDownButton />
+      <div
+        data-select-scroll-slot="down"
+        aria-hidden="true"
+        className="relative hidden h-6 shrink-0 items-center justify-center"
+      >
+        <ChevronDown className="h-4 w-4 text-muted-foreground/40" />
+        <SelectScrollDownButton
+          data-select-scroll-button="down"
+          className="absolute inset-0 h-full w-full bg-popover"
+        />
+      </div>
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ));

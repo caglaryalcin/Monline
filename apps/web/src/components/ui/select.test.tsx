@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import {
@@ -22,6 +22,53 @@ beforeAll(() => {
 });
 
 describe("Select primitives", () => {
+  it("keeps scroll-button areas at both ends so clicking an exhausted arrow cannot select an option", async () => {
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+    render(
+      <Select defaultValue="b" onValueChange={onValueChange}>
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="a">Alpha</SelectItem>
+          <SelectItem value="b">Beta</SelectItem>
+          <SelectItem value="c">Gamma</SelectItem>
+        </SelectContent>
+      </Select>,
+    );
+    await user.click(screen.getByRole("combobox"));
+    const list = await screen.findByRole("listbox");
+    const viewport = list.querySelector<HTMLElement>("[data-radix-select-viewport]")!;
+    Object.defineProperties(viewport, {
+      clientHeight: { configurable: true, value: 64 },
+      scrollHeight: { configurable: true, value: 320 },
+    });
+    fireEvent.scroll(viewport, { target: { scrollTop: 32 } });
+    await waitFor(() =>
+      expect(list.querySelector('[data-select-scroll-button="up"]')).not.toBeNull(),
+    );
+    const upSlot = list.querySelector<HTMLElement>('[data-select-scroll-slot="up"]')!;
+    const downSlot = list.querySelector<HTMLElement>('[data-select-scroll-slot="down"]')!;
+
+    fireEvent.scroll(viewport, { target: { scrollTop: 0 } });
+    await waitFor(() => expect(list.querySelector('[data-select-scroll-button="up"]')).toBeNull());
+    await user.click(upSlot);
+    expect(screen.getByRole("listbox")).toBeVisible();
+    expect(onValueChange).not.toHaveBeenCalled();
+
+    fireEvent.scroll(viewport, { target: { scrollTop: 256 } });
+    await waitFor(() =>
+      expect(list.querySelector('[data-select-scroll-button="down"]')).toBeNull(),
+    );
+    expect(list.querySelector('[data-select-scroll-slot="up"]')).toBe(upSlot);
+    expect(list.querySelector('[data-select-scroll-slot="down"]')).toBe(downSlot);
+    await user.click(downSlot);
+    expect(onValueChange).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("option", { name: "Gamma" }));
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith("c");
+  });
+
   it("renders the trigger with a placeholder", () => {
     render(
       <Select>
