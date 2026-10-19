@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+.monline-login {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: max(1.5rem, env(safe-area-inset-top));
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
 .monline-app {
   --monline-header-height: 64px;
   padding-top: env(safe-area-inset-top);
@@ -455,6 +464,7 @@ html[data-theme-changing] *::after {
 .subscription-billing-progress > div {
   border-radius: inherit;
   background: linear-gradient(90deg, hsl(var(--primary) / 0.65), hsl(var(--primary)));
+  transition: none;
   animation: subscription-billing-fill 1.2s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 .subscription-billing-progress::after {
@@ -475,7 +485,10 @@ html[data-theme-changing] *::after {
   );
   background-size: 300% 100%;
   background-repeat: no-repeat;
-  animation: subscription-billing-flow 2s linear 1.2s infinite backwards;
+  /* Start with the highlight inside the bar so it is visible while filling. */
+  animation:
+    subscription-billing-reveal 1.2s cubic-bezier(0.22, 1, 0.36, 1) backwards,
+    subscription-billing-flow 2s linear -0.75s infinite;
 }
 @keyframes subscription-billing-fill {
   from {
@@ -485,7 +498,58 @@ html[data-theme-changing] *::after {
     transform: translateX(calc(var(--billing-progress, 0%) - 100%));
   }
 }
+@keyframes subscription-billing-reveal {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--billing-progress, 0%);
+  }
+}
 @keyframes subscription-billing-flow {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0% 0;
+  }
+}
+.budget-progress-exceeded > div {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--destructive) / 0.7),
+    hsl(var(--destructive)) 65%,
+    #fb7185
+  );
+  animation:
+    subscription-billing-fill 1.2s cubic-bezier(0.22, 1, 0.36, 1) backwards,
+    budget-pressure-build 1.8s ease-in-out infinite;
+}
+.budget-progress-exceeded::after {
+  background: linear-gradient(
+    90deg,
+    transparent 25%,
+    rgb(255 190 190 / 0.12) 45%,
+    rgb(255 230 230 / 0.75) 60%,
+    transparent 75%
+  );
+  background-size: 200% 100%;
+  animation:
+    subscription-billing-reveal 1.2s cubic-bezier(0.22, 1, 0.36, 1) backwards,
+    budget-pressure-flow 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes budget-pressure-build {
+  0%,
+  100% {
+    filter: brightness(1);
+    box-shadow: inset -8px 0 10px rgb(255 210 210 / 0.1);
+  }
+  55% {
+    filter: brightness(1.12);
+    box-shadow: inset -20px 0 18px rgb(255 210 210 / 0.4);
+  }
+}
+@keyframes budget-pressure-flow {
   from {
     background-position: 100% 0;
   }

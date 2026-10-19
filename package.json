@@ -1,6 +1,6 @@
 {
   "name": "monline",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Self-hosted subscription tracker built with React, Node.js, SQLite, and Docker.",
   "private": true,
   "packageManager": "bun@1.4.3",

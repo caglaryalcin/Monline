@@ -1,4 +1,5 @@
 import { Check, Clock3, ReceiptText, TriangleAlert } from "lucide-react";
+import type { CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
@@ -43,6 +44,7 @@ export function BudgetOverviewCard({
   const available = budget + totalCredits;
   const remaining = available - total;
   const overBudget = available > 0 && remaining < 0;
+  const progress = available > 0 ? Math.min(100, (total / available) * 100) : 0;
   const ready = !isLoading && !hasError;
   return (
     <Card className="flex flex-col overflow-hidden rounded-3xl border shadow-sm xl:min-h-[740px]">
@@ -91,9 +93,13 @@ export function BudgetOverviewCard({
             {available > 0 && (
               <div className="space-y-2">
                 <Progress
-                  value={Math.min(100, (total / available) * 100)}
+                  value={progress}
                   aria-label={t("budget_month_total")}
-                  className={cn("h-2 rounded-full", overBudget && "[&>div]:bg-destructive")}
+                  className={cn(
+                    "subscription-billing-progress h-2 rounded-full",
+                    overBudget && "budget-progress-exceeded",
+                  )}
+                  style={{ "--billing-progress": `${progress}%` } as CSSProperties}
                 />
                 <div className="flex flex-wrap justify-between gap-2 text-xs">
                   <span className="text-muted-foreground">

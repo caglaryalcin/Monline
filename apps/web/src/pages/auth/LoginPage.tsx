@@ -92,19 +92,28 @@ export function LoginPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+    <div className="monline-login flex flex-col items-center bg-background">
+      <Card className="my-auto w-full max-w-md shrink-0">
+        <CardHeader className="p-5 text-center sm:p-6">
           <div className="flex justify-center mb-2">
             <LogoWithName className="h-10 w-auto" />
           </div>
           <LanguagePicker />
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-5 pb-5 sm:px-6 sm:pb-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">{t("email")}</Label>
-              <Input id="email" type="email" autoComplete="email" {...register("email")} />
+              <Input
+                id="email"
+                type="email"
+                inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                autoComplete="email"
+                className="h-11 sm:h-10"
+                {...register("email")}
+              />
               {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
             </div>
             <div className="space-y-2">
@@ -113,13 +122,17 @@ export function LoginPage() {
                 id="password"
                 type="password"
                 autoComplete="current-password"
+                className="h-11 sm:h-10"
                 {...register("password")}
               />
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password.message}</p>
               )}
               <div className="flex justify-end pt-1 text-sm">
-                <Link to="/password-reset" className="text-muted-foreground">
+                <Link
+                  to="/password-reset"
+                  className="inline-flex min-h-11 items-center text-right text-muted-foreground sm:min-h-0"
+                >
                   {t("forgot_password")}
                 </Link>
               </div>
@@ -146,12 +159,12 @@ export function LoginPage() {
                 </small>
               </div>
             </div>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="h-11 w-full sm:h-10" disabled={isSubmitting}>
               {isSubmitting ? t("loading") : t("login")}
             </Button>
           </form>
           {oidcProviderName !== null && (
-            <div className="mt-4 space-y-4">
+            <div className="mt-4 space-y-4 [&>button]:h-auto [&>button]:min-h-11 [&>button]:whitespace-normal [&>button]:py-2.5 [&>button]:break-words sm:[&>button]:min-h-10">
               <div className="flex items-center gap-3">
                 <span className="h-px flex-1 bg-border" />
                 <span className="text-xs uppercase text-muted-foreground">{t("or")}</span>
@@ -163,7 +176,10 @@ export function LoginPage() {
           {registrationOpen && (
             <p className="mt-4 text-center text-sm text-muted-foreground">
               {t("no_account")}{" "}
-              <Link to="/register" className="text-primary">
+              <Link
+                to="/register"
+                className="inline-flex min-h-11 items-center text-primary sm:min-h-0"
+              >
                 {t("create_account")}
               </Link>
             </p>
