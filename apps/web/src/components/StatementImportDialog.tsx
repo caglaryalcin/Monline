@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -532,25 +532,32 @@ function ImportForm({
                         "border-red-500/60 bg-red-50 dark:border-red-400/60 dark:bg-red-950/30",
                     )}
                   >
-                    <input
-                      type="checkbox"
-                      className="mt-1 h-4 w-4 accent-primary"
-                      checked={selected.has(row.id)}
-                      disabled={busy || !eligible(row)}
-                      aria-describedby={conflict ? conflictHintId : undefined}
-                      onChange={(event) => {
-                        setSelected((current) => {
-                          const next = new Set(current);
-                          if (event.target.checked) next.add(row.id);
-                          else next.delete(row.id);
-                          return next;
-                        });
-                        setConflicts((current) =>
-                          current.filter((item) => item.transaction_id !== row.id),
-                        );
-                        setError("");
-                      }}
-                    />
+                    <span className="relative mt-1 h-4 w-4 shrink-0">
+                      <input
+                        type="checkbox"
+                        className="peer block h-4 w-4 appearance-none rounded border border-muted-foreground bg-background checked:border-primary checked:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
+                        checked={selected.has(row.id)}
+                        disabled={busy || !eligible(row)}
+                        aria-describedby={conflict ? conflictHintId : undefined}
+                        onChange={(event) => {
+                          setSelected((current) => {
+                            const next = new Set(current);
+                            if (event.target.checked) next.add(row.id);
+                            else next.delete(row.id);
+                            return next;
+                          });
+                          setConflicts((current) =>
+                            current.filter((item) => item.transaction_id !== row.id),
+                          );
+                          setError("");
+                        }}
+                      />
+                      <Check
+                        aria-hidden="true"
+                        strokeWidth={3}
+                        className="pointer-events-none absolute inset-0 h-4 w-4 text-primary-foreground opacity-0 peer-checked:opacity-100 peer-disabled:text-primary-foreground/50"
+                      />
+                    </span>
                     <span className="min-w-0 flex-1">
                       <span className="block">
                         <span
