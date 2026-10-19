@@ -162,7 +162,7 @@ describe("SubscriptionCard", () => {
       />,
     );
     expect(screen.getByAltText("Enpara")).toHaveAttribute("src", "/assets/logos/banks/enpara.svg");
-    expect(screen.getByText("pays Daniel").parentElement).toContainElement(
+    expect(screen.getByText("pays Daniel").parentElement?.parentElement).toContainElement(
       screen.getByAltText("Enpara"),
     );
   });

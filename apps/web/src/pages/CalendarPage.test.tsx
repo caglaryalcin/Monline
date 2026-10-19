@@ -321,8 +321,9 @@ describe("CalendarPage", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "close-day" }));
     fireEvent.click(screen.getByRole("button", { name: "add-adjacent-payment" }));
-    expect(screen.getByLabelText("historical_paid_date")).toHaveValue(isoDay(adjacent));
-    expect(screen.getByLabelText("historical_due_date")).toHaveValue(isoDay(adjacent));
+    const displayedDate = `27/${String(adjacent.getMonth() + 1).padStart(2, "0")}/${adjacent.getFullYear()}`;
+    expect(screen.getByLabelText("historical_paid_date")).toHaveValue(displayedDate);
+    expect(screen.getByLabelText("historical_due_date")).toHaveValue(displayedDate);
     fireEvent.click(screen.getByRole("button", { name: "cancel" }));
     fireEvent.click(screen.getByRole("button", { name: "close-day" }));
     expect(

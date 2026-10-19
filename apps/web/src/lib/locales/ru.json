@@ -1,4 +1,9 @@
 {
+  "payment_status": "Статус платежа",
+  "payment_to_pay": "К оплате",
+  "payment_date_future": "Дата оплаты должна быть сегодня или раньше.",
+  "subscription_paid_date_hint": "Будет записан только этот платёж. Следующий платёж: {{date}}.",
+  "validation_date": "Введите корректную дату в формате ДД/ММ/ГГГГ.",
   "main_payment_method": "Основной способ оплаты",
   "set_as_main_payment_method": "Сделать основным способом оплаты",
   "app_name": "Monline",

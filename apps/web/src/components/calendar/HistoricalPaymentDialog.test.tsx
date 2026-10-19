@@ -8,7 +8,9 @@ import type { PaymentRecord, Subscription } from "@/types";
 import { historicalDateRange, HistoricalPaymentDialog } from "./HistoricalPaymentDialog";
 
 const mocks = vi.hoisted(() => ({ createHistorical: vi.fn(), success: vi.fn() }));
-vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ t: (key: string) => key, i18n: { resolvedLanguage: "tr" } }),
+}));
 vi.mock("@/components/SubscriptionLogo", () => ({ SubscriptionLogo: () => <span /> }));
 vi.mock("@/services/paymentRecords", () => ({
   paymentRecordsService: { createHistorical: mocks.createHistorical },
@@ -84,8 +86,14 @@ describe("HistoricalPaymentDialog", () => {
     expect(screen.getByRole("option", { name: "Music · inactive" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Income" })).not.toBeInTheDocument();
     await userEvent.keyboard("{Escape}");
-    expect(screen.getByLabelText("historical_paid_date")).toHaveAttribute("min", "2025-10-17");
-    expect(screen.getByLabelText("historical_paid_date")).toHaveAttribute("max", "2026-10-17");
+    expect(screen.getByLabelText("historical_paid_date")).toHaveValue("17/10/2026");
+    for (const label of ["historical_paid_date", "historical_due_date"]) {
+      await userEvent.click(screen.getByRole("button", { name: new RegExp(`^${label}:`) }));
+      expect(screen.getByRole("combobox", { name: "Ayı seçin" })).toHaveTextContent("Ekim");
+      expect(screen.getByRole("button", { name: "Temizle" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^18 Ekim 2026/ })).toBeDisabled();
+      await userEvent.keyboard("{Escape}");
+    }
     expect(historicalDateRange(new Date(2024, 1, 29))).toEqual({
       min: "2023-02-28",
       max: "2024-02-29",
@@ -104,7 +112,7 @@ describe("HistoricalPaymentDialog", () => {
     fireEvent.change(screen.getByLabelText("historical_paid_date"), {
       target: { value: "2026-06-10" },
     });
-    expect(screen.getByLabelText("historical_due_date")).toHaveValue("2026-06-10");
+    expect(screen.getByLabelText("historical_due_date")).toHaveValue("10/06/2026");
     fireEvent.change(screen.getByLabelText("historical_due_date"), {
       target: { value: "2026-06-05" },
     });
@@ -125,6 +133,24 @@ describe("HistoricalPaymentDialog", () => {
     expect(invalidate).toHaveBeenCalledWith({
       queryKey: queryKeys.subscriptions.history("user-1", "sub-1"),
     });
+  });
+
+  it.each([
+    ["historical_paid_date", "16/10/2025"],
+    ["historical_paid_date", "18/10/2026"],
+    ["historical_due_date", "16/10/2025"],
+    ["historical_due_date", "18/10/2026"],
+    ["historical_paid_date", "31/02/2026"],
+  ])("rejects invalid or out-of-range manual dates in %s (%s)", (label, value) => {
+    setup();
+    fireEvent.change(screen.getByLabelText(label), { target: { value } });
+    fireEvent.click(screen.getByRole("button", { name: "historical_save" }));
+    expect(
+      screen
+        .getAllByRole("alert")
+        .some((alert) => alert.textContent?.includes("historical_invalid_date")),
+    ).toBe(true);
+    expect(mocks.createHistorical).not.toHaveBeenCalled();
   });
 
   it("blocks an already paid day and reports a server-side duplicate without closing", async () => {

@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { api } from "@/lib/api";
 import type { ReviewTransaction } from "@/lib/statements";
+import { categoriesService } from "@/services/categories";
 import { subscriptionsService } from "@/services/subscriptions";
 import { createQueryClientWrapper } from "@/test/query-client";
 import type { Subscription } from "@/types";
@@ -27,6 +28,7 @@ vi.mock("@/services/cycles", () => ({
 }));
 vi.mock("@/services/categories", () => ({
   categoriesService: {
+    create: vi.fn(),
     list: async () => [
       { id: "cat-streaming", name: "Streaming" },
       { id: "cat-ai", name: "AI" },
@@ -91,6 +93,101 @@ afterEach(() => {
 });
 
 describe("statement import logos", () => {
+  it("creates a category inline, selects it only for the current group and makes it available to other groups", async () => {
+    const user = userEvent.setup();
+    vi.mocked(categoriesService.create).mockResolvedValue({
+      id: "cat-cloud",
+      name: "Cloud services",
+      user: "user-1",
+    });
+    const post = vi
+      .spyOn(api, "post")
+      .mockResolvedValue({ subscriptions_created: 0, payments_imported: 2, payments_skipped: 0 });
+    openImport(
+      [
+        { id: "netflix", name: "Netflix", currency: "try", category: "" } as Subscription,
+        { id: "chatgpt", name: "Chatgpt", currency: "try", category: "cat-ai" } as Subscription,
+      ],
+      [row, { ...row, id: "row-2", subscription_service: "Chatgpt" }],
+    );
+    const heading = await screen.findByRole("heading", { name: "Netflix" });
+    const group = within(heading.closest("section")!);
+    await user.click(group.getByRole("button", { name: "statement_import_add_category" }));
+    const input = group.getByRole("textbox", { name: "statement_import_category_name" });
+    expect(group.getByRole("button", { name: "add" })).toBeDisabled();
+    await user.type(input, "  Cloud services  ");
+    await user.keyboard("{Enter}");
+    await waitFor(() =>
+      expect(group.getByRole("combobox", { name: "category" })).toHaveTextContent("Cloud services"),
+    );
+    expect(categoriesService.create).toHaveBeenCalledExactlyOnceWith("user-1", "Cloud services");
+    expect(group.getByRole("combobox", { name: "category" })).toHaveFocus();
+    const otherGroup = within(screen.getByRole("heading", { name: "Chatgpt" }).closest("section")!);
+    const otherCategory = otherGroup.getByRole("combobox", { name: "category" });
+    expect(otherCategory).toHaveTextContent("AI");
+    await user.click(otherCategory);
+    expect(screen.getByRole("option", { name: "Cloud services" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "statement_import_submit" }));
+    expect(post).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        groups: [
+          expect.objectContaining({ subscription_id: "netflix", category: "cat-cloud" }),
+          expect.objectContaining({ subscription_id: "chatgpt", category: "cat-ai" }),
+        ],
+      }),
+    );
+  });
+
+  it("keeps a failed category draft for retry and can cancel without changing the selection", async () => {
+    const user = userEvent.setup();
+    vi.mocked(categoriesService.create).mockRejectedValueOnce(new Error("Network error"));
+    openImport([]);
+    await user.click(await screen.findByRole("button", { name: "statement_import_add_category" }));
+    const input = screen.getByRole("textbox", { name: "statement_import_category_name" });
+    await user.type(input, "Cloud services");
+    await user.click(screen.getByRole("button", { name: "add" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("failed_add_category");
+    expect(input).toHaveValue("Cloud services");
+    expect(screen.getByRole("button", { name: "statement_import_submit" })).toBeDisabled();
+    vi.mocked(categoriesService.create).mockResolvedValueOnce({
+      id: "cat-cloud",
+      name: "Cloud services",
+      user: "user-1",
+    });
+    await user.click(screen.getByRole("button", { name: "add" }));
+    await waitFor(() =>
+      expect(screen.getByRole("combobox", { name: "category" })).toHaveTextContent(
+        "Cloud services",
+      ),
+    );
+    await user.click(screen.getByRole("button", { name: "statement_import_add_category" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "statement_import_category_name" }),
+      "Discarded",
+    );
+    const categoryForm = screen
+      .getByRole("textbox", { name: "statement_import_category_name" })
+      .closest("form")!;
+    await user.click(within(categoryForm).getByRole("button", { name: "cancel" }));
+    expect(screen.getByRole("combobox", { name: "category" })).toHaveTextContent("Cloud services");
+    expect(categoriesService.create).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses an existing category instead of creating the same name again", async () => {
+    const user = userEvent.setup();
+    openImport([]);
+    await user.click(await screen.findByRole("button", { name: "statement_import_add_category" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "statement_import_category_name" }),
+      " streaming ",
+    );
+    await user.click(screen.getByRole("button", { name: "add" }));
+    expect(screen.getByRole("combobox", { name: "category" })).toHaveTextContent("Streaming");
+    expect(categoriesService.create).not.toHaveBeenCalled();
+  });
+
   it("selects and imports a statement payment older than one year", async () => {
     const user = userEvent.setup();
     const post = vi

@@ -9,6 +9,16 @@ vi.mock("@/services/subscriptions", () => ({
 }));
 
 describe("subscription logos", () => {
+  it("shows the Workspace logo in previews without overriding a custom uploaded logo", () => {
+    const { rerender } = render(<SubscriptionLogo sub={{ name: "Google Workspace", url: "" }} />);
+    expect(screen.getByRole("img")).toHaveAttribute("src", "/assets/logos/google-workspace.png");
+    rerender(
+      <SubscriptionLogo
+        sub={{ id: "sub", logo: "custom-logo.png", name: "Google Workspace", url: "" }}
+      />,
+    );
+    expect(screen.getByRole("img")).toHaveAttribute("src", "/api/files/subscriptions/sub/logo.png");
+  });
   const sub = {
     id: "sub",
     name: "Spotify",

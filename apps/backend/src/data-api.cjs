@@ -257,8 +257,20 @@ function registerDataApi(app, repository, auth) {
       record.set("email", email);
     }
     const backfillHelper = require("./domain/lib/subscription-backfill.js");
-    const backfill =
-      name === "subscriptions" && Object.hasOwn(body, "historical_payments")
+    const hasInitialPayment =
+      name === "subscriptions" && Object.hasOwn(body, "initial_payment");
+    if (
+      hasInitialPayment &&
+      (!create || Object.hasOwn(body, "historical_payments"))
+    )
+      throw new BadRequestError("backfill_invalid_selection");
+    const backfill = hasInitialPayment
+      ? backfillHelper.prepareInitialPayment(
+          repository,
+          record,
+          body.initial_payment,
+        )
+      : name === "subscriptions" && Object.hasOwn(body, "historical_payments")
         ? backfillHelper.prepareBackfill(
             repository,
             record,

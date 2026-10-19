@@ -119,4 +119,62 @@ function saveBackfill(app, subscription, payments) {
   }
   return saved;
 }
-module.exports = { prepareBackfill, saveBackfill };
+// A first paid charge is saved with its subscription, including month-end dates
+// that cannot be reconstructed backwards from the next clamped payment date.
+function prepareInitialPayment(app, subscription, input, now = new Date()) {
+  let data;
+  try {
+    data = typeof input === "string" ? JSON.parse(input) : input;
+  } catch {
+    throw new BadRequestError("historical_invalid_date");
+  }
+  const date = data?.date;
+  const cycle = app
+    .findRecordById("cycles", subscription.getString("cycle"))
+    .getString("name");
+  const next = require("./pure/subscription-start.js").nextPaymentDate(
+    date,
+    cycle,
+    Number(subscription.get("frequency")),
+  );
+  if (!next || next <= date)
+    throw new BadRequestError("historical_invalid_date");
+  const payments = prepareBackfill(
+    app,
+    {
+      getString: (key) => {
+        if (["start_date", "next_payment"].includes(key)) return date;
+        const value = subscription.getString(key);
+        return key === "end_date" && (!value || value > date) ? date : value;
+      },
+      get: (key) => subscription.get(key),
+    },
+    {
+      confirmed: true,
+      utc_offset_minutes: data.utc_offset_minutes,
+      payments: [
+        {
+          due_date: date,
+          amount: Number(subscription.get("price")),
+          paid_utc_offset_minutes: data.paid_utc_offset_minutes,
+        },
+      ],
+    },
+    now,
+  );
+  subscription.set("start_date", date);
+  subscription.set("next_payment", next);
+  if (Number(subscription.get("payment_limit")) > 0) {
+    const completed = Math.max(
+      1,
+      Number(subscription.get("payments_completed")) || 0,
+    );
+    subscription.set("payments_completed", completed);
+    if (completed >= Number(subscription.get("payment_limit"))) {
+      subscription.set("inactive", true);
+      subscription.set("auto_renew", false);
+    }
+  }
+  return payments;
+}
+module.exports = { prepareBackfill, saveBackfill, prepareInitialPayment };

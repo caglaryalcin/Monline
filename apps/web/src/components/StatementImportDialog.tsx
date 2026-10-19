@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Plus } from "lucide-react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ThemedSelect } from "@/components/ui/themed-select";
 import { api } from "@/lib/api";
 import { type BackfillSelection, localToday } from "@/lib/backfillPayments";
@@ -304,6 +305,11 @@ function ImportForm({
     });
   });
   const [error, setError] = useState("");
+  const [categoryEditor, setCategoryEditor] = useState<{
+    groupKey: string;
+    name: string;
+    error: string;
+  } | null>(null);
   const [history, setHistory] = useState<Record<string, BackfillSelection>>({});
   const onHistoryChange = useCallback((key: string, selection: BackfillSelection) => {
     setHistory((current) =>
@@ -315,7 +321,17 @@ function ImportForm({
   const [conflicts, setConflicts] = useState<ImportConflict[]>([]);
   const formRef = useRef<HTMLDivElement>(null);
   const groupRefs = useRef(new Map<string, HTMLElement>());
+  const categoryFocusKey = useRef<string | null>(null);
   const importHintId = useId();
+  useEffect(() => {
+    if (!categoryEditor && !busy && categoryFocusKey.current) {
+      const key = categoryFocusKey.current;
+      categoryFocusKey.current = null;
+      document
+        .getElementById(`${importHintId}-category-${encodeURIComponent(key)}-select`)
+        ?.focus({ preventScroll: true });
+    }
+  }, [categoryEditor, busy, importHintId]);
   useEffect(() => {
     if (conflicts.length)
       formRef.current
@@ -336,6 +352,42 @@ function ImportForm({
     );
     setError("");
   };
+  async function createCategory() {
+    const draft = categoryEditor;
+    const name = draft?.name.trim();
+    if (!draft || !name || busy) return;
+    const existing = categories.find((category) =>
+      [category.name, categoryLabel(category, t)].some(
+        (label) =>
+          label
+            .trim()
+            .localeCompare(name, i18n.language.replace("_", "-"), { sensitivity: "accent" }) === 0,
+      ),
+    );
+    if (existing) {
+      update(draft.groupKey, { category: existing.id });
+      categoryFocusKey.current = draft.groupKey;
+      setCategoryEditor(null);
+      return;
+    }
+    setBusy(true);
+    setCategoryEditor({ ...draft, error: "" });
+    try {
+      const created = await categoriesService.create(userId, name);
+      queryClient.setQueryData<Category[]>(queryKeys.categories.all(userId), (current) =>
+        [...(current ?? categories).filter((category) => category.id !== created.id), created].sort(
+          (a, b) => a.name.localeCompare(b.name),
+        ),
+      );
+      update(draft.groupKey, { category: created.id });
+      categoryFocusKey.current = draft.groupKey;
+      setCategoryEditor(null);
+    } catch {
+      setCategoryEditor({ ...draft, error: t("failed_add_category") });
+    } finally {
+      setBusy(false);
+    }
+  }
   const historyNeedsReview = groups.filter(
     (group) =>
       group.rows.some((row) => selected.has(row.id)) &&
@@ -465,6 +517,8 @@ function ImportForm({
         const categoryMissing =
           groupSelected && !categories.some((category) => category.id === group.category);
         const categoryErrorId = `${importHintId}-category-${encodeURIComponent(group.key)}`;
+        const categoryFieldId = `${categoryErrorId}-select`;
+        const categoryNameId = `${categoryErrorId}-name`;
         const selectedSubscription = subscriptions.find((sub) => sub.id === group.target);
         const groupLogo = selectedSubscription ?? { name: group.name, url: "" };
         const selectedByDate = new Map<string, ReviewTransaction[]>();
@@ -706,9 +760,25 @@ function ImportForm({
                   </p>
                 )}
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="grid content-start gap-1 text-sm">
-                    <span>{t("category")} *</span>
+                  <div className="grid content-start gap-1 text-sm">
+                    <div className="flex min-h-6 items-center justify-between gap-2">
+                      <Label htmlFor={categoryFieldId}>{t("category")} *</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 gap-1 px-1 text-xs"
+                        aria-expanded={categoryEditor?.groupKey === group.key}
+                        onClick={() =>
+                          setCategoryEditor({ groupKey: group.key, name: "", error: "" })
+                        }
+                      >
+                        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                        {t("statement_import_add_category")}
+                      </Button>
+                    </div>
                     <ThemedSelect
+                      id={categoryFieldId}
                       aria-label={t("category")}
                       required
                       aria-invalid={categoryMissing}
@@ -729,9 +799,75 @@ function ImportForm({
                         {t("category_required")}
                       </span>
                     )}
-                  </label>
+                    {categoryEditor?.groupKey === group.key && (
+                      <form
+                        className="mt-1 space-y-2 rounded-xl border bg-muted/20 p-3"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          void createCategory();
+                        }}
+                      >
+                        <Label htmlFor={categoryNameId}>
+                          {t("statement_import_category_name")}
+                        </Label>
+                        <Input
+                          id={categoryNameId}
+                          autoFocus
+                          maxLength={120}
+                          value={categoryEditor.name}
+                          placeholder={t("category_name_placeholder")}
+                          aria-invalid={!!categoryEditor.error}
+                          aria-describedby={
+                            categoryEditor.error ? `${categoryNameId}-error` : undefined
+                          }
+                          onChange={(event) =>
+                            setCategoryEditor({
+                              ...categoryEditor,
+                              name: event.target.value,
+                              error: "",
+                            })
+                          }
+                        />
+                        {categoryEditor.error && (
+                          <p
+                            id={`${categoryNameId}-error`}
+                            role="alert"
+                            className="text-xs text-destructive"
+                          >
+                            {categoryEditor.error}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              categoryFocusKey.current = group.key;
+                              setCategoryEditor(null);
+                            }}
+                          >
+                            {t("cancel")}
+                          </Button>
+                          <Button
+                            type="submit"
+                            size="sm"
+                            disabled={!categoryEditor.name.trim() || busy}
+                          >
+                            {busy && (
+                              <Loader2
+                                className="mr-1 h-3.5 w-3.5 animate-spin"
+                                aria-hidden="true"
+                              />
+                            )}
+                            {t(busy ? "saving" : "add")}
+                          </Button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
                   <label className="grid content-start gap-1 text-sm">
-                    <span>{t("payment_method")}</span>
+                    <span className="flex min-h-6 items-center">{t("payment_method")}</span>
                     <ThemedSelect
                       aria-label={t("payment_method")}
                       className={selectClass}

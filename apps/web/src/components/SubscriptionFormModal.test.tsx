@@ -233,6 +233,148 @@ describe("SubscriptionFormModal", () => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
+
+  it.each([false, true])("creates one explicit paid charge (logo: %s)", async (withLogo) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-19T12:00:00Z"));
+    const { container } = render(
+      <SubscriptionFormModal
+        sub={null}
+        userId="user-1"
+        currencies={[getCurrency()]}
+        categories={[getCategory()]}
+        household={[]}
+        paymentMethods={[]}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+    fireEvent.change(document.querySelector('input[name="name"]')!, {
+      target: { value: "Paid service" },
+    });
+    fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "25" } });
+    fireEvent.click(screen.getByTestId("select-item-cat-1"));
+    fireEvent.click(screen.getByTestId("select-item-paid"));
+    expect(screen.getByRole("textbox", { name: "historical_paid_date" })).toHaveValue("19/10/2026");
+    expect(screen.queryByText("backfill_title")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox", { name: "historical_paid_date" }), {
+      target: { value: "31/01/2026" },
+    });
+    if (withLogo)
+      fireEvent.change(container.querySelector('input[type="file"]')!, {
+        target: { files: [new File(["image"], "manual.png", { type: "image/png" })] },
+      });
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    await waitFor(() => expect(mocks.createSubscription).toHaveBeenCalledTimes(1));
+    const body = mocks.createSubscription.mock.calls[0][0];
+    const payment =
+      body instanceof FormData
+        ? JSON.parse(body.get("initial_payment") as string)
+        : body.initial_payment;
+    expect(payment).toEqual({
+      date: "2026-01-31",
+      utc_offset_minutes: new Date().getTimezoneOffset(),
+      paid_utc_offset_minutes: new Date("2026-01-31T00:00:00").getTimezoneOffset(),
+    });
+    expect(
+      body instanceof FormData ? body.has("historical_payments") : !!body.historical_payments,
+    ).toBe(false);
+  });
+
+  it("rejects future paid dates and removes the paid charge when switched back to unpaid", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-19T12:00:00Z"));
+    render(
+      <SubscriptionFormModal
+        sub={null}
+        userId="user-1"
+        currencies={[getCurrency()]}
+        categories={[getCategory()]}
+        household={[]}
+        paymentMethods={[]}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+    fireEvent.change(document.querySelector('input[name="name"]')!, {
+      target: { value: "Unpaid service" },
+    });
+    fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "25" } });
+    fireEvent.click(screen.getByTestId("select-item-cat-1"));
+    fireEvent.click(screen.getByTestId("select-item-paid"));
+    fireEvent.change(screen.getByRole("textbox", { name: "historical_paid_date" }), {
+      target: { value: "20/10/2026" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("payment_date_future"));
+    expect(mocks.createSubscription).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("select-item-unpaid"));
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    await waitFor(() => expect(mocks.createSubscription).toHaveBeenCalledTimes(1));
+    expect(mocks.createSubscription.mock.calls[0][0]).not.toHaveProperty("initial_payment");
+    expect(mocks.createSubscription.mock.calls[0][0]).toHaveProperty("next_payment", "2026-10-20");
+  });
+  it.each(["new", "legacy", "assigned"])(
+    "uses the main household payer for %s subscriptions without overwriting an assigned payer",
+    async (mode) => {
+      render(
+        <SubscriptionFormModal
+          sub={mode === "new" ? null : getSubscription({ payer: mode === "legacy" ? "" : "hh-1" })}
+          userId="user-1"
+          currencies={[getCurrency()]}
+          categories={[getCategory()]}
+          paymentMethods={[getPaymentMethod()]}
+          household={[
+            getHousehold({ is_main: false }),
+            getHousehold({ id: "hh-main", name: "Caglar", is_main: true }),
+          ]}
+          onClose={vi.fn()}
+          onSaved={vi.fn()}
+        />,
+      );
+      expect(screen.getByText("payer").parentElement).not.toHaveTextContent("optional");
+      if (mode === "new") {
+        fireEvent.change(document.querySelector('input[name="name"]')!, {
+          target: { value: "Payer test" },
+        });
+        fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "25" } });
+        fireEvent.click(screen.getByTestId("select-item-cat-1"));
+      }
+      fireEvent.click(screen.getByRole("button", { name: "save" }));
+      const save = mode === "new" ? mocks.createSubscription : mocks.updateSubscription;
+      await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+      expect(save.mock.calls[0][mode === "new" ? 0 : 1]).toMatchObject({
+        payer: mode === "assigned" ? "hh-1" : "hh-main",
+      });
+    },
+  );
+  it.each(["next_payment", "end_date", "cancellation_date"])(
+    "blocks saving an invalid manually entered %s",
+    async (field) => {
+      render(
+        <SubscriptionFormModal
+          sub={getSubscription({
+            end_date: "2026-12-31",
+            cancellation_date: "2026-12-31",
+            inactive: true,
+          })}
+          userId="user-1"
+          currencies={[getCurrency()]}
+          categories={[getCategory()]}
+          paymentMethods={[getPaymentMethod()]}
+          household={[getHousehold()]}
+          onClose={vi.fn()}
+          onSaved={vi.fn()}
+        />,
+      );
+      fireEvent.change(screen.getByRole("textbox", { name: field }), {
+        target: { value: "31/02/2026" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "save" }));
+      await waitFor(() => expect(screen.getAllByText("validation_date").length).toBeGreaterThan(0));
+      expect(mocks.updateSubscription).not.toHaveBeenCalled();
+    },
+  );
   it("infers the tracking start from the chosen next payment and billing period", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-10-18T12:00:00Z"));

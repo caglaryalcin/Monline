@@ -108,6 +108,11 @@ function importStatement(app, owner, statement, body, now = new Date()) {
       tx.findRecordsByFilter(name, "user = {:owner}", "", 0, 0, { owner });
     const subscriptions = owned("subscriptions");
     const currencies = owned("currencies");
+    const household = owned("household");
+    const defaultPayer =
+      household.find((member) => member.getBool("is_main"))?.id ||
+      household[0]?.id ||
+      "";
     const relationIds = {
       category: new Set(owned("categories").map((record) => record.id)),
       payment_method: new Set(
@@ -322,6 +327,7 @@ function importStatement(app, owner, statement, body, now = new Date()) {
             notify: false,
             category: group.category ?? "",
             payment_method: group.payment_method ?? "",
+            payer: defaultPayer,
           }))
             subscription.set(key, value);
           tx.save(subscription);
@@ -441,6 +447,10 @@ function importStatement(app, owner, statement, body, now = new Date()) {
       }
       if (subscription) {
         let changed = false;
+        if (!subscription.getString("payer") && defaultPayer) {
+          subscription.set("payer", defaultPayer);
+          changed = true;
+        }
         for (const field of Object.keys(relationIds)) {
           if (
             group[field] !== undefined &&

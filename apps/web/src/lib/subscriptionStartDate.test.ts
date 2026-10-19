@@ -1,4 +1,15 @@
-import { automaticStartDate } from "./subscriptionStartDate";
+import { automaticStartDate, nextPaymentDate } from "./subscriptionStartDate";
+
+it.each([
+  ["2026-10-19", "Monthly", 1, "2026-11-19"],
+  ["2026-01-31", "Monthly", 1, "2026-02-28"],
+  ["2024-02-29", "Yearly", 1, "2025-02-28"],
+  ["2026-10-19", "Yearly", 2, "2028-10-19"],
+  ["2026-12-31", "Weekly", 2, "2027-01-14"],
+  ["2026-12-31", "Daily", 1, "2027-01-01"],
+])("advances a paid %s %s x%s charge by exactly one period", (date, cycle, frequency, expected) => {
+  expect(nextPaymentDate(date, cycle, frequency)).toBe(expected);
+});
 
 describe("automatic tracking start", () => {
   it.each([

@@ -187,7 +187,7 @@ export function SubscriptionCard({
     shouldConvert ||
     (showMonthly && !credit && (cycleName !== "Monthly" || (sub.frequency || 1) !== 1));
   const originalPriceDetails = showOriginalPrice ? (
-    <p className="mt-1 text-xs tabular-nums text-muted-foreground">
+    <p className="mt-1 truncate text-xs tabular-nums text-muted-foreground">
       {formatPrice(sub.price, currency?.symbol ?? symbol, { currencyCode: currency?.code })}
       {" / "}
       {credit ? t("one_time") : periodLabel}
@@ -372,7 +372,6 @@ export function SubscriptionCard({
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider whitespace-nowrap">
               {credit ? t("one_time") : showMonthly ? t("monthly") : periodLabel}
             </p>
-            {originalPriceDetails}
           </div>
           {statusToggle && <div className="shrink-0 pt-0.5">{statusToggle}</div>}
         </div>
@@ -437,11 +436,14 @@ export function SubscriptionCard({
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-5">
         <div className="flex min-w-0 basis-24 flex-1 items-center gap-2 text-xs text-muted-foreground">
           {paymentMethod && <PaymentMethodIcon method={paymentMethod} />}
-          {payer && (
-            <span className="truncate font-medium text-foreground/80">
-              {t("pays")} {payer.name}
-            </span>
-          )}
+          <div className="min-w-0">
+            {payer && (
+              <span className="block truncate font-medium text-foreground/80">
+                {t("pays")} {payer.name}
+              </span>
+            )}
+            {originalPriceDetails}
+          </div>
         </div>
 
         <SubscriptionActions

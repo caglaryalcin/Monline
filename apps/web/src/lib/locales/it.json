@@ -1,4 +1,9 @@
 {
+  "payment_status": "Stato del pagamento",
+  "payment_to_pay": "Da pagare",
+  "payment_date_future": "La data del pagamento deve essere oggi o precedente.",
+  "subscription_paid_date_hint": "Viene registrato solo questo pagamento. Prossimo pagamento: {{date}}.",
+  "validation_date": "Inserisci una data valida nel formato GG/MM/AAAA.",
   "main_payment_method": "Metodo di pagamento principale",
   "set_as_main_payment_method": "Imposta come metodo di pagamento principale",
   "app_name": "Monline",

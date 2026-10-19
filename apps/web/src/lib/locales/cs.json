@@ -1,4 +1,9 @@
 {
+  "payment_status": "Stav platby",
+  "payment_to_pay": "K zaplacení",
+  "payment_date_future": "Datum úhrady musí být dnes nebo dříve.",
+  "subscription_paid_date_hint": "Zaznamená se pouze tato platba. Další platba: {{date}}.",
+  "validation_date": "Zadejte platné datum ve formátu DD/MM/RRRR.",
   "main_payment_method": "Hlavní platební metoda",
   "set_as_main_payment_method": "Nastavit jako hlavní platební metodu",
   "app_name": "Monline",

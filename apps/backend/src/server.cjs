@@ -204,7 +204,7 @@ function seed(repository) {
         repository.findCollectionByNameOrId("admin_settings"),
       );
       settings.set("open_registrations", false);
-      settings.set("latest_version", "1.0.4");
+      settings.set("latest_version", "1.0.5");
       settings.set("smtp_port", 587);
       repository.save(settings);
     }

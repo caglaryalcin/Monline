@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ThemedSelect } from "@/components/ui/themed-select";
+import { isValidISODate } from "@/lib/dateInput";
 import { queryKeys } from "@/lib/queryKeys";
 import { isExpense } from "@/lib/recordTypes";
 import { toast } from "@/lib/toast";
@@ -120,6 +122,14 @@ export function HistoricalPaymentDialog({
             setError(null);
             if (duplicate) return;
             if (
+              [paidDate, dueDate].some(
+                (date) => !isValidISODate(date) || date < range.min || date > range.max,
+              )
+            ) {
+              setError(t("historical_invalid_date"));
+              return;
+            }
+            if (
               !subscription ||
               !amount.trim() ||
               !Number.isFinite(Number(amount)) ||
@@ -175,31 +185,31 @@ export function HistoricalPaymentDialog({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="historical-paid-date">{t("historical_paid_date")}</Label>
-                <Input
+                <DatePicker
                   id="historical-paid-date"
-                  type="date"
+                  label={t("historical_paid_date")}
                   required
                   min={range.min}
                   max={range.max}
                   value={paidDate}
-                  onChange={(event) => {
-                    if (dueDate === paidDate) setDueDate(event.target.value);
-                    setPaidDate(event.target.value);
+                  onChange={(value) => {
+                    if (dueDate === paidDate) setDueDate(value);
+                    setPaidDate(value);
                     setError(null);
                   }}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="historical-due-date">{t("historical_due_date")}</Label>
-                <Input
+                <DatePicker
                   id="historical-due-date"
-                  type="date"
+                  label={t("historical_due_date")}
                   required
                   min={range.min}
                   max={range.max}
                   value={dueDate}
-                  onChange={(event) => {
-                    setDueDate(event.target.value);
+                  onChange={(value) => {
+                    setDueDate(value);
                     setError(null);
                   }}
                 />

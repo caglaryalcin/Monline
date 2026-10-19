@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { localToday } from "@/lib/backfillPayments";
 import { findBillingPreset } from "@/lib/billingPeriods";
+import { isValidISODate } from "@/lib/dateInput";
 import { queryKeys } from "@/lib/queryKeys";
 import { nextStatementPaymentDate } from "@/lib/statementPaymentDate";
 import { cyclesService } from "@/services/cycles";
@@ -25,6 +26,7 @@ const _schemaShape = z.object({
   cycle: z.string(),
   billing_preset: z.string(),
   next_payment: z.string(),
+  payment_status: z.enum(["unpaid", "paid"]),
   start_date: z.string(),
   payment_method: z.string(),
   payer: z.string(),
@@ -92,7 +94,11 @@ export function useSubscriptionForm({
       cycle: z.string().min(1, t("required")),
       // UI-only: which preset drives cycle/frequency, or "custom". Never sent.
       billing_preset: z.string(),
-      next_payment: z.string().min(1, t("required")),
+      payment_status: z.enum(["unpaid", "paid"]),
+      next_payment: z
+        .string()
+        .min(1, t("required"))
+        .refine((date) => !date || isValidISODate(date), t("validation_date")),
       // Stored for compatibility when editing; new tracking dates are inferred.
       start_date: z.string(),
       payment_method: z.string(),
@@ -109,14 +115,23 @@ export function useSubscriptionForm({
       notify_days_before: z.string(),
       inactive: z.boolean(),
       auto_mark_paid: z.boolean(),
-      cancellation_date: z.string(),
+      cancellation_date: z
+        .string()
+        .refine((date) => !date || isValidISODate(date), t("validation_date")),
       end_mode: z.enum(["never", "date", "payments"]),
-      end_date: z.string(),
+      end_date: z.string().refine((date) => !date || isValidISODate(date), t("validation_date")),
       payment_limit: z.string(),
       payments_completed: z.string(),
     })
     .superRefine((values, context) => {
       if (values.record_type === "credit") return;
+      if (!sub && values.payment_status === "paid" && values.next_payment > localToday()) {
+        context.addIssue({
+          code: "custom",
+          path: ["next_payment"],
+          message: t("payment_date_future"),
+        });
+      }
 
       if (values.notify) {
         const days = Number(values.notify_days_before);
@@ -197,6 +212,7 @@ export function useSubscriptionForm({
       cycle: "",
       billing_preset: "monthly",
       next_payment: nextMonthDate(),
+      payment_status: "unpaid",
       start_date: new Date().toISOString().split("T")[0],
       payment_method: "",
       payer: "",
@@ -220,6 +236,7 @@ export function useSubscriptionForm({
 
   // ── Pre-fill / reset form when sub or dependencies change ─────────────────
   useEffect(() => {
+    const defaultPayer = household.find((member) => member.is_main)?.id || household[0]?.id || "";
     if (sub) {
       reset({
         record_type: sub.record_type === "credit" ? "credit" : "expense",
@@ -233,9 +250,10 @@ export function useSubscriptionForm({
           sub.frequency,
         ),
         next_payment: toDateOnly(sub.next_payment),
+        payment_status: "unpaid",
         start_date: toDateOnly(sub.start_date) || new Date().toISOString().split("T")[0],
         payment_method: sub.payment_method || "",
-        payer: sub.payer || "",
+        payer: household.some((member) => member.id === sub.payer) ? sub.payer : defaultPayer,
         category: sub.category || "",
         notes: sub.notes || "",
         url: sub.url || "",
@@ -262,9 +280,10 @@ export function useSubscriptionForm({
         cycle: monthCycle?.id || cycles[0]?.id || "",
         billing_preset: monthCycle ? "monthly" : "custom",
         next_payment: nextMonthDate(),
+        payment_status: "unpaid",
         start_date: new Date().toISOString().split("T")[0],
         payment_method: paymentMethods?.find((method) => method.is_main)?.id || "",
-        payer: household.find((member) => member.is_main)?.id || household[0]?.id || "",
+        payer: defaultPayer,
         category: "",
         notes: "",
         url: "",

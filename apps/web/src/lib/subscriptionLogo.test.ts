@@ -1,6 +1,18 @@
 import { automaticLogoUrls } from "./subscriptionLogo";
 
 describe("automatic subscription icons", () => {
+  it.each(["Google Workspace", "Google Workspace Business Standard", "G Suite", "GSuite"])(
+    "uses the bundled Workspace logo for %s",
+    (name) => {
+      expect(automaticLogoUrls({ name, url: "" })[0]).toBe("/assets/logos/google-workspace.png");
+    },
+  );
+  it("keeps the Workspace override separate from other Google services", () => {
+    for (const name of ["Google", "Google One", "Google Drive"])
+      expect(automaticLogoUrls({ name, url: "" })).not.toContain(
+        "/assets/logos/google-workspace.png",
+      );
+  });
   it("sends only the public hostname, excluding credentials, paths and queries", () => {
     expect(
       automaticLogoUrls({

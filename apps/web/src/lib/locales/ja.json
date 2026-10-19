@@ -1,4 +1,9 @@
 {
+  "payment_status": "支払い状況",
+  "payment_to_pay": "支払い予定",
+  "payment_date_future": "支払日は今日以前の日付にしてください。",
+  "subscription_paid_date_hint": "この支払いのみが記録されます。次回の支払日: {{date}}。",
+  "validation_date": "DD/MM/YYYY（日/月/年）形式で有効な日付を入力してください。",
   "main_payment_method": "既定の支払い方法",
   "set_as_main_payment_method": "既定の支払い方法に設定",
   "app_name": "Monline",

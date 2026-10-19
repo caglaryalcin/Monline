@@ -114,7 +114,12 @@ const SERVICES: [string, string, string?, string?][] = [
   ["google.com", "Google"],
   ["one.google.com", "Google One|Google Storage", "google"],
   ["drive.google.com", "Google Drive", "googledrive"],
-  ["workspace.google.com", "Google Workspace|G Suite|GSuite", "google"],
+  [
+    "workspace.google.com",
+    "Google Workspace|G Suite|GSuite",
+    "googleworkspace",
+    "/assets/logos/google-workspace.png",
+  ],
   ["play.google.com", "Google Play|Google Play Pass", "googleplay"],
   ["apple.com", "Apple|Apple One", "apple"],
   ["music.apple.com", "Apple Music", "applemusic"],

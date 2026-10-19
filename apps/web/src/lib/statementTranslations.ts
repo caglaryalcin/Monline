@@ -1,6 +1,8 @@
 // The rest of the interface falls back to English for languages without these keys.
 export const statementTranslations = {
   tr: {
+    statement_import_add_category: "Kategori ekle",
+    statement_import_category_name: "Kategori adı",
     statement_import_prepare_note:
       "İçe aktarmadan önce <categories>kategorilerinizi</categories> ve <paymentMethods>ödeme yöntemlerinizi</paymentMethods> düzenlemenizi tavsiye ederiz.",
     statement_import_title: "Aboneliklere ve takvime aktar",
@@ -159,6 +161,8 @@ export const statementTranslations = {
       "Ödeme dönemine göre eksik tarihler oluşturulur. Tutarlar son seçili ekstre ödemesinden alınır; her tutarı kontrol edip değiştirebilir veya tarihi çıkarabilirsin. Onayladığın ödemeler ödendi olarak eklenir. Ekstredeki ve daha önce ödenmiş tarihler tekrar eklenmez.",
   },
   en: {
+    statement_import_add_category: "Add category",
+    statement_import_category_name: "Category name",
     statement_import_prepare_note:
       "We recommend organizing your <categories>categories</categories> and <paymentMethods>payment methods</paymentMethods> before importing.",
     statement_import_title: "Import into subscriptions and calendar",
@@ -322,6 +326,8 @@ export const statementTranslations = {
       "Missing dates follow the billing cycle. Amounts start from the latest selected statement charge; review, edit or exclude each one. Confirmed entries are marked paid. Statement dates and previously paid dates are not added again.",
   },
   de: {
+    statement_import_add_category: "Kategorie hinzufügen",
+    statement_import_category_name: "Kategoriename",
     statement_import_prepare_note:
       "Wir empfehlen, vor dem Import deine <categories>Kategorien</categories> und <paymentMethods>Zahlungsmethoden</paymentMethods> einzurichten.",
     statement_import_title: "In Abos und Kalender übernehmen",

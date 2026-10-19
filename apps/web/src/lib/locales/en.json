@@ -1,4 +1,9 @@
 {
+  "payment_status": "Payment status",
+  "payment_to_pay": "To be paid",
+  "payment_date_future": "The paid date must be today or earlier.",
+  "subscription_paid_date_hint": "Only this payment is recorded. Next payment: {{date}}.",
+  "validation_date": "Enter a valid date in DD/MM/YYYY format.",
   "billing_days_remaining": "{{count}} days left",
   "billing_days_remaining_one": "{{count}} day left",
   "billing_days_remaining_other": "{{count}} days left",

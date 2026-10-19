@@ -1,4 +1,9 @@
 {
+  "payment_status": "Zahlungsstatus",
+  "payment_to_pay": "Zu zahlen",
+  "payment_date_future": "Das Zahlungsdatum muss heute oder früher sein.",
+  "subscription_paid_date_hint": "Nur diese Zahlung wird erfasst. Nächste Zahlung: {{date}}.",
+  "validation_date": "Gib ein gültiges Datum im Format TT/MM/JJJJ ein.",
   "main_payment_method": "Hauptzahlungsmethode",
   "set_as_main_payment_method": "Als Hauptzahlungsmethode festlegen",
   "statement_import_one_off": "YouTube Superchat ist eine einmalige Ausgabe. Sie bleibt im Kontoauszug und wird nicht in Abonnements oder den Kalender übernommen.",

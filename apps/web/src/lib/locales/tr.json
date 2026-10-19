@@ -1,4 +1,9 @@
 {
+  "payment_status": "Ödeme durumu",
+  "payment_to_pay": "Ödenecek",
+  "payment_date_future": "Ödenen tarih bugün veya daha önce olmalıdır.",
+  "subscription_paid_date_hint": "Yalnızca bu ödeme kaydedilir. Sonraki ödeme: {{date}}.",
+  "validation_date": "GG/AA/YYYY biçiminde geçerli bir tarih girin.",
   "billing_days_remaining": "{{count}} gün kaldı",
   "billing_days_overdue": "{{count}} gün gecikti",
   "billing_progress_hint": "Bar soldan sağa dolar; doldukça ödeme günü yaklaşır.",

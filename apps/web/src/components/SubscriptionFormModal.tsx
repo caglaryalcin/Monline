@@ -29,7 +29,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLogoSearch } from "@/hooks/useLogoSearch";
 import type { SubscriptionFormValues } from "@/hooks/useSubscriptionForm";
 import { useSubscriptionForm } from "@/hooks/useSubscriptionForm";
-import type { BackfillSelection } from "@/lib/backfillPayments";
+import { type BackfillSelection,localToday } from "@/lib/backfillPayments";
 import {
   availableBillingPresets,
   CUSTOM_BILLING_PRESET,
@@ -37,9 +37,10 @@ import {
   formatBillingPeriod,
 } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
+import { displayDateInput } from "@/lib/dateInput";
 import { compressImage } from "@/lib/image";
 import { ONE_TIME_CYCLE } from "@/lib/recordTypes";
-import { automaticStartDate } from "@/lib/subscriptionStartDate";
+import { automaticStartDate, nextPaymentDate } from "@/lib/subscriptionStartDate";
 import { toast } from "@/lib/toast";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Category, Currency, Household, PaymentMethod, Subscription } from "@/types";
@@ -95,6 +96,8 @@ export function SubscriptionFormModal({
   // New subscriptions are always expenses. Preserve the type of legacy income
   // records when editing so an unrelated change never converts their history.
   const isCredit = sub?.record_type === "credit";
+  const isPaid = !sub && !isCredit && watch("payment_status") === "paid";
+  const dateLabel = t(isCredit ? "received_on" : isPaid ? "historical_paid_date" : "next_payment");
   const isFiniteSchedule = !isCredit && watchedEndMode !== "never";
   const oneTimeCycle = cycles.find((cycle) => cycle.name === ONE_TIME_CYCLE);
   const recurringCycles = cycles.filter((cycle) => cycle.name !== ONE_TIME_CYCLE);
@@ -133,7 +136,7 @@ export function SubscriptionFormModal({
   // ── Submit ─────────────────────────────────────────────────────────────────
   const onSubmit = async (data: SubscriptionFormValues) => {
     try {
-      if (backfill.enabled && !backfill.valid) {
+      if (!isPaid && backfill.enabled && !backfill.valid) {
         toast.error(t("backfill_confirm_required"));
         return;
       }
@@ -179,7 +182,18 @@ export function SubscriptionFormModal({
         payments_completed:
           isCredit || data.end_mode === "never" ? 0 : parseInt(data.payments_completed) || 0,
         user: userId,
-        ...(!isCredit && !sub?.statement_imported && backfill.input
+        ...(isPaid
+          ? {
+              initial_payment: {
+                date: data.next_payment,
+                utc_offset_minutes: new Date().getTimezoneOffset(),
+                paid_utc_offset_minutes: new Date(
+                  `${data.next_payment}T00:00:00`,
+                ).getTimezoneOffset(),
+              },
+            }
+          : {}),
+        ...(!isPaid && !isCredit && !sub?.statement_imported && backfill.input
           ? { historical_payments: backfill.input }
           : {}),
       };
@@ -219,7 +233,12 @@ export function SubscriptionFormModal({
         const formData = new FormData();
         Object.entries(body).forEach(([k, v]) => {
           if (v !== null && v !== undefined)
-            formData.append(k, k === "historical_payments" ? JSON.stringify(v) : String(v));
+            formData.append(
+              k,
+              ["historical_payments", "initial_payment"].includes(k)
+                ? JSON.stringify(v)
+                : String(v),
+            );
         });
         formData.append("logo", logoToUpload);
         if (sub) {
@@ -430,25 +449,69 @@ export function SubscriptionFormModal({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="subscription-next_payment">
-              {t(isCredit ? "received_on" : "next_payment")}
-            </Label>
-            <Controller
-              name="next_payment"
-              control={control}
-              render={({ field }) => (
-                <DatePicker
-                  {...field}
-                  id="subscription-next_payment"
-                  label={t(isCredit ? "received_on" : "next_payment")}
-                  {...invalidProps("next_payment")}
-                />
+            <div className={!sub && !isCredit ? "grid grid-cols-1 gap-3 sm:grid-cols-2" : ""}>
+              {!sub && !isCredit && (
+                <div className="space-y-2">
+                  <Label htmlFor="subscription-payment-status">{t("payment_status")}</Label>
+                  <Controller
+                    name="payment_status"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={(status: "paid" | "unpaid") => {
+                          field.onChange(status);
+                          setBackfill({ enabled: false, valid: true, input: null });
+                          if (status === "paid" && watch("next_payment") > localToday())
+                            setValue("next_payment", localToday(), {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                        }}
+                      >
+                        <SelectTrigger id="subscription-payment-status">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unpaid">{t("payment_to_pay")}</SelectItem>
+                          <SelectItem value="paid">{t("paid")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
               )}
-            />
-            {renderError("next_payment")}
+              <div className="space-y-2">
+                <Label htmlFor="subscription-next_payment">{dateLabel}</Label>
+                <Controller
+                  name="next_payment"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      {...field}
+                      id="subscription-next_payment"
+                      label={dateLabel}
+                      max={isPaid ? localToday() : undefined}
+                      {...invalidProps("next_payment")}
+                    />
+                  )}
+                />
+                {renderError("next_payment")}
+              </div>
+            </div>
             {!sub && !isCredit && (
               <p className="text-xs leading-relaxed text-muted-foreground">
-                {t("subscription_schedule_auto_hint")}
+                {isPaid
+                  ? t("subscription_paid_date_hint", {
+                      date: displayDateInput(
+                        nextPaymentDate(
+                          watch("next_payment"),
+                          watchedCycleName || "Monthly",
+                          watchedFrequency,
+                        ),
+                      ),
+                    })
+                  : t("subscription_schedule_auto_hint")}
               </p>
             )}
           </div>
@@ -563,14 +626,14 @@ export function SubscriptionFormModal({
               )}
             </div>
             <div className="space-y-2">
-              <Label>{t("payer")}</Label>
+              <Label htmlFor="subscription-payer">{t("payer")}</Label>
               <Controller
                 name="payer"
                 control={control}
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("optional")} />
+                    <SelectTrigger id="subscription-payer">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       {household.map((h) => (
@@ -713,7 +776,7 @@ export function SubscriptionFormModal({
             </div>
           )}
 
-          {!sub && !isCredit && (
+          {!sub && !isCredit && !isPaid && (
             <BackfillPaymentsEditor
               start={automaticStartDate(
                 watch("next_payment"),
@@ -742,8 +805,13 @@ export function SubscriptionFormModal({
             <Button type="button" variant="outline" onClick={onClose}>
               {t("cancel")}
             </Button>
-            <Button type="submit" disabled={isSubmitting || (backfill.enabled && !backfill.valid)}>
-              {isSubmitting ? t("loading") : t(backfill.enabled ? "backfill_save" : "save")}
+            <Button
+              type="submit"
+              disabled={isSubmitting || (!isPaid && backfill.enabled && !backfill.valid)}
+            >
+              {isSubmitting
+                ? t("loading")
+                : t(!isPaid && backfill.enabled ? "backfill_save" : "save")}
             </Button>
           </DialogFooter>
         </form>

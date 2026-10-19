@@ -1,4 +1,9 @@
 {
+  "payment_status": "Betaalstatus",
+  "payment_to_pay": "Te betalen",
+  "payment_date_future": "De betaaldatum moet vandaag of eerder zijn.",
+  "subscription_paid_date_hint": "Alleen deze betaling wordt vastgelegd. Volgende betaling: {{date}}.",
+  "validation_date": "Voer een geldige datum in de notatie DD/MM/JJJJ in.",
   "main_payment_method": "Standaardbetaalmethode",
   "set_as_main_payment_method": "Instellen als standaardbetaalmethode",
   "app_name": "Monline",

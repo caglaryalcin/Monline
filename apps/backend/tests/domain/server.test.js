@@ -927,6 +927,123 @@ it("imports statement payments older than one year with original dates and amoun
   });
 });
 
+it("assigns the account's main payer on statement import, preserves assigned payers and fills legacy blanks", async () => {
+  const createPerson = async (name, is_main) => {
+    const response = await request("/api/data/household", {
+      token: owner.token,
+      method: "POST",
+      body: { name, is_main },
+    });
+    expect(response.status).toBe(201);
+    return response.data.id;
+  };
+  const mainPayer = await createPerson("Default statement payer", true);
+  const anotherPayer = await createPerson("Another statement payer", false);
+  const date = new Date().toISOString().slice(0, 10);
+  const name = "Statement payer test";
+  const statement = await request("/api/statements", {
+    token: owner.token,
+    method: "POST",
+    body: {
+      bank: "enpara",
+      file_name: "payer.pdf",
+      file_hash: require("node:crypto")
+        .createHash("sha256")
+        .update("statement-payer-test")
+        .digest("hex"),
+      period: date.slice(0, 7),
+      page_count: 1,
+      transactions: [
+        {
+          id: "payer-row",
+          date,
+          amount: 15,
+          currency: "EUR",
+          kind: "charge",
+          page: 1,
+          installment: "",
+          merchant: name,
+          subscription_service: name,
+          subscription_match: "manual",
+        },
+      ],
+    },
+  });
+  expect(statement.status).toBe(201);
+  const endpoint = `/api/statements/${statement.data.id}/import`;
+  const body = {
+    utc_offset_minutes: 0,
+    groups: [
+      {
+        transaction_ids: ["payer-row"],
+        category: category.id,
+        new_subscription: {
+          name,
+          cycle: cycle.id,
+          frequency: 1,
+          active: false,
+        },
+      },
+    ],
+  };
+  const first = await request(endpoint, {
+    token: owner.token,
+    method: "POST",
+    body,
+  });
+  expect(first.status).toBe(200);
+  const imported = (
+    await request("/api/data/subscriptions", { token: owner.token })
+  ).data.items.find((sub) => sub.name === name);
+  expect(imported.payer).toBe(mainPayer);
+  expect(
+    (
+      await request(`/api/data/household/${anotherPayer}`, {
+        token: owner.token,
+        method: "PATCH",
+        body: { is_main: true },
+      })
+    ).status,
+  ).toBe(200);
+  const repeated = await request(endpoint, {
+    token: owner.token,
+    method: "POST",
+    body,
+  });
+  expect(repeated.status).toBe(200);
+  expect(repeated.data).toMatchObject({
+    payments_imported: 0,
+    payments_skipped: 1,
+  });
+  expect(
+    (
+      await request(`/api/data/subscriptions/${imported.id}`, {
+        token: owner.token,
+      })
+    ).data.payer,
+  ).toBe(mainPayer);
+  expect(
+    (
+      await request(`/api/data/subscriptions/${imported.id}`, {
+        token: owner.token,
+        method: "PATCH",
+        body: { payer: "" },
+      })
+    ).status,
+  ).toBe(200);
+  expect(
+    (await request(endpoint, { token: owner.token, method: "POST", body }))
+      .status,
+  ).toBe(200);
+  expect(
+    (
+      await request(`/api/data/subscriptions/${imported.id}`, {
+        token: owner.token,
+      })
+    ).data.payer,
+  ).toBe(anotherPayer);
+});
+
 it.each([false, true])(
   "imports reviewed statement history independently of active status (%s)",
   async (active) => {
@@ -1343,6 +1460,166 @@ it("rolls back the subscription and all past payments if a later payment cannot 
     db.close();
   }
 });
+it.each([false, true])(
+  "saves a single paid initial charge atomically, clamps month end and preserves zero (multipart: %s)",
+  async (multipart) => {
+    const data = {
+      name: "Paid initial charge",
+      price: multipart ? 0 : 123.45,
+      frequency: 1,
+      currency: currency.id,
+      category: category.id,
+      cycle: cycle.id,
+      next_payment: "2026-01-31",
+      auto_renew: true,
+      initial_payment: {
+        date: "2026-01-31",
+        utc_offset_minutes: -180,
+        paid_utc_offset_minutes: -180,
+      },
+    };
+    let body = data;
+    if (multipart) {
+      body = new FormData();
+      for (const [key, value] of Object.entries(data))
+        body.set(
+          key,
+          key === "initial_payment" ? JSON.stringify(value) : String(value),
+        );
+    }
+    const result = await request("/api/data/subscriptions", {
+      token: owner.token,
+      method: "POST",
+      body,
+    });
+    expect(result.status).toBe(201);
+    const id = result.data.id;
+    try {
+      expect(result.data).toMatchObject({
+        start_date: "2026-01-31",
+        next_payment: "2026-02-28",
+      });
+      const payments = (
+        await request("/api/data/payment_records", { token: owner.token })
+      ).data.items.filter((payment) => payment.subscription_id === id);
+      expect(payments).toHaveLength(1);
+      expect(payments[0]).toMatchObject({
+        due_date: "2026-01-31",
+        amount: data.price,
+        paid_at: "2026-01-30T21:00:00.000Z",
+        auto_paid: false,
+      });
+      const edit = await request(`/api/data/subscriptions/${id}`, {
+        token: owner.token,
+        method: "PATCH",
+        body: { initial_payment: data.initial_payment },
+      });
+      expect(edit.status).toBe(400);
+      const foreign = await request(`/api/data/subscriptions/${id}`, {
+        token: other.token,
+        method: "PATCH",
+        body: { initial_payment: data.initial_payment },
+      });
+      expect([403, 404]).toContain(foreign.status);
+    } finally {
+      await request(`/api/data/subscriptions/${id}`, {
+        token: owner.token,
+        method: "DELETE",
+      });
+    }
+  },
+);
+
+it("rejects future, impossible and mixed initial payments without creating a subscription", async () => {
+  const before = (
+    await request("/api/data/subscriptions", { token: owner.token })
+  ).data.totalItems;
+  for (const initial of [
+    { date: "9999-01-01", utc_offset_minutes: 0, paid_utc_offset_minutes: 0 },
+    { date: "2026-02-30", utc_offset_minutes: 0, paid_utc_offset_minutes: 0 },
+    {
+      date: "2026-01-31",
+      utc_offset_minutes: 9999,
+      paid_utc_offset_minutes: 0,
+    },
+    null,
+  ]) {
+    const result = await request("/api/data/subscriptions", {
+      token: owner.token,
+      method: "POST",
+      body: {
+        name: "Invalid initial charge",
+        price: 15,
+        frequency: 1,
+        currency: currency.id,
+        category: category.id,
+        cycle: cycle.id,
+        next_payment: "2026-01-31",
+        initial_payment: initial,
+      },
+    });
+    expect(result.status).toBe(400);
+  }
+  const mixed = await request("/api/data/subscriptions", {
+    token: owner.token,
+    method: "POST",
+    body: {
+      name: "Mixed initial charge",
+      price: 15,
+      frequency: 1,
+      currency: currency.id,
+      category: category.id,
+      cycle: cycle.id,
+      next_payment: "2026-01-31",
+      initial_payment: {},
+      historical_payments: {},
+    },
+  });
+  expect(mixed.status).toBe(400);
+  expect(
+    (await request("/api/data/subscriptions", { token: owner.token })).data
+      .totalItems,
+  ).toBe(before);
+});
+
+it("rolls back a new subscription if its initial paid charge cannot be saved", async () => {
+  const { DatabaseSync } = require("node:sqlite");
+  const db = new DatabaseSync(path.join(directory, "monline.db"));
+  const counts = () => [
+    db.prepare("SELECT count(*) AS n FROM subscriptions").get().n,
+    db.prepare("SELECT count(*) AS n FROM payment_records").get().n,
+  ];
+  const before = counts();
+  db.exec(
+    "CREATE TRIGGER reject_initial_test BEFORE INSERT ON payment_records WHEN NEW.amount = 12345.67 BEGIN SELECT RAISE(ABORT, 'test payment failure'); END",
+  );
+  try {
+    const result = await request("/api/data/subscriptions", {
+      token: owner.token,
+      method: "POST",
+      body: {
+        name: "Atomic initial charge",
+        price: 12345.67,
+        frequency: 1,
+        currency: currency.id,
+        category: category.id,
+        cycle: cycle.id,
+        next_payment: "2026-01-31",
+        initial_payment: {
+          date: "2026-01-31",
+          utc_offset_minutes: 0,
+          paid_utc_offset_minutes: 0,
+        },
+      },
+    });
+    expect(result.status).toBe(500);
+    expect(counts()).toEqual(before);
+  } finally {
+    db.exec("DROP TRIGGER reject_initial_test");
+    db.close();
+  }
+});
+
 it("keeps the monthly calendar data and iCal feed available", async () => {
   const monthly = await request("/api/calendar/data?year=2026&month=10", {
     token: owner.token,

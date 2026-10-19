@@ -1,4 +1,9 @@
 {
+  "payment_status": "Статус платежу",
+  "payment_to_pay": "До сплати",
+  "payment_date_future": "Дата оплати має бути сьогодні або раніше.",
+  "subscription_paid_date_hint": "Буде записано лише цей платіж. Наступний платіж: {{date}}.",
+  "validation_date": "Введіть коректну дату у форматі ДД/ММ/РРРР.",
   "main_payment_method": "Основний спосіб оплати",
   "set_as_main_payment_method": "Зробити основним способом оплати",
   "app_name": "Monline",

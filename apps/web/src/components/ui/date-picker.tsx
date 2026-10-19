@@ -1,6 +1,6 @@
 import { format, isValid, parseISO } from "date-fns";
 import { CalendarDays } from "lucide-react";
-import { forwardRef, useState } from "react";
+import { forwardRef, useId, useState } from "react";
 import { DayPicker, type DropdownProps } from "react-day-picker";
 import {
   cs,
@@ -23,9 +23,10 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ThemedSelect } from "@/components/ui/themed-select";
-import { cn } from "@/lib/utils";
+import { displayDateInput, isValidISODate, parseDateInput } from "@/lib/dateInput";
 
 const locales = {
   en: enUS,
@@ -96,21 +97,30 @@ interface DatePickerProps {
   id?: string;
   label: string;
   disabled?: boolean;
+  required?: boolean;
+  min?: string;
+  max?: string;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 }
 
 /** Stores a local ISO date; calendar language follows the application, not the browser. */
-export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(function DatePicker(
-  { value, onChange, onBlur, label, name, id, disabled, ...props },
+export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function DatePicker(
+  { value, onChange, onBlur, label, name, id, disabled, required, min, max, ...props },
   ref,
 ) {
   const { t, i18n } = useTranslation();
   const language = (i18n?.resolvedLanguage ?? i18n?.language ?? "en").split(/[-_]/)[0];
   const locale = locales[language as keyof typeof locales] ?? enUS;
-  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseISO(value) : undefined;
+  const parsed = isValidISODate(value) ? parseISO(value) : undefined;
   const selected = parsed && isValid(parsed) ? parsed : undefined;
+  const minimum = min && isValidISODate(min) ? parseISO(min) : undefined;
+  const maximum = max && isValidISODate(max) ? parseISO(max) : undefined;
+  const today = format(new Date(), "yyyy-MM-dd");
   const [open, setOpen] = useState(false);
+  const errorId = useId();
+  const invalid = !!value && !selected;
+  const showError = invalid && !props["aria-describedby"];
   const select = (date: Date | undefined) => {
     onChange(date ? format(date, "yyyy-MM-dd") : "");
     onBlur?.();
@@ -125,24 +135,56 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(functio
       }}
     >
       <input type="hidden" name={name} value={value} />
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          id={id}
-          ref={ref}
-          disabled={disabled}
-          onBlur={onBlur}
-          aria-label={`${label}: ${selected ? format(selected, "dd/MM/yyyy") : "—"}`}
-          {...props}
-          className={cn(
-            "flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-left text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-            "aria-[invalid=true]:border-destructive aria-[invalid=true]:bg-destructive/5 aria-[invalid=true]:focus-visible:ring-destructive",
-          )}
-        >
-          <span>{selected ? format(selected, "dd/MM/yyyy") : "—"}</span>
-          <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
-        </button>
-      </PopoverTrigger>
+      <div className="space-y-1">
+        <PopoverAnchor asChild>
+          <div className="relative">
+            <Input
+              ref={ref}
+              id={id}
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={10}
+              value={displayDateInput(value)}
+              placeholder={language === "tr" ? "GG/AA/YYYY" : "DD/MM/YYYY"}
+              aria-label={label}
+              {...props}
+              aria-invalid={invalid || props["aria-invalid"]}
+              aria-describedby={
+                [props["aria-describedby"], showError ? errorId : undefined]
+                  .filter(Boolean)
+                  .join(" ") || undefined
+              }
+              disabled={disabled}
+              required={required}
+              className="pr-10 tabular-nums"
+              onChange={(event) => onChange(parseDateInput(event.target.value))}
+              onBlur={onBlur}
+              onKeyDown={(event) => {
+                if (event.key === "ArrowDown" && event.altKey) {
+                  event.preventDefault();
+                  setOpen(true);
+                }
+              }}
+            />
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                disabled={disabled}
+                aria-label={`${label}: ${selected ? format(selected, "dd/MM/yyyy") : "—"}`}
+                className="absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-r-md text-muted-foreground focus-visible:outline focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <CalendarDays className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </PopoverTrigger>
+          </div>
+        </PopoverAnchor>
+        {showError && (
+          <p id={errorId} role="alert" className="text-xs text-destructive">
+            {t("validation_date")}
+          </p>
+        )}
+      </div>
       <PopoverContent
         className="w-[min(20rem,calc(100vw-2rem))] p-0 shadow-none"
         aria-label={label}
@@ -156,8 +198,12 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(functio
           autoFocus
           showOutsideDays
           captionLayout="dropdown"
-          startMonth={new Date(1900, 0)}
-          endMonth={new Date(new Date().getFullYear() + 100, 11)}
+          startMonth={minimum ?? new Date(1900, 0)}
+          endMonth={maximum ?? new Date(new Date().getFullYear() + 100, 11)}
+          disabled={[
+            ...(minimum ? [{ before: minimum }] : []),
+            ...(maximum ? [{ after: maximum }] : []),
+          ]}
           components={{ Dropdown: CalendarDropdown }}
           classNames={{
             root: "relative p-3",
@@ -188,7 +234,13 @@ export const DatePicker = forwardRef<HTMLButtonElement, DatePickerProps>(functio
           <Button type="button" variant="ghost" size="sm" onClick={() => select(undefined)}>
             {clearLabels[language] ?? clearLabels.en}
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={() => select(new Date())}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={!!((min && today < min) || (max && today > max))}
+            onClick={() => select(new Date())}
+          >
             {t("today")}
           </Button>
         </div>

@@ -1,4 +1,9 @@
 {
+  "payment_status": "Betalingsstatus",
+  "payment_to_pay": "Skal betales",
+  "payment_date_future": "Betalingsdatoen skal være i dag eller tidligere.",
+  "subscription_paid_date_hint": "Kun denne betaling registreres. Næste betaling: {{date}}.",
+  "validation_date": "Indtast en gyldig dato i formatet DD/MM/ÅÅÅÅ.",
   "main_payment_method": "Primær betalingsmetode",
   "set_as_main_payment_method": "Angiv som primær betalingsmetode",
   "app_name": "Monline",

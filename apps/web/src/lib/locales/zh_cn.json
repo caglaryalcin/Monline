@@ -1,4 +1,9 @@
 {
+  "payment_status": "付款状态",
+  "payment_to_pay": "待付款",
+  "payment_date_future": "付款日期必须是今天或更早。",
+  "subscription_paid_date_hint": "仅记录此笔付款。下次付款：{{date}}。",
+  "validation_date": "请输入有效日期，格式为日/月/年（DD/MM/YYYY）。",
   "main_payment_method": "主要付款方式",
   "set_as_main_payment_method": "设为主要付款方式",
   "app_name": "Monline",
