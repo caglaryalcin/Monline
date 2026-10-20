@@ -1,0 +1,78 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Monline — Monthly spending, clearly.</title>
+  <desc id="desc">Monline social preview with its green product mark, a monthly budget overview, and subscription cards.</desc>
+
+  <rect width="1200" height="630" fill="#F4F3EE"/>
+  <circle cx="1118" cy="-46" r="240" fill="#D8FF68" fill-opacity="0.22"/>
+  <circle cx="14" cy="634" r="182" fill="#D8FF68" fill-opacity="0.16"/>
+
+  <g transform="translate(74 70) scale(1.5)">
+    <rect x="1" y="1" width="38" height="38" rx="12" fill="#D8FF68"/>
+    <path d="M10 28V13h4l6 9 6-9h4v15h-4V20l-6 8-6-8v8z" fill="#1B1D19"/>
+  </g>
+  <text x="154" y="116" fill="#181A1B" font-family="Segoe UI, Arial, sans-serif" font-size="54" font-weight="700" letter-spacing="-2">Monline</text>
+
+  <g fill="#181A1B" font-family="Segoe UI, Arial, sans-serif" font-size="82" font-weight="700" letter-spacing="-4">
+    <text x="72" y="266">Monthly</text>
+    <text x="72" y="354">spending,</text>
+    <text x="72" y="442">clearly.</text>
+  </g>
+  <rect x="76" y="480" width="116" height="8" rx="4" fill="#D8FF68"/>
+
+  <g transform="translate(666 38)" font-family="Segoe UI, Arial, sans-serif">
+    <rect x="0.5" y="0.5" width="469" height="553" rx="36" fill="#202423" stroke="#41443B"/>
+    <path d="M36 1H434A35 35 0 0 1 469 36V86H1V36A35 35 0 0 1 36 1Z" fill="#262A25"/>
+    <path d="M1 86H469" stroke="#41443B"/>
+    <text x="32" y="52" fill="#F4F3EE" font-size="23" font-weight="600" letter-spacing="-0.6">Budget overview</text>
+    <text x="438" y="50" text-anchor="end" fill="#A8AAA4" font-size="14">October 2026</text>
+
+    <text x="32" y="124" fill="#A8AAA4" font-size="15">Monthly budget</text>
+    <text x="32" y="169" fill="#F4F3EE" font-size="42" font-weight="700" letter-spacing="-1.5">$120.00</text>
+
+    <g transform="translate(32 192)">
+      <rect x="0.5" y="0.5" width="196" height="79" rx="13" fill="#22332A" stroke="#34503B"/>
+      <text x="16" y="28" fill="#A8AAA4" font-size="14">Paid</text>
+      <text x="16" y="58" fill="#75D49B" font-size="25" font-weight="700" letter-spacing="-0.6">$58.92</text>
+    </g>
+    <g transform="translate(241 192)">
+      <rect x="0.5" y="0.5" width="196" height="79" rx="13" fill="#262A25" stroke="#41443B"/>
+      <text x="16" y="28" fill="#A8AAA4" font-size="14">Pending</text>
+      <text x="16" y="58" fill="#F4F3EE" font-size="25" font-weight="700" letter-spacing="-0.6">$25.98</text>
+    </g>
+
+    <defs>
+      <linearGradient id="budget-progress" x1="32" y1="0" x2="319" y2="0" gradientUnits="userSpaceOnUse">
+        <stop stop-color="#B2D54E"/>
+        <stop offset="0.62" stop-color="#D8FF68"/>
+        <stop offset="0.77" stop-color="#F2F7DF"/>
+        <stop offset="1" stop-color="#D8FF68"/>
+      </linearGradient>
+    </defs>
+    <rect x="32" y="296" width="406" height="8" rx="4" fill="#393D34"/>
+    <rect x="32" y="296" width="287" height="8" rx="4" fill="url(#budget-progress)"/>
+    <text x="32" y="329" fill="#A8AAA4" font-size="13">This month: <tspan fill="#F4F3EE" font-weight="600">$84.90</tspan></text>
+    <text x="438" y="329" text-anchor="end" fill="#F4F3EE" font-size="13" font-weight="600">Remaining: $35.10</text>
+
+    <path d="M32 355H438" stroke="#41443B"/>
+    <text x="32" y="387" fill="#F4F3EE" font-size="17" font-weight="600">This month’s subscriptions</text>
+    <rect x="410" y="368" width="28" height="26" rx="8" fill="#30352B"/>
+    <text x="424" y="386" text-anchor="middle" fill="#B7BAB0" font-size="14">6</text>
+
+    <g transform="translate(32 411)">
+      <rect x="0.5" y="0.5" width="43" height="43" rx="13" fill="#191D1B" stroke="#41443B"/>
+      <rect x="9" y="13" width="26" height="18" rx="5" stroke="#D8FF68" stroke-width="2"/>
+      <path d="M20 18L27 22L20 26V18Z" fill="#D8FF68"/>
+      <text x="58" y="16" fill="#F4F3EE" font-size="17" font-weight="600">Streaming</text>
+      <text x="58" y="38" fill="#A8AAA4" font-size="13">Oct 6 · <tspan fill="#75D49B">✓ Paid</tspan></text>
+      <text x="406" y="26" text-anchor="end" fill="#F4F3EE" font-size="18" font-weight="600">$15.99</text>
+    </g>
+
+    <g transform="translate(32 477)">
+      <rect x="0.5" y="0.5" width="43" height="43" rx="13" fill="#191D1B" stroke="#41443B"/>
+      <path d="M14 29H30C33.3 29 36 26.4 36 23C36 19.8 33.5 17.2 30.4 17C29.3 13 25.8 10.3 21.8 10.3C16.8 10.3 12.8 14.3 12.8 19.3C10.2 20 8.3 21.8 8.3 24.2C8.3 26.9 10.8 29 14 29Z" stroke="#A8AAA4" stroke-width="2" stroke-linejoin="round"/>
+      <text x="58" y="16" fill="#F4F3EE" font-size="17" font-weight="600">Cloud storage</text>
+      <text x="58" y="38" fill="#A8AAA4" font-size="13">Oct 24 · Payment pending</text>
+      <text x="406" y="26" text-anchor="end" fill="#F4F3EE" font-size="18" font-weight="600">$9.99</text>
+    </g>
+  </g>
+</svg>
