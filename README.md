@@ -1,3 +1,5 @@
+![Monline](apps/web/public/og.png)
+
 # Monline
 
 ![Status](https://img.shields.io/badge/status-stable-ca7373) [![Latest Release](https://img.shields.io/github/v/release/caglaryalcin/monline?include_prereleases&color=blue)](https://github.com/caglaryalcin/monline/releases)
@@ -6,16 +8,27 @@
 
 A self-hosted home for your subscriptions, recurring payments, and budget. React frontend, Monline's own Node.js server and embedded SQLite storage.
 
+![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/main.gif)
+
 ## Features
 
 - **Subscription tracking** — automatic service logos, flexible billing cycles, active/inactive controls, and optional automatic renewal.
 - **Budget overview** — monthly charges, paid and outstanding amounts, and remaining budget.
+
+![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/subscriptions.png)
+
 - **Payment calendar** — see every payment on a day, mark payments as paid, and add historical payments individually or in a reviewed batch with editable amounts.
+
+![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/calendar.png)
+
 - **Payment-based insights** — selected-year paid totals and weekly/monthly averages calculated from recorded payment amounts. Upcoming recurring charges use the saved prices and schedules of subscriptions with automatic renewal enabled.
 - **Yearly breakdowns** — January–December payment views and category breakdowns with paid/upcoming filters and independently expandable subscription details.
-- **Statement import** — review online subscription charges from Enpara, DenizBank, and Garanti BBVA PDFs, including Amazon Prime and Google Workspace billing descriptors. Match or create subscriptions and import paid calendar entries without duplicates. Matching full-refund pairs within a statement are excluded together.
+- **Statement import** — review online subscription charges from **Enpara**, **DenizBank**, and **Garanti BBVA** PDFs, including Amazon Prime and Google Workspace billing descriptors. Match or create subscriptions and import paid calendar entries without duplicates. Matching full-refund pairs within a statement are excluded together.
 - **People, payment methods, and currencies** — choose defaults, recognize bank logos, convert currencies, and edit multiple payment methods or currencies together.
 - **Complete backups** — account JSON import/export and administrator `.tar.gz` instance archives, including payment history, settings, logos, and attachments. Restore a full instance backup directly from first setup.
+
+![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/import-export.png)
+
 - **Your language, your theme** — Turkish, English, German, light/dark modes, and customizable accent colors.
 - **Private accounts** — optional 30-day sign-in, two-factor authentication, trusted devices, OIDC sign-in, and scoped API keys.
 - **Payment reminders** — email and configurable notification providers, with SMTP tests during setup and in settings, and email templates that follow the selected language.
@@ -46,11 +59,11 @@ GitHub Actions publishes **AMD64 and ARM64** images to `ghcr.io/caglaryalcin/mon
 
 | Trigger                    | Image tags        |
 | -------------------------- | ----------------- |
-| Release tag, e.g. `v1.0.12` | `1.0.12`, `latest` |
+| Release tag, e.g. `v1.0.11` | `1.0.11`, `latest` |
 
 Images are published only for version tags; pushes to `main` do not publish images. Release tags must match the root, frontend and server package versions. Prereleases publish only their full version and leave `latest` unchanged. Publishing uses GitHub's built-in `GITHUB_TOKEN`.
 
-For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.0.12`, omit `build`, and run `docker compose up -d`. Authenticate to GHCR before pulling private images. Keep the package private unless you intend to publish it publicly.
+For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.0.11`, omit `build`, and run `docker compose up -d`. Authenticate to GHCR before pulling private images. Keep the package private unless you intend to publish it publicly.
 
 ## License
 
