@@ -11,6 +11,8 @@ export function LogoIcon({ className }: LogoProps) {
       role="img"
       aria-label="Monline logo"
       viewBox="0 0 40 40"
+      width={40}
+      height={40}
       className={cn("inline-block shrink-0", className)}
     >
       <rect x="1" y="1" width="38" height="38" rx="12" fill={BRAND_ACCENT} />
@@ -29,8 +31,8 @@ export function LogoWithName({ className }: LogoProps) {
         className,
       )}
     >
-      <span aria-hidden="true" className="flex h-full aspect-square">
-        <LogoIcon className="h-full w-full" />
+      <span aria-hidden="true" className="h-full shrink-0">
+        <LogoIcon className="block h-full w-auto" />
       </span>
       <span aria-hidden="true" className="text-[1.5rem] leading-none">
         Monline<span className="text-[#9bbb47]">.</span>
