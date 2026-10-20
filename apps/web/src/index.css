@@ -409,10 +409,10 @@ html[data-theme-changing] *::after {
   display: grid;
   place-items: center;
   padding: 0;
-  border: 1px solid #e5e5dd;
+  border: 1px solid hsl(var(--border));
   border-radius: 12px;
-  background: linear-gradient(145deg, #ffffff, #e8e8e4);
-  color: #5c6057;
+  background: hsl(var(--card));
+  color: hsl(var(--muted-foreground));
   cursor: pointer;
   transition:
     transform 120ms ease,

@@ -1,6 +1,6 @@
 {
   "name": "@monline/server",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "private": true,
   "description": "Monline HTTP server and SQLite storage",
   "license": "GPL-3.0-only",
