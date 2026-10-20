@@ -11,30 +11,32 @@
  * @param {Date} date
  * @param {string} cycleName - "Daily" | "Weekly" | "Monthly" | "Quarterly" | "Half-Yearly" | "Yearly"
  * @param {number} frequency - multiplier
+ * @param {number} [anchorDay] - Original billing day, retained across short months.
  * @returns {Date}
  */
-function advanceDate(date, cycleName, frequency) {
+function advanceDate(
+  date,
+  cycleName,
+  frequency,
+  anchorDay = date.getUTCDate(),
+) {
   const result = new Date(date.getTime());
+  const months = { Monthly: 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
+  if (typeof months[cycleName] === "number") {
+    result.setUTCDate(1);
+    result.setUTCMonth(result.getUTCMonth() + frequency * months[cycleName]);
+    const lastDay = new Date(result.getTime());
+    lastDay.setUTCMonth(lastDay.getUTCMonth() + 1);
+    lastDay.setUTCDate(0);
+    result.setUTCDate(Math.min(anchorDay, lastDay.getUTCDate()));
+    return result;
+  }
   switch (cycleName) {
     case "Daily":
       result.setUTCDate(result.getUTCDate() + frequency);
       break;
     case "Weekly":
       result.setUTCDate(result.getUTCDate() + frequency * 7);
-      break;
-    case "Monthly":
-      result.setUTCMonth(result.getUTCMonth() + frequency);
-      break;
-    case "Quarterly":
-      // 1 quarter = 3 months
-      result.setUTCMonth(result.getUTCMonth() + frequency * 3);
-      break;
-    case "Half-Yearly":
-      // 1 half-year = 6 months
-      result.setUTCMonth(result.getUTCMonth() + frequency * 6);
-      break;
-    case "Yearly":
-      result.setUTCFullYear(result.getUTCFullYear() + frequency);
       break;
   }
   return result;
@@ -75,21 +77,22 @@ function formatLocalDate(date) {
  */
 function getPricePerMonth(price, cycleName, frequency, exchangeRate) {
   const converted = price / (exchangeRate || 1);
+  const f = frequency || 1;
   switch (cycleName) {
     case "Daily":
-      return converted * frequency * 30;
+      return (converted / f) * 30.44;
     case "Weekly":
-      return (converted / frequency) * 4.33;
+      return (converted / f) * (52 / 12);
     case "Monthly":
-      return converted / frequency;
+      return converted / f;
     case "Quarterly":
       // Price is charged every (frequency * 3) months
-      return converted / (frequency * 3);
+      return converted / (f * 3);
     case "Half-Yearly":
       // Price is charged every (frequency * 6) months
-      return converted / (frequency * 6);
+      return converted / (f * 6);
     case "Yearly":
-      return converted / (frequency * 12);
+      return converted / (f * 12);
     case "One-Time":
       // A single dated payout has no recurring monthly equivalent. Without
       // this case it would fall through to `converted` and be billed as a

@@ -40,6 +40,9 @@ it("upgrades legacy databases and identifies statement history without changing 
       JSON.stringify(["[monline-statement:file-hash:row-2]"]),
     );
     db.exec("ALTER TABLE subscriptions DROP COLUMN statement_imported");
+    db.exec(
+      "UPDATE subscriptions SET next_payment='2026-01-31' WHERE id='sub000000000001'; ALTER TABLE subscriptions DROP COLUMN billing_anchor_day",
+    );
     db.exec(`INSERT INTO payment_methods(id,user,name) VALUES
       ('method000000001','owner0000000001','Visa'),('method000000002','owner0000000001','Mastercard');
       ALTER TABLE payment_methods DROP COLUMN is_main;
@@ -60,6 +63,7 @@ it("upgrades legacy databases and identifies statement history without changing 
       "sub000000000001",
     );
     expect(imported.getBool("statement_imported")).toBe(true);
+    expect(imported.getFloat("billing_anchor_day")).toBe(31);
     expect(imported.getString("start_date")).toBe("2026-01-06");
     expect(imported.getFloat("price")).toBe(5000);
     expect(imported.getString("category")).toBe("cat000000000001");

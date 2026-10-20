@@ -43,6 +43,7 @@ const FIELDS = {
     "currency",
     "cycle",
     "frequency",
+    "billing_anchor_day",
     "category",
     "payment_method",
     "payer",
@@ -242,12 +243,17 @@ function validateBackup(backup) {
       if (!row || !/^[a-z0-9]{15}$/.test(row.id) || ids.has(row.id))
         throw new Error("transfer_invalid_backup");
       ids.add(row.id);
+      if (
+        name === "subscriptions" &&
+        row.billing_anchor_day != null &&
+        (!Number.isInteger(row.billing_anchor_day) ||
+          row.billing_anchor_day < 0 ||
+          row.billing_anchor_day > 31)
+      )
+        throw new Error("transfer_invalid_backup");
       if (name === "bank_statements") {
         try {
-          Object.assign(
-            row,
-            require(domainPath + "/lib/bank-statements.js").validate(row),
-          );
+          Object.assign(row, require("./bank-statements.js").validate(row));
         } catch (_) {
           throw new Error("transfer_invalid_backup");
         }

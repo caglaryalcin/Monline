@@ -22,6 +22,29 @@ function advance(overrides) {
 }
 
 describe("src/domain/lib/pure/subscription-limits.js", () => {
+  it("keeps the billing anchor across catch-up runs and independently saved months", () => {
+    expect(
+      advance({ nextPayment: "2026-01-31", today: "2026-03-01" }).nextPayment,
+    ).toBe("2026-03-31");
+    expect(
+      advance({
+        nextPayment: "2026-02-28",
+        today: "2026-02-28",
+        billingAnchorDay: 31,
+      }).nextPayment,
+    ).toBe("2026-03-31");
+    expect(
+      advance({
+        nextPayment: "2026-01-31",
+        today: "2026-03-01",
+        endDate: "2026-02-28",
+      }),
+    ).toMatchObject({
+      nextPayment: "2026-02-28",
+      processed: 2,
+      inactive: true,
+    });
+  });
   it("normalizes date-only values and positive integer limits", () => {
     expect(dateOnly("2026-03-04 00:00:00.000Z")).toBe("2026-03-04");
     expect(dateOnly("invalid")).toBe("");

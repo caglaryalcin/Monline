@@ -33,6 +33,16 @@ function totalFor(overrides) {
 }
 
 describe("src/domain/lib/pure/subscription-history.js", () => {
+  it("counts all month-end occurrences while retaining the original day", () => {
+    expect(
+      totalFor({
+        segments: [
+          { from: "2026-01-31", price: 10, cycleName: "Monthly", frequency: 1 },
+        ],
+        until: "2026-03-31",
+      }),
+    ).toMatchObject({ total: 30, payments: 3, lastDate: "2026-03-31" });
+  });
   describe("normalizeSnapshot", () => {
     it("fills in the defaults a partial or missing snapshot leaves out", () => {
       expect(normalizeSnapshot()).toEqual({

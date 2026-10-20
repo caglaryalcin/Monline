@@ -56,5 +56,6 @@ function validateHistoricalPayment(body, now, { limitToPastYear = true } = {}) {
   };
 }
 module.exports = {
+  validDate,
   validateHistoricalPayment,
 };

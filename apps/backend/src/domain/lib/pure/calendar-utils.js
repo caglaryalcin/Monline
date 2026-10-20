@@ -13,6 +13,27 @@ function formatIcalDate(dateValue) {
   const iso = date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
   return iso.substring(0, 8);
 }
+function escapeIcalText(value) {
+  return String(value)
+    .replace(/\\/g, "\\\\")
+    .replace(/\r\n|\r|\n/g, "\\n")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,");
+}
+function foldIcalLine(line) {
+  let result = "";
+  let bytes = 0;
+  for (const character of line) {
+    const size = Buffer.byteLength(character, "utf8");
+    if (bytes + size > 75) {
+      result += "\r\n ";
+      bytes = 1;
+    }
+    result += character;
+    bytes += size;
+  }
+  return result;
+}
 function buildIcalEvent(event) {
   const dateStr = formatIcalDate(event.nextPayment);
   return (
@@ -21,10 +42,13 @@ function buildIcalEvent(event) {
       "UID:" + event.id + "@monline",
       "DTSTART;VALUE=DATE:" + dateStr,
       "DTEND;VALUE=DATE:" + dateStr,
-      "SUMMARY:" + event.name + " - " + event.currencySymbol + event.price,
-      "DESCRIPTION:Payment due for " + event.name,
+      "SUMMARY:" +
+        escapeIcalText(event.name + " - " + event.currencySymbol + event.price),
+      "DESCRIPTION:" + escapeIcalText("Payment due for " + event.name),
       "END:VEVENT",
-    ].join("\r\n") + "\r\n"
+    ]
+      .map(foldIcalLine)
+      .join("\r\n") + "\r\n"
   );
 }
 module.exports = {

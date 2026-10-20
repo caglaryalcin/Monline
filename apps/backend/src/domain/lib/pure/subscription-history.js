@@ -265,6 +265,7 @@ function computeSpendTotal(options) {
   var date = segments[0].from;
   var since = limits.dateOnly(config.since);
   if (since && since > date) date = since;
+  var anchorDay = Number(date.slice(8, 10));
   var steps = 0;
   while (date <= until && steps < MAX_OCCURRENCES) {
     steps += 1;
@@ -284,9 +285,12 @@ function computeSpendTotal(options) {
       new Date(date + "T00:00:00.000Z"),
       segment.cycleName,
       segment.frequency,
+      anchorDay,
     );
     var next = limits.dateOnly(advanced && advanced.toISOString());
     if (!next || next <= date) break;
+    if (segment.cycleName === "Daily" || segment.cycleName === "Weekly")
+      anchorDay = Number(next.slice(8, 10));
     date = next;
   }
   result.total = roundMoney(result.total);

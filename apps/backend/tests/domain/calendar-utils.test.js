@@ -5,6 +5,38 @@ const {
 } = require("../../src/domain/lib/pure/calendar-utils.js");
 
 describe("src/domain/lib/pure/calendar-utils.js", () => {
+  it("escapes text and prevents embedded newlines from creating iCal properties", () => {
+    const event = buildIcalEvent({
+      id: "test",
+      name: "A,B;C\\D\r\nX-TEST:injected",
+      price: 10,
+      currencySymbol: "$",
+      nextPayment: "2026-01-31",
+    });
+    expect(event).toContain(
+      "SUMMARY:A\\,B\\;C\\\\D\\nX-TEST:injected - $10\r\n",
+    );
+    expect(event).toContain(
+      "DESCRIPTION:Payment due for A\\,B\\;C\\\\D\\nX-TEST:injected\r\n",
+    );
+    expect(event).not.toContain("\r\nX-TEST:");
+  });
+
+  it("folds long Unicode lines at 75 UTF-8 octets without splitting characters", () => {
+    const name = "Türkçe 🎉 ".repeat(30);
+    const event = buildIcalEvent({
+      id: "test",
+      name,
+      price: 10,
+      currencySymbol: "₺",
+      nextPayment: "2026-01-31",
+    });
+    for (const line of event.split("\r\n"))
+      expect(Buffer.byteLength(line, "utf8")).toBeLessThanOrEqual(75);
+    expect(event.replace(/\r\n /g, "")).toContain(
+      "SUMMARY:" + name + " - ₺10\r\n",
+    );
+  });
   it("builds month ranges including December rollover", () => {
     expect(buildMonthRange(3, 2026)).toEqual({
       startDate: "2026-03-01",

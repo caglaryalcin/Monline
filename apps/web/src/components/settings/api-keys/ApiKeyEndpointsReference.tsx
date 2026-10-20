@@ -103,6 +103,7 @@ const SUBSCRIPTION_STATUS_BODY = `{
 }`;
 
 const SUBSCRIPTION_MARK_PAID_BODY = `{
+  "payment_date": "2025-02-01", // optional - due date, defaults to next_payment
   "paid_at": "2025-02-01",     // optional - ISO date
   "amount": 15.99              // optional - amount paid
 }`;

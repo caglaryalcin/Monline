@@ -34,6 +34,9 @@ function advanceFiniteSchedule(options) {
   );
   var inactive = !!(options && options.inactive);
   var processed = 0;
+  var anchorDay = options && options.billingAnchorDay;
+  if (!Number.isInteger(anchorDay) || anchorDay < 1 || anchorDay > 31)
+    anchorDay = Number(nextPayment.slice(8, 10));
   if (!nextPayment || !today || inactive) {
     return {
       nextPayment,
@@ -73,6 +76,7 @@ function advanceFiniteSchedule(options) {
       current,
       options.cycleName,
       options.frequency,
+      anchorDay,
     );
     var advancedDate = dateOnly(advanced && advanced.toISOString());
     if (!advancedDate || advancedDate <= nextPayment) break;

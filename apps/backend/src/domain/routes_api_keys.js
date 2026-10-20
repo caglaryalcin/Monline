@@ -2396,21 +2396,61 @@ routerAdd("POST", "/api/external/subscriptions/{id}/mark-paid", function (e) {
         error: "Credits cannot be marked paid",
       });
     }
-    var body = e.requestInfo().body;
-    var amount = parseFloat(body.amount) || sub.get("price");
-    var paymentDate = body.payment_date || sub.get("next_payment");
+    var body = e.requestInfo().body || {};
+    var amount = body.amount == null ? sub.get("price") : body.amount;
+    var paymentDate =
+      body.payment_date == null
+        ? String(sub.get("next_payment")).slice(0, 10)
+        : body.payment_date;
+    var validDate = require(
+      domainPath + "/lib/pure/historical-payment.js",
+    ).validDate;
+    var now = new Date();
+    var paidAt = body.paid_at == null ? now.toISOString() : body.paid_at;
+    if (
+      typeof amount !== "number" ||
+      !Number.isFinite(amount) ||
+      amount < 0 ||
+      amount > 1e12
+    )
+      return e.json(400, { error: "Invalid amount" });
+    if (
+      !validDate(paymentDate) ||
+      typeof paidAt !== "string" ||
+      !validDate(paidAt.slice(0, 10)) ||
+      !/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2}))?$/.test(
+        paidAt,
+      ) ||
+      !Number.isFinite(Date.parse(paidAt)) ||
+      Date.parse(paidAt) > now.getTime()
+    )
+      return e.json(400, { error: "Invalid payment date" });
+    var payment;
+    repository.runInTransaction(function (tx) {
+      var matches = tx.findRecordsByFilter(
+        "payment_records",
+        "user = {:user} && subscription_id = {:sub} && due_date >= {:from} && due_date < {:until}",
+        "",
+        0,
+        0,
+        { user: userId, sub: id, from: paymentDate, until: paymentDate + "~" },
+      );
+      payment = matches.find(function (record) {
+        return !!record.getString("paid_at");
+      });
+      if (payment) return;
+      payment =
+        matches[0] ||
+        new Record(tx.findCollectionByNameOrId("payment_records"));
+      payment.set("subscription_id", id);
+      payment.set("amount", amount);
+      payment.set("due_date", paymentDate);
+      payment.set("paid_at", new Date(paidAt).toISOString());
+      payment.set("auto_paid", false);
+      payment.set("user", userId);
+      tx.save(payment);
+    });
 
-    // Create payment record
-    var pCol = repository.findCollectionByNameOrId("payments");
-    var payment = new Record(pCol);
-    payment.set("subscription", id);
-    payment.set("amount", amount);
-    payment.set("payment_date", paymentDate);
-    payment.set("user", userId);
-    repository.save(payment);
-
-    // Update next_payment (Simplified logic for now, usually handles cycle increment)
-    // For now we just return success like the internal tool
     return e.json(200, {
       success: true,
       payment_id: payment.id,

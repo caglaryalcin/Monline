@@ -5,6 +5,45 @@ const {
 } = require("../../src/domain/lib/date-helpers.js");
 
 describe("src/domain/lib/date-helpers.js", () => {
+  it.each([
+    ["2026-01-29", "Monthly", 1, "2026-02-28"],
+    ["2024-01-31", "Monthly", 1, "2024-02-29"],
+    ["2026-01-31", "Quarterly", 1, "2026-04-30"],
+    ["2026-08-31", "Half-Yearly", 1, "2027-02-28"],
+    ["2024-02-29", "Yearly", 4, "2028-02-29"],
+  ])(
+    "clamps %s %s x%s to the target month",
+    (date, cycle, frequency, expected) => {
+      const source = new Date(date + "T12:34:56.000Z");
+      expect(advanceDate(source, cycle, frequency).toISOString()).toBe(
+        expected + "T12:34:56.000Z",
+      );
+      expect(source.toISOString()).toBe(date + "T12:34:56.000Z");
+    },
+  );
+
+  it("restores the original billing day after a short month", () => {
+    const february = advanceDate(
+      new Date("2026-01-31T00:00:00Z"),
+      "Monthly",
+      1,
+      31,
+    );
+    expect(advanceDate(february, "Monthly", 1, 31).toISOString()).toBe(
+      "2026-03-31T00:00:00.000Z",
+    );
+    const year = advanceDate(new Date("2024-02-29T00:00:00Z"), "Yearly", 1, 29);
+    expect(advanceDate(year, "Yearly", 3, 29).toISOString()).toBe(
+      "2028-02-29T00:00:00.000Z",
+    );
+  });
+
+  it("treats daily frequency as an interval and matches frontend monthly coefficients", () => {
+    expect(getPricePerMonth(10, "Daily", 3, 1)).toBeCloseTo((10 / 3) * 30.44);
+    expect(getPricePerMonth(20, "Daily", 3, 2)).toBeCloseTo((10 / 3) * 30.44);
+    expect(getPricePerMonth(10, "Daily", 0, 1)).toBeCloseTo(304.4);
+    expect(getPricePerMonth(12, "Weekly", 2, 1)).toBe(26);
+  });
   it("advances dates without mutating the original input", () => {
     const source = new Date("2026-01-31T00:00:00.000Z");
     const result = advanceDate(source, "Daily", 2);
@@ -33,7 +72,7 @@ describe("src/domain/lib/date-helpers.js", () => {
         "Monthly",
         1,
       ).toISOString(),
-    ).toBe("2026-03-03T00:00:00.000Z");
+    ).toBe("2026-02-28T00:00:00.000Z");
     // Quarterly: 1 quarter = 3 months
     expect(
       advanceDate(
@@ -64,7 +103,7 @@ describe("src/domain/lib/date-helpers.js", () => {
         "Yearly",
         1,
       ).toISOString(),
-    ).toBe("2025-03-01T00:00:00.000Z");
+    ).toBe("2025-02-28T00:00:00.000Z");
   });
 
   describe("timezone independence", () => {
@@ -168,8 +207,8 @@ describe("src/domain/lib/date-helpers.js", () => {
   });
 
   it("computes monthly price equivalents across all supported cycles", () => {
-    expect(getPricePerMonth(10, "Daily", 1, 1)).toBe(300);
-    expect(getPricePerMonth(21, "Weekly", 3, 1)).toBeCloseTo(30.31, 2);
+    expect(getPricePerMonth(10, "Daily", 1, 1)).toBeCloseTo(304.4);
+    expect(getPricePerMonth(21, "Weekly", 3, 1)).toBeCloseTo(30.33, 2);
     expect(getPricePerMonth(24, "Monthly", 2, 1)).toBe(12);
     // Quarterly: $90 every quarter (3 months) → $30/month
     expect(getPricePerMonth(90, "Quarterly", 1, 1)).toBe(30);

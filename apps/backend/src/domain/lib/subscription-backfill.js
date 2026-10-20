@@ -163,6 +163,7 @@ function prepareInitialPayment(app, subscription, input, now = new Date()) {
     now,
   );
   subscription.set("start_date", date);
+  subscription.set("__monline_initial_billing_day", Number(date.slice(8, 10)));
   subscription.set("next_payment", next);
   if (Number(subscription.get("payment_limit")) > 0) {
     const completed = Math.max(

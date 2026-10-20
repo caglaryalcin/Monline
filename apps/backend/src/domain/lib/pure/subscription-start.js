@@ -10,15 +10,10 @@ function shiftPaymentDate(nextPayment, cycle, frequency, direction) {
     return "";
   const months = { Monthly: 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
   if (months[cycle]) {
-    const day = date.getUTCDate();
-    date.setUTCDate(1);
-    date.setUTCMonth(
-      date.getUTCMonth() + direction * frequency * months[cycle],
-    );
-    const last = new Date(date.getTime());
-    last.setUTCMonth(last.getUTCMonth() + 1);
-    last.setUTCDate(0);
-    date.setUTCDate(Math.min(day, last.getUTCDate()));
+    return require("../date-helpers.js")
+      .advanceDate(date, cycle, direction * frequency)
+      .toISOString()
+      .slice(0, 10);
   } else if (cycle === "Daily" || cycle === "Weekly") {
     date.setUTCDate(
       date.getUTCDate() + direction * frequency * (cycle === "Weekly" ? 7 : 1),

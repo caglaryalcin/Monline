@@ -140,6 +140,7 @@ describe("formatPrice", () => {
 describe("toMonthly", () => {
   it("converts daily price (frequency 1) to monthly", () => {
     expect(toMonthly(1, "Daily", 1)).toBeCloseTo(30.44);
+    expect(toMonthly(10, "Daily", 3)).toBeCloseTo((10 / 3) * 30.44);
   });
 
   it("converts weekly price to monthly", () => {

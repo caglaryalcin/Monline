@@ -166,6 +166,19 @@ class Repository {
       this.connection.exec(
         "ALTER TABLE payment_methods ADD COLUMN is_main INTEGER NOT NULL DEFAULT 0",
       );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("subscriptions")')
+        .all()
+        .some((column) => column.name === "billing_anchor_day")
+    ) {
+      this.connection.exec(
+        "ALTER TABLE subscriptions ADD COLUMN billing_anchor_day REAL NOT NULL DEFAULT 0",
+      );
+    }
+    this.connection.exec(
+      "UPDATE subscriptions SET billing_anchor_day = CAST(substr(next_payment, 9, 2) AS INTEGER) WHERE billing_anchor_day = 0 AND length(next_payment) >= 10",
+    );
     const notificationColumns = new Set(
       this.connection
         .prepare('PRAGMA table_info("notifications_config")')

@@ -52,12 +52,14 @@ function advanceDueSubscriptions(app, todayStr) {
       today: todayStr,
       cycleName: cycleRecord.get("name"),
       frequency: sub.get("frequency"),
+      billingAnchorDay: sub.get("billing_anchor_day"),
       endDate: sub.get("end_date"),
       paymentLimit: sub.get("payment_limit"),
       paymentsCompleted: sub.get("payments_completed"),
       inactive: sub.get("inactive"),
       advanceDate: dateHelpers.advanceDate,
     });
+    sub.set("__monline_schedule_advance", true);
     sub.set("next_payment", result.nextPayment);
     sub.set("payments_completed", result.paymentsCompleted);
     sub.set("inactive", result.inactive);
