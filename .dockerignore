@@ -4,6 +4,7 @@
 
 # Docs & scripts
 docs/
+screenshots/
 scripts/
 *.md
 

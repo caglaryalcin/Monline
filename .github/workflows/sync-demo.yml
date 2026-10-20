@@ -3,6 +3,8 @@ name: Update Cloudflare demo
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "screenshots/**"
   workflow_dispatch:
 
 permissions:
