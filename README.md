@@ -1,4 +1,4 @@
-![Monline](apps/web/public/og.png)
+<img src="apps/web/public/og.png" width="512" alt="Coffer social preview" />
 
 # Monline
 
