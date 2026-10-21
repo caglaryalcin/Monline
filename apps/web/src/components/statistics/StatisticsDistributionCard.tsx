@@ -179,6 +179,7 @@ export function StatisticsDistributionCard({
                     cy="50%"
                     innerRadius={60}
                     outerRadius={100}
+                    cornerRadius={4}
                     paddingAngle={2}
                     isAnimationActive={false}
                     label={({ name, payload, percent: share }) =>
@@ -203,7 +204,8 @@ export function StatisticsDistributionCard({
                       <Cell
                         key={item.name}
                         fill={STATISTICS_CATEGORY_COLORS[index % STATISTICS_CATEGORY_COLORS.length]}
-                        className="stroke-background stroke-[2px]"
+                        style={{ transformBox: "fill-box", transformOrigin: "center" }}
+                        className="stroke-background stroke-[2px] transition-[transform,filter] duration-200 ease-out hover:scale-[1.06] hover:drop-shadow-sm motion-reduce:transition-none"
                       />
                     ))}
                   </Pie>

@@ -1,3 +1,4 @@
+import { Portal as TooltipPortal } from "@radix-ui/react-tooltip";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -5,6 +6,8 @@ import { STATISTICS_COLORS } from "@/components/statistics/constants";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemedSelect } from "@/components/ui/themed-select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { categoryLabel } from "@/lib/categoryLabel";
 import { historyMonth } from "@/lib/costHistory";
 import type { MonthlyPaymentTotal } from "@/lib/paymentStatistics";
 import { cn, formatDate } from "@/lib/utils";
@@ -46,7 +49,6 @@ export function StatisticsPaymentsCard({
             `${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, "0")}`,
         ) ?? months.at(-1))
       : (months.find((month) => month.count > 0) ?? months[0]));
-  const max = Math.max(1, ...months.map((month) => month.total));
   const ids = [
     ...new Set(
       [...data.paid, ...data.upcoming].flatMap((month) =>
@@ -134,7 +136,7 @@ export function StatisticsPaymentsCard({
                       className={cn(
                         "flex min-h-[140px] w-full flex-col items-start justify-between gap-4 rounded-2xl border p-4 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2",
                         current?.name === month.name
-                          ? "border-primary/30 bg-primary/5"
+                          ? "border-primary bg-primary text-primary-foreground"
                           : "border-transparent",
                       )}
                     >
@@ -152,26 +154,47 @@ export function StatisticsPaymentsCard({
                                   : "payments_upcoming_none",
                             )}
                       </span>
-                      <span
-                        className="flex h-2 w-full overflow-hidden rounded-full bg-muted"
-                        aria-hidden="true"
-                      >
-                        <span
-                          className="flex h-full overflow-hidden rounded-full"
-                          style={{ width: `${(month.total / max) * 100}%` }}
-                        >
-                          {month.subscriptions.map((item) => (
-                            <span
-                              key={item.subscription.id}
-                              style={{
-                                width: `${month.total > 0 ? (item.amount / month.total) * 100 : 0}%`,
-                                backgroundColor: color(item.subscription.id),
-                              }}
-                              className="h-full"
-                            />
-                          ))}
+                      <TooltipProvider delayDuration={100}>
+                        <span className="flex h-2 w-full rounded-full bg-muted">
+                          {month.subscriptions
+                            .filter((item) => item.amount > 0)
+                            .map((item) => {
+                              const category = item.subscription.expand?.category;
+                              const label = category
+                                ? categoryLabel(category, t)
+                                : t("statistics_category_uncategorized");
+                              return (
+                                <Tooltip key={item.subscription.id}>
+                                  <TooltipTrigger asChild>
+                                    <span
+                                      tabIndex={0}
+                                      role="img"
+                                      aria-label={`${item.subscription.name} · ${label} · ${formatValue(item.amount)}`}
+                                      style={{
+                                        width: `${month.total > 0 ? (item.amount / month.total) * 100 : 0}%`,
+                                        backgroundColor: color(item.subscription.id),
+                                      }}
+                                      className="relative block h-full shrink-0 first:rounded-l-full last:rounded-r-full transition-[transform,border-radius,box-shadow] duration-200 ease-out hover:z-10 hover:scale-y-[1.75] hover:rounded-sm hover:shadow-sm focus-visible:z-10 focus-visible:scale-y-[1.75] focus-visible:rounded-sm focus-visible:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring motion-reduce:transition-none"
+                                    />
+                                  </TooltipTrigger>
+                                  <TooltipPortal>
+                                    <TooltipContent side="top" sideOffset={10} className="max-w-64">
+                                      <span className="block font-semibold">
+                                        {item.subscription.name}
+                                      </span>
+                                      <span className="block text-xs text-muted-foreground">
+                                        {label}
+                                      </span>
+                                      <span className="block mt-1 font-semibold tabular-nums">
+                                        {formatValue(item.amount)}
+                                      </span>
+                                    </TooltipContent>
+                                  </TooltipPortal>
+                                </Tooltip>
+                              );
+                            })}
                         </span>
-                      </span>
+                      </TooltipProvider>
                     </button>
                   </li>
                 ))}

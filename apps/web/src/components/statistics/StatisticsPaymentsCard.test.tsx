@@ -33,6 +33,46 @@ describe("monthly horizontal payment breakdown", () => {
   afterEach(() => vi.useRealTimers());
   const formatValue = (value: number) => `$${value}`;
 
+  it("shows the subscription, localized category and monthly amount when hovering a colored segment", async () => {
+    const subscription = monthlyBudgetFixture().entries[0].subscription;
+    render(
+      <StatisticsPaymentsCard
+        data={{
+          paid: [
+            {
+              name: "2026/10",
+              total: 30,
+              count: 1,
+              unpricedCount: 0,
+              subscriptions: [
+                {
+                  subscription: {
+                    ...subscription,
+                    expand: {
+                      category: { id: "video", name: "Video", translation_key: "video", user: "u" },
+                    },
+                  },
+                  amount: 30,
+                  count: 1,
+                },
+              ],
+            },
+          ],
+          upcoming: [],
+        }}
+        formatValue={formatValue}
+      />,
+    );
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    await userEvent.hover(
+      screen.getByRole("img", { name: "Netflix · category_default_video · $30" }),
+    );
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Netflix");
+    expect(tooltip).toHaveTextContent("category_default_video");
+    expect(tooltip).toHaveTextContent("$30");
+  });
+
   it("selects a calendar year for both paid and upcoming payments without rolling month options", async () => {
     function Payments() {
       const [year, setYear] = useState(2026);

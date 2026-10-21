@@ -38,15 +38,17 @@ export function CurrencyListItem({
             onChange={onSelect}
           />
         )}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xl font-semibold tracking-tight">{currency.code}</span>
-            <span className="rounded-lg bg-muted px-2.5 py-1 text-base font-medium text-foreground">
+            <span className="rounded-lg bg-muted px-2.5 py-0.5 text-base font-medium text-foreground">
               {currency.symbol}
             </span>
           </div>
           {currency.name && (
-            <p className="mt-1.5 break-words text-sm text-muted-foreground">{currency.name}</p>
+            <p className="mt-1 truncate text-sm leading-4 text-muted-foreground" title={currency.name}>
+              {currency.name}
+            </p>
           )}
         </div>
         <button
