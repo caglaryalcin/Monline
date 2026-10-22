@@ -5,6 +5,7 @@ import {
   toDateStr,
 } from "@/components/calendar/types";
 import { isCredit, isDateInMonth } from "@/lib/recordTypes";
+import { paymentOwnerId, withStandalonePayments } from "@/lib/standalonePayments";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
 export interface MonthlyBudgetEntry {
@@ -29,12 +30,12 @@ export function buildMonthlyBudget(
   const recordsBySubscription = new Map<string, PaymentRecord[]>();
   for (const record of records) {
     if (!isDateInMonth(record.due_date, now)) continue;
-    const group = recordsBySubscription.get(record.subscription_id) ?? [];
+    const group = recordsBySubscription.get(paymentOwnerId(record)) ?? [];
     group.push(record);
-    recordsBySubscription.set(record.subscription_id, group);
+    recordsBySubscription.set(paymentOwnerId(record), group);
   }
   const entries: MonthlyBudgetEntry[] = [];
-  for (const subscription of subscriptions) {
+  for (const subscription of withStandalonePayments(subscriptions, records, currencies)) {
     if (isCredit(subscription)) continue;
     const subscriptionRecords = recordsBySubscription.get(subscription.id) ?? [];
     const dates = new Set(

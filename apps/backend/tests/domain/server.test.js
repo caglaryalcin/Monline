@@ -800,6 +800,280 @@ it("requires an owned category for all subscription writes and prevents deleting
     method: "DELETE",
   });
 });
+it("records independent past payments without creating subscriptions and validates ownership", async () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const body = {
+    name: " Old service ",
+    currency: currency.id,
+    due_date: today,
+    paid_date: today,
+    amount: 18.5,
+    utc_offset_minutes: 0,
+    paid_utc_offset_minutes: 0,
+  };
+  const before = (
+    await request("/api/data/subscriptions", { token: owner.token })
+  ).data.totalItems;
+  const saved = [];
+  for (const name of ["Old service", "Other service"]) {
+    const result = await request("/api/payments/history", {
+      token: owner.token,
+      method: "POST",
+      body: { ...body, name },
+    });
+    expect(result.status).toBe(201);
+    expect(result.data).toMatchObject({
+      subscription_id: "",
+      name,
+      currency: currency.id,
+      amount: 18.5,
+      due_date: today,
+    });
+    saved.push(result.data);
+  }
+  expect(
+    (await request("/api/data/subscriptions", { token: owner.token })).data
+      .totalItems,
+  ).toBe(before);
+  for (const invalid of [
+    { name: " " },
+    { currency: "missing" },
+    { name: "x".repeat(201) },
+  ]) {
+    expect(
+      (
+        await request("/api/payments/history", {
+          token: owner.token,
+          method: "POST",
+          body: { ...body, ...invalid },
+        })
+      ).status,
+    ).toBe(400);
+  }
+  expect(
+    (
+      await request("/api/payments/history", {
+        token: other.token,
+        method: "POST",
+        body,
+      })
+    ).status,
+  ).toBe(400);
+  const backup = (await request("/api/account/export", { token: owner.token }))
+    .data;
+  expect(
+    backup.data.payment_records.filter((row) =>
+      saved.some((record) => record.id === row.id),
+    ),
+  ).toHaveLength(2);
+  for (const record of saved)
+    await request(`/api/data/payment_records/${record.id}`, {
+      token: owner.token,
+      method: "DELETE",
+    });
+  // Restore just these payments and their currency, independently of unrelated file attachments.
+  for (const name of Object.keys(backup.data)) {
+    if (name === "payment_records") backup.data[name] = saved;
+    else if (name !== "currencies") backup.data[name] = [];
+  }
+  backup.files = [];
+  backup.profile.avatar = "";
+  const restored = await request("/api/account/import", {
+    token: owner.token,
+    method: "POST",
+    body: { backup },
+  });
+  expect(restored.status, JSON.stringify(restored.data)).toBe(200);
+  for (const record of saved) {
+    const restoredPayment = await request(
+      `/api/data/payment_records/${record.id}`,
+      { token: owner.token },
+    );
+    expect(restoredPayment.data).toMatchObject({
+      name: record.name,
+      currency: currency.id,
+      subscription_id: "",
+    });
+    expect(
+      (
+        await request(`/api/data/payment_records/${record.id}`, {
+          token: other.token,
+        })
+      ).status,
+    ).toBe(404);
+    await request(`/api/data/payment_records/${record.id}`, {
+      token: owner.token,
+      method: "DELETE",
+    });
+  }
+});
+it("saves independent payment logos and details and restores logo and proof attachments together", async () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const method = (
+    await request("/api/data/payment_methods", { token: owner.token })
+  ).data.items[0];
+  const payer = (await request("/api/data/household", { token: owner.token }))
+    .data.items[0];
+  const values = {
+    name: "Old service with logo",
+    currency: currency.id,
+    category: category.id,
+    payment_method: method.id,
+    payer: payer.id,
+    due_date: today,
+    paid_date: today,
+    amount: 19.5,
+    utc_offset_minutes: 0,
+    paid_utc_offset_minutes: 0,
+  };
+  const png = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aF6sAAAAASUVORK5CYII=",
+    "base64",
+  );
+  const form = new FormData();
+  for (const [key, value] of Object.entries(values))
+    form.set(key, String(value));
+  form.set("logo", new Blob([png], { type: "image/png" }), "custom-logo.png");
+  const created = await request("/api/payments/history", {
+    token: owner.token,
+    method: "POST",
+    body: form,
+  });
+  expect(created.status).toBe(201);
+  expect(created.data).toMatchObject({
+    name: values.name,
+    category: category.id,
+    payer: payer.id,
+    payment_method: method.id,
+    amount: 19.5,
+  });
+  expect(created.data.logo).toMatch(/custom-logo\.png$/);
+  const list = await request(
+    "/api/data/payment_records?expand=category,payer,payment_method",
+    { token: owner.token },
+  );
+  expect(
+    list.data.items.find((row) => row.id === created.data.id).expand,
+  ).toMatchObject({
+    category: { id: category.id },
+    payer: { id: payer.id },
+    payment_method: { id: method.id },
+  });
+  const proof = new FormData();
+  proof.set(
+    "proof",
+    new Blob(["receipt"], { type: "application/pdf" }),
+    "receipt.pdf",
+  );
+  expect(
+    (
+      await request(`/api/data/payment_records/${created.data.id}`, {
+        token: owner.token,
+        method: "PATCH",
+        body: proof,
+      })
+    ).status,
+  ).toBe(200);
+  const backup = (await request("/api/account/export", { token: owner.token }))
+    .data;
+  backup.files = backup.files.filter(
+    (file) =>
+      file.collection === "payment_records" &&
+      file.recordId === created.data.id,
+  );
+  expect(backup.files.map((file) => file.field).sort()).toEqual([
+    "logo",
+    "proof",
+  ]);
+  for (const file of backup.files) {
+    const url = `${base}/api/files/${file.collection}/${file.recordId}/${encodeURIComponent(file.name)}`;
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${owner.token}` },
+    });
+    expect(response.status).toBe(200);
+    file.base64 = Buffer.from(await response.arrayBuffer()).toString("base64");
+    expect(
+      (
+        await fetch(url, {
+          headers: { Authorization: `Bearer ${other.token}` },
+        })
+      ).status,
+    ).toBe(404);
+  }
+  for (const name of Object.keys(backup.data)) {
+    if (name === "payment_records")
+      backup.data[name] = backup.data[name].filter(
+        (row) => row.id === created.data.id,
+      );
+    else if (
+      !["currencies", "categories", "payment_methods", "household"].includes(
+        name,
+      )
+    )
+      backup.data[name] = [];
+  }
+  backup.profile.avatar = "";
+  await request(`/api/data/payment_records/${created.data.id}`, {
+    token: owner.token,
+    method: "DELETE",
+  });
+  const restored = await request("/api/account/import", {
+    token: owner.token,
+    method: "POST",
+    body: { backup },
+  });
+  expect(restored.status, JSON.stringify(restored.data)).toBe(200);
+  const record = (
+    await request(`/api/data/payment_records/${created.data.id}`, {
+      token: owner.token,
+    })
+  ).data;
+  expect(record).toMatchObject({
+    category: category.id,
+    payer: payer.id,
+    payment_method: method.id,
+  });
+  for (const field of ["logo", "proof"]) {
+    const response = await fetch(
+      `${base}/api/files/payment_records/${record.id}/${encodeURIComponent(record[field])}`,
+      { headers: { Authorization: `Bearer ${owner.token}` } },
+    );
+    expect(response.status).toBe(200);
+    expect(Buffer.from(await response.arrayBuffer())).toEqual(
+      field === "logo" ? png : Buffer.from("receipt"),
+    );
+  }
+  await request(`/api/data/payment_records/${record.id}`, {
+    token: owner.token,
+    method: "DELETE",
+  });
+  const foreign = await request("/api/data/categories", {
+    token: other.token,
+    method: "POST",
+    body: { name: "Private category" },
+  });
+  expect(
+    (
+      await request("/api/payments/history", {
+        token: owner.token,
+        method: "POST",
+        body: { ...values, category: foreign.data.id },
+      })
+    ).status,
+  ).toBe(400);
+  await request(`/api/data/categories/${foreign.data.id}`, {
+    token: other.token,
+    method: "DELETE",
+  });
+  form.set("logo", new Blob(["invalid"], { type: "image/png" }), "bad.png");
+  const rejected = await request("/api/payments/history", {
+    token: owner.token,
+    method: "POST",
+    body: form,
+  });
+  expect(rejected.status).toBe(400);
+  expect(rejected.data.message).toBe("historical_invalid_logo");
+});
 it("preserves payments and file references in account backups", async () => {
   const today = new Date().toISOString().slice(0, 10);
   const payment = await request("/api/payments/history", {

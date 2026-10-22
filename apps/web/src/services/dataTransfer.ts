@@ -91,9 +91,17 @@ export async function exportBackup(onProgress: (done: number, total: number) => 
   downloadBlob(blob, `monline-backup-${new Date().toISOString().slice(0, 10)}.json`);
 }
 
-export async function exportInstanceBackup() {
-  const response = await serverSettingsService.backupRaw();
-  if (!response.ok) throw new Error("transfer_export_failed");
+export async function exportInstanceBackup(password: string) {
+  const response = await serverSettingsService.backupRaw(password);
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const code = data.message;
+    throw new Error(
+      ["transfer_password_required", "transfer_invalid_password"].includes(code)
+        ? code
+        : "transfer_export_failed",
+    );
+  }
   const blob = await response.blob();
   downloadBlob(blob, `monline-backup-${new Date().toISOString().slice(0, 10)}.tar.gz`);
 }

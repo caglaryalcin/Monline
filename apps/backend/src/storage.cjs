@@ -148,6 +148,24 @@ class Repository {
       this.collections.set(entry.name, collection);
       this.collections.set(entry.legacyId, collection);
     }
+    const paymentColumns = new Set(
+      this.connection
+        .prepare('PRAGMA table_info("payment_records")')
+        .all()
+        .map((column) => column.name),
+    );
+    for (const name of [
+      "name",
+      "currency",
+      "logo",
+      "category",
+      "payment_method",
+      "payer",
+    ])
+      if (!paymentColumns.has(name))
+        this.connection.exec(
+          `ALTER TABLE payment_records ADD COLUMN ${identifier(name)} TEXT NOT NULL DEFAULT ''`,
+        );
     if (
       !this.connection
         .prepare('PRAGMA table_info("subscriptions")')
@@ -485,6 +503,15 @@ class Repository {
       owner = record.getString(
         collection.name === "notification_log" ? "user_id" : "user",
       );
+    if (
+      collection.name === "payment_records" &&
+      !record.getString("subscription_id")
+    ) {
+      if (!record.getString("name").trim())
+        throw new BadRequestError("historical_invalid_name");
+      if (!record.getString("currency"))
+        throw new BadRequestError("historical_invalid_currency");
+    }
     for (const field of collection.fields) {
       const value = record.get(field.name);
       if (

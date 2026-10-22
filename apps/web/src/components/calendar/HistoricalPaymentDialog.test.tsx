@@ -7,7 +7,32 @@ import type { PaymentRecord, Subscription } from "@/types";
 
 import { historicalDateRange, HistoricalPaymentDialog } from "./HistoricalPaymentDialog";
 
-const mocks = vi.hoisted(() => ({ createHistorical: vi.fn(), success: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  createHistorical: vi.fn(),
+  success: vi.fn(),
+  logoFile: null as File | null,
+}));
+vi.mock("@/hooks/useLogoSearch", () => ({
+  useLogoSearch: () => ({
+    logoFile: mocks.logoFile,
+    logoUrl: "",
+    logoPreview: null,
+    logoSearch: "",
+    logoResults: [],
+    setLogoSearch: vi.fn(),
+    setShowLogoResults: vi.fn(),
+    showLogoResults: false,
+    searching: false,
+    logoSearchRef: { current: null },
+    handleSelectLogo: vi.fn(),
+    handleFileChange: (event: { target: { files: File[] } }) => {
+      mocks.logoFile = event.target.files[0];
+    },
+    resolveLogoFile: async () => mocks.logoFile,
+    manualLogo: true,
+  }),
+}));
+vi.mock("@/lib/image", () => ({ compressImage: async (file: File) => file }));
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { resolvedLanguage: "tr" } }),
 }));
@@ -26,17 +51,23 @@ const subscription = {
   inactive: true,
 } as Subscription;
 
-function setup(records: PaymentRecord[] = []) {
+function setup(
+  records: PaymentRecord[] = [],
+  subscriptions: Subscription[] = [
+    subscription,
+    { ...subscription, id: "credit-1", name: "Income", record_type: "credit" },
+  ],
+) {
   const { client, Wrapper } = createQueryClientWrapper();
   const onSaved = vi.fn();
   const onClose = vi.fn();
   const invalidate = vi.spyOn(client, "invalidateQueries");
   render(
     <HistoricalPaymentDialog
-      subscriptions={[
-        subscription,
-        { ...subscription, id: "credit-1", name: "Income", record_type: "credit" },
-      ]}
+      subscriptions={subscriptions}
+      categories={[{ id: "category", name: "Video", user: "user-1" }]}
+      paymentMethods={[{ id: "method", name: "Card", user: "user-1", is_main: true }]}
+      household={[{ id: "payer", name: "Me", user: "user-1", is_main: true }]}
       currencies={[
         {
           id: "eur",
@@ -60,6 +91,7 @@ function setup(records: PaymentRecord[] = []) {
 
 describe("HistoricalPaymentDialog", () => {
   beforeEach(() => {
+    mocks.logoFile = null;
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 9, 17, 12));
   });
@@ -76,6 +108,65 @@ describe("HistoricalPaymentDialog", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onSaved).not.toHaveBeenCalled();
     expect(mocks.createHistorical).not.toHaveBeenCalled();
+  });
+
+  it("saves an independent payment when there are no subscriptions", async () => {
+    const record = { id: "independent", subscription_id: "", name: "Old service" } as PaymentRecord;
+    mocks.createHistorical.mockResolvedValue(record);
+    const { onSaved, invalidate } = setup([], []);
+    expect(screen.getByRole("button", { name: "historical_save" })).toBeEnabled();
+    fireEvent.change(screen.getByLabelText("historical_name"), {
+      target: { value: " Old service " },
+    });
+    fireEvent.change(screen.getByLabelText("amount (EUR)"), { target: { value: "18.5" } });
+    fireEvent.click(screen.getByRole("button", { name: "historical_save" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith(record));
+    expect(mocks.createHistorical).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "Old service",
+        currency: "eur",
+        amount: 18.5,
+      }),
+    );
+    expect(mocks.createHistorical.mock.calls[0][0]).not.toHaveProperty("subscription_id");
+    expect(invalidate).not.toHaveBeenCalledWith({
+      queryKey: queryKeys.subscriptions.history("user-1", ""),
+    });
+  });
+
+  it("offers independent payments even when subscriptions are available", async () => {
+    setup();
+    Element.prototype.hasPointerCapture = () => false;
+    Element.prototype.scrollIntoView = () => {};
+    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(screen.getByRole("option", { name: "historical_standalone" }));
+    expect(screen.getByLabelText("historical_name")).toBeVisible();
+    expect(screen.getByLabelText("currency")).toHaveTextContent("EUR");
+  });
+
+  it("uploads a logo and saves category, payer and payment method with an independent payment", async () => {
+    mocks.createHistorical.mockResolvedValue({ id: "paid" });
+    const { onSaved } = setup([], []);
+    Element.prototype.hasPointerCapture = () => false;
+    Element.prototype.scrollIntoView = () => {};
+    fireEvent.change(screen.getByLabelText("historical_name"), {
+      target: { value: "Old service" },
+    });
+    fireEvent.change(screen.getByLabelText("amount (EUR)"), { target: { value: "23.5" } });
+    await userEvent.click(screen.getByLabelText("category"));
+    await userEvent.click(screen.getByRole("option", { name: "Video" }));
+    const file = new File(["logo"], "logo.png", { type: "image/png" });
+    fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [file] } });
+    fireEvent.click(screen.getByRole("button", { name: "historical_save" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    const body = mocks.createHistorical.mock.calls[0][0] as FormData;
+    expect(body).toBeInstanceOf(FormData);
+    expect(body.get("name")).toBe("Old service");
+    expect(body.get("category")).toBe("category");
+    expect(body.get("payer")).toBe("payer");
+    expect(body.get("payment_method")).toBe("method");
+    expect(body.get("logo")).toBe(file);
+    expect(body.has("subscription_id")).toBe(false);
   });
 
   it("offers inactive expenses and sets a rolling one-year window, clamping leap day", async () => {

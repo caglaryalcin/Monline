@@ -20,7 +20,7 @@ A self-hosted home for your subscriptions, recurring payments, and budget. React
 
 ![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/subscriptions.png)
 
-- **Payment calendar** — see every payment on a day, mark payments as paid, and add historical payments individually or in a reviewed batch with editable amounts.
+- **Payment calendar** — see every payment on a day, mark payments as paid, and add historical payments individually or in a reviewed batch with editable amounts. Record independent payments with automatic or uploaded logos, categories, payers, and payment methods without creating a subscription.
 
 ![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/calendar.png)
 
@@ -28,7 +28,7 @@ A self-hosted home for your subscriptions, recurring payments, and budget. React
 - **Yearly breakdowns** — January–December payment views and category breakdowns with paid/upcoming filters and independently expandable subscription details.
 - **Statement import** — review online subscription charges from **Enpara**, **DenizBank**, and **Garanti BBVA** PDFs, including Amazon Prime and Google Workspace billing descriptors. Match or create subscriptions and import paid calendar entries without duplicates. Matching full-refund pairs within a statement are excluded together.
 - **People, payment methods, and currencies** — choose defaults, recognize bank logos, convert currencies, and edit multiple payment methods or currencies together.
-- **Complete backups** — account JSON import/export and administrator `.tar.gz` instance archives, including payment history, settings, logos, and attachments. Restore a full instance backup directly from first setup.
+- **Complete backups** — account JSON import/export and administrator `.tar.gz` instance archives, including payment history, settings, logos, and attachments. Full instance exports require the administrator’s current account password. Restore a full instance backup directly from first setup, including archives from older versions.
 
 ![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/import-export.png)
 
@@ -62,11 +62,11 @@ GitHub Actions publishes **AMD64 and ARM64** images to `ghcr.io/caglaryalcin/mon
 
 | Trigger                    | Image tags        |
 | -------------------------- | ----------------- |
-| Release tag, e.g. `v1.0.15` | `1.0.15`, `latest` |
+| Release tag, e.g. `v1.0.16` | `1.0.16`, `latest` |
 
 Images are published only for version tags; pushes to `main` do not publish images. Release tags must match the root, frontend and server package versions. Prereleases publish only their full version and leave `latest` unchanged. Publishing uses GitHub's built-in `GITHUB_TOKEN`.
 
-For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.0.15`, omit `build`, and run `docker compose up -d`. Authenticate to GHCR before pulling private images. Keep the package private unless you intend to publish it publicly.
+For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.0.16`, omit `build`, and run `docker compose up -d`. Authenticate to GHCR before pulling private images. Keep the package private unless you intend to publish it publicly.
 
 ## Contributors
 

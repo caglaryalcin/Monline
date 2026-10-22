@@ -1479,7 +1479,7 @@
         "name": "subscription_id",
         "type": "text",
         "hidden": false,
-        "required": true,
+        "required": false,
         "min": 0,
         "max": 0
       },
@@ -1541,9 +1541,68 @@
         "type": "json",
         "hidden": false,
         "required": false
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 200
+      },
+      {
+        "name": "currency",
+        "type": "relation",
+        "hidden": false,
+        "required": false,
+        "maxSelect": 1,
+        "collectionId": "pbc_3379852803",
+        "cascadeDelete": false
+      },
+      {
+        "name": "logo",
+        "type": "file",
+        "hidden": false,
+        "required": false,
+        "maxSize": 5242880,
+        "mimeTypes": [
+          "image/png",
+          "image/jpeg",
+          "image/svg+xml",
+          "image/webp",
+          "image/gif"
+        ],
+        "maxSelect": 1
+      },
+      {
+        "name": "category",
+        "type": "relation",
+        "hidden": false,
+        "required": false,
+        "maxSelect": 1,
+        "collectionId": "pbc_3292755704",
+        "cascadeDelete": false
+      },
+      {
+        "name": "payment_method",
+        "type": "relation",
+        "hidden": false,
+        "required": false,
+        "maxSelect": 1,
+        "collectionId": "pbc_568792081",
+        "cascadeDelete": false
+      },
+      {
+        "name": "payer",
+        "type": "relation",
+        "hidden": false,
+        "required": false,
+        "maxSelect": 1,
+        "collectionId": "pbc_820562264",
+        "cascadeDelete": false
       }
     ],
-    "sql": "CREATE TABLE \"payment_records\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"subscription_id\" TEXT NOT NULL DEFAULT '', \"due_date\" TEXT NOT NULL DEFAULT '', \"paid_at\" TEXT NOT NULL DEFAULT '', \"auto_paid\" INTEGER NOT NULL DEFAULT 0, \"amount\" REAL NOT NULL DEFAULT 0, \"notes\" TEXT NOT NULL DEFAULT '', \"proof\" TEXT NOT NULL DEFAULT '', \"statement_sources\" TEXT DEFAULT 'null')"
+    "sql": "CREATE TABLE \"payment_records\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"subscription_id\" TEXT NOT NULL DEFAULT '', \"due_date\" TEXT NOT NULL DEFAULT '', \"paid_at\" TEXT NOT NULL DEFAULT '', \"auto_paid\" INTEGER NOT NULL DEFAULT 0, \"amount\" REAL NOT NULL DEFAULT 0, \"notes\" TEXT NOT NULL DEFAULT '', \"proof\" TEXT NOT NULL DEFAULT '', \"statement_sources\" TEXT DEFAULT 'null', \"name\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '')"
   },
   {
     "name": "api_keys",

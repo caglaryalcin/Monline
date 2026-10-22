@@ -3,6 +3,7 @@ const {
   NotFoundError,
   Record,
   UnauthorizedError,
+  files,
   repository,
   routerAdd,
 } = require("../runtime.cjs");
@@ -11,7 +12,16 @@ routerAdd("POST", "/api/payments/history", (e) => {
   if (!e.auth || e.auth.collection().name !== "users")
     throw new UnauthorizedError("Authentication required");
   const helper = require(domainPath + "/lib/pure/historical-payment.js");
-  const body = e.requestInfo().body;
+  const body = { ...e.requestInfo().body };
+  if (e.request.header.get("Content-Type").startsWith("multipart/form-data")) {
+    for (const key of [
+      "amount",
+      "utc_offset_minutes",
+      "paid_utc_offset_minutes",
+    ])
+      if (typeof body[key] === "string" && body[key].trim())
+        body[key] = Number(body[key]);
+  }
   let values;
   try {
     values = helper.validateHistoricalPayment(body, new Date());
@@ -23,6 +33,59 @@ routerAdd("POST", "/api/payments/history", (e) => {
   let saved;
   let duplicate = false;
   repository.runInTransaction((tx) => {
+    if (!body.subscription_id) {
+      if (
+        typeof body.name !== "string" ||
+        !body.name.trim() ||
+        body.name.trim().length > 200
+      )
+        throw new BadRequestError("historical_invalid_name");
+      let currency;
+      try {
+        currency = tx.findRecordById("currencies", String(body.currency || ""));
+      } catch (_) {
+        throw new BadRequestError("historical_invalid_currency");
+      }
+      if (currency.getString("user") !== e.auth.id)
+        throw new BadRequestError("historical_invalid_currency");
+      const record = new Record(tx.findCollectionByNameOrId("payment_records"));
+      record.set("user", e.auth.id);
+      record.set("name", body.name.trim());
+      record.set("currency", currency.id);
+      for (const [key, collection] of Object.entries({
+        category: "categories",
+        payment_method: "payment_methods",
+        payer: "household",
+      })) {
+        if (!body[key]) continue;
+        let related;
+        try {
+          related = tx.findRecordById(collection, String(body[key]));
+        } catch (_) {
+          throw new BadRequestError("historical_invalid_details");
+        }
+        if (related.getString("user") !== e.auth.id)
+          throw new BadRequestError("historical_invalid_details");
+        record.set(key, related.id);
+      }
+      let logo;
+      try {
+        [, logo] = e.request.formFile("logo");
+      } catch (_) {}
+      if (logo) {
+        if (
+          !require(domainPath + "/lib/pure/image-source.js").imageContentType(
+            logo.buffer,
+          )
+        )
+          throw new BadRequestError("historical_invalid_logo");
+        record.set("logo", files.fileFromMultipart(logo));
+      }
+      for (const key of Object.keys(values)) record.set(key, values[key]);
+      tx.save(record);
+      saved = record;
+      return;
+    }
     let sub;
     try {
       sub = tx.findRecordById(

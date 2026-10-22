@@ -30,9 +30,14 @@ export const serverSettingsService = {
   // ─── Backup / Restore ───────────────────────────────────────────────────────
 
   /** Returns a Response so callers can handle the binary blob themselves. */
-  backupRaw: () =>
+  backupRaw: (password: string) =>
     fetch("/api/db/backup", {
-      headers: { Authorization: `Bearer ${client.authStore.token}` },
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${client.authStore.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ password }),
     }),
 
   restore: (formData: FormData) =>

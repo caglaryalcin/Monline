@@ -10,6 +10,7 @@ import {
   toMain,
 } from "@/components/calendar/types";
 import { isExpense } from "@/lib/recordTypes";
+import { paymentOwnerId, withStandalonePayments } from "@/lib/standalonePayments";
 import type { Currency, Cycle, PaymentRecord, Subscription } from "@/types";
 
 const NO_RECORDS: PaymentRecord[] = [];
@@ -49,12 +50,12 @@ export function useCalendarMonthData({
     for (const record of paymentRecords) {
       const date = parseLocalDate(record.due_date);
       if (!date || date.getFullYear() !== year || date.getMonth() + 1 !== month) continue;
-      const group = recordsBySubscription.get(record.subscription_id) ?? [];
+      const group = recordsBySubscription.get(paymentOwnerId(record)) ?? [];
       group.push(record);
-      recordsBySubscription.set(record.subscription_id, group);
+      recordsBySubscription.set(paymentOwnerId(record), group);
     }
 
-    for (const subscription of subscriptions) {
+    for (const subscription of withStandalonePayments(subscriptions, paymentRecords, currencies)) {
       const subscriptionRecords = recordsBySubscription.get(subscription.id) ?? [];
       const dates = new Set(
         getOccurrencesInMonth(subscription, year, month, cycles).map(toDateStr),
@@ -75,7 +76,7 @@ export function useCalendarMonthData({
     }
 
     return entries;
-  }, [subscriptions, cycles, year, month, paymentRecords]);
+  }, [subscriptions, cycles, year, month, paymentRecords, currencies]);
 
   const stats = useMemo(() => {
     const today = new Date();

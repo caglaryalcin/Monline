@@ -2,7 +2,12 @@ import client from "@/lib/client";
 import type { PaymentRecord } from "@/types";
 
 export interface HistoricalPaymentInput {
-  subscription_id: string;
+  subscription_id?: string;
+  name?: string;
+  currency?: string;
+  category?: string;
+  payment_method?: string;
+  payer?: string;
   due_date: string;
   paid_date: string;
   amount: number;
@@ -12,12 +17,13 @@ export interface HistoricalPaymentInput {
 }
 
 export const paymentRecordsService = {
-  createHistorical: (data: HistoricalPaymentInput) =>
+  createHistorical: (data: HistoricalPaymentInput | FormData) =>
     client.send<PaymentRecord>("/api/payments/history", { method: "POST", body: data }),
 
   listForUser: (userId: string) =>
     client.collection("payment_records").getFullList<PaymentRecord>({
       filter: client.filter("user = {:userId}", { userId }),
+      expand: "currency,category,payment_method,payer",
     }),
 
   listForSubscription: (subscriptionId: string, userId: string) =>

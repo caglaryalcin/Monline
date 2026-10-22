@@ -136,5 +136,10 @@ describe("subscriptionsService", () => {
       { collectionId: "subscriptions", id: "sub-2" },
       "prime.png",
     );
+    subscriptionsService.logoUrl({ ...subWithLogo, standalone_payment_id: "sub-2" });
+    expect(client.files.getUrl).toHaveBeenLastCalledWith(
+      { collectionId: "payment_records", id: "sub-2" },
+      "prime.png",
+    );
   });
 });

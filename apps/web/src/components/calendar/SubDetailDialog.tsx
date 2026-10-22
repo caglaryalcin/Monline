@@ -99,7 +99,11 @@ export function SubDetailDialog({
             <div className="min-w-0 flex-1 basis-[calc(100%-5rem)] sm:basis-0">
               <p className="text-xl font-bold leading-tight truncate">{sub.name}</p>
               <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                {sub.inactive ? (
+                {sub.standalone_payment_id ? (
+                  <Badge variant="secondary" className="text-xs">
+                    {t("historical_standalone")}
+                  </Badge>
+                ) : sub.inactive ? (
                   <Badge variant="secondary" className="text-xs">
                     {t("inactive")}
                   </Badge>
@@ -196,7 +200,13 @@ export function SubDetailDialog({
               <div className="space-y-3">
                 <InfoRow
                   icon={<CalendarDays className="h-4 w-4" />}
-                  label={t(credit ? "received_on" : "next_payment")}
+                  label={t(
+                    sub.standalone_payment_id
+                      ? "historical_due_date"
+                      : credit
+                        ? "received_on"
+                        : "next_payment",
+                  )}
                 >
                   <span className="flex items-center gap-1.5 flex-wrap">
                     <span>{formatDate(sub.next_payment)}</span>
@@ -208,7 +218,7 @@ export function SubDetailDialog({
                         {dLeft} {t("days_short")}
                       </Badge>
                     )}
-                    {dLeft < 0 && !credit && (
+                    {dLeft < 0 && !credit && !sub.standalone_payment_id && (
                       <Badge variant="destructive" className="text-[10px]">
                         {t("overdue")}
                       </Badge>
@@ -312,10 +322,12 @@ export function SubDetailDialog({
                 {t("view_payment")}
               </Button>
             )}
-            <Button onClick={() => onEdit(sub)}>
-              <Pencil className="h-4 w-4 mr-2" />
-              {t("edit")}
-            </Button>
+            {!sub.standalone_payment_id && (
+              <Button onClick={() => onEdit(sub)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                {t("edit")}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

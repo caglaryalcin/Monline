@@ -177,7 +177,15 @@ function validateDatabase(file) {
             !columns.has(field.name) &&
             !(
               (entry.name === "payment_records" &&
-                field.name === "statement_sources") ||
+                [
+                  "statement_sources",
+                  "name",
+                  "currency",
+                  "logo",
+                  "category",
+                  "payment_method",
+                  "payer",
+                ].includes(field.name)) ||
               (entry.name === "subscriptions" &&
                 field.name === "statement_imported") ||
               (["payment_methods", "household"].includes(entry.name) &&
@@ -200,7 +208,16 @@ function validateDatabase(file) {
 
 function replaceDatabase(repository, input) {
   for (const entry of schema) {
-    const fields = entry.fields.map((field) => field.name);
+    const sourceColumns = new Set(
+      input
+        .prepare(`PRAGMA table_info(${identifier(entry.name)})`)
+        .all()
+        .map((column) => column.name),
+    );
+    // Let the current table supply defaults for fields added after the backup.
+    const fields = entry.fields
+      .map((field) => field.name)
+      .filter((name) => sourceColumns.has(name));
     repository.connection.exec(`DELETE FROM ${identifier(entry.name)}`);
     const insert = repository.connection.prepare(
       `INSERT INTO ${identifier(entry.name)} (${fields.map(identifier)}) VALUES (${fields.map(() => "?")})`,
@@ -208,15 +225,7 @@ function replaceDatabase(repository, input) {
     for (const row of input
       .prepare(`SELECT * FROM ${identifier(entry.name)}`)
       .iterate())
-      insert.run(
-        ...fields.map((field) =>
-          Object.hasOwn(row, field)
-            ? row[field]
-            : ["statement_imported", "is_main"].includes(field)
-              ? 0
-              : null,
-        ),
-      );
+      insert.run(...fields.map((field) => row[field]));
   }
   repository.connection.exec(
     "DELETE FROM monline_sessions; DELETE FROM monline_meta",
@@ -258,7 +267,12 @@ function registerBackupApi(app, repository, auth) {
       return next(new ForbiddenError("Admin access required"));
     next();
   };
-  app.get("/api/db/backup", admin, backupLimiter, async (req, res, next) => {
+  app.post("/api/db/backup", admin, backupLimiter, async (req, res, next) => {
+    const password = req.body?.password;
+    if (typeof password !== "string" || !password)
+      return res.status(400).json({ message: "transfer_password_required" });
+    if (!(await auth.passwordValid(password, req.user.getString("password"))))
+      return res.status(403).json({ message: "transfer_invalid_password" });
     if (repository.databaseOperation)
       return res
         .status(409)

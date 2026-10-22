@@ -210,6 +210,9 @@ export function CalendarPage() {
         <HistoricalPaymentDialog
           subscriptions={subscriptions}
           currencies={currencies}
+          categories={categories}
+          paymentMethods={paymentMethods}
+          household={household}
           records={paymentRecords}
           userId={userId}
           initialDate={selectedDate ? toDateStr(selectedDate) : undefined}

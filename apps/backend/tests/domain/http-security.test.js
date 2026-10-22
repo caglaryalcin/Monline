@@ -170,8 +170,38 @@ it("rejects traversal and symlink archive entries without touching existing data
   ).toEqual([]);
 });
 
+it("requires the current account password for every full backup", async () => {
+  expect((await request("/api/db/backup")).status).toBe(404);
+  for (const value of [undefined, "", 123]) {
+    const response = await request("/api/db/backup", {
+      method: "POST",
+      body: { password: value },
+    });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      message: "transfer_password_required",
+    });
+  }
+  const rejected = await request("/api/db/backup", {
+    method: "POST",
+    body: { password: "wrong-password" },
+  });
+  expect(rejected.status).toBe(403);
+  expect(await rejected.json()).toMatchObject({
+    message: "transfer_invalid_password",
+  });
+  expect(
+    fs
+      .readdirSync(path.join(directory, "backups"))
+      .filter((name) => name.startsWith("work-")),
+  ).toEqual([]);
+});
+
 it("backs up and restores a valid archive using only server-owned upload paths", async () => {
-  const backup = await request("/api/db/backup");
+  const backup = await request("/api/db/backup", {
+    method: "POST",
+    body: { password },
+  });
   expect(backup.status).toBe(200);
   const archive = await backup.arrayBuffer();
   const body = new FormData();

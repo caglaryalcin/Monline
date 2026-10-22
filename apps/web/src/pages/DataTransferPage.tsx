@@ -23,6 +23,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import client from "@/lib/client";
@@ -51,6 +60,9 @@ export function DataTransferPage() {
   const [selected, setSelected] = useState<AccountBackup | null>(null);
   const [archive, setArchive] = useState<InstanceFile | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
+  const [confirmExport, setConfirmExport] = useState(false);
+  const [exportPassword, setExportPassword] = useState("");
+  const [exportError, setExportError] = useState("");
   const [filename, setFilename] = useState("");
   const [result, setResult] = useState<ImportResult | null>(null);
   const disabled = !!busy || isLoading || !user;
@@ -89,6 +101,36 @@ export function DataTransferPage() {
         throw new Error("transfer_invalid_backup");
       setArchive({ file, legacy });
     } else setSelected(await readImportFile(file));
+  }
+
+  function closeExport() {
+    setConfirmExport(false);
+    setExportPassword("");
+    setExportError("");
+  }
+
+  async function confirmInstanceExport() {
+    if (busy || !isAdmin) return;
+    setBusy("backup");
+    setError("");
+    setExportError("");
+    const password = exportPassword;
+    setExportPassword("");
+    try {
+      await exportInstanceBackup(password);
+      closeExport();
+    } catch (err) {
+      const code = err instanceof Error ? err.message : "";
+      setExportError(
+        t(
+          ["transfer_password_required", "transfer_invalid_password"].includes(code)
+            ? code
+            : "transfer_export_failed",
+        ),
+      );
+    } finally {
+      setBusy(null);
+    }
   }
 
   async function restoreAccount() {
@@ -141,15 +183,17 @@ export function DataTransferPage() {
             <Button
               disabled={disabled}
               className="shrink-0 rounded-xl"
-              onClick={() =>
-                void run("backup", () =>
-                  isAdmin
-                    ? exportInstanceBackup()
-                    : exportBackup((done, total) =>
-                        setProgress(t("transfer_file_progress", { done, total })),
-                      ),
-                )
-              }
+              onClick={() => {
+                if (isAdmin) {
+                  setConfirmExport(true);
+                } else {
+                  void run("backup", () =>
+                    exportBackup((done, total) =>
+                      setProgress(t("transfer_file_progress", { done, total })),
+                    ),
+                  );
+                }
+              }}
             >
               {busy === "backup" ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -292,6 +336,59 @@ export function DataTransferPage() {
           {error}
         </p>
       )}
+      <Dialog
+        open={confirmExport && isAdmin}
+        onOpenChange={(open) => {
+          if (!open && !busy) closeExport();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("transfer_export_password_title")}</DialogTitle>
+            <DialogDescription>{t("transfer_export_password_description")}</DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void confirmInstanceExport();
+            }}
+          >
+            <div className="space-y-2">
+              <Label htmlFor="export-password">{t("current_password")}</Label>
+              <Input
+                id="export-password"
+                type="password"
+                autoComplete="current-password"
+                required
+                autoFocus
+                disabled={!!busy}
+                value={exportPassword}
+                aria-invalid={!!exportError}
+                aria-describedby={exportError ? "export-password-error" : undefined}
+                onChange={(event) => {
+                  setExportPassword(event.target.value);
+                  setExportError("");
+                }}
+              />
+            </div>
+            {exportError && (
+              <p id="export-password-error" role="alert" className="text-sm text-destructive">
+                {exportError}
+              </p>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" disabled={!!busy} onClick={closeExport}>
+                {t("cancel")}
+              </Button>
+              <Button type="submit" disabled={!!busy || !exportPassword}>
+                {busy === "backup" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t(busy === "backup" ? "transfer_preparing" : "transfer_export_action")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       <AlertDialog open={confirmRestore && !!archive && isAdmin} onOpenChange={setConfirmRestore}>
         <AlertDialogContent>
           <AlertDialogHeader>

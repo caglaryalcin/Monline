@@ -46,12 +46,19 @@ export function SubscriptionLogo({
   previewUrl,
   className = "h-full w-full object-contain p-1",
 }: {
-  sub: Pick<Subscription, "name" | "url"> & Partial<Pick<Subscription, "id" | "logo">>;
+  sub: Pick<Subscription, "name" | "url"> &
+    Partial<Pick<Subscription, "id" | "logo" | "standalone_payment_id">>;
   previewUrl?: string | null;
   className?: string;
 }) {
   const saved =
-    sub.logo && sub.id ? subscriptionsService.logoUrl({ id: sub.id, logo: sub.logo }) : null;
+    sub.logo && sub.id
+      ? subscriptionsService.logoUrl({
+          id: sub.id,
+          logo: sub.logo,
+          standalone_payment_id: sub.standalone_payment_id,
+        })
+      : null;
   const automatic = automaticLogoUrls(sub);
   const legacyWorkspace = isLegacyWorkspaceLogo({ name: sub.name, logo: sub.logo });
   const sources = [

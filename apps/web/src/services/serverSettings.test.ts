@@ -57,12 +57,14 @@ describe("serverSettingsService", () => {
     (api.postForm as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({});
     (api.post as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({});
 
-    await serverSettingsService.backupRaw();
+    await serverSettingsService.backupRaw("test-only-password");
     await serverSettingsService.restore(formData);
     await serverSettingsService.deleteUnusedLogos();
 
     expect(fetchMock).toHaveBeenCalledWith("/api/db/backup", {
-      headers: { Authorization: "Bearer admin-token" },
+      method: "POST",
+      headers: { Authorization: "Bearer admin-token", "Content-Type": "application/json" },
+      body: JSON.stringify({ password: "test-only-password" }),
     });
     expect(api.postForm).toHaveBeenCalledWith("/api/db/restore", formData, { timeoutMs: 600_000 });
     expect(api.post).toHaveBeenNthCalledWith(1, "/api/admin/deleteunusedlogos");

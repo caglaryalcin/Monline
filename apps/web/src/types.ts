@@ -29,6 +29,19 @@ export interface User {
 export interface PaymentRecord {
   id: string;
   subscription_id: string;
+  /** Name and currency for a payment without a subscription. */
+  name?: string;
+  currency?: string;
+  logo?: string;
+  category?: string;
+  payment_method?: string;
+  payer?: string;
+  expand?: {
+    currency?: Currency;
+    category?: Category;
+    payment_method?: PaymentMethod;
+    payer?: Household;
+  };
   user: string;
   due_date: string; // YYYY-MM-DD
   paid_at?: string; // ISO datetime
@@ -41,12 +54,7 @@ export interface PaymentRecord {
 
 /** One logged change to a subscription, as written by the backend hooks. */
 export type SubscriptionHistoryEventType =
-  | "created"
-  | "price_changed"
-  | "cycle_changed"
-  | "currency_changed"
-  | "paused"
-  | "resumed";
+  "created" | "price_changed" | "cycle_changed" | "currency_changed" | "paused" | "resumed";
 
 export interface SubscriptionHistoryEvent {
   id: string;
@@ -103,6 +111,8 @@ export interface SubscriptionHistory {
 
 export interface Subscription {
   id: string;
+  /** Present only on the display model of an independent payment. */
+  standalone_payment_id?: string;
   name: string;
   logo?: string;
   price: number;

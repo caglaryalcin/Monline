@@ -1,4 +1,5 @@
 import { isCredit } from "@/lib/recordTypes";
+import { paymentOwnerId } from "@/lib/standalonePayments";
 import { automaticLogoUrls } from "@/lib/subscriptionLogo";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Currency, Cycle, PaymentRecord, Subscription } from "@/types";
@@ -45,7 +46,7 @@ export function getPaymentRecord(
   dateStr: string,
 ): PaymentRecord | undefined {
   const matches = records.filter(
-    (r) => r.subscription_id === subId && toDateOnly(r.due_date) === dateStr,
+    (r) => paymentOwnerId(r) === subId && toDateOnly(r.due_date) === dateStr,
   );
 
   if (matches.length === 0) return undefined;
@@ -104,6 +105,7 @@ export function getOccurrencesInMonth(
   month: number,
   cycles: Cycle[],
 ): Date[] {
+  if (sub.standalone_payment_id) return [];
   const cycle = sub.expand?.cycle ?? cycles.find((c) => c.id === sub.cycle);
   const cycleName = cycle?.name ?? "Monthly";
 

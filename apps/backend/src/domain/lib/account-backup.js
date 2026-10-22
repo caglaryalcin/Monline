@@ -66,6 +66,12 @@ const FIELDS = {
     "logo",
   ],
   payment_records: [
+    "name",
+    "currency",
+    "logo",
+    "category",
+    "payment_method",
+    "payer",
     "statement_sources",
     "subscription_id",
     "due_date",
@@ -122,10 +128,10 @@ const FIELDS = {
   ],
 };
 const FILE_FIELDS = {
-  users: "avatar",
-  subscriptions: "logo",
-  payment_methods: "icon",
-  payment_records: "proof",
+  users: ["avatar"],
+  subscriptions: ["logo"],
+  payment_methods: ["icon"],
+  payment_records: ["proof", "logo"],
 };
 const RELATIONS = {
   currency: "currencies",
@@ -177,15 +183,16 @@ function exportAccount(app, userId) {
       files: [],
     };
     function addFile(name, row) {
-      const field = FILE_FIELDS[name];
-      const filename = field && row.getString(field);
-      if (filename)
-        backup.files.push({
-          collection: name,
-          recordId: row.id,
-          field,
-          name: filename,
-        });
+      for (const field of FILE_FIELDS[name] || []) {
+        const filename = row.getString(field);
+        if (filename)
+          backup.files.push({
+            collection: name,
+            recordId: row.id,
+            field,
+            name: filename,
+          });
+      }
     }
     addFile("users", account);
     for (const name of Object.keys(FIELDS)) {
@@ -269,7 +276,7 @@ function validateBackup(backup) {
     if (
       !file ||
       !Object.prototype.hasOwnProperty.call(FILE_FIELDS, file.collection) ||
-      FILE_FIELDS[file.collection] !== file.field ||
+      !FILE_FIELDS[file.collection].includes(file.field) ||
       typeof file.name !== "string" ||
       !file.name ||
       /[\/\\\x00-\x1f]/.test(file.name) ||
@@ -295,7 +302,6 @@ function validateBackup(backup) {
   }
   // Never silently restore a filename without its actual contents.
   for (const name of Object.keys(FILE_FIELDS)) {
-    const field = FILE_FIELDS[name];
     const rows =
       name === "users"
         ? [
@@ -306,8 +312,9 @@ function validateBackup(backup) {
           ]
         : backup.data[name];
     for (const row of rows)
-      if (row[field] && !files[fileKey(name, row.id, field)])
-        throw new Error("transfer_invalid_backup");
+      for (const field of FILE_FIELDS[name])
+        if (row[field] && !files[fileKey(name, row.id, field)])
+          throw new Error("transfer_invalid_backup");
   }
   return files;
 }
@@ -428,12 +435,17 @@ function importAccount(app, userId, backup, restoreSettings) {
           !Object.prototype.hasOwnProperty.call(row, field)
         )
           continue;
-        if (field === FILE_FIELDS[name]) {
+        if (FILE_FIELDS[name]?.includes(field)) {
           const file = files[fileKey(name, row.id, field)];
           if (file)
             record.set(field, fileHelpers.fileFromBytes(file.bytes, file.name));
         } else if (field === "subscription_id")
-          record.set(field, subscriptionId(row[field]));
+          record.set(
+            field,
+            name === "payment_records" && !row[field]
+              ? ""
+              : subscriptionId(row[field]),
+          );
         else if (field === "cycle")
           record.set(field, relation("cycles", row[field]));
         else if (RELATIONS[field])
@@ -462,7 +474,7 @@ function importAccount(app, userId, backup, restoreSettings) {
           result.skipped++;
           continue;
         }
-        if (!record && name === "payment_records") {
+        if (!record && name === "payment_records" && row.subscription_id) {
           const duplicates = tx.findRecordsByFilter(
             name,
             "user = {:owner} && subscription_id = {:subscription} && due_date = {:due}",

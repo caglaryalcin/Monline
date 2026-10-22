@@ -47,10 +47,15 @@ export const subscriptionsService = {
       errors: { index: number; name?: string; reason?: string; warning?: string }[];
     }>("/api/subscriptions/import", { subscriptions }),
 
-  logoUrl: (sub: Pick<Subscription, "id" | "logo">): string | null => {
+  logoUrl: (
+    sub: Pick<Subscription, "id" | "logo"> & Pick<Partial<Subscription>, "standalone_payment_id">,
+  ): string | null => {
     if (!sub.logo) return null;
     return client.files.getUrl(
-      { collectionId: "subscriptions", id: sub.id } as Parameters<typeof client.files.getUrl>[0],
+      {
+        collectionId: sub.standalone_payment_id ? "payment_records" : "subscriptions",
+        id: sub.id,
+      } as Parameters<typeof client.files.getUrl>[0],
       sub.logo,
     );
   },

@@ -60,6 +60,7 @@ describe("paymentRecordsService", () => {
 
     expect(getFullList).toHaveBeenNthCalledWith(1, {
       filter: "filter:user-1",
+      expand: "currency,category,payment_method,payer",
     });
     expect(getFullList).toHaveBeenNthCalledWith(2, {
       filter: "filter:sub-1:user-1",
