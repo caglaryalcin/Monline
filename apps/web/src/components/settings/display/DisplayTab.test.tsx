@@ -57,20 +57,21 @@ describe("DisplayTab", () => {
       expect(screen.getByTestId(`toggle-${labelKey}`)).toBeInTheDocument();
     }
     expect(screen.getByTestId("toggle-hide_disabled")).toBeInTheDocument();
+    expect(screen.queryByTestId("toggle-monthly_price")).not.toBeInTheDocument();
   });
 
   it("calls mutate with the negated value when a toggle is clicked while the field is true", async () => {
-    mockAuthUser.user = { id: "user-1", monthly_price: true };
+    mockAuthUser.user = { id: "user-1", hide_disabled: true };
     render(<DisplayTab />);
-    await userEvent.click(screen.getByTestId("toggle-monthly_price"));
-    expect(mutate).toHaveBeenCalledWith({ monthly_price: false });
+    await userEvent.click(screen.getByTestId("toggle-hide_disabled"));
+    expect(mutate).toHaveBeenCalledWith({ hide_disabled: false });
   });
 
   it("calls mutate with true when toggling an unset (undefined) field", async () => {
     mockAuthUser.user = { id: "user-1" };
     render(<DisplayTab />);
-    await userEvent.click(screen.getByTestId("toggle-monthly_price"));
-    expect(mutate).toHaveBeenCalledWith({ monthly_price: true });
+    await userEvent.click(screen.getByTestId("toggle-hide_disabled"));
+    expect(mutate).toHaveBeenCalledWith({ hide_disabled: true });
   });
 
   it("calls mutate for the hide_disabled field", async () => {
@@ -81,16 +82,14 @@ describe("DisplayTab", () => {
   });
 
   it("passes checked=true when the user field is truthy", () => {
-    mockAuthUser.user = { id: "user-1", monthly_price: true, hide_disabled: true };
+    mockAuthUser.user = { id: "user-1", hide_disabled: true };
     render(<DisplayTab />);
-    expect(screen.getByTestId("toggle-monthly_price").getAttribute("data-checked")).toBe("true");
     expect(screen.getByTestId("toggle-hide_disabled").getAttribute("data-checked")).toBe("true");
   });
 
   it("passes checked=false when the user field is falsy", () => {
-    mockAuthUser.user = { id: "user-1", monthly_price: false, hide_disabled: false };
+    mockAuthUser.user = { id: "user-1", hide_disabled: false };
     render(<DisplayTab />);
-    expect(screen.getByTestId("toggle-monthly_price").getAttribute("data-checked")).toBe("false");
     expect(screen.getByTestId("toggle-hide_disabled").getAttribute("data-checked")).toBe("false");
   });
 });

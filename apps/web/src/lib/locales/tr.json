@@ -313,7 +313,6 @@
   "disable_2fa": "2FA'yı Devre Dışı Bırak",
   "scan_qr": "Bu QR kodunu kimlik doğrulayıcı uygulamanızla tarayın",
   "backup_codes": "Yedek Kodlar",
-  "monthly_price": "Aylık fiyatı göster",
   "show_original_price": "Orijinal fiyatı göster",
   "hide_disabled": "Pasif abonelikleri gizle",
   "disabled_to_bottom": "Pasifleri alta taşı",
@@ -584,7 +583,6 @@
   "currency_symbol_placeholder": "Sembol (ör. $)",
   "currency_name_placeholder": "Ad (ör. ABD Doları)",
   "display_desc": "Bilgilerin uygulama genelinde nasıl görüntüleneceğini özelleştirin.",
-  "monthly_price_desc": "Abonelikler sayfasındaki kart ve liste fiyatlarını aylık karşılıklarıyla gösterir. Örneğin yıllık 1.200 TL, 100 TL/ay görünür; takvimdeki gerçek ödeme tutarı değişmez.",
   "show_original_price_desc": "Aylık karşılığın yanında aboneliğin kendi dönem ücretini de gösterin.",
   "hide_disabled_desc": "Pasif abonelikleri Abonelikler sayfasındaki kart ve listelerden gizler. Geçmiş ödeme kayıtları takvimde kalır.",
   "disabled_to_bottom_desc": "Pasif abonelikleri listenin en altına taşıyın.",
@@ -996,5 +994,9 @@
   "transfer_password_required": "Devam etmek için şifreni gir.",
   "transfer_invalid_password": "Şifre hatalı. Mevcut hesap şifreni kontrol edip tekrar dene.",
   "historical_invalid_logo": "Geçerli bir logo dosyası seçin.",
-  "historical_invalid_details": "Kategori, kişi veya ödeme yöntemi geçersiz. Seçimleri kontrol edin."
+  "historical_invalid_details": "Kategori, kişi veya ödeme yöntemi geçersiz. Seçimleri kontrol edin.",
+  "subscription_price_display": "Fiyat gösterimi",
+  "show_all_monthly": "Tümünü aylık göster",
+  "show_all_yearly": "Tümünü yıllık göster",
+  "subscription_price_display_hint": "Kayıtlı ödeme dönemlerini göstermek için seçili butona tekrar basın."
 }

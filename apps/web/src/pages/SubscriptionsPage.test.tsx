@@ -106,11 +106,13 @@ vi.mock("@/components/subscriptions/SubscriptionsToolbar", () => ({
     onToggleFilters,
     onCycleSort,
     onViewChange,
+    onPriceDisplayChange,
   }: {
     onSearchChange: (value: string) => void;
     onToggleFilters: () => void;
     onCycleSort: () => void;
     onViewChange: (view: "grid" | "list") => void;
+    onPriceDisplayChange: (value: "billing" | "monthly" | "yearly") => void;
   }) => (
     <div>
       <button type="button" onClick={() => onSearchChange("netflix")}>
@@ -125,6 +127,11 @@ vi.mock("@/components/subscriptions/SubscriptionsToolbar", () => ({
       <button type="button" onClick={() => onViewChange("list")}>
         list-view
       </button>
+      {(["billing", "monthly", "yearly"] as const).map((value) => (
+        <button key={value} onClick={() => onPriceDisplayChange(value)}>
+          {value}-prices
+        </button>
+      ))}
     </div>
   ),
 }));
@@ -137,6 +144,7 @@ vi.mock("@/components/subscriptions/SubscriptionsGrid", () => ({
   SubscriptionsGrid: ({
     subscriptions,
     layout,
+    priceDisplay,
     onEdit,
     onClone,
     onRenew,
@@ -145,6 +153,7 @@ vi.mock("@/components/subscriptions/SubscriptionsGrid", () => ({
   }: {
     subscriptions: Array<{ id: string; name: string }>;
     layout: "grid" | "list";
+    priceDisplay: "billing" | "monthly" | "yearly";
     onEdit: (subscription: { id: string; name: string }) => void;
     onClone: (id: string) => void;
     onRenew: (id: string) => void;
@@ -154,6 +163,7 @@ vi.mock("@/components/subscriptions/SubscriptionsGrid", () => ({
     <div>
       <div>grid:{subscriptions.length}</div>
       <div>layout:{layout}</div>
+      <div>prices:{priceDisplay}</div>
       <button type="button" onClick={() => onEdit(subscriptions[0])}>
         edit-subscription
       </button>
@@ -231,6 +241,20 @@ vi.mock("@/components/ui/confirm-dialog", () => ({
 import { SubscriptionsPage } from "./SubscriptionsPage";
 
 describe("SubscriptionsPage", () => {
+  it("defaults to billing periods even for a legacy monthly-price preference and switches both layouts", () => {
+    const { Wrapper } = createQueryClientWrapper();
+    render(<SubscriptionsPage />, { wrapper: Wrapper });
+    expect(screen.getByText("prices:billing")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "monthly-prices" }));
+    expect(screen.getByText("prices:monthly")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "list-view" }));
+    expect(screen.getByText("prices:monthly")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "yearly-prices" }));
+    expect(screen.getByText("prices:yearly")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "billing-prices" }));
+    expect(screen.getByText("prices:billing")).toBeInTheDocument();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.useAuth.mockReturnValue({

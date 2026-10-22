@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 
 import { PaymentMethodIcon } from "@/components/PaymentMethodIcon";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
+import type { SubscriptionPriceDisplay } from "@/components/subscriptions/subscriptionsPage.types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -133,7 +134,7 @@ export function SubscriptionCard({
   mainCurrency,
   currencies,
   convertCurrency,
-  showMonthly,
+  priceDisplay = "billing",
   showProgress,
   onEdit,
   onClone,
@@ -149,7 +150,7 @@ export function SubscriptionCard({
   mainCurrency?: Currency;
   convertCurrency?: boolean;
   currencies?: Currency[];
-  showMonthly?: boolean;
+  priceDisplay?: SubscriptionPriceDisplay;
   showProgress?: boolean;
   onEdit: () => void;
   onClone: () => void;
@@ -178,14 +179,24 @@ export function SubscriptionCard({
     Number.isFinite(currency.rate) &&
     currency.rate > 0
   );
-  const rawPrice =
-    showMonthly && !credit ? toMonthly(sub.price, cycleName, sub.frequency || 1) : sub.price;
+  const recurring = !credit && cycleName !== "One-Time";
+  const normalizePeriod = recurring && priceDisplay !== "billing";
+  const rawPrice = normalizePeriod
+    ? toMonthly(sub.price, cycleName, sub.frequency || 1) * (priceDisplay === "yearly" ? 12 : 1)
+    : sub.price;
+  const displayPeriod = !recurring
+    ? t("one_time")
+    : normalizePeriod
+      ? t(priceDisplay === "yearly" ? "yearly" : "monthly")
+      : periodLabel;
   const price = shouldConvert ? toMainCurrency(rawPrice, currency) : rawPrice;
   const displayCurrency = shouldConvert ? mainCurrency : currency;
   const symbol = displayCurrency?.symbol ?? "$";
   const showOriginalPrice =
     shouldConvert ||
-    (showMonthly && !credit && (cycleName !== "Monthly" || (sub.frequency || 1) !== 1));
+    (normalizePeriod &&
+      (cycleName !== (priceDisplay === "yearly" ? "Yearly" : "Monthly") ||
+        (sub.frequency || 1) !== 1));
   const originalPriceDetails = showOriginalPrice ? (
     <p className="mt-1 truncate text-xs tabular-nums text-muted-foreground">
       {formatPrice(sub.price, currency?.symbol ?? symbol, { currencyCode: currency?.code })}
@@ -270,7 +281,7 @@ export function SubscriptionCard({
                 {formatPrice(price, symbol, { currencyCode: displayCurrency?.code })}
               </p>
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                {credit ? t("one_time") : showMonthly ? t("monthly") : periodLabel}
+                {displayPeriod}
               </p>
               {originalPriceDetails}
             </div>
@@ -370,7 +381,7 @@ export function SubscriptionCard({
               {formatPrice(price, symbol, { currencyCode: displayCurrency?.code })}
             </p>
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider whitespace-nowrap">
-              {credit ? t("one_time") : showMonthly ? t("monthly") : periodLabel}
+              {displayPeriod}
             </p>
           </div>
           {statusToggle && <div className="shrink-0 pt-0.5">{statusToggle}</div>}

@@ -234,7 +234,7 @@ describe("SubscriptionCard", () => {
         sub={getSubscription()}
         mainCurrency={getCurrency({ is_main: true, symbol: "$" })}
         convertCurrency
-        showMonthly
+        priceDisplay="monthly"
         showProgress
         onEdit={onEdit}
         onClone={onClone}
@@ -380,14 +380,14 @@ describe("SubscriptionCard", () => {
     );
   });
 
-  it("uses sub.price directly when showMonthly is false (line 100 false branch)", () => {
-    // showMonthly=false → rawPrice = sub.price (not toMonthly)
+  it("uses sub.price directly when the billing period display is selected", () => {
+    // priceDisplay="billing" → rawPrice = sub.price (not toMonthly)
     render(
       <SubscriptionCard
         sub={getSubscription({ price: 99 })}
         mainCurrency={getCurrency({ is_main: true, symbol: "$" })}
         convertCurrency={false}
-        showMonthly={false}
+        priceDisplay="billing"
         showProgress={false}
         onEdit={vi.fn()}
         onClone={vi.fn()}
@@ -421,7 +421,7 @@ describe("SubscriptionCard", () => {
             cycle: { id: "one-time", name: "One-Time" },
           },
         })}
-        showMonthly
+        priceDisplay="monthly"
         showProgress
         onEdit={vi.fn()}
         onClone={vi.fn()}
@@ -450,7 +450,7 @@ describe("SubscriptionCard", () => {
         sub={getSubscription({ price: 50 })}
         mainCurrency={getCurrency({ is_main: true, symbol: "$" })}
         convertCurrency={false}
-        showMonthly={false}
+        priceDisplay="billing"
         showProgress={false}
         onEdit={vi.fn()}
         onClone={vi.fn()}
@@ -472,7 +472,7 @@ describe("SubscriptionCard", () => {
         sub={getSubscription()}
         mainCurrency={getCurrency({ is_main: true, symbol: "$" })}
         convertCurrency={false}
-        showMonthly={false}
+        priceDisplay="billing"
         showProgress
         onEdit={vi.fn()}
         onClone={vi.fn()}
@@ -514,7 +514,7 @@ describe("SubscriptionCard", () => {
     render(
       <SubscriptionCard
         sub={getSubscription({ frequency: undefined, expand: {} })}
-        showMonthly
+        priceDisplay="monthly"
         convertCurrency={false}
         onEdit={vi.fn()}
         onClone={vi.fn()}
@@ -535,7 +535,7 @@ describe("SubscriptionCard", () => {
         sub={getSubscription()}
         mainCurrency={getCurrency({ is_main: true, symbol: undefined as unknown as string })}
         convertCurrency
-        showMonthly={false}
+        priceDisplay="billing"
         onEdit={vi.fn()}
         onClone={vi.fn()}
         onRenew={vi.fn()}
@@ -581,7 +581,7 @@ describe("SubscriptionCard", () => {
         })}
         mainCurrency={getCurrency({ is_main: true, symbol: "$" })}
         convertCurrency={false}
-        showMonthly={false}
+        priceDisplay="billing"
         showProgress={false}
         onEdit={vi.fn()}
         onClone={vi.fn()}
@@ -618,7 +618,7 @@ describe("SubscriptionCard", () => {
           layout="list"
           mainCurrency={getCurrency({ is_main: true, symbol: "$" })}
           convertCurrency
-          showMonthly
+          priceDisplay="monthly"
           showProgress={false}
           {...actions}
         />,
@@ -650,7 +650,7 @@ describe("SubscriptionCard", () => {
             },
           })}
           layout="list"
-          showMonthly={false}
+          priceDisplay="billing"
           showProgress={false}
           {...actions}
         />,
@@ -678,7 +678,7 @@ describe("SubscriptionCard", () => {
             },
           })}
           layout="list"
-          showMonthly
+          priceDisplay="monthly"
           showProgress={false}
           {...actions}
         />,
@@ -704,7 +704,7 @@ describe("SubscriptionCard", () => {
             },
           })}
           layout="list"
-          showMonthly
+          priceDisplay="monthly"
           showProgress={false}
           {...actions}
         />,

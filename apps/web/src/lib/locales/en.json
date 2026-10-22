@@ -319,7 +319,6 @@
   "disable_2fa": "Disable 2FA",
   "scan_qr": "Scan this QR code with your authenticator app",
   "backup_codes": "Backup Codes",
-  "monthly_price": "Show monthly price",
   "show_original_price": "Show original price",
   "hide_disabled": "Hide inactive subscriptions",
   "disabled_to_bottom": "Move inactive to bottom",
@@ -590,7 +589,6 @@
   "currency_symbol_placeholder": "Symbol (e.g. $)",
   "currency_name_placeholder": "Name (e.g. US Dollar)",
   "display_desc": "Customize how information is displayed across the app.",
-  "monthly_price_desc": "Show subscription card and list prices as monthly equivalents. For example, 1,200/year appears as 100/month; actual calendar payments stay the same.",
   "show_original_price_desc": "Display the original price alongside billed amounts.",
   "hide_disabled_desc": "Hide inactive subscriptions from the Subscriptions page. Historical payments remain in the calendar.",
   "disabled_to_bottom_desc": "Move inactive subscriptions to the bottom of the list.",
@@ -996,5 +994,9 @@
   "transfer_password_required": "Enter your password to continue.",
   "transfer_invalid_password": "Incorrect password. Check your current account password and try again.",
   "historical_invalid_logo": "Choose a valid logo image.",
-  "historical_invalid_details": "The category, payer or payment method is invalid. Check your selections."
+  "historical_invalid_details": "The category, payer or payment method is invalid. Check your selections.",
+  "subscription_price_display": "Price display",
+  "show_all_monthly": "Show all monthly",
+  "show_all_yearly": "Show all yearly",
+  "subscription_price_display_hint": "Select the active button again to show the original billing periods."
 }

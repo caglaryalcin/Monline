@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { SubscriptionCard } from "@/components/subscriptions/SubscriptionCard";
+import type { SubscriptionPriceDisplay } from "@/components/subscriptions/subscriptionsPage.types";
 import { cn } from "@/lib/utils";
 import type { Currency, Subscription } from "@/types";
 
@@ -69,7 +70,7 @@ interface SubscriptionsGridProps {
   mainCurrency?: Currency;
   currencies?: Currency[];
   convertCurrency?: boolean;
-  showMonthly?: boolean;
+  priceDisplay?: SubscriptionPriceDisplay;
   showProgress?: boolean;
   onEdit: (subscription: Subscription) => void;
   onClone: (id: string) => void;
@@ -87,7 +88,7 @@ export function SubscriptionsGrid({
   mainCurrency,
   currencies,
   convertCurrency,
-  showMonthly,
+  priceDisplay,
   showProgress,
   onEdit,
   onClone,
@@ -114,7 +115,7 @@ export function SubscriptionsGrid({
         mainCurrency={mainCurrency}
         currencies={currencies}
         convertCurrency={convertCurrency}
-        showMonthly={showMonthly}
+        priceDisplay={priceDisplay}
         showProgress={showProgress}
         onEdit={() => onEdit(subscription)}
         onClone={() => onClone(subscription.id)}

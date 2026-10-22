@@ -297,7 +297,6 @@
   "disable_2fa": "2FA deaktivieren",
   "scan_qr": "Diesen QR-Code mit Ihrer Authenticator-App scannen",
   "backup_codes": "Backup-Codes",
-  "monthly_price": "Monatlichen Preis anzeigen",
   "show_original_price": "Originalpreis anzeigen",
   "hide_disabled": "Inaktive Abonnements ausblenden",
   "disabled_to_bottom": "Inaktive nach unten verschieben",
@@ -568,7 +567,6 @@
   "currency_symbol_placeholder": "Symbol (z. B. $)",
   "currency_name_placeholder": "Name (z. B. US-Dollar)",
   "display_desc": "Passen Sie an, wie Informationen in der App angezeigt werden.",
-  "monthly_price_desc": "Auf einen monatlichen Betrag normalisierte Preise anzeigen.",
   "show_original_price_desc": "Zeigen Sie den Originalpreis neben den in Rechnung gestellten Beträgen an.",
   "hide_disabled_desc": "Inaktive Abonnements aus der Liste ausblenden.",
   "disabled_to_bottom_desc": "Verschieben Sie inaktive Abonnements an das Ende der Liste.",
@@ -996,5 +994,9 @@
   "transfer_password_required": "Geben Sie Ihr Passwort ein, um fortzufahren.",
   "transfer_invalid_password": "Falsches Passwort. Prüfen Sie Ihr aktuelles Kontopasswort und versuchen Sie es erneut.",
   "historical_invalid_logo": "Wählen Sie eine gültige Logo-Bilddatei.",
-  "historical_invalid_details": "Kategorie, Zahler oder Zahlungsmethode ist ungültig. Prüfen Sie Ihre Auswahl."
+  "historical_invalid_details": "Kategorie, Zahler oder Zahlungsmethode ist ungültig. Prüfen Sie Ihre Auswahl.",
+  "subscription_price_display": "Preisanzeige",
+  "show_all_monthly": "Alle monatlich anzeigen",
+  "show_all_yearly": "Alle jährlich anzeigen",
+  "subscription_price_display_hint": "Erneut auf die aktive Schaltfläche klicken, um die ursprünglichen Abrechnungszeiträume anzuzeigen."
 }
