@@ -75,6 +75,7 @@ interface SubscriptionsGridProps {
   onEdit: (subscription: Subscription) => void;
   onClone: (id: string) => void;
   onRenew: (id: string) => void;
+  renewPending?: boolean;
   onHistory: (subscription: Subscription) => void;
   onDelete: (id: string) => void;
   onToggleActive?: (subscription: Subscription) => void;
@@ -92,6 +93,7 @@ export function SubscriptionsGrid({
   onEdit,
   onClone,
   onRenew,
+  renewPending,
   onHistory,
   onDelete,
   onToggleActive,
@@ -123,6 +125,7 @@ export function SubscriptionsGrid({
         onEdit={() => onEdit(subscription)}
         onClone={() => onClone(subscription.id)}
         onRenew={() => onRenew(subscription.id)}
+        renewPending={renewPending}
         onHistory={() => onHistory(subscription)}
         onDelete={() => onDelete(subscription.id)}
         onToggleActive={onToggleActive ? () => onToggleActive(subscription) : undefined}

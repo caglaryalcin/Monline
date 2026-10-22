@@ -166,7 +166,7 @@ describe("SubscriptionsGrid", () => {
     fireEvent.click(screen.getByTitle("clone"));
     expect(baseHandlers.onClone).toHaveBeenCalledWith(sub.id);
 
-    fireEvent.click(screen.getByTitle("renew"));
+    fireEvent.click(screen.getByRole("button", { name: "renew" }));
     expect(baseHandlers.onRenew).toHaveBeenCalledWith(sub.id);
 
     fireEvent.click(screen.getByTitle("history"));

@@ -100,6 +100,29 @@ function getSubscription(overrides: Partial<Subscription> = {}): Subscription {
 
 describe("SubscriptionCard", () => {
   it.each(["grid", "list"] as const)(
+    "disables renewal while rates refresh in %s layout",
+    (layout) => {
+      const onRenew = vi.fn();
+      render(
+        <SubscriptionCard
+          sub={getSubscription()}
+          layout={layout}
+          renewPending
+          onRenew={onRenew}
+          onEdit={vi.fn()}
+          onClone={vi.fn()}
+          onHistory={vi.fn()}
+          onDelete={vi.fn()}
+        />,
+      );
+      const renew = screen.getByRole("button", { name: "renew" });
+      expect(renew).toBeDisabled();
+      fireEvent.click(renew);
+      expect(onRenew).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["grid", "list"] as const)(
     "hides the payment method for inactive subscriptions in %s layout",
     (layout) => {
       const actions = {
@@ -264,7 +287,7 @@ describe("SubscriptionCard", () => {
     fireEvent.click(screen.getByTitle("open_url"));
     fireEvent.click(screen.getByTitle("edit"));
     fireEvent.click(screen.getByTitle("clone"));
-    fireEvent.click(screen.getByTitle("renew"));
+    fireEvent.click(screen.getByRole("button", { name: "renew" }));
     fireEvent.click(screen.getByTitle("history"));
     fireEvent.click(screen.getByTitle("delete"));
 
@@ -439,7 +462,7 @@ describe("SubscriptionCard", () => {
     expect(screen.queryByText("billing_cycle")).not.toBeInTheDocument();
     expect(screen.queryByText("payments_progress")).not.toBeInTheDocument();
     expect(screen.queryByText("ends_on")).not.toBeInTheDocument();
-    expect(screen.queryByTitle("renew")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "renew" })).not.toBeInTheDocument();
     expect(mocks.toMonthly).not.toHaveBeenCalled();
   });
 

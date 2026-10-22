@@ -24,6 +24,50 @@ routerAdd("POST", "/api/fixer/update", async (e) => {
   if (!e.auth) throw new ForbiddenError("Authentication required");
   const userId = e.auth.id;
 
+  // An optional currency ID limits manual card refreshes to one owned currency.
+  const currencyId = e.requestInfo().body.currencyId;
+  if (
+    currencyId !== undefined &&
+    (typeof currencyId !== "string" || !currencyId.trim())
+  ) {
+    return e.json(400, { error: "Invalid currency ID." });
+  }
+  let selectedCurrency = null;
+  if (currencyId !== undefined) {
+    const selected = repository.findRecordsByFilter(
+      "currencies",
+      "user = {:u} && id = {:id}",
+      "",
+      1,
+      0,
+      { u: userId, id: currencyId },
+    );
+    if (!selected.length) return e.json(404, { error: "Currency not found." });
+    selectedCurrency = selected[0];
+  }
+
+  // Resolve the user's main currency code via is_main flag (authoritative)
+  const mainCurrencies = repository.findRecordsByFilter(
+    "currencies",
+    "user = {:u} && is_main = true",
+    "",
+    1,
+    0,
+    {
+      u: userId,
+    },
+  );
+  if (mainCurrencies.length === 0) {
+    return e.json(400, {
+      error: "No main currency set.",
+    });
+  }
+  const mainCode = mainCurrencies[0].get("code");
+
+  if (selectedCurrency && selectedCurrency.get("code") === mainCode) {
+    return e.json(200, { updated: 0, base: mainCode });
+  }
+
   // Load fixer settings for this user.
   // Load by owner and validate the persisted secret in JavaScript. This also
   // avoids filtering on the secret itself.
@@ -48,24 +92,6 @@ routerAdd("POST", "/api/fixer/update", async (e) => {
   const fixer = fixerCandidates[0];
   const apiKey = fixer.get("api_key");
   const provider = fixer.get("provider") || "fixer";
-
-  // Resolve the user's main currency code via is_main flag (authoritative)
-  const mainCurrencies = repository.findRecordsByFilter(
-    "currencies",
-    "user = {:u} && is_main = true",
-    "",
-    1,
-    0,
-    {
-      u: userId,
-    },
-  );
-  if (mainCurrencies.length === 0) {
-    return e.json(400, {
-      error: "No main currency set.",
-    });
-  }
-  const mainCode = mainCurrencies[0].get("code");
 
   // Fetch EUR-based rates. Both HTTP and HTTPS work — use HTTPS for compatibility
   // with restricted environments (Docker, corporate proxies, etc.)
@@ -104,16 +130,11 @@ routerAdd("POST", "/api/fixer/update", async (e) => {
 
   // EUR-based rates from the API (e.g. { USD: 1.08, BRL: 5.4, EUR: 1.0 })
   const eurRates = res.json.rates;
-  const currencies = repository.findRecordsByFilter(
-    "currencies",
-    "user = {:u}",
-    "",
-    0,
-    0,
-    {
-      u: userId,
-    },
-  );
+  const currencies = selectedCurrency
+    ? [selectedCurrency]
+    : repository.findRecordsByFilter("currencies", "user = {:u}", "", 0, 0, {
+        u: userId,
+      });
   let normalizedRates;
   try {
     normalizedRates = exchangeRates.normalizeRatesByMainCurrency(
@@ -131,6 +152,15 @@ routerAdd("POST", "/api/fixer/update", async (e) => {
         "' was not found in the API response. " +
         "Make sure you have the correct currency code (e.g. BRL, USD, EUR).",
     });
+  }
+  if (selectedCurrency) {
+    const rate = normalizedRates[selectedCurrency.get("code")];
+    if (!Number.isFinite(rate) || rate <= 0) {
+      return e.json(502, {
+        error:
+          "Selected currency rate is missing or invalid in the API response.",
+      });
+    }
   }
   let updated = 0;
   for (let i = 0; i < currencies.length; i++) {

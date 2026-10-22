@@ -12,6 +12,8 @@ const mocks = vi.hoisted(() => ({
   deleteSubscription: vi.fn(),
   cloneSubscription: vi.fn(),
   renewSubscription: vi.fn(),
+  updateRates: vi.fn(),
+  toastWarning: vi.fn(),
   exportSubscriptions: vi.fn(),
   importSubscriptions: vi.fn(),
   filteredSubscriptions: vi.fn(),
@@ -57,6 +59,10 @@ vi.mock("@/services/subscriptions", () => ({
   },
 }));
 
+vi.mock("@/services/fixer", () => ({
+  fixerService: { updateRates: mocks.updateRates },
+}));
+
 vi.mock("@/services/currencies", () => ({
   currenciesService: {
     list: mocks.listCurrencies,
@@ -89,6 +95,7 @@ vi.mock("@/lib/toast", () => ({
   toast: {
     success: mocks.toastSuccess,
     error: mocks.toastError,
+    warning: mocks.toastWarning,
   },
 }));
 
@@ -140,6 +147,7 @@ vi.mock("@/components/subscriptions/SubscriptionsGrid", () => ({
     onEdit,
     onClone,
     onRenew,
+    renewPending,
     onHistory,
     onDelete,
   }: {
@@ -148,6 +156,7 @@ vi.mock("@/components/subscriptions/SubscriptionsGrid", () => ({
     onEdit: (subscription: { id: string; name: string }) => void;
     onClone: (id: string) => void;
     onRenew: (id: string) => void;
+    renewPending?: boolean;
     onHistory: (subscription: { id: string; name: string }) => void;
     onDelete: (id: string) => void;
   }) => (
@@ -160,7 +169,7 @@ vi.mock("@/components/subscriptions/SubscriptionsGrid", () => ({
       <button type="button" onClick={() => onClone(subscriptions[0].id)}>
         clone-subscription
       </button>
-      <button type="button" onClick={() => onRenew(subscriptions[0].id)}>
+      <button type="button" disabled={renewPending} onClick={() => onRenew(subscriptions[0].id)}>
         renew-subscription
       </button>
       <button type="button" onClick={() => onHistory(subscriptions[0])}>
@@ -241,9 +250,12 @@ describe("SubscriptionsPage", () => {
         subscription_progress: true,
       },
     });
-    mocks.listSubscriptions.mockResolvedValue([{ id: "sub-1", name: "Netflix" }]);
+    mocks.listSubscriptions.mockResolvedValue([
+      { id: "sub-1", name: "Netflix", currency: "cur-usd" },
+    ]);
     mocks.listCurrencies.mockResolvedValue([
-      { id: "cur-1", code: "USD", symbol: "$", is_main: true },
+      { id: "cur-1", code: "TRY", symbol: "₺", is_main: true },
+      { id: "cur-usd", code: "USD", symbol: "$", is_main: false },
     ]);
     mocks.listCategories.mockResolvedValue([{ id: "cat-1", name: "Streaming" }]);
     mocks.listPaymentMethods.mockResolvedValue([{ id: "pm-1", name: "Visa" }]);
@@ -251,6 +263,7 @@ describe("SubscriptionsPage", () => {
     mocks.deleteSubscription.mockResolvedValue(undefined);
     mocks.cloneSubscription.mockResolvedValue(undefined);
     mocks.renewSubscription.mockResolvedValue(undefined);
+    mocks.updateRates.mockResolvedValue({ updated: 2, base: "USD" });
     mocks.exportSubscriptions.mockResolvedValue({
       subscriptions: [{ id: "sub-1", name: "Netflix" }],
     });
@@ -324,6 +337,110 @@ describe("SubscriptionsPage", () => {
     expect(invalidateQueries).toHaveBeenCalledWith({
       queryKey: queryKeys.subscriptions.all("user-1"),
     });
+  });
+
+  it.each([
+    ["TRY", "USD"],
+    ["EUR", "USD"],
+    ["USD", "EUR"],
+    ["GBP", "JPY"],
+    ["JPY", "GBP"],
+  ])(
+    "refreshes only the card currency when main is %s and card is %s",
+    async (mainCode, cardCode) => {
+      mocks.listCurrencies.mockResolvedValue([
+        { id: "main-currency", code: mainCode, is_main: true },
+        { id: "card-currency", code: cardCode, is_main: false },
+      ]);
+      mocks.listSubscriptions.mockResolvedValue([
+        { id: "sub-1", name: "Netflix", currency: "card-currency" },
+      ]);
+      const { client, Wrapper } = createQueryClientWrapper();
+      const invalidateQueries = vi.spyOn(client, "invalidateQueries").mockResolvedValue(undefined);
+      render(<SubscriptionsPage />, { wrapper: Wrapper });
+      await screen.findByText("grid:1");
+
+      fireEvent.click(screen.getByRole("button", { name: "renew-subscription" }));
+
+      await waitFor(() =>
+        expect(mocks.toastSuccess).toHaveBeenCalledWith("subscription_renewed_rates_updated"),
+      );
+      expect(mocks.renewSubscription).toHaveBeenCalledWith("sub-1");
+      expect(mocks.updateRates).toHaveBeenCalledTimes(1);
+      expect(mocks.updateRates).toHaveBeenCalledWith("card-currency");
+      expect(mocks.renewSubscription.mock.invocationCallOrder[0]).toBeLessThan(
+        mocks.updateRates.mock.invocationCallOrder[0],
+      );
+      expect(invalidateQueries).toHaveBeenCalledWith();
+    },
+  );
+
+  it.each(["TRY", "EUR", "USD", "GBP", "JPY"])(
+    "renews %s main-currency subscriptions without requesting exchange rates",
+    async (mainCode) => {
+      mocks.listCurrencies.mockResolvedValue([{ id: "cur-1", code: mainCode, is_main: true }]);
+      mocks.listSubscriptions.mockResolvedValue([
+        { id: "sub-1", name: "Netflix", currency: "cur-1" },
+      ]);
+      const { Wrapper } = createQueryClientWrapper();
+      render(<SubscriptionsPage />, { wrapper: Wrapper });
+      await screen.findByText("grid:1");
+      await waitFor(() => expect(mocks.listCurrencies).toHaveBeenCalled());
+      fireEvent.click(screen.getByRole("button", { name: "renew-subscription" }));
+      await waitFor(() => expect(mocks.toastSuccess).toHaveBeenCalledWith("success"));
+      expect(mocks.renewSubscription).toHaveBeenCalledWith("sub-1");
+      expect(mocks.updateRates).not.toHaveBeenCalled();
+      expect(mocks.toastWarning).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    ["No exchange rate API key configured.", "subscription_renewed_rates_no_key"],
+    ["Provider unavailable", "subscription_renewed_rates_failed"],
+  ])("preserves renewal when exchange rates fail: %s", async (error, message) => {
+    mocks.updateRates.mockRejectedValueOnce(new Error(error));
+    const { client, Wrapper } = createQueryClientWrapper();
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries").mockResolvedValue(undefined);
+    render(<SubscriptionsPage />, { wrapper: Wrapper });
+    await screen.findByText("grid:1");
+
+    fireEvent.click(screen.getByRole("button", { name: "renew-subscription" }));
+
+    await waitFor(() => expect(mocks.toastWarning).toHaveBeenCalledWith(message));
+    expect(mocks.renewSubscription).toHaveBeenCalledTimes(1);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+    expect(mocks.toastSuccess).not.toHaveBeenCalled();
+    expect(invalidateQueries).toHaveBeenCalledWith();
+  });
+
+  it("blocks duplicate renewals while exchange rates are updating", async () => {
+    let finishRates!: (value: { updated: number; base: string }) => void;
+    mocks.updateRates.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finishRates = resolve;
+      }),
+    );
+    const { Wrapper } = createQueryClientWrapper();
+    render(<SubscriptionsPage />, { wrapper: Wrapper });
+    await screen.findByText("grid:1");
+    const renew = screen.getByRole("button", { name: "renew-subscription" });
+    fireEvent.click(renew);
+    await waitFor(() => expect(mocks.updateRates).toHaveBeenCalledTimes(1));
+    expect(renew).toBeDisabled();
+    fireEvent.click(renew);
+    expect(mocks.renewSubscription).toHaveBeenCalledTimes(1);
+    finishRates({ updated: 2, base: "USD" });
+    await waitFor(() => expect(renew).toBeEnabled());
+  });
+
+  it("does not update exchange rates when subscription renewal fails", async () => {
+    mocks.renewSubscription.mockRejectedValueOnce(new Error("category_required"));
+    const { Wrapper } = createQueryClientWrapper();
+    render(<SubscriptionsPage />, { wrapper: Wrapper });
+    await screen.findByText("grid:1");
+    fireEvent.click(screen.getByRole("button", { name: "renew-subscription" }));
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith("category_required"));
+    expect(mocks.updateRates).not.toHaveBeenCalled();
   });
 
   it("handles mutation errors", async () => {

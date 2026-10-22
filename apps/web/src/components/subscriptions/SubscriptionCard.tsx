@@ -1,3 +1,4 @@
+import { Portal as TooltipPortal } from "@radix-ui/react-tooltip";
 import {
   Calendar,
   CalendarRange,
@@ -19,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { isCredit } from "@/lib/recordTypes";
@@ -42,6 +44,7 @@ interface SubscriptionActionsProps {
   onEdit: () => void;
   onClone: () => void;
   onRenew: () => void;
+  renewPending?: boolean;
   onHistory: () => void;
   onDelete: () => void;
 }
@@ -54,6 +57,7 @@ function SubscriptionActions({
   onEdit,
   onClone,
   onRenew,
+  renewPending,
   onHistory,
   onDelete,
 }: SubscriptionActionsProps) {
@@ -139,15 +143,27 @@ function SubscriptionActions({
           refuses to advance a paused or finished schedule — so offering the
           action here would just be a button that does nothing. */}
       {!sub.inactive && !credit && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 rounded-full text-muted-foreground"
-          onClick={onRenew}
-          title={t("renew")}
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-        </Button>
+        <TooltipProvider delayDuration={250}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-full text-muted-foreground"
+                onClick={onRenew}
+                disabled={renewPending}
+                aria-label={t("renew")}
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipPortal>
+              <TooltipContent side="top" sideOffset={8} className="max-w-60 text-center text-xs">
+                {t("renew_tooltip")}
+              </TooltipContent>
+            </TooltipPortal>
+          </Tooltip>
+        </TooltipProvider>
       )}
       <Button
         variant="ghost"
@@ -175,6 +191,7 @@ export function SubscriptionCard({
   onEdit,
   onClone,
   onRenew,
+  renewPending,
   onHistory,
   onDelete,
   layout = "grid",
@@ -192,6 +209,7 @@ export function SubscriptionCard({
   onEdit: () => void;
   onClone: () => void;
   onRenew: () => void;
+  renewPending?: boolean;
   onHistory: () => void;
   onDelete: () => void;
   layout?: "grid" | "list";
@@ -354,6 +372,7 @@ export function SubscriptionCard({
             onEdit={onEdit}
             onClone={onClone}
             onRenew={onRenew}
+            renewPending={renewPending}
             onHistory={onHistory}
             onDelete={onDelete}
           />
@@ -502,6 +521,7 @@ export function SubscriptionCard({
           onEdit={onEdit}
           onClone={onClone}
           onRenew={onRenew}
+          renewPending={renewPending}
           onHistory={onHistory}
           onDelete={onDelete}
         />

@@ -20,7 +20,11 @@ export const fixerService = {
   updateSettings: (id: string, data: Partial<FixerSettings>) =>
     client.collection("fixer_settings").update<FixerSettings>(id, data),
 
-  updateRates: () => api.post<{ updated: number; base: string }>("/api/fixer/update", {}),
+  updateRates: (currencyId?: string) =>
+    api.post<{ updated: number; base: string }>(
+      "/api/fixer/update",
+      currencyId ? { currencyId } : {},
+    ),
 
   /** Returns the ISO timestamp of the last successful exchange rate update, or null. */
   getLastUpdate: async (): Promise<string | null> => {

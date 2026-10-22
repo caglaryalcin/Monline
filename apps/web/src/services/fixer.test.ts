@@ -81,6 +81,11 @@ describe("fixerService", () => {
     expect(api.post).toHaveBeenCalledWith("/api/fixer/update", {});
   });
 
+  it("limits a card refresh to its currency", async () => {
+    await fixerService.updateRates("cur-usd");
+    expect(api.post).toHaveBeenCalledWith("/api/fixer/update", { currencyId: "cur-usd" });
+  });
+
   it("returns the last exchange update from record properties, or null on error", async () => {
     const getWithGetter = vi.fn().mockResolvedValue({
       items: [

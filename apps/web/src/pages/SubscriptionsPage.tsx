@@ -20,6 +20,7 @@ import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { categoriesService } from "@/services/categories";
 import { currenciesService } from "@/services/currencies";
+import { fixerService } from "@/services/fixer";
 import { householdService } from "@/services/household";
 import { paymentMethodsService } from "@/services/paymentMethods";
 import { subscriptionsService } from "@/services/subscriptions";
@@ -146,12 +147,45 @@ export function SubscriptionsPage() {
   });
 
   const renewMutation = useMutation({
-    mutationFn: (id: string) => subscriptionsService.renew(id),
-    onSuccess: () => {
-      toast.success(t("success"));
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.subscriptions.all(userId),
-      });
+    mutationFn: async (id: string) => {
+      await subscriptionsService.renew(id);
+      const subscription = subscriptions.find((entry) => entry.id === id);
+      const currencyId = subscription?.currency;
+      const currency =
+        currencies.find((entry) => entry.id === currencyId) ?? subscription?.expand?.currency;
+      if (
+        !currencyId ||
+        currencyId === mainCurrency?.id ||
+        currency?.is_main ||
+        (mainCurrency && currency?.code === mainCurrency.code)
+      ) {
+        return "skipped" as const;
+      }
+      try {
+        await fixerService.updateRates(currencyId);
+        return "updated" as const;
+      } catch (error) {
+        return error instanceof Error && error.message === "No exchange rate API key configured."
+          ? ("missing-key" as const)
+          : ("failed" as const);
+      }
+    },
+    onSuccess: (rates) => {
+      if (rates === "updated") {
+        toast.success(t("subscription_renewed_rates_updated"));
+      } else if (rates === "skipped") {
+        toast.success(t("success"));
+      } else {
+        toast.warning(
+          t(
+            rates === "missing-key"
+              ? "subscription_renewed_rates_no_key"
+              : "subscription_renewed_rates_failed",
+          ),
+        );
+      }
+      // Rates also affect cached dashboard totals and expanded currency records.
+      return queryClient.invalidateQueries();
     },
     onError: (error: Error) =>
       toast.error(t(error.message === "category_required" ? "category_required" : "unknown_error")),
@@ -216,7 +250,10 @@ export function SubscriptionsPage() {
         showProgress={user?.subscription_progress}
         onEdit={handleEdit}
         onClone={(id) => cloneMutation.mutate(id)}
-        onRenew={(id) => renewMutation.mutate(id)}
+        onRenew={(id) => {
+          if (!renewMutation.isPending) renewMutation.mutate(id);
+        }}
+        renewPending={renewMutation.isPending}
         onHistory={setHistorySubscription}
         onDelete={setDeleteId}
         onToggleActive={(subscription) => {
