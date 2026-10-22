@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { formatPrice } from "@/lib/utils";
 import type { Currency, Subscription } from "@/types";
@@ -45,6 +46,22 @@ const actions = {
 
 for (const layout of ["grid", "list"] as const) {
   describe(`subscription pricing in ${layout} layout`, () => {
+    it("switches directly between monthly and yearly with one icon button", async () => {
+      const user = userEvent.setup();
+      render(<SubscriptionCard sub={subscription} layout={layout} {...actions} />);
+      const toggle = screen.getByRole("button", { name: "show_monthly" });
+      expect(toggle.querySelector("svg")).toBeInTheDocument();
+      expect(toggle).not.toHaveAttribute("aria-haspopup");
+      await user.click(toggle);
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      expect(screen.getByText(formatPrice(10, "€", { currencyCode: "EUR" }))).toBeInTheDocument();
+      expect(toggle).toHaveAccessibleName("show_yearly");
+      await user.click(toggle);
+      expect(screen.getByText("billing_preset_yearly")).toBeInTheDocument();
+      expect(toggle).toHaveAccessibleName("show_monthly");
+      expect(subscription.price).toBe(120);
+    });
+
     it.each([
       ["Monthly", 1, 10, 10, 120, "billing_preset_monthly"],
       ["Yearly", 1, 120, 10, 120, "billing_preset_yearly"],
@@ -65,6 +82,13 @@ for (const layout of ["grid", "list"] as const) {
           screen.getByText(formatPrice(price, "€", { currencyCode: "EUR" })),
         ).toBeInTheDocument();
         expect(screen.getByText(label)).toBeInTheDocument();
+        if (cycle !== "One-Time") {
+          expect(
+            screen.getByRole("button", {
+              name: cycle === "Monthly" && frequency === 1 ? "show_yearly" : "show_monthly",
+            }),
+          ).toBeInTheDocument();
+        }
         for (const [mode, expected] of [
           ["monthly", monthly],
           ["yearly", yearly],
@@ -73,7 +97,9 @@ for (const layout of ["grid", "list"] as const) {
           expect(
             screen.getByText(formatPrice(expected, "€", { currencyCode: "EUR" })),
           ).toBeInTheDocument();
-          expect(screen.getByText(cycle === "One-Time" ? "one_time" : mode)).toBeInTheDocument();
+          expect(
+            screen.getByText(cycle === "One-Time" ? "one_time" : mode, { selector: "p" }),
+          ).toBeInTheDocument();
         }
         rerender(
           <SubscriptionCard sub={sub} layout={layout} priceDisplay="billing" {...actions} />,
@@ -124,9 +150,11 @@ for (const layout of ["grid", "list"] as const) {
       );
       expect(screen.getByText(formatPrice(120, "€", { currencyCode: "EUR" }))).toBeInTheDocument();
       expect(
-        screen.getByText(`${formatPrice(20, "$", { currencyCode: "USD" })} / billing_preset_monthly`),
+        screen.getByText(
+          `${formatPrice(20, "$", { currencyCode: "USD" })} / billing_preset_monthly`,
+        ),
       ).toBeInTheDocument();
-      expect(screen.getByText("yearly")).toBeInTheDocument();
+      expect(screen.getByText("yearly", { selector: "p" })).toBeInTheDocument();
     });
   });
 }

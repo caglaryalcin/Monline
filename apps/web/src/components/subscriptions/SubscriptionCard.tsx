@@ -1,5 +1,6 @@
 import {
   Calendar,
+  CalendarRange,
   Copy,
   Edit,
   ExternalLink,
@@ -8,7 +9,7 @@ import {
   RefreshCw,
   Trash2,
 } from "lucide-react";
-import type { CSSProperties } from "react";
+import { type CSSProperties, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { PaymentMethodIcon } from "@/components/PaymentMethodIcon";
@@ -36,6 +37,8 @@ import type { Currency, Subscription } from "@/types";
 interface SubscriptionActionsProps {
   sub: Subscription;
   className?: string;
+  priceDisplay: SubscriptionPriceDisplay;
+  onPriceDisplayChange: (value: SubscriptionPriceDisplay) => void;
   onEdit: () => void;
   onClone: () => void;
   onRenew: () => void;
@@ -46,6 +49,8 @@ interface SubscriptionActionsProps {
 function SubscriptionActions({
   sub,
   className,
+  priceDisplay,
+  onPriceDisplayChange,
   onEdit,
   onClone,
   onRenew,
@@ -54,14 +59,44 @@ function SubscriptionActions({
 }: SubscriptionActionsProps) {
   const { t } = useTranslation();
   const credit = isCredit(sub);
+  const cycleName = sub.expand?.cycle?.name ?? "Monthly";
+  const savedPeriod =
+    (sub.frequency || 1) === 1
+      ? cycleName === "Monthly"
+        ? "monthly"
+        : cycleName === "Yearly"
+          ? "yearly"
+          : null
+      : null;
+  const displayedPeriod = priceDisplay === "billing" ? savedPeriod : priceDisplay;
+  const nextPeriod = displayedPeriod === "monthly" ? "yearly" : "monthly";
+  const priceActionLabel = t(nextPeriod === "monthly" ? "show_monthly" : "show_yearly");
+  const changePeriod = (period: "monthly" | "yearly") =>
+    onPriceDisplayChange(period === savedPeriod ? "billing" : period);
 
   return (
     <div
       className={cn(
-        "flex items-center space-x-1 rounded-full border bg-background/80 p-1 shadow-sm backdrop-blur transition-opacity",
+        "flex max-w-full flex-wrap items-center justify-end gap-1 rounded-2xl border bg-background/80 p-1 shadow-sm backdrop-blur transition-opacity sm:rounded-full",
         className,
       )}
     >
+      {!credit && sub.expand?.cycle?.name !== "One-Time" && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "h-7 w-7 rounded-full text-muted-foreground",
+            priceDisplay !== "billing" && "bg-primary/10 text-primary",
+          )}
+          aria-label={priceActionLabel}
+          title={priceActionLabel}
+          onClick={() => changePeriod(nextPeriod)}
+        >
+          <CalendarRange className="h-3.5 w-3.5" />
+        </Button>
+      )}
       {sub.url && (
         <Button
           variant="ghost"
@@ -134,7 +169,8 @@ export function SubscriptionCard({
   mainCurrency,
   currencies,
   convertCurrency,
-  priceDisplay = "billing",
+  priceDisplay: controlledPriceDisplay,
+  onPriceDisplayChange,
   showProgress,
   onEdit,
   onClone,
@@ -151,6 +187,7 @@ export function SubscriptionCard({
   convertCurrency?: boolean;
   currencies?: Currency[];
   priceDisplay?: SubscriptionPriceDisplay;
+  onPriceDisplayChange?: (value: SubscriptionPriceDisplay) => void;
   showProgress?: boolean;
   onEdit: () => void;
   onClone: () => void;
@@ -163,6 +200,9 @@ export function SubscriptionCard({
   statusDisabled?: boolean;
 }) {
   const { t } = useTranslation();
+  const [localPriceDisplay, setLocalPriceDisplay] = useState<SubscriptionPriceDisplay>("billing");
+  const priceDisplay = controlledPriceDisplay ?? localPriceDisplay;
+  const changePriceDisplay = onPriceDisplayChange ?? setLocalPriceDisplay;
   const currency = currencies?.find((entry) => entry.id === sub.currency) ?? sub.expand?.currency;
   const cycleName = sub.expand?.cycle?.name ?? "Monthly";
   const periodLabel = formatBillingPeriod(t, cycleName, sub.frequency || 1);
@@ -308,6 +348,8 @@ export function SubscriptionCard({
 
           <SubscriptionActions
             sub={sub}
+            priceDisplay={priceDisplay}
+            onPriceDisplayChange={changePriceDisplay}
             className="shrink-0"
             onEdit={onEdit}
             onClone={onClone}
@@ -454,6 +496,8 @@ export function SubscriptionCard({
 
         <SubscriptionActions
           sub={sub}
+          priceDisplay={priceDisplay}
+          onPriceDisplayChange={changePriceDisplay}
           className="ml-auto shrink-0"
           onEdit={onEdit}
           onClone={onClone}

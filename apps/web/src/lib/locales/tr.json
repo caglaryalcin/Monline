@@ -996,7 +996,6 @@
   "historical_invalid_logo": "Geçerli bir logo dosyası seçin.",
   "historical_invalid_details": "Kategori, kişi veya ödeme yöntemi geçersiz. Seçimleri kontrol edin.",
   "subscription_price_display": "Fiyat gösterimi",
-  "show_all_monthly": "Tümünü aylık göster",
-  "show_all_yearly": "Tümünü yıllık göster",
-  "subscription_price_display_hint": "Kayıtlı ödeme dönemlerini göstermek için seçili butona tekrar basın."
+  "show_monthly": "Aylık göster",
+  "show_yearly": "Yıllık göster"
 }

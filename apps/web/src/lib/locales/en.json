@@ -996,7 +996,6 @@
   "historical_invalid_logo": "Choose a valid logo image.",
   "historical_invalid_details": "The category, payer or payment method is invalid. Check your selections.",
   "subscription_price_display": "Price display",
-  "show_all_monthly": "Show all monthly",
-  "show_all_yearly": "Show all yearly",
-  "subscription_price_display_hint": "Select the active button again to show the original billing periods."
+  "show_monthly": "Show monthly",
+  "show_yearly": "Show yearly"
 }

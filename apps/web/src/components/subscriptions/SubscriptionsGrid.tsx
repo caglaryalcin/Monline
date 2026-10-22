@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { SubscriptionCard } from "@/components/subscriptions/SubscriptionCard";
@@ -70,7 +71,6 @@ interface SubscriptionsGridProps {
   mainCurrency?: Currency;
   currencies?: Currency[];
   convertCurrency?: boolean;
-  priceDisplay?: SubscriptionPriceDisplay;
   showProgress?: boolean;
   onEdit: (subscription: Subscription) => void;
   onClone: (id: string) => void;
@@ -88,7 +88,6 @@ export function SubscriptionsGrid({
   mainCurrency,
   currencies,
   convertCurrency,
-  priceDisplay,
   showProgress,
   onEdit,
   onClone,
@@ -98,6 +97,7 @@ export function SubscriptionsGrid({
   onToggleActive,
   statusPendingId,
 }: SubscriptionsGridProps) {
+  const [priceDisplays, setPriceDisplays] = useState<Record<string, SubscriptionPriceDisplay>>({});
   if (isLoading) {
     return <SubscriptionsLoadingGrid layout={layout} />;
   }
@@ -115,7 +115,10 @@ export function SubscriptionsGrid({
         mainCurrency={mainCurrency}
         currencies={currencies}
         convertCurrency={convertCurrency}
-        priceDisplay={priceDisplay}
+        priceDisplay={priceDisplays[subscription.id] ?? "billing"}
+        onPriceDisplayChange={(mode) =>
+          setPriceDisplays((current) => ({ ...current, [subscription.id]: mode }))
+        }
         showProgress={showProgress}
         onEdit={() => onEdit(subscription)}
         onClone={() => onClone(subscription.id)}

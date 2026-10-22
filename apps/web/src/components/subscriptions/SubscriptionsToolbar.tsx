@@ -1,7 +1,6 @@
 import { ArrowUpDown, Filter, LayoutGrid, List, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import type { SubscriptionPriceDisplay } from "@/components/subscriptions/subscriptionsPage.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -10,8 +9,6 @@ interface SubscriptionsToolbarProps {
   searchTerm: string;
   showFilters: boolean;
   view: "grid" | "list";
-  priceDisplay: SubscriptionPriceDisplay;
-  onPriceDisplayChange: (value: SubscriptionPriceDisplay) => void;
   onSearchChange: (value: string) => void;
   onToggleFilters: () => void;
   onCycleSort: () => void;
@@ -22,8 +19,6 @@ export function SubscriptionsToolbar({
   searchTerm,
   showFilters,
   view,
-  priceDisplay,
-  onPriceDisplayChange,
   onSearchChange,
   onToggleFilters,
   onCycleSort,
@@ -95,24 +90,6 @@ export function SubscriptionsToolbar({
           <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
           <span className="hidden sm:inline">{t("sort")}</span>
         </Button>
-      </div>
-      <div
-        className="flex w-full gap-2 border-t p-2"
-        role="group"
-        aria-label={t("subscription_price_display")}
-      >
-        {(["monthly", "yearly"] as const).map((period) => (
-          <Button
-            key={period}
-            variant={priceDisplay === period ? "default" : "outline"}
-            className="min-h-10 flex-1 whitespace-normal px-2 text-xs sm:text-sm"
-            aria-pressed={priceDisplay === period}
-            title={t("subscription_price_display_hint")}
-            onClick={() => onPriceDisplayChange(priceDisplay === period ? "billing" : period)}
-          >
-            {t(period === "monthly" ? "show_all_monthly" : "show_all_yearly")}
-          </Button>
-        ))}
       </div>
     </div>
   );

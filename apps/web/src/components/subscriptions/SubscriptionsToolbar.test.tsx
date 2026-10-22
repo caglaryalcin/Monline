@@ -9,38 +9,6 @@ vi.mock("react-i18next", () => ({
 import { SubscriptionsToolbar } from "./SubscriptionsToolbar";
 
 describe("SubscriptionsToolbar", () => {
-  it.each(["billing", "monthly", "yearly"] as const)(
-    "offers mutually exclusive price displays and restores billing periods from %s",
-    (priceDisplay) => {
-      const onPriceDisplayChange = vi.fn();
-      render(
-        <SubscriptionsToolbar
-          searchTerm=""
-          showFilters={false}
-          view="grid"
-          priceDisplay={priceDisplay}
-          onPriceDisplayChange={onPriceDisplayChange}
-          onSearchChange={vi.fn()}
-          onToggleFilters={vi.fn()}
-          onCycleSort={vi.fn()}
-          onViewChange={vi.fn()}
-        />,
-      );
-      const monthly = screen.getByRole("button", { name: "show_all_monthly" });
-      const yearly = screen.getByRole("button", { name: "show_all_yearly" });
-      expect(monthly).toHaveAttribute("aria-pressed", String(priceDisplay === "monthly"));
-      expect(yearly).toHaveAttribute("aria-pressed", String(priceDisplay === "yearly"));
-      fireEvent.click(monthly);
-      expect(onPriceDisplayChange).toHaveBeenLastCalledWith(
-        priceDisplay === "monthly" ? "billing" : "monthly",
-      );
-      fireEvent.click(yearly);
-      expect(onPriceDisplayChange).toHaveBeenLastCalledWith(
-        priceDisplay === "yearly" ? "billing" : "yearly",
-      );
-    },
-  );
-
   it("renders the controls and delegates interactions", () => {
     const onSearchChange = vi.fn();
     const onToggleFilters = vi.fn();
@@ -49,8 +17,6 @@ describe("SubscriptionsToolbar", () => {
 
     render(
       <SubscriptionsToolbar
-        priceDisplay="billing"
-        onPriceDisplayChange={vi.fn()}
         searchTerm="net"
         showFilters={false}
         view="grid"
@@ -83,8 +49,6 @@ describe("SubscriptionsToolbar", () => {
   it("applies active styling to filter button when showFilters is true", () => {
     const { container } = render(
       <SubscriptionsToolbar
-        priceDisplay="billing"
-        onPriceDisplayChange={vi.fn()}
         searchTerm=""
         showFilters={true}
         view="list"

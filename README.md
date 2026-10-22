@@ -15,7 +15,7 @@ A self-hosted home for your subscriptions, recurring payments, and budget. React
 
 ## Features
 
-- **Subscription tracking** — automatic service logos, flexible billing cycles, active/inactive controls, and optional automatic renewal.
+- **Subscription tracking** — automatic service logos, flexible billing cycles, active/inactive controls, and optional automatic renewal. Cards show their saved billing amount and period by default; a calendar icon switches each card between monthly and yearly equivalents.
 - **Budget overview** — monthly charges, paid and outstanding amounts, and remaining budget.
 
 ![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/subscriptions.png)
@@ -62,11 +62,11 @@ GitHub Actions publishes **AMD64 and ARM64** images to `ghcr.io/caglaryalcin/mon
 
 | Trigger                    | Image tags        |
 | -------------------------- | ----------------- |
-| Release tag, e.g. `v1.0.16` | `1.0.16`, `latest` |
+| Release tag, e.g. `v1.0.17` | `1.0.17`, `latest` |
 
 Images are published only for version tags; pushes to `main` do not publish images. Release tags must match the root, frontend and server package versions. Prereleases publish only their full version and leave `latest` unchanged. Publishing uses GitHub's built-in `GITHUB_TOKEN`.
 
-For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.0.16`, omit `build`, and run `docker compose up -d`. Authenticate to GHCR before pulling private images. Keep the package private unless you intend to publish it publicly.
+For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.0.17`, omit `build`, and run `docker compose up -d`. Authenticate to GHCR before pulling private images. Keep the package private unless you intend to publish it publicly.
 
 ## Contributors
 

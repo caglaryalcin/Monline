@@ -247,7 +247,7 @@ describe("SubscriptionCard", () => {
     expect(screen.getByText("Netflix")).toBeInTheDocument();
     expect(screen.getByText("Streaming")).toBeInTheDocument();
     expect(screen.getByText("20.00 $")).toBeInTheDocument();
-    expect(screen.getByText("monthly")).toBeInTheDocument();
+    expect(screen.getByText("monthly", { selector: "p" })).toBeInTheDocument();
     expect(screen.getByText("next_payment")).toBeInTheDocument();
     expect(screen.queryByText("next")).not.toBeInTheDocument();
     expect(screen.getByText("Apr 10, 2026")).toBeInTheDocument();
@@ -631,7 +631,7 @@ describe("SubscriptionCard", () => {
       expect(screen.getByText("Streaming")).toBeInTheDocument();
       // toMonthly halves 20 → 10, then conversion doubles it → 20.
       expect(screen.getByText("20.00 $")).toBeInTheDocument();
-      expect(screen.getByText("monthly")).toBeInTheDocument();
+      expect(screen.getByText("monthly", { selector: "p" })).toBeInTheDocument();
       expect(screen.getByText("next_payment")).toBeInTheDocument();
       expect(screen.getByText("Apr 10, 2026")).toBeInTheDocument();
       expect(screen.getByText("Daniel")).toBeInTheDocument();

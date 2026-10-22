@@ -9,7 +9,6 @@ import { SubscriptionsGrid } from "@/components/subscriptions/SubscriptionsGrid"
 import {
   INITIAL_SUBSCRIPTION_FILTERS,
   type SubscriptionFiltersState,
-  type SubscriptionPriceDisplay,
   type SubscriptionSortKey,
 } from "@/components/subscriptions/subscriptionsPage.types";
 import { SubscriptionsPageHeader } from "@/components/subscriptions/SubscriptionsPageHeader";
@@ -42,7 +41,6 @@ export function SubscriptionsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [priceDisplay, setPriceDisplay] = useState<SubscriptionPriceDisplay>("billing");
 
   const { data: subscriptions = [], isLoading } = useQuery({
     queryKey: queryKeys.subscriptions.all(userId),
@@ -192,8 +190,6 @@ export function SubscriptionsPage() {
             searchTerm={searchTerm}
             showFilters={showFilters}
             view={view}
-            priceDisplay={priceDisplay}
-            onPriceDisplayChange={setPriceDisplay}
             onSearchChange={setSearchTerm}
             onToggleFilters={() => setShowFilters((current) => !current)}
             onCycleSort={handleCycleSort}
@@ -217,7 +213,6 @@ export function SubscriptionsPage() {
         mainCurrency={mainCurrency}
         currencies={currencies}
         convertCurrency={user?.convert_currency}
-        priceDisplay={priceDisplay}
         showProgress={user?.subscription_progress}
         onEdit={handleEdit}
         onClone={(id) => cloneMutation.mutate(id)}

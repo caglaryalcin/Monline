@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -98,6 +99,35 @@ describe("SubscriptionsGrid", () => {
     );
     expect(screen.getByText("Netflix")).toBeInTheDocument();
     expect(screen.getByText("Spotify")).toBeInTheDocument();
+  });
+
+  it("keeps price display choices independent and preserves them across layouts and filtering", async () => {
+    const user = userEvent.setup();
+    const subscriptions = [getSub(), getSub({ id: "sub-2", name: "Spotify" })];
+    const { rerender } = render(
+      <SubscriptionsGrid isLoading={false} subscriptions={subscriptions} {...baseHandlers} />,
+    );
+    await user.click(screen.getAllByRole("button", { name: "show_yearly" })[0]);
+    expect(screen.getAllByRole("button", { name: "show_monthly" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "show_yearly" })).toHaveLength(1);
+    await user.click(screen.getByRole("button", { name: "show_yearly" }));
+    rerender(
+      <SubscriptionsGrid
+        isLoading={false}
+        subscriptions={subscriptions}
+        layout="list"
+        {...baseHandlers}
+      />,
+    );
+    expect(screen.getAllByRole("button", { name: "show_monthly" })).toHaveLength(2);
+    await user.click(screen.getAllByRole("button", { name: "show_monthly" })[0]);
+    expect(screen.getAllByRole("button", { name: "show_yearly" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "show_monthly" })).toHaveLength(1);
+    rerender(
+      <SubscriptionsGrid isLoading={false} subscriptions={[subscriptions[1]]} {...baseHandlers} />,
+    );
+    expect(screen.getByRole("button", { name: "show_monthly" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "show_yearly" })).not.toBeInTheDocument();
   });
 
   it("renders subscriptions in the compact list layout", () => {

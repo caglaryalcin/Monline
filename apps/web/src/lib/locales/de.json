@@ -996,7 +996,6 @@
   "historical_invalid_logo": "Wählen Sie eine gültige Logo-Bilddatei.",
   "historical_invalid_details": "Kategorie, Zahler oder Zahlungsmethode ist ungültig. Prüfen Sie Ihre Auswahl.",
   "subscription_price_display": "Preisanzeige",
-  "show_all_monthly": "Alle monatlich anzeigen",
-  "show_all_yearly": "Alle jährlich anzeigen",
-  "subscription_price_display_hint": "Erneut auf die aktive Schaltfläche klicken, um die ursprünglichen Abrechnungszeiträume anzuzeigen."
+  "show_monthly": "Monatlich anzeigen",
+  "show_yearly": "Jährlich anzeigen"
 }
