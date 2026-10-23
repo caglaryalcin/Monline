@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { ScopedTransferActions } from "@/components/ScopedTransferActions";
 import { SubscriptionFormModal } from "@/components/SubscriptionFormModal";
 import { SubscriptionHistoryDialog } from "@/components/subscriptions/SubscriptionHistoryDialog";
 import { SubscriptionsFiltersPanel } from "@/components/subscriptions/SubscriptionsFiltersPanel";
@@ -41,6 +42,16 @@ export function SubscriptionsPage() {
   const [editSubscription, setEditSubscription] = useState<Subscription | null>(null);
   const [historySubscription, setHistorySubscription] = useState<Subscription | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const deleteAllMutation = useMutation({
+    mutationFn: () => subscriptionsService.deleteAll(),
+    onSuccess: async () => {
+      setDeleteAllOpen(false);
+      await queryClient.invalidateQueries();
+      toast.success(t("all_subscriptions_deleted"));
+    },
+    onError: () => toast.error(t("error_deleting_subscription")),
+  });
   const [showFilters, setShowFilters] = useState(false);
   const [view, setView] = useState<"grid" | "list">("grid");
 
@@ -257,6 +268,11 @@ export function SubscriptionsPage() {
             onToggleFilters={() => setShowFilters((current) => !current)}
             onCycleSort={handleCycleSort}
             onViewChange={setView}
+            onDeleteAll={() => setDeleteAllOpen(true)}
+            deleteAllDisabled={
+              isLoading || deleteAllMutation.isPending || subscriptions.length === 0
+            }
+            transferActions={<ScopedTransferActions scope="subscriptions" compact />}
           />
         </div>
       </div>
@@ -283,6 +299,7 @@ export function SubscriptionsPage() {
           if (!renewMutation.isPending) renewMutation.mutate(id);
         }}
         renewPending={renewMutation.isPending}
+        renewPendingId={renewMutation.variables}
         onHistory={setHistorySubscription}
         onDelete={setDeleteId}
         onToggleActive={(subscription) => {
@@ -300,6 +317,8 @@ export function SubscriptionsPage() {
             });
         }}
         automationPending={automationMutation.isPending}
+        automationPendingId={automationMutation.variables?.id}
+        automationPendingSetting={automationMutation.variables?.setting}
       />
 
       {showForm ? (
@@ -333,6 +352,15 @@ export function SubscriptionsPage() {
         title={t("delete_subscription")}
         description={t("confirm_delete_subscription")}
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+      />
+      <ConfirmDialog
+        open={deleteAllOpen}
+        onOpenChange={setDeleteAllOpen}
+        title={t("delete_all_subscriptions")}
+        description={t("delete_all_subscriptions_confirm", { count: subscriptions.length })}
+        onConfirm={() => {
+          if (!deleteAllMutation.isPending) deleteAllMutation.mutate();
+        }}
       />
     </div>
   );

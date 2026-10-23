@@ -110,6 +110,7 @@ export interface SubscriptionHistory {
 }
 
 export interface Subscription {
+  calendar_projection_hidden?: boolean;
   /** Original billing day, preserved when shorter months clamp the due date. */
   billing_anchor_day?: number;
   id: string;

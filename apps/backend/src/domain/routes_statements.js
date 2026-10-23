@@ -9,6 +9,31 @@ const {
 const domainPath = __dirname;
 routerAdd(
   "POST",
+  "/api/statements/delete-all",
+  (e) => {
+    if (!e.auth || e.auth.collection().name !== "users")
+      throw new UnauthorizedError();
+    if (e.requestInfo().body.confirmed !== true)
+      return e.json(400, { error: "confirmation_required" });
+    const deleted = repository.runInTransaction((tx) => {
+      const statements = tx.findRecordsByFilter(
+        "bank_statements",
+        "user = {:owner}",
+        "",
+        0,
+        0,
+        { owner: e.auth.id },
+      );
+      for (const statement of statements) tx.delete(statement);
+      return statements.length;
+    });
+    return e.json(200, { deleted });
+  },
+  apiLimits.bodyLimit(2048),
+);
+
+routerAdd(
+  "POST",
   "/api/statements/{id}/import",
   (e) => {
     if (!e.auth || e.auth.collection().name !== "users")

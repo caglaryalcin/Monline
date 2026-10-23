@@ -34,6 +34,7 @@ import type {
   Subscription,
 } from "@/types";
 
+import { pastePaymentProof,PaymentProofField } from "./PaymentProofField";
 import { getPaymentRecord, toDateStr } from "./types";
 
 export function historicalDateRange(now = new Date()) {
@@ -90,6 +91,7 @@ export function HistoricalPaymentDialog({
   const [dueDate, setDueDate] = useState(initial);
   const [amount, setAmount] = useState(String(options[0]?.price ?? ""));
   const [notes, setNotes] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
   const subscription = options.find((sub) => sub.id === subscriptionId);
   const currency = standalone
     ? currencies.find((item) => item.id === currencyId)
@@ -125,10 +127,11 @@ export function HistoricalPaymentDialog({
           logoFile = null;
         }
       }
-      if (!logoFile) return paymentRecordsService.createHistorical(body);
+      if (!logoFile && !proofFile) return paymentRecordsService.createHistorical(body);
       const form = new FormData();
       for (const [key, value] of Object.entries(body)) form.set(key, String(value));
-      form.set("logo", logoFile);
+      if (logoFile) form.set("logo", logoFile);
+      if (proofFile) form.set("proof", proofFile);
       return paymentRecordsService.createHistorical(form);
     },
     onSuccess: async (record) => {
@@ -170,6 +173,7 @@ export function HistoricalPaymentDialog({
       }}
     >
       <DialogContent
+        onPaste={(event) => pastePaymentProof(event, setProofFile)}
         className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"
         onPointerDownOutside={(event) => {
           event.preventDefault();
@@ -409,6 +413,7 @@ export function HistoricalPaymentDialog({
                 placeholder={t("optional")}
               />
             </div>
+            <PaymentProofField file={proofFile} onChange={setProofFile} t={t} />
             {(duplicate || error) && (
               <p role="alert" className="text-sm text-destructive">
                 {duplicate ? t("historical_duplicate") : error}

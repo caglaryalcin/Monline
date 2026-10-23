@@ -8,6 +8,47 @@ const {
   routerAdd,
 } = require("../runtime.cjs");
 const domainPath = __dirname;
+routerAdd("POST", "/api/payments/{id}/mark-unpaid", (e) => {
+  if (!e.auth || e.auth.collection().name !== "users")
+    throw new UnauthorizedError("Authentication required");
+  let updated = 0;
+  repository.runInTransaction((tx) => {
+    const record = tx.findRecordById(
+      "payment_records",
+      e.request.pathValue("id"),
+    );
+    if (record.getString("user") !== e.auth.id) throw new NotFoundError();
+    const subscriptionId = record.getString("subscription_id");
+    const dueDate = record.getString("due_date").slice(0, 10);
+    // Old backups may contain several records for one calendar occurrence.
+    // Clear them together so a duplicate cannot keep that occurrence paid.
+    const records =
+      subscriptionId && /^\d{4}-\d{2}-\d{2}$/.test(dueDate)
+        ? tx.findRecordsByFilter(
+            "payment_records",
+            "user = {:user} && subscription_id = {:sub} && due_date >= {:from} && due_date < {:until}",
+            "",
+            0,
+            0,
+            {
+              user: e.auth.id,
+              sub: subscriptionId,
+              from: dueDate,
+              until: dueDate + "~",
+            },
+          )
+        : [record];
+    for (const payment of records) {
+      if (!payment.getString("paid_at") && !payment.get("auto_paid")) continue;
+      payment.set("paid_at", "");
+      payment.set("auto_paid", false);
+      tx.save(payment);
+      updated++;
+    }
+  });
+  return e.json(200, { updated });
+});
+
 routerAdd("POST", "/api/payments/history", (e) => {
   if (!e.auth || e.auth.collection().name !== "users")
     throw new UnauthorizedError("Authentication required");
@@ -30,6 +71,10 @@ routerAdd("POST", "/api/payments/history", (e) => {
       error: err.message,
     });
   }
+  let proof;
+  try {
+    [, proof] = e.request.formFile("proof");
+  } catch (_) {}
   let saved;
   let duplicate = false;
   repository.runInTransaction((tx) => {
@@ -82,6 +127,7 @@ routerAdd("POST", "/api/payments/history", (e) => {
         record.set("logo", files.fileFromMultipart(logo));
       }
       for (const key of Object.keys(values)) record.set(key, values[key]);
+      if (proof) record.set("proof", files.fileFromMultipart(proof));
       tx.save(record);
       saved = record;
       return;
@@ -120,6 +166,7 @@ routerAdd("POST", "/api/payments/history", (e) => {
     record.set("user", e.auth.id);
     record.set("subscription_id", sub.id);
     for (const key of Object.keys(values)) record.set(key, values[key]);
+    if (proof) record.set("proof", files.fileFromMultipart(proof));
     tx.save(record);
     saved = record;
   });

@@ -46,6 +46,12 @@ describe("paymentRecordsService", () => {
     });
   });
 
+  it("reverses payment confirmation through the authenticated endpoint", async () => {
+    vi.mocked(client.send).mockResolvedValue({ updated: 1 });
+    expect(await paymentRecordsService.markUnpaid("pr-1")).toEqual({ updated: 1 });
+    expect(client.send).toHaveBeenCalledWith("/api/payments/pr-1/mark-unpaid", { method: "POST" });
+  });
+
   it("lists records for a user and for a subscription", async () => {
     const getFullList = vi.fn().mockResolvedValue([]);
     (client.filter as unknown as ReturnType<typeof vi.fn>)
@@ -81,6 +87,20 @@ describe("paymentRecordsService", () => {
 
     expect(create).toHaveBeenCalledWith(formData);
     expect(update).toHaveBeenCalledWith("pr-1", { notes: "updated" });
+  });
+
+  it("uploads receipts as multipart files rather than empty JSON objects", async () => {
+    const update = vi.fn().mockResolvedValue({ id: "pr-1", proof: "receipt.png" });
+    vi.mocked(client.collection).mockReturnValue(getCollectionMock({ update }) as never);
+    const proof = new File(["image-bytes"], "receipt.png", { type: "image/png" });
+    await paymentRecordsService.update("pr-1", {
+      notes: "Keep note",
+      proof,
+    } as unknown as Partial<PaymentRecord>);
+    const form = update.mock.calls[0][1] as FormData;
+    expect(form).toBeInstanceOf(FormData);
+    expect(form.get("proof")).toBe(proof);
+    expect(form.get("notes")).toBe("Keep note");
   });
 
   it("returns null without proof and builds a proof URL when present", () => {

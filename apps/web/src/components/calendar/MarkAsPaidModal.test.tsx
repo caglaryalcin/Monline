@@ -72,14 +72,14 @@ describe("MarkAsPaidModal", () => {
     },
   };
 
-  function renderComponent(existingRecord?: PaymentRecord) {
+  function renderComponent(existingRecord?: PaymentRecord, subscription = sub) {
     const onClose = vi.fn();
     const onSaved = vi.fn();
     const { Wrapper } = createQueryClientWrapper();
 
     const renderResult = render(
       <MarkAsPaidModal
-        sub={sub}
+        sub={subscription}
         date={new Date("2026-03-20T12:00:00.000Z")}
         userId="user-1"
         existingRecord={existingRecord}
@@ -102,7 +102,7 @@ describe("MarkAsPaidModal", () => {
     subscriptionsLogoUrl.mockReturnValue(null);
   });
 
-  it("renders a read-only payment when the record is already paid", () => {
+  it("keeps paid details editable for attaching a receipt later", () => {
     renderComponent({
       id: "rec-1",
       subscription_id: "sub-1",
@@ -113,12 +113,36 @@ describe("MarkAsPaidModal", () => {
       notes: "done",
     });
 
-    expect(screen.getByText("view_payment")).toBeInTheDocument();
+    expect(screen.getByText("edit_payment")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /receipt\.pdf/i })).toHaveAttribute(
       "href",
       "https://example.com/proof.pdf",
     );
     expect(screen.queryByRole("button", { name: "confirm_payment" })).not.toBeInTheDocument();
+  });
+
+  it("pastes a screenshot and saves a receipt after payment without changing its paid date", async () => {
+    const paidAt = "2026-03-20T10:00:00.000Z";
+    renderComponent({
+      id: "rec-1",
+      user: "user-1",
+      subscription_id: sub.id,
+      due_date: "2026-03-20",
+      paid_at: paidAt,
+      amount: 45,
+    });
+    const screenshot = new File(["screenshot"], "pasted.png", { type: "image/png" });
+    fireEvent.paste(screen.getByRole("dialog"), {
+      clipboardData: { items: [{ type: "image/png", getAsFile: () => screenshot }] },
+    });
+    expect(screen.getByText(/screenshot-.*\.png/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "save_changes" }));
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith(
+        "rec-1",
+        expect.objectContaining({ paid_at: paidAt, amount: 45, proof: expect.any(File) }),
+      ),
+    );
   });
 
   it("updates the existing record and reports success", async () => {
@@ -150,6 +174,35 @@ describe("MarkAsPaidModal", () => {
     );
     expect(toastSuccess).toHaveBeenCalledWith("marked_as_paid");
     expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it("can confirm a standalone payment again after undoing it without creating a subscription link", async () => {
+    const { onSaved } = renderComponent(
+      {
+        id: "standalone-1",
+        subscription_id: "",
+        user: "user-1",
+        due_date: "2026-03-20",
+        paid_at: "",
+        amount: 45,
+        notes: "Keep notes",
+      },
+      { ...sub, id: "standalone-1", standalone_payment_id: "standalone-1" },
+    );
+    await userEvent.click(screen.getByRole("button", { name: "confirm_payment" }));
+    await waitFor(() =>
+      expect(update).toHaveBeenCalledWith(
+        "standalone-1",
+        expect.objectContaining({
+          subscription_id: "",
+          auto_paid: false,
+          amount: 45,
+          notes: "Keep notes",
+        }),
+      ),
+    );
+    expect(create).not.toHaveBeenCalled();
+    expect(onSaved).toHaveBeenCalledOnce();
   });
 
   it("reuses a matching unpaid record when no existing record is passed", async () => {
@@ -289,7 +342,7 @@ describe("MarkAsPaidModal", () => {
 
     expect(screen.getByText("no_proof")).toBeInTheDocument();
     // Should not show the upload section or the proof link
-    expect(screen.queryByRole("button", { name: "upload_proof" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "upload_proof" })).toBeInTheDocument();
   });
 
   it("shows saving label while mutation is pending (line 268 isPending branch)", async () => {

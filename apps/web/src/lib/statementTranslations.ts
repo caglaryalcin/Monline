@@ -1,6 +1,9 @@
 // The rest of the interface falls back to English for languages without these keys.
 export const statementTranslations = {
   tr: {
+    statement_delete_all: "Tüm ekstreleri sil",
+    statement_delete_all_note:
+      "Tüm sayfalardaki ekstre arşivinin tamamı kalıcı olarak silinecek. Abonelikler ve takvime aktarılmış ödemeler korunacak. Emin misiniz?",
     statement_import_add_category: "Kategori ekle",
     statement_import_category_name: "Kategori adı",
     statement_import_prepare_note:
@@ -161,6 +164,9 @@ export const statementTranslations = {
       "Ödeme dönemine göre eksik tarihler oluşturulur. Tutarlar son seçili ekstre ödemesinden alınır; her tutarı kontrol edip değiştirebilir veya tarihi çıkarabilirsin. Onayladığın ödemeler ödendi olarak eklenir. Ekstredeki ve daha önce ödenmiş tarihler tekrar eklenmez.",
   },
   en: {
+    statement_delete_all: "Delete all statements",
+    statement_delete_all_note:
+      "Permanently delete the entire statement archive, across all pages? Subscriptions and payments already imported into the calendar will be kept.",
     statement_import_add_category: "Add category",
     statement_import_category_name: "Category name",
     statement_import_prepare_note:
@@ -326,6 +332,9 @@ export const statementTranslations = {
       "Missing dates follow the billing cycle. Amounts start from the latest selected statement charge; review, edit or exclude each one. Confirmed entries are marked paid. Statement dates and previously paid dates are not added again.",
   },
   de: {
+    statement_delete_all: "Alle Abrechnungen löschen",
+    statement_delete_all_note:
+      "Das gesamte Abrechnungsarchiv auf allen Seiten endgültig löschen? Abonnements und bereits importierte Kalenderzahlungen bleiben erhalten.",
     statement_import_add_category: "Kategorie hinzufügen",
     statement_import_category_name: "Kategoriename",
     statement_import_prepare_note:

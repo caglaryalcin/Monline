@@ -83,7 +83,7 @@ routerAdd("GET", "/api/calendar/ical", function (e) {
   }
   const subs = repository.findRecordsByFilter(
     "subscriptions",
-    "user = {:userId} && inactive = false",
+    "user = {:userId} && calendar_projection_hidden = false && inactive = false",
     "",
     0,
     0,
@@ -140,7 +140,7 @@ routerAdd("GET", "/api/calendar/data", (e) => {
   const range = calendarUtils.buildMonthRange(month, year);
   const subs = repository.findRecordsByFilter(
     "subscriptions",
-    "user = {:userId} && inactive = false && next_payment >= {:startDate} && next_payment < {:endDate}",
+    "user = {:userId} && calendar_projection_hidden = false && inactive = false && next_payment >= {:startDate} && next_payment < {:endDate}",
     "next_payment",
     0,
     0,
@@ -183,19 +183,19 @@ routerAdd(
     if (body.confirmed !== true || body.scope !== "payments")
       return e.json(400, { error: "calendar_clear_invalid" });
     const result = repository.runInTransaction((tx) => {
-      const credits = new Set(
-        tx
-          .findRecordsByFilter("subscriptions", "user = {:owner}", "", 0, 0, {
-            owner: e.auth.id,
-          })
-          .filter((sub) => sub.getString("record_type") === "credit")
-          .map((sub) => sub.id),
+      const payments = tx.findRecordsByFilter(
+        "payment_records",
+        "user = {:owner}",
+        "",
+        0,
+        0,
+        { owner: e.auth.id },
       );
-      const payments = tx
-        .findRecordsByFilter("payment_records", "user = {:owner}", "", 0, 0, {
-          owner: e.auth.id,
-        })
-        .filter((record) => !credits.has(record.getString("subscription_id")));
+      tx.connection
+        .prepare(
+          "UPDATE subscriptions SET calendar_projection_hidden = 1, calendar_history_recovery_passes = 2 WHERE user = ?",
+        )
+        .run(e.auth.id);
       for (const record of payments) tx.delete(record);
       return { subscriptions_deleted: 0, payments_deleted: payments.length };
     });

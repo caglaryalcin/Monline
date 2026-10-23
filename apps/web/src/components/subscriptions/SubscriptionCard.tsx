@@ -24,6 +24,7 @@ import type {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatBillingPeriod } from "@/lib/billingPeriods";
@@ -50,10 +51,12 @@ interface SubscriptionActionsProps {
   onClone: () => void;
   onRenew: () => void;
   renewPending?: boolean;
+  renewDisabled?: boolean;
   onHistory: () => void;
   onDelete: () => void;
   onToggleAutomation?: (setting: SubscriptionAutomationSetting) => void;
   automationDisabled?: boolean;
+  automationPendingSetting?: SubscriptionAutomationSetting;
   showAutoMarkPaid?: boolean;
 }
 
@@ -66,10 +69,12 @@ function SubscriptionActions({
   onClone,
   onRenew,
   renewPending,
+  renewDisabled,
   onHistory,
   onDelete,
   onToggleAutomation,
   automationDisabled,
+  automationPendingSetting,
   showAutoMarkPaid,
 }: SubscriptionActionsProps) {
   const { t } = useTranslation();
@@ -94,8 +99,9 @@ function SubscriptionActions({
       setting === "auto_renew" ? !sub.inactive && sub.auto_renew : !!sub.auto_mark_paid;
     const fixedRenewal = setting === "auto_renew" && finiteSchedule && !sub.inactive;
     const disabled =
-      automationDisabled || (setting === "auto_renew" && (sub.inactive || fixedRenewal));
+      sub.inactive || automationDisabled || (setting === "auto_renew" && fixedRenewal);
     const Icon = setting === "auto_renew" ? Repeat2 : CalendarCheck;
+    const pending = automationPendingSetting === setting;
     return (
       <TooltipProvider delayDuration={250} key={setting}>
         <Tooltip>
@@ -107,11 +113,13 @@ function SubscriptionActions({
                 size="icon"
                 className={cn(
                   "h-7 w-7 rounded-full text-muted-foreground",
+                  automationDisabled && !pending && !sub.inactive && "disabled:opacity-100",
                   enabled &&
                     "bg-green-500/15 text-green-700 hover:bg-green-500/25 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
                 )}
                 aria-label={t(setting)}
                 aria-pressed={enabled}
+                aria-busy={pending}
                 disabled={disabled}
                 onClick={() => onToggleAutomation?.(setting)}
               >
@@ -141,6 +149,9 @@ function SubscriptionActions({
         <>
           {cycleName !== "One-Time" && automationButton("auto_renew")}
           {showAutoMarkPaid && automationButton("auto_mark_paid")}
+          {(cycleName !== "One-Time" || showAutoMarkPaid) && (
+            <Separator orientation="vertical" className="mx-1 h-4" aria-hidden="true" />
+          )}
         </>
       )}
       {!credit && sub.expand?.cycle?.name !== "One-Time" && (
@@ -154,6 +165,7 @@ function SubscriptionActions({
           )}
           aria-label={priceActionLabel}
           title={priceActionLabel}
+          disabled={sub.inactive}
           onClick={() => changePeriod(nextPeriod)}
         >
           <ArrowLeftRight className="h-3.5 w-3.5" />
@@ -166,6 +178,7 @@ function SubscriptionActions({
           className="h-7 w-7 rounded-full text-muted-foreground"
           onClick={() => window.open(sub.url, "_blank")}
           title={t("open_url")}
+          disabled={sub.inactive}
         >
           <ExternalLink className="h-3.5 w-3.5" />
         </Button>
@@ -176,6 +189,7 @@ function SubscriptionActions({
         className="h-7 w-7 rounded-full text-muted-foreground"
         onClick={onEdit}
         title={t("edit")}
+        disabled={sub.inactive}
       >
         <Edit className="h-3.5 w-3.5" />
       </Button>
@@ -185,6 +199,7 @@ function SubscriptionActions({
         className="h-7 w-7 rounded-full text-muted-foreground"
         onClick={onClone}
         title={t("clone")}
+        disabled={sub.inactive}
       >
         <Copy className="h-3.5 w-3.5" />
       </Button>
@@ -194,6 +209,7 @@ function SubscriptionActions({
         className="h-7 w-7 rounded-full text-muted-foreground"
         onClick={onHistory}
         title={t("history")}
+        disabled={sub.inactive}
       >
         <History className="h-3.5 w-3.5" />
       </Button>
@@ -207,12 +223,16 @@ function SubscriptionActions({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 rounded-full text-muted-foreground"
+                className={cn(
+                  "h-7 w-7 rounded-full text-muted-foreground",
+                  !renewPending && "disabled:opacity-100",
+                )}
                 onClick={onRenew}
-                disabled={renewPending}
+                disabled={renewDisabled || renewPending}
                 aria-label={t("renew")}
+                aria-busy={!!renewPending}
               >
-                <RefreshCw className="h-3.5 w-3.5" />
+                <RefreshCw className={cn("h-3.5 w-3.5", renewPending && "animate-spin")} />
               </Button>
             </TooltipTrigger>
             <TooltipPortal>
@@ -229,6 +249,7 @@ function SubscriptionActions({
         className="h-7 w-7 rounded-full text-muted-foreground"
         onClick={onDelete}
         title={t("delete")}
+        disabled={sub.inactive}
       >
         <Trash2 className="h-3.5 w-3.5" />
       </Button>
@@ -250,6 +271,7 @@ export function SubscriptionCard({
   onClone,
   onRenew,
   renewPending,
+  renewDisabled,
   onHistory,
   onDelete,
   layout = "grid",
@@ -258,6 +280,7 @@ export function SubscriptionCard({
   statusDisabled = false,
   onToggleAutomation,
   automationDisabled = false,
+  automationPendingSetting,
   showAutoMarkPaid = true,
 }: {
   sub: Subscription;
@@ -271,6 +294,7 @@ export function SubscriptionCard({
   onClone: () => void;
   onRenew: () => void;
   renewPending?: boolean;
+  renewDisabled?: boolean;
   onHistory: () => void;
   onDelete: () => void;
   layout?: "grid" | "list";
@@ -279,6 +303,7 @@ export function SubscriptionCard({
   statusDisabled?: boolean;
   onToggleAutomation?: (setting: SubscriptionAutomationSetting) => void;
   automationDisabled?: boolean;
+  automationPendingSetting?: SubscriptionAutomationSetting;
   showAutoMarkPaid?: boolean;
 }) {
   const { t } = useTranslation();
@@ -340,7 +365,7 @@ export function SubscriptionCard({
   const statusToggle = onToggleActive ? (
     <Switch
       type="button"
-      className="shadow-sm"
+      className={cn("shadow-sm", !statusPending && "disabled:opacity-100")}
       checked={!sub.inactive}
       onCheckedChange={onToggleActive}
       disabled={statusDisabled || statusPending}
@@ -438,6 +463,7 @@ export function SubscriptionCard({
           <SubscriptionActions
             onToggleAutomation={onToggleAutomation}
             automationDisabled={automationDisabled}
+            automationPendingSetting={automationPendingSetting}
             showAutoMarkPaid={showAutoMarkPaid}
             sub={sub}
             priceDisplay={priceDisplay}
@@ -447,6 +473,7 @@ export function SubscriptionCard({
             onClone={onClone}
             onRenew={onRenew}
             renewPending={renewPending}
+            renewDisabled={renewDisabled}
             onHistory={onHistory}
             onDelete={onDelete}
           />
@@ -594,6 +621,7 @@ export function SubscriptionCard({
         <SubscriptionActions
           onToggleAutomation={onToggleAutomation}
           automationDisabled={automationDisabled}
+          automationPendingSetting={automationPendingSetting}
           showAutoMarkPaid={showAutoMarkPaid}
           sub={sub}
           priceDisplay={priceDisplay}
@@ -603,6 +631,7 @@ export function SubscriptionCard({
           onClone={onClone}
           onRenew={onRenew}
           renewPending={renewPending}
+          renewDisabled={renewDisabled}
           onHistory={onHistory}
           onDelete={onDelete}
         />

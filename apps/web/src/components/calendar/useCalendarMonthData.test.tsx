@@ -37,6 +37,52 @@ function getSubscription(overrides: Partial<Subscription> = {}): Subscription {
 }
 
 describe("useCalendarMonthData", () => {
+  it("leaves the current and future calendar empty after clearing projections without deleting subscriptions", () => {
+    const subscription = getSubscription({ calendar_projection_hidden: true });
+    const { result } = renderHook(() =>
+      useCalendarMonthData({
+        subscriptions: [subscription],
+        cycles: [{ id: "cycle-monthly", name: "Monthly" }],
+        currencies: [getCurrency()],
+        year: 2026,
+        month: 4,
+        selectedDay: 5,
+        paymentRecords: [],
+      }),
+    );
+    expect(result.current.stats.count).toBe(0);
+    expect(result.current.selectedEntries).toEqual([]);
+    expect(subscription.inactive).toBe(false);
+  });
+  it("keeps a standalone payment visible after its paid status is reversed", () => {
+    const { result } = renderHook(() =>
+      useCalendarMonthData({
+        subscriptions: [],
+        cycles: [],
+        currencies: [getCurrency({ is_main: true })],
+        year: 2026,
+        month: 4,
+        selectedDay: 5,
+        paymentRecords: [
+          {
+            id: "standalone-1",
+            subscription_id: "",
+            user: "user-1",
+            name: "One-off payment",
+            currency: "cur-1",
+            due_date: "2026-04-05",
+            paid_at: "",
+            amount: 25,
+          },
+        ],
+      }),
+    );
+    expect(result.current.selectedEntries).toHaveLength(1);
+    expect(result.current.selectedEntries[0].sub.standalone_payment_id).toBe("standalone-1");
+    expect(result.current.selectedDayTotal).toBe(25);
+    expect(result.current.stats.total).toBe(25);
+  });
+
   it("scopes awaiting confirmation and upcoming totals to the selected month and excludes paid occurrences", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 9, 23, 12));
@@ -106,6 +152,12 @@ describe("useCalendarMonthData", () => {
       });
       expect(result.current.stats.awaitingConfirmation).toBe(10);
       expect(result.current.stats.due).toBe(0);
+      // Undoing confirmation keeps the occurrences and restores pending totals.
+      rerender({ month: 10, paymentRecords: records });
+      expect(result.current.entriesByDay[22]).toHaveLength(1);
+      expect(result.current.entriesByDay[22][0].amount).toBe(69.9);
+      expect(result.current.stats.awaitingConfirmation).toBeCloseTo(79.9);
+      expect(result.current.stats.due).toBe(15);
     } finally {
       vi.useRealTimers();
     }

@@ -1,4 +1,5 @@
 import { History, Trash2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -7,17 +8,20 @@ interface CalendarPageHeaderProps {
   onAddHistorical?: () => void;
   onClearAll?: () => void;
   clearDisabled?: boolean;
+  transferActions?: ReactNode;
 }
 
 export function CalendarPageHeader({
   onAddHistorical,
   onClearAll,
   clearDisabled,
+  transferActions,
 }: CalendarPageHeaderProps) {
   const { t } = useTranslation();
   if (!onAddHistorical && !onClearAll) return null;
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+      {transferActions}
       {onClearAll && (
         <Button
           variant="outline"

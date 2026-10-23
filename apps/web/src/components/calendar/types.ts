@@ -111,7 +111,7 @@ export function getOccurrencesInMonth(
   month: number,
   cycles: Cycle[],
 ): Date[] {
-  if (sub.standalone_payment_id) return [];
+  if (sub.standalone_payment_id || sub.calendar_projection_hidden) return [];
   const cycle = sub.expand?.cycle ?? cycles.find((c) => c.id === sub.cycle);
   const cycleName = cycle?.name ?? "Monthly";
 

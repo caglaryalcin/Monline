@@ -16,7 +16,7 @@ import {
   toDateStr,
 } from "@/components/calendar/types";
 import { useCalendarMonthData } from "@/components/calendar/useCalendarMonthData";
-import { SubscriptionFormModal } from "@/components/SubscriptionFormModal";
+import { ScopedTransferActions } from "@/components/ScopedTransferActions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { queryKeys } from "@/lib/queryKeys";
-import { isCredit } from "@/lib/recordTypes";
 import { toast } from "@/lib/toast";
 import { categoriesService } from "@/services/categories";
 import { currenciesService } from "@/services/currencies";
@@ -36,7 +35,7 @@ import { householdService } from "@/services/household";
 import { paymentMethodsService } from "@/services/paymentMethods";
 import { paymentRecordsService } from "@/services/paymentRecords";
 import { subscriptionsService } from "@/services/subscriptions";
-import type { PaymentRecord, Subscription } from "@/types";
+import type { PaymentRecord } from "@/types";
 
 export function CalendarPage() {
   const { t } = useTranslation();
@@ -55,9 +54,8 @@ export function CalendarPage() {
   const setSelectedDay = (day: number | null) =>
     setSelectedDate(day === null ? null : new Date(year, month - 1, day));
   const [detailEntry, setDetailEntry] = useState<DayEntry | null>(null);
-  const [editSubscription, setEditSubscription] = useState<Subscription | null>(null);
-  const [editOpen, setEditOpen] = useState(false);
   const [historicalOpen, setHistoricalOpen] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<"confirm" | "edit">("confirm");
   const [markAsPaidEntry, setMarkAsPaidEntry] = useState<DayEntry | null>(null);
   const [deletePayment, setDeletePayment] = useState<PaymentRecord | null>(null);
   const [clearOpen, setClearOpen] = useState(false);
@@ -68,8 +66,6 @@ export function CalendarPage() {
       setSelectedDate(null);
       setDetailEntry(null);
       setMarkAsPaidEntry(null);
-      setEditOpen(false);
-      setEditSubscription(null);
       setHistoricalOpen(false);
       setDeletePayment(null);
       await queryClient.invalidateQueries();
@@ -90,6 +86,15 @@ export function CalendarPage() {
   });
 
   const paymentTracking = !!user?.payment_tracking;
+
+  const markUnpaid = useMutation({
+    mutationFn: (record: PaymentRecord) => paymentRecordsService.markUnpaid(record.id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries();
+      toast.success(t("marked_as_unpaid"));
+    },
+    onError: () => toast.error(t("mark_as_unpaid_failed")),
+  });
 
   const {
     data: subscriptions = [],
@@ -143,10 +148,11 @@ export function CalendarPage() {
     queryFn: () => paymentRecordsService.listForUser(userId),
     enabled: !!userId,
   });
-  const creditIds = new Set(subscriptions.filter(isCredit).map((sub) => sub.id));
-  const calendarPaymentCount = paymentRecords.filter(
-    (record) => !creditIds.has(record.subscription_id),
-  ).length;
+
+  const calendarPaymentCount = paymentRecords.length;
+  const hasCalendarEntries =
+    calendarPaymentCount > 0 ||
+    subscriptions.some((sub) => !sub.calendar_projection_hidden);
 
   const { allCells, currencyById, daysInMonth, entriesByDay, mainCurrency, stats } =
     useCalendarMonthData({
@@ -207,6 +213,7 @@ export function CalendarPage() {
   return (
     <div className="monline-calendar-page flex min-h-0 flex-col gap-4">
       <CalendarPageHeader
+        transferActions={<ScopedTransferActions scope="calendar" />}
         onAddHistorical={!loadingSubscriptions ? () => setHistoricalOpen(true) : undefined}
         onClearAll={() => setClearOpen(true)}
         clearDisabled={
@@ -214,7 +221,8 @@ export function CalendarPage() {
           loadingPayments ||
           clearCalendar.isPending ||
           removePayment.isPending ||
-          !calendarPaymentCount
+          markUnpaid.isPending ||
+          !hasCalendarEntries
         }
       />
 
@@ -282,7 +290,7 @@ export function CalendarPage() {
         }
       />
 
-      {selectedDate !== null && !historicalOpen && !detailEntry && !markAsPaidEntry && !editOpen ? (
+      {selectedDate !== null && !historicalOpen && !detailEntry && !markAsPaidEntry ? (
         <Dialog
           open
           onOpenChange={(open) => {
@@ -326,14 +334,25 @@ export function CalendarPage() {
             toDateStr(detailEntry.date),
           )}
           onClose={() => setDetailEntry(null)}
-          onEdit={(subscription) => {
-            setDetailEntry(null);
-            setEditSubscription(subscription);
-            setEditOpen(true);
-          }}
-          onMarkAsPaid={() => {
+          onEdit={() => {
+            setPaymentMode("edit");
             setMarkAsPaidEntry(detailEntry);
             setDetailEntry(null);
+          }}
+          onMarkAsPaid={() => {
+            setPaymentMode("confirm");
+            setMarkAsPaidEntry(detailEntry);
+            setDetailEntry(null);
+          }}
+          markingUnpaid={markUnpaid.isPending}
+          onMarkAsUnpaid={() => {
+            if (markUnpaid.isPending || removePayment.isPending || clearCalendar.isPending) return;
+            const record = getPaymentRecord(
+              paymentRecords,
+              detailEntry.sub.id,
+              toDateStr(detailEntry.date),
+            );
+            if (record?.paid_at) markUnpaid.mutate(record);
           }}
           deletingPayment={removePayment.isPending || clearCalendar.isPending}
           onDeletePayment={() => {
@@ -350,6 +369,7 @@ export function CalendarPage() {
 
       {markAsPaidEntry ? (
         <MarkAsPaidModal
+          mode={paymentMode}
           sub={markAsPaidEntry.sub}
           date={markAsPaidEntry.date}
           userId={userId}
@@ -361,31 +381,9 @@ export function CalendarPage() {
           onClose={() => setMarkAsPaidEntry(null)}
           onSaved={() => {
             setMarkAsPaidEntry(null);
-            void queryClient.invalidateQueries({
-              queryKey: queryKeys.paymentRecords.all(userId),
-            });
-          }}
-          t={t}
-        />
-      ) : null}
-
-      {editOpen && editSubscription ? (
-        <SubscriptionFormModal
-          sub={editSubscription}
-          userId={userId}
-          currencies={currencies}
-          categories={categories}
-          paymentMethods={paymentMethods}
-          household={household}
-          onClose={() => {
-            setEditOpen(false);
-            setEditSubscription(null);
-          }}
-          onSaved={() => {
-            setEditOpen(false);
-            setEditSubscription(null);
             void queryClient.invalidateQueries();
           }}
+          t={t}
         />
       ) : null}
 

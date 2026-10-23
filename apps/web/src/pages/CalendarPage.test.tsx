@@ -2,7 +2,6 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import type * as CalendarTypes from "@/components/calendar/types";
-import { queryKeys } from "@/lib/queryKeys";
 import { createQueryClientWrapper } from "@/test/query-client";
 
 const mocks = vi.hoisted(() => ({
@@ -14,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   listHousehold: vi.fn(),
   listPaymentRecords: vi.fn(),
   removePayment: vi.fn(),
+  markUnpaid: vi.fn(),
+  toastError: vi.fn(),
   clearCalendar: vi.fn(),
   useCalendarMonthData: vi.fn(),
   getPaymentRecord: vi.fn(),
@@ -77,7 +78,12 @@ vi.mock("@/services/paymentRecords", () => ({
     listForUser: mocks.listPaymentRecords,
     remove: mocks.removePayment,
     clearCalendar: mocks.clearCalendar,
+    markUnpaid: mocks.markUnpaid,
   },
+}));
+
+vi.mock("@/lib/toast", () => ({
+  toast: { success: vi.fn(), error: mocks.toastError },
 }));
 
 vi.mock("@/components/calendar/useCalendarMonthData", () => ({
@@ -194,11 +200,15 @@ vi.mock("@/components/calendar/SubDetailDialog", () => ({
   SubDetailDialog: ({
     onEdit,
     onMarkAsPaid,
+    onMarkAsUnpaid,
+    markingUnpaid,
     onDeletePayment,
     onClose,
   }: {
     onEdit: (sub: { id: string; name: string }) => void;
     onMarkAsPaid: () => void;
+    onMarkAsUnpaid?: () => void;
+    markingUnpaid?: boolean;
     onDeletePayment?: () => void;
     onClose: () => void;
   }) => (
@@ -208,6 +218,9 @@ vi.mock("@/components/calendar/SubDetailDialog", () => ({
       </button>
       <button type="button" onClick={onMarkAsPaid}>
         mark-as-paid
+      </button>
+      <button type="button" onClick={onMarkAsUnpaid} disabled={markingUnpaid}>
+        {markingUnpaid ? "saving-unpaid" : "mark-as-unpaid"}
       </button>
       <button type="button" onClick={onDeletePayment}>
         delete-payment
@@ -270,6 +283,43 @@ const dayAfterVisibleMonth = isoDay(
 );
 
 describe("CalendarPage", () => {
+  it("reverses payment confirmation without deleting the record and refreshes cached totals", async () => {
+    let resolveUpdate!: (value: { updated: number }) => void;
+    mocks.markUnpaid.mockReturnValue(
+      new Promise((resolve) => {
+        resolveUpdate = resolve;
+      }),
+    );
+    const { client, Wrapper } = createQueryClientWrapper();
+    const invalidate = vi.spyOn(client, "invalidateQueries").mockResolvedValue(undefined);
+    render(<CalendarPage />, { wrapper: Wrapper });
+    await waitFor(() => expect(mocks.listSubscriptions).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: "select-day" }));
+    fireEvent.click(screen.getByRole("button", { name: "open-detail" }));
+    fireEvent.click(screen.getByRole("button", { name: "mark-as-unpaid" }));
+    await waitFor(() => expect(mocks.markUnpaid).toHaveBeenCalledExactlyOnceWith("pr-1"));
+    expect(screen.getByRole("button", { name: "saving-unpaid" })).toBeDisabled();
+    expect(mocks.removePayment).not.toHaveBeenCalled();
+    resolveUpdate({ updated: 1 });
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith());
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "mark-as-unpaid" })).toBeEnabled(),
+    );
+  });
+
+  it("keeps the paid details open and permits retry when reversing payment fails", async () => {
+    mocks.markUnpaid.mockRejectedValue(new Error("network failure"));
+    const { Wrapper } = createQueryClientWrapper();
+    render(<CalendarPage />, { wrapper: Wrapper });
+    await waitFor(() => expect(mocks.listSubscriptions).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: "select-day" }));
+    fireEvent.click(screen.getByRole("button", { name: "open-detail" }));
+    fireEvent.click(screen.getByRole("button", { name: "mark-as-unpaid" }));
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith("mark_as_unpaid_failed"));
+    expect(screen.getByRole("button", { name: "mark-as-unpaid" })).toBeEnabled();
+    expect(mocks.removePayment).not.toHaveBeenCalled();
+  });
+
   it("asks for confirmation before clearing payment records and allows cancellation", async () => {
     const { client, Wrapper } = createQueryClientWrapper();
     const invalidate = vi.spyOn(client, "invalidateQueries").mockResolvedValue(undefined);
@@ -402,9 +452,10 @@ describe("CalendarPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "open-detail" }));
     fireEvent.click(screen.getByRole("button", { name: "edit-detail" }));
-    expect(screen.getByText("edit-form:Netflix")).toBeInTheDocument();
+    expect(screen.queryByText("edit-form:Netflix")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "save-payment" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "save-edit" }));
+    fireEvent.click(screen.getByRole("button", { name: "save-payment" }));
     await waitFor(() => {
       expect(invalidateQueries).toHaveBeenCalledWith();
     });
@@ -414,9 +465,7 @@ describe("CalendarPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "save-payment" }));
 
     await waitFor(() => {
-      expect(invalidateQueries).toHaveBeenCalledWith({
-        queryKey: queryKeys.paymentRecords.all("user-1"),
-      });
+      expect(invalidateQueries).toHaveBeenCalledWith();
     });
 
     // test mark as paid close
@@ -428,7 +477,7 @@ describe("CalendarPage", () => {
     // test edit modal close
     fireEvent.click(screen.getByRole("button", { name: "open-detail" }));
     fireEvent.click(screen.getByRole("button", { name: "edit-detail" }));
-    fireEvent.click(screen.getByRole("button", { name: "close-edit" }));
+    fireEvent.click(screen.getByRole("button", { name: "close-payment" }));
     expect(screen.queryByText("edit-form:Netflix")).not.toBeInTheDocument();
 
     // test sub detail close

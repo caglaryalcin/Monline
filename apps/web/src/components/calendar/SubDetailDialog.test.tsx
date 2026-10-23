@@ -134,6 +134,7 @@ describe("SubDetailDialog", () => {
     const onClose = vi.fn();
     const onEdit = vi.fn();
     const onMarkAsPaid = vi.fn();
+    const onMarkAsUnpaid = vi.fn();
     const onDeletePayment = vi.fn();
     const paymentRecord: PaymentRecord = {
       id: "pr-1",
@@ -142,6 +143,7 @@ describe("SubDetailDialog", () => {
       due_date: "2026-03-10",
       paid_at: "2026-03-10T10:00:00Z",
       amount: 10,
+      notes: "Payment-specific notes",
     };
     const sub = getSubscription();
 
@@ -156,6 +158,7 @@ describe("SubDetailDialog", () => {
         onClose={onClose}
         onEdit={onEdit}
         onMarkAsPaid={onMarkAsPaid}
+        onMarkAsUnpaid={onMarkAsUnpaid}
         onDeletePayment={onDeletePayment}
         t={(key) => key}
       />,
@@ -166,7 +169,7 @@ describe("SubDetailDialog", () => {
     expect(screen.getByText("Visa")).toBeInTheDocument();
     expect(screen.getByText("Daniel")).toBeInTheDocument();
     expect(screen.getByText("netflix.com")).toBeInTheDocument();
-    expect(screen.getByText("Some notes")).toBeInTheDocument();
+    expect(screen.getByText("Payment-specific notes")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /proof/i })).toHaveAttribute(
       "href",
       "https://cdn.example.com/proof.png",
@@ -174,10 +177,12 @@ describe("SubDetailDialog", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "close" }));
     fireEvent.click(screen.getByRole("button", { name: "view_payment" }));
-    fireEvent.click(screen.getByRole("button", { name: "edit" }));
+    fireEvent.click(screen.getByRole("button", { name: "edit_payment" }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(onMarkAsPaid).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "mark_as_unpaid" }));
+    expect(onMarkAsUnpaid).toHaveBeenCalledTimes(1);
     expect(onEdit).toHaveBeenCalledWith(sub);
     expect(onDeletePayment).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "calendar_delete_payment" }));

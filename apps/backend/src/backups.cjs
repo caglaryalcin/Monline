@@ -190,6 +190,7 @@ function validateDatabase(file) {
                 [
                   "statement_imported",
                   "calendar_history_recovery_passes",
+                  "calendar_projection_hidden",
                 ].includes(field.name)) ||
               (["payment_methods", "household"].includes(entry.name) &&
                 field.name === "is_main")

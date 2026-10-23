@@ -69,13 +69,14 @@ void noteI18n.init({
 });
 
 function openPage() {
-  const { Wrapper } = createQueryClientWrapper();
+  const { client, Wrapper } = createQueryClientWrapper();
   render(
     <I18nextProvider i18n={noteI18n}>
       <StatementsPage />
     </I18nextProvider>,
     { wrapper: Wrapper },
   );
+  return client;
 }
 beforeEach(() => {
   vi.clearAllMocks();
@@ -83,6 +84,48 @@ beforeEach(() => {
 });
 
 describe("statement review and archive", () => {
+  it("requires confirmation before deleting the entire archive and refreshes every archive page", async () => {
+    mocks.items = [
+      { id: "statement-1", bank: "enpara", period: "2026-01", file_name: "statement.pdf" },
+    ];
+    mocks.post.mockResolvedValue({ deleted: 13 });
+    const client = openPage();
+    const invalidate = vi.spyOn(client, "invalidateQueries").mockResolvedValue(undefined);
+    await screen.findByText("statement.pdf");
+    await userEvent.click(screen.getByRole("button", { name: "statement_delete_all" }));
+    expect(mocks.post).not.toHaveBeenCalled();
+    await userEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "cancel" }),
+    );
+    expect(mocks.post).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "statement_delete_all" }));
+    await userEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "delete" }),
+    );
+    await waitFor(() =>
+      expect(mocks.post).toHaveBeenCalledExactlyOnceWith("/api/statements/delete-all", {
+        confirmed: true,
+      }),
+    );
+    expect(mocks.remove).not.toHaveBeenCalled();
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["bank-statements", "user-1"] });
+  });
+
+  it("retains the archive when bulk deletion fails", async () => {
+    mocks.items = [
+      { id: "statement-1", bank: "enpara", period: "2026-01", file_name: "statement.pdf" },
+    ];
+    mocks.post.mockRejectedValue(new Error("network"));
+    openPage();
+    await screen.findByText("statement.pdf");
+    await userEvent.click(screen.getByRole("button", { name: "statement_delete_all" }));
+    await userEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "delete" }),
+    );
+    await screen.findByText("statement_delete_failed");
+    expect(screen.getByText("statement.pdf")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "statement_delete_all" })).toBeEnabled();
+  });
   it("opens category and payment method settings in separate tabs from the information note", () => {
     openPage();
     const categories = screen.getByRole("link", { name: "categories" });

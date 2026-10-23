@@ -57,8 +57,22 @@ async function snapshot() {
   return api.get<AccountBackup>("/api/account/export", { cache: "no-store", timeoutMs: 120_000 });
 }
 
-export async function exportBackup(onProgress: (done: number, total: number) => void) {
-  const backup = await snapshot();
+export type TransferScope = "calendar" | "subscriptions";
+export interface ScopedBackup {
+  format: "monline-scoped-backup";
+  version: 1;
+  scope: TransferScope;
+  backup: AccountBackup;
+}
+
+export async function exportBackup(
+  onProgress: (done: number, total: number) => void,
+  scope?: TransferScope,
+) {
+  const scoped = scope
+    ? await api.get<ScopedBackup>(`/api/transfer/${scope}/export`, { timeoutMs: 120_000 })
+    : undefined;
+  const backup = scoped?.backup ?? (await snapshot());
   onProgress(0, backup.files.length);
   const token = backup.files.length ? await client.files.getToken() : "";
   let totalBytes = 0;
@@ -86,9 +100,9 @@ export async function exportBackup(onProgress: (done: number, total: number) => 
     file.base64 = btoa(chunks.join(""));
     onProgress(index + 1, backup.files.length);
   }
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(scoped ?? backup, null, 2)], { type: "application/json" });
   if (blob.size > MAX_BYTES) throw new Error("transfer_too_large");
-  downloadBlob(blob, `monline-backup-${new Date().toISOString().slice(0, 10)}.json`);
+  downloadBlob(blob, `monline-${scope ?? "backup"}-${new Date().toISOString().slice(0, 10)}.json`);
 }
 
 export async function exportInstanceBackup(password: string) {
@@ -135,3 +149,26 @@ export async function importData(backup: AccountBackup): Promise<ImportResult> {
     { timeoutMs: 120_000 },
   );
 }
+
+export async function readScopedImport(file: File, scope: TransferScope): Promise<ScopedBackup> {
+  if (file.size > MAX_BYTES) throw new Error("transfer_too_large");
+  let parsed;
+  try {
+    parsed = JSON.parse(await file.text());
+  } catch {
+    throw new Error("transfer_invalid_backup");
+  }
+  if (
+    parsed?.format !== "monline-scoped-backup" ||
+    parsed.version !== 1 ||
+    parsed.scope !== scope ||
+    !parsed.backup
+  )
+    throw new Error("transfer_invalid_backup");
+  const backup = await readImportFile(
+    new File([JSON.stringify(parsed.backup)], "backup.json", { type: "application/json" }),
+  );
+  return { ...parsed, backup };
+}
+export const importScopedData = (data: ScopedBackup) =>
+  api.post<ImportResult>(`/api/transfer/${data.scope}/import`, data, { timeoutMs: 120_000 });

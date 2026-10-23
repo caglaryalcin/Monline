@@ -2002,7 +2002,7 @@ it("keeps the monthly calendar data and iCal feed available", async () => {
   expect(await feed.text()).toContain("BEGIN:VCALENDAR");
 });
 it.each(["payments"])(
-  "confirms calendar clearing, protects other accounts and keeps income (%s)",
+  "clears all calendar records and projections while keeping subscriptions and other accounts (%s)",
   async (scope) => {
     // Reset only this test account's calendar using the individual owned endpoints.
     for (const record of (
@@ -2171,17 +2171,18 @@ it.each(["payments"])(
     expect(cleared.status).toBe(200);
     expect(cleared.data).toEqual({
       subscriptions_deleted: 0,
-      payments_deleted: 3,
+      payments_deleted: 4,
     });
     const remainingSubs = (
       await request("/api/data/subscriptions", { token: other.token })
     ).data.items;
-    expect(remainingSubs).toEqual(subscriptionsBefore);
+    expect(remainingSubs.map((sub) => ({ ...sub, calendar_projection_hidden: false }))).toEqual(subscriptionsBefore);
+    expect(remainingSubs.every((sub) => sub.calendar_projection_hidden)).toBe(true);
     expect(remainingSubs.some((item) => item.id === credit.id)).toBe(true);
     expect(
       (await request("/api/data/payment_records", { token: other.token })).data
         .items,
-    ).toEqual([legacyPayment.data]);
+    ).toEqual([]);
     expect(
       (
         await request("/api/data/subscriptions", { token: owner.token })
@@ -2529,4 +2530,183 @@ it("recovers pending history through the API and confirms the same record later"
   } finally {
     await request(`/api/data/subscriptions/${id}`, { token: owner.token, method: "DELETE" });
   }
+});
+
+it("reverses a paid occurrence atomically, preserves its details and permits paying again", async () => {
+  const created = await request("/api/data/subscriptions", {
+    token: owner.token, method: "POST", body: {
+      name: "Reversible confirmation", price: 49.9, cycle: cycle.id,
+      currency: currency.id, category: category.id, frequency: 1,
+      start_date: "2026-01-01", next_payment: "2099-01-10", auto_mark_paid: true,
+    },
+  });
+  expect(created.status).toBe(201);
+  const subId = created.data.id;
+  const records = [];
+  try {
+    for (const [index, dueDate] of ["2026-03-10", "2026-03-10T12:00:00Z", "2026-04-10"].entries()) {
+      const form = new FormData();
+      for (const [key, value] of Object.entries({
+        subscription_id: subId, due_date: dueDate, amount: 49.9 + index,
+        paid_at: "2026-03-10T15:00:00Z", auto_paid: true, notes: "Keep receipt and notes",
+      })) form.set(key, String(value));
+      if (index === 0) form.set("proof", new Blob(["%PDF-1.4\nreceipt"], { type: "application/pdf" }), "receipt.pdf");
+      const saved = await request("/api/data/payment_records", { token: owner.token, method: "POST", body: form });
+      expect(saved.status).toBe(201);
+      records.push(saved.data);
+    }
+    const endpoint = `/api/payments/${records[0].id}/mark-unpaid`;
+    expect((await request(endpoint, { method: "POST" })).status).toBe(401);
+    expect((await request(endpoint, { token: other.token, method: "POST" })).status).toBe(404);
+
+    // A failure on one legacy duplicate must leave the entire occurrence paid.
+    const { DatabaseSync } = require("node:sqlite");
+    const db = new DatabaseSync(path.join(directory, "monline.db"));
+    db.exec(`CREATE TRIGGER reject_unpaid_test BEFORE UPDATE ON payment_records WHEN OLD.id = '${records[1].id}' AND NEW.paid_at = '' BEGIN SELECT RAISE(ABORT, 'test undo failure'); END`);
+    try {
+      expect((await request(endpoint, { token: owner.token, method: "POST" })).status).toBe(500);
+      for (const record of records) expect(db.prepare("SELECT paid_at FROM payment_records WHERE id=?").get(record.id).paid_at).toBeTruthy();
+    } finally {
+      db.exec("DROP TRIGGER reject_unpaid_test");
+      db.close();
+    }
+
+    const undone = await request(endpoint, { token: owner.token, method: "POST" });
+    expect(undone.status).toBe(200);
+    expect(undone.data).toEqual({ updated: 2 });
+    for (const record of records.slice(0, 2)) {
+      const pending = await request(`/api/data/payment_records/${record.id}`, { token: owner.token });
+      expect(pending.data).toMatchObject({
+        id: record.id, paid_at: "", auto_paid: false, amount: record.amount,
+        due_date: record.due_date, notes: record.notes, proof: record.proof,
+      });
+    }
+    expect((await request(`/api/data/payment_records/${records[2].id}`, { token: owner.token })).data.paid_at).toBeTruthy();
+    expect((await request(endpoint, { token: owner.token, method: "POST" })).data).toEqual({ updated: 0 });
+    const subscriptionAfter = await request(`/api/data/subscriptions/${subId}`, { token: owner.token });
+    expect(subscriptionAfter.data.next_payment).toBe(created.data.next_payment);
+    expect(subscriptionAfter.data.auto_mark_paid).toBe(true);
+    const paidAgain = await request(`/api/data/payment_records/${records[0].id}`, {
+      token: owner.token, method: "PATCH", body: { paid_at: "2026-03-11T10:00:00Z" },
+    });
+    expect(paidAgain.status).toBe(200);
+    expect(paidAgain.data.paid_at).toBeTruthy();
+  } finally {
+    await request(`/api/data/subscriptions/${subId}`, { token: owner.token, method: "DELETE" });
+  }
+});
+
+it("reverses only the selected standalone payment", async () => {
+  const records = [];
+  try {
+    for (const name of ["First standalone", "Second standalone"]) {
+      const saved = await request("/api/payments/history", {
+        token: owner.token, method: "POST", body: {
+          name, currency: currency.id, due_date: "2026-01-01", paid_date: "2026-01-01",
+          amount: 20, utc_offset_minutes: 0, paid_utc_offset_minutes: 0,
+        },
+      });
+      expect(saved.status).toBe(201);
+      records.push(saved.data);
+    }
+    const result = await request(`/api/payments/${records[0].id}/mark-unpaid`, { token: owner.token, method: "POST" });
+    expect(result.status).toBe(200);
+    expect(result.data).toEqual({ updated: 1 });
+    expect((await request(`/api/data/payment_records/${records[1].id}`, { token: owner.token })).data.paid_at).toBeTruthy();
+  } finally {
+    for (const record of records) await request(`/api/data/payment_records/${record.id}`, { token: owner.token, method: "DELETE" });
+  }
+});
+it("keeps scoped transfers separate, round-trips receipts, and deletes only the owner's subscriptions", async () => {
+  const create = await request('/api/data/subscriptions', { token: owner.token, method: 'POST', body: { name: 'Scoped proof sample', price: 33, frequency: 1, cycle: cycle.id, currency: currency.id, category: category.id, next_payment: '2099-01-01', start_date: '2026-01-01' } });
+  expect(create.status).toBe(201);
+  const form = new FormData();
+  const day = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  for (const [key, value] of Object.entries({ subscription_id: create.data.id, due_date: day, paid_date: day, amount: 33, utc_offset_minutes: 0, paid_utc_offset_minutes: 0, notes: 'Receipt survives scoped export' })) form.set(key, String(value));
+  form.set('proof', new Blob(['%PDF-1.4 original receipt'], { type: 'application/pdf' }), 'proof.pdf');
+  const paid = await request('/api/payments/history', { token: owner.token, method: 'POST', body: form });
+  expect(paid.status).toBe(201);
+  expect(paid.data.proof).toBeTruthy();
+  const changeProof = new FormData();
+  changeProof.set('proof', new Blob(['%PDF-1.4 new receipt'], { type: 'application/pdf' }), 'new-proof.pdf');
+  const edited = await request('/api/data/payment_records/' + paid.data.id, { token: owner.token, method: 'PATCH', body: changeProof });
+  expect(edited.data.paid_at).toBe(paid.data.paid_at);
+  const hydrate = async (scope) => {
+    const response = await request('/api/transfer/' + scope + '/export', { token: owner.token });
+    expect(response.status).toBe(200);
+    const scoped = response.data;
+    for (const file of scoped.backup.files) {
+      const content = await fetch(base + '/api/files/' + file.collection + '/' + file.recordId + '/' + encodeURIComponent(file.name), { headers: { Authorization: 'Bearer ' + owner.token } });
+      expect(content.status).toBe(200);
+      file.base64 = Buffer.from(await content.arrayBuffer()).toString('base64');
+    }
+    return scoped;
+  };
+  const calendar = await hydrate('calendar');
+  const plans = await hydrate('subscriptions');
+  expect(calendar.backup.data.subscriptions).toEqual([]);
+  expect(plans.backup.data.payment_records).toEqual([]);
+  expect(calendar.backup.profile).toEqual({ id: owner.record.id });
+  expect((await request('/api/transfer/calendar/export')).status).toBe(401);
+  const subCountBefore = (await request('/api/data/subscriptions', { token: other.token })).data.totalItems;
+  const restoredCalendar = await request('/api/transfer/calendar/import', { token: other.token, method: 'POST', body: calendar });
+  expect(restoredCalendar.status).toBe(200);
+  expect((await request('/api/data/subscriptions', { token: other.token })).data.totalItems).toBe(subCountBefore);
+  const targetPayments = (await request('/api/data/payment_records?perPage=500', { token: other.token })).data.items;
+  const receipt = targetPayments.find((row) => row.notes === 'Receipt survives scoped export');
+  expect(receipt).toMatchObject({ name: 'Scoped proof sample', subscription_id: '', amount: 33, paid_at: paid.data.paid_at });
+  const downloaded = await fetch(base + '/api/files/payment_records/' + receipt.id + '/' + encodeURIComponent(receipt.proof), { headers: { Authorization: 'Bearer ' + other.token } });
+  expect(await downloaded.text()).toBe('%PDF-1.4 new receipt');
+  expect((await request('/api/transfer/calendar/import', { token: other.token, method: 'POST', body: plans })).status).toBe(400);
+  const contaminated = structuredClone(calendar);
+  contaminated.backup.data.subscriptions = plans.backup.data.subscriptions;
+  expect((await request('/api/transfer/calendar/import', { token: other.token, method: 'POST', body: contaminated })).status).toBe(400);
+  const importPlans = await request('/api/transfer/subscriptions/import', { token: other.token, method: 'POST', body: plans });
+  expect(importPlans.status).toBe(200);
+  expect((await request('/api/data/payment_records?perPage=500', { token: other.token })).data.totalItems).toBe(targetPayments.length);
+  expect((await request('/api/transfer/calendar/import', { token: other.token, method: 'POST', body: calendar })).data.imported).toBe(0);
+  const targetSub = (await request('/api/data/subscriptions?perPage=500', { token: other.token })).data.items.find((row) => row.name === 'Scoped proof sample');
+  const linkedPayment = await request('/api/data/payment_records', { token: other.token, method: 'POST', body: { subscription_id: targetSub.id, due_date: day, paid_at: paid.data.paid_at, amount: 7 } });
+  expect(linkedPayment.status).toBe(201);
+  const ownerSubs = (await request('/api/data/subscriptions', { token: owner.token })).data.totalItems;
+  expect((await request('/api/subscriptions/delete-all', { token: other.token, method: 'POST', body: {} })).status).toBe(400);
+  const deleted = await request('/api/subscriptions/delete-all', { token: other.token, method: 'POST', body: { confirmed: true, user: owner.record.id } });
+  expect(deleted.status).toBe(200);
+  expect((await request('/api/data/subscriptions', { token: other.token })).data.totalItems).toBe(0);
+  expect((await request('/api/data/subscriptions', { token: owner.token })).data.totalItems).toBe(ownerSubs);
+  expect((await request('/api/data/payment_records?perPage=500', { token: other.token })).data.totalItems).toBe(targetPayments.length + 1);
+  expect((await request('/api/data/payment_records/' + linkedPayment.data.id, { token: other.token })).data).toMatchObject({ subscription_id: '', name: 'Scoped proof sample', amount: 7 });
+  expect((await request('/api/data/payment_records?perPage=500', { token: other.token })).data.items.every((row) => row.name)).toBe(true);
+});
+it("deletes the complete statement archive atomically without touching other accounts, subscriptions or payments", async () => {
+  const ownedIds = [];
+  for (let index = 0; index < 13; index++) {
+    const saved = await request('/api/statements', { token: other.token, method: 'POST', body: {
+      bank: 'enpara', file_name: 'bulk-' + index + '.pdf', file_hash: require('node:crypto').createHash('sha256').update('bulk-delete-' + index).digest('hex'), period: '2026-10', page_count: 1,
+      transactions: [{ id: 'row-' + index, date: '2026-10-01', merchant: 'NETFLIX', amount: 15, currency: 'EUR', kind: 'charge', page: 1, installment: '', subscription_service: 'Netflix', subscription_match: 'catalog' }],
+    } });
+    expect(saved.status).toBe(201);
+    ownedIds.push(saved.data.id);
+  }
+  const list = (name, token) => request('/api/data/' + name + '?perPage=500', { token }).then((res) => res.data.items);
+  const beforeArchive = await list('bank_statements', other.token);
+  const ownerArchive = await list('bank_statements', owner.token);
+  const beforePayments = await list('payment_records', other.token);
+  const beforeSubs = await list('subscriptions', other.token);
+  expect((await request('/api/statements/delete-all', { method: 'POST', body: { confirmed: true } })).status).toBe(401);
+  expect((await request('/api/statements/delete-all', { token: other.token, method: 'POST', body: {} })).status).toBe(400);
+  const { DatabaseSync } = require('node:sqlite');
+  const db = new DatabaseSync(path.join(directory, 'monline.db'));
+  try {
+    db.exec(`CREATE TRIGGER reject_archive_clear BEFORE DELETE ON bank_statements WHEN OLD.id = '${ownedIds[6]}' BEGIN SELECT RAISE(ABORT, 'test archive failure'); END`);
+    expect((await request('/api/statements/delete-all', { token: other.token, method: 'POST', body: { confirmed: true } })).status).toBe(500);
+    expect(await list('bank_statements', other.token)).toEqual(beforeArchive);
+  } finally { db.exec('DROP TRIGGER reject_archive_clear'); db.close(); }
+  const deleted = await request('/api/statements/delete-all', { token: other.token, method: 'POST', body: { confirmed: true, user: owner.record.id } });
+  expect(deleted.status).toBe(200);
+  expect(deleted.data).toEqual({ deleted: beforeArchive.length });
+  expect(await list('bank_statements', other.token)).toEqual([]);
+  expect(await list('bank_statements', owner.token)).toEqual(ownerArchive);
+  expect(await list('payment_records', other.token)).toEqual(beforePayments);
+  expect(await list('subscriptions', other.token)).toEqual(beforeSubs);
 });

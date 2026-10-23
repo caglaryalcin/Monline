@@ -45,6 +45,7 @@ const FIELDS = {
     "frequency",
     "billing_anchor_day",
     "calendar_history_recovery_passes",
+    "calendar_projection_hidden",
     "category",
     "payment_method",
     "payer",
@@ -319,7 +320,13 @@ function validateBackup(backup) {
   }
   return files;
 }
-function importAccount(app, userId, backup, restoreSettings) {
+function importAccount(
+  app,
+  userId,
+  backup,
+  restoreSettings,
+  { recoverHistory = true } = {},
+) {
   const files = validateBackup(backup);
   const result = {
     imported: 0,
@@ -605,11 +612,12 @@ function importAccount(app, userId, backup, restoreSettings) {
           tx.save(currency);
         }
     }
-    require("./calendar-history-recovery.js").recoverCalendarHistory(
-      tx,
-      require("./date-helpers.js").formatLocalDate(new Date()),
-      userId,
-    );
+    if (recoverHistory)
+      require("./calendar-history-recovery.js").recoverCalendarHistory(
+        tx,
+        require("./date-helpers.js").formatLocalDate(new Date()),
+        userId,
+      );
   });
   return result;
 }

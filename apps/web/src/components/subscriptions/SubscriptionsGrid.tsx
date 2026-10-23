@@ -79,12 +79,15 @@ interface SubscriptionsGridProps {
   onClone: (id: string) => void;
   onRenew: (id: string) => void;
   renewPending?: boolean;
+  renewPendingId?: string;
   onHistory: (subscription: Subscription) => void;
   onDelete: (id: string) => void;
   onToggleActive?: (subscription: Subscription) => void;
   statusPendingId?: string | null;
   onToggleAutomation?: (subscription: Subscription, setting: SubscriptionAutomationSetting) => void;
   automationPending?: boolean;
+  automationPendingId?: string;
+  automationPendingSetting?: SubscriptionAutomationSetting;
   showAutoMarkPaid?: boolean;
 }
 
@@ -100,12 +103,15 @@ export function SubscriptionsGrid({
   onClone,
   onRenew,
   renewPending,
+  renewPendingId,
   onHistory,
   onDelete,
   onToggleActive,
   statusPendingId,
   onToggleAutomation,
   automationPending,
+  automationPendingId,
+  automationPendingSetting,
   showAutoMarkPaid,
 }: SubscriptionsGridProps) {
   const [priceDisplays, setPriceDisplays] = useState<Record<string, SubscriptionPriceDisplay>>({});
@@ -134,7 +140,8 @@ export function SubscriptionsGrid({
         onEdit={() => onEdit(subscription)}
         onClone={() => onClone(subscription.id)}
         onRenew={() => onRenew(subscription.id)}
-        renewPending={renewPending}
+        renewPending={renewPending && renewPendingId === subscription.id}
+        renewDisabled={renewPending}
         onHistory={() => onHistory(subscription)}
         onDelete={() => onDelete(subscription.id)}
         onToggleActive={onToggleActive ? () => onToggleActive(subscription) : undefined}
@@ -144,6 +151,11 @@ export function SubscriptionsGrid({
           onToggleAutomation ? (setting) => onToggleAutomation(subscription, setting) : undefined
         }
         automationDisabled={automationPending || !!statusPendingId}
+        automationPendingSetting={
+          automationPending && automationPendingId === subscription.id
+            ? automationPendingSetting
+            : undefined
+        }
         showAutoMarkPaid={showAutoMarkPaid}
       />
     ));

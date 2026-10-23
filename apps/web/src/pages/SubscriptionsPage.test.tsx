@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   listPaymentMethods: vi.fn(),
   listHousehold: vi.fn(),
   deleteSubscription: vi.fn(),
+  deleteAllSubscriptions: vi.fn(),
   cloneSubscription: vi.fn(),
   renewSubscription: vi.fn(),
   updateSubscription: vi.fn(),
@@ -53,6 +54,7 @@ vi.mock("@/services/subscriptions", () => ({
   subscriptionsService: {
     list: mocks.listSubscriptions,
     delete: mocks.deleteSubscription,
+    deleteAll: mocks.deleteAllSubscriptions,
     clone: mocks.cloneSubscription,
     renew: mocks.renewSubscription,
     update: mocks.updateSubscription,
@@ -115,13 +117,18 @@ vi.mock("@/components/subscriptions/SubscriptionsToolbar", () => ({
     onToggleFilters,
     onCycleSort,
     onViewChange,
+    onDeleteAll,
   }: {
     onSearchChange: (value: string) => void;
     onToggleFilters: () => void;
     onCycleSort: () => void;
     onViewChange: (view: "grid" | "list") => void;
+    onDeleteAll?: () => void;
   }) => (
     <div>
+      <button type="button" onClick={onDeleteAll}>
+        delete-all
+      </button>
       <button type="button" onClick={() => onSearchChange("netflix")}>
         change-search
       </button>
@@ -263,6 +270,21 @@ vi.mock("@/components/ui/confirm-dialog", () => ({
 import { SubscriptionsPage } from "./SubscriptionsPage";
 
 describe("SubscriptionsPage", () => {
+  it("requires confirmation before deleting all subscriptions and refreshes caches", async () => {
+    const { client, Wrapper } = createQueryClientWrapper();
+    const invalidate = vi.spyOn(client, "invalidateQueries").mockResolvedValue(undefined);
+    mocks.deleteAllSubscriptions.mockResolvedValue({ deleted: 1 });
+    render(<SubscriptionsPage />, { wrapper: Wrapper });
+    await screen.findByText("grid:1");
+    fireEvent.click(screen.getByRole("button", { name: "delete-all" }));
+    expect(mocks.deleteAllSubscriptions).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "close-delete" }));
+    expect(mocks.deleteAllSubscriptions).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "delete-all" }));
+    fireEvent.click(screen.getByRole("button", { name: "confirm-delete" }));
+    await waitFor(() => expect(mocks.deleteAllSubscriptions).toHaveBeenCalledOnce());
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith());
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.useAuth.mockReturnValue({

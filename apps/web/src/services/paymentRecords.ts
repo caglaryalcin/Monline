@@ -1,6 +1,24 @@
 import client from "@/lib/client";
 import type { PaymentRecord } from "@/types";
 
+function paymentBody(data: FormData | Partial<PaymentRecord>) {
+  if (data instanceof FormData || !Object.values(data).some((value) => value instanceof Blob))
+    return data;
+  const form = new FormData();
+  for (const [key, value] of Object.entries(data)) {
+    if (value === undefined) continue;
+    form.set(
+      key,
+      value instanceof Blob
+        ? value
+        : typeof value === "object"
+          ? JSON.stringify(value)
+          : String(value),
+    );
+  }
+  return form;
+}
+
 export interface HistoricalPaymentInput {
   subscription_id?: string;
   name?: string;
@@ -17,6 +35,11 @@ export interface HistoricalPaymentInput {
 }
 
 export const paymentRecordsService = {
+  markUnpaid: (id: string) =>
+    client.send<{ updated: number }>(`/api/payments/${encodeURIComponent(id)}/mark-unpaid`, {
+      method: "POST",
+    }),
+
   createHistorical: (data: HistoricalPaymentInput | FormData) =>
     client.send<PaymentRecord>("/api/payments/history", { method: "POST", body: data }),
 
@@ -35,10 +58,10 @@ export const paymentRecordsService = {
     }),
 
   create: (data: FormData | Partial<PaymentRecord>) =>
-    client.collection("payment_records").create<PaymentRecord>(data),
+    client.collection("payment_records").create<PaymentRecord>(paymentBody(data)),
 
   update: (id: string, data: FormData | Partial<PaymentRecord>) =>
-    client.collection("payment_records").update<PaymentRecord>(id, data),
+    client.collection("payment_records").update<PaymentRecord>(id, paymentBody(data)),
 
   remove: (id: string) => client.collection("payment_records").delete(id),
 

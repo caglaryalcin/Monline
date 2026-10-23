@@ -46,7 +46,10 @@ async function main() {
   );
   app.use(auth.middleware);
   app.use(
-    "/api/account/import",
+    [
+      "/api/account/import",
+      /^\/api\/transfer\/(calendar|subscriptions)\/import$/,
+    ],
     rateLimit({
       windowMs: 15 * 60 * 1000,
       limit: 20,
@@ -219,7 +222,7 @@ function seed(repository) {
         repository.findCollectionByNameOrId("admin_settings"),
       );
       settings.set("open_registrations", false);
-      settings.set("latest_version", "1.0.21");
+      settings.set("latest_version", "1.1.0");
       settings.set("smtp_port", 587);
       repository.save(settings);
     }

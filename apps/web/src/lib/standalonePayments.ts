@@ -13,7 +13,7 @@ export function withStandalonePayments(
   return [
     ...subscriptions,
     ...records
-      .filter((record) => !record.subscription_id && record.name && record.paid_at)
+      .filter((record) => !record.subscription_id && record.name)
       .map((record): Subscription => ({
         id: record.id,
         standalone_payment_id: record.id,

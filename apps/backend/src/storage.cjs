@@ -206,6 +206,15 @@ class Repository {
       this.connection.exec(
         "ALTER TABLE subscriptions ADD COLUMN calendar_history_recovery_passes REAL NOT NULL DEFAULT 0",
       );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("subscriptions")')
+        .all()
+        .some((column) => column.name === "calendar_projection_hidden")
+    )
+      this.connection.exec(
+        "ALTER TABLE subscriptions ADD COLUMN calendar_projection_hidden INTEGER NOT NULL DEFAULT 0",
+      );
     const notificationColumns = new Set(
       this.connection
         .prepare('PRAGMA table_info("notifications_config")')

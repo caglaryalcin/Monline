@@ -96,6 +96,7 @@ function StatementWorkspace({ userId }: { userId: string }) {
   const [importOpen, setImportOpen] = useState(false);
   const [importResult, setImportResult] = useState<StatementImportResult | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [archivePage, setArchivePage] = useState(1);
   const archiveKey = ["bank-statements", userId] as const;
@@ -364,6 +365,27 @@ function StatementWorkspace({ userId }: { userId: string }) {
     try {
       await client.collection("bank_statements").delete(id);
       if (viewing === id) clear();
+      setArchivePage(1);
+      await queryClient.invalidateQueries({ queryKey: archiveKey });
+    } catch {
+      setError(t("statement_delete_failed"));
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function deleteAllStatements() {
+    if (busy) return;
+    setDeleteAllOpen(false);
+    setBusy("delete-all");
+    setError("");
+    try {
+      await api.post<{ deleted: number }>("/api/statements/delete-all", { confirmed: true });
+      if (viewing) {
+        clear();
+        setBusy("delete-all");
+      }
+      setDeleteId(null);
       setArchivePage(1);
       await queryClient.invalidateQueries({ queryKey: archiveKey });
     } catch {
@@ -965,7 +987,23 @@ function StatementWorkspace({ userId }: { userId: string }) {
 
       <Card className="rounded-3xl">
         <CardHeader>
-          <CardTitle className="text-lg">{t("statement_archive")}</CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <CardTitle className="text-lg">{t("statement_archive")}</CardTitle>
+            <Button
+              variant="outline"
+              className="gap-2 rounded-xl border-destructive/40 text-destructive"
+              disabled={
+                !!busy ||
+                archive.isLoading ||
+                archive.isError ||
+                !(archive.data?.totalItems ?? archive.data?.items.length)
+              }
+              onClick={() => setDeleteAllOpen(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+              {t("statement_delete_all")}
+            </Button>
+          </div>
           <p className="text-sm text-muted-foreground">{t("statement_archive_note")}</p>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -1049,6 +1087,14 @@ function StatementWorkspace({ userId }: { userId: string }) {
         title={t("statement_delete_title")}
         description={t("statement_delete_note")}
         onConfirm={() => void deleteStatement()}
+      />
+      <ConfirmDialog
+        confirmOnEnter
+        open={deleteAllOpen}
+        onOpenChange={setDeleteAllOpen}
+        title={t("statement_delete_all")}
+        description={t("statement_delete_all_note")}
+        onConfirm={() => void deleteAllStatements()}
       />
     </div>
   );

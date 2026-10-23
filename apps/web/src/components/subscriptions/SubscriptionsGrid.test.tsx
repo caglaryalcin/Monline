@@ -101,6 +101,48 @@ describe("SubscriptionsGrid", () => {
     expect(screen.getByText("Spotify")).toBeInTheDocument();
   });
 
+  it.each(["grid", "list"] as const)(
+    "shows saving feedback only for the affected action in %s layout",
+    (layout) => {
+      const props = {
+        isLoading: false,
+        layout,
+        subscriptions: [getSub(), getSub({ id: "sub-2", name: "Spotify" })],
+        onToggleAutomation: vi.fn(),
+        onToggleActive: vi.fn(),
+        ...baseHandlers,
+      };
+      const { rerender } = render(
+        <SubscriptionsGrid
+          {...props}
+          automationPending
+          automationPendingId="sub-1"
+          automationPendingSetting="auto_renew"
+        />,
+      );
+      const renewalSettings = screen.getAllByRole("button", { name: "auto_renew" });
+      expect(renewalSettings[0]).toHaveAttribute("aria-busy", "true");
+      expect(renewalSettings[1]).toHaveAttribute("aria-busy", "false");
+      expect(renewalSettings[1]).toBeDisabled();
+      expect(renewalSettings[1]).toHaveClass("disabled:opacity-100");
+      for (const button of screen.getAllByRole("button", { name: "auto_mark_paid" })) {
+        expect(button).toHaveAttribute("aria-busy", "false");
+        expect(button).toHaveClass("disabled:opacity-100");
+      }
+      for (const toggle of screen.getAllByRole("switch")) {
+        expect(toggle).toHaveClass("disabled:opacity-100");
+      }
+
+      rerender(<SubscriptionsGrid {...props} renewPending renewPendingId="sub-2" />);
+      const renewals = screen.getAllByRole("button", { name: "renew" });
+      expect(renewals[0]).toHaveAttribute("aria-busy", "false");
+      expect(renewals[0]).toBeDisabled();
+      expect(renewals[0]).toHaveClass("disabled:opacity-100");
+      expect(renewals[1]).toHaveAttribute("aria-busy", "true");
+      expect(renewals[1]).toBeDisabled();
+    },
+  );
+
   it("keeps price display choices independent and preserves them across layouts and filtering", async () => {
     const user = userEvent.setup();
     const subscriptions = [getSub(), getSub({ id: "sub-2", name: "Spotify" })];

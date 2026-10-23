@@ -100,6 +100,50 @@ function getSubscription(overrides: Partial<Subscription> = {}): Subscription {
 
 describe("SubscriptionCard", () => {
   it.each(["grid", "list"] as const)(
+    "disables every action on inactive cards while allowing reactivation in %s layout",
+    (layout) => {
+      const actions = {
+        onEdit: vi.fn(),
+        onClone: vi.fn(),
+        onRenew: vi.fn(),
+        onHistory: vi.fn(),
+        onDelete: vi.fn(),
+        onToggleAutomation: vi.fn(),
+        onPriceDisplayChange: vi.fn(),
+      };
+      const onToggleActive = vi.fn();
+      const subscription = getSubscription({ inactive: true, auto_mark_paid: true });
+      const { rerender } = render(
+        <SubscriptionCard
+          sub={subscription}
+          layout={layout}
+          {...actions}
+          onToggleActive={onToggleActive}
+        />,
+      );
+      for (const button of screen.getAllByRole("button")) {
+        expect(button).toBeDisabled();
+        fireEvent.click(button);
+      }
+      for (const action of Object.values(actions)) expect(action).not.toHaveBeenCalled();
+      expect(mocks.windowOpen).not.toHaveBeenCalled();
+      const toggle = screen.getByRole("switch");
+      expect(toggle).toBeEnabled();
+      fireEvent.click(toggle);
+      expect(onToggleActive).toHaveBeenCalledOnce();
+      rerender(
+        <SubscriptionCard
+          sub={{ ...subscription, inactive: false }}
+          layout={layout}
+          {...actions}
+          onToggleActive={onToggleActive}
+        />,
+      );
+      for (const button of screen.getAllByRole("button")) expect(button).toBeEnabled();
+    },
+  );
+
+  it.each(["grid", "list"] as const)(
     "shows automation states and toggles the selected setting in %s layout",
     (layout) => {
       const onToggleAutomation = vi.fn();

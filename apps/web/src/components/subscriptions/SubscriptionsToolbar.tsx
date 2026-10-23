@@ -1,4 +1,5 @@
-import { ArrowUpDown, Filter, LayoutGrid, List, Search } from "lucide-react";
+import { ArrowUpDown, Filter, LayoutGrid, List, Search, Trash2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,9 @@ interface SubscriptionsToolbarProps {
   onToggleFilters: () => void;
   onCycleSort: () => void;
   onViewChange: (view: "grid" | "list") => void;
+  onDeleteAll?: () => void;
+  deleteAllDisabled?: boolean;
+  transferActions?: ReactNode;
 }
 
 export function SubscriptionsToolbar({
@@ -23,22 +27,25 @@ export function SubscriptionsToolbar({
   onToggleFilters,
   onCycleSort,
   onViewChange,
+  onDeleteAll,
+  deleteAllDisabled,
+  transferActions,
 }: SubscriptionsToolbarProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-wrap gap-2 rounded-xl border bg-card/40 shadow-sm backdrop-blur-md">
-      <div className="relative min-w-[140px] flex-1">
-        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder={`${t("search")}...`}
-          value={searchTerm}
-          onChange={(event) => onSearchChange(event.target.value)}
-          className="h-[42px] rounded-xl border-transparent bg-background/50 pl-10 text-base placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/50"
-        />
-      </div>
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex min-w-[min(100%,240px)] flex-1 flex-wrap items-center gap-2 rounded-xl border bg-card/40 shadow-sm backdrop-blur-md">
+        <div className="relative min-w-[140px] flex-1">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder={`${t("search")}...`}
+            value={searchTerm}
+            onChange={(event) => onSearchChange(event.target.value)}
+            className="h-[42px] rounded-xl border-transparent bg-background/50 pl-10 text-base placeholder:text-muted-foreground/60 focus-visible:ring-1 focus-visible:ring-primary/50"
+          />
+        </div>
 
-      <div className="flex shrink-0 gap-2">
         <div
           className="flex rounded-lg bg-background/50 p-[3px]"
           role="group"
@@ -67,7 +74,6 @@ export function SubscriptionsToolbar({
             <List className="h-4 w-4" />
           </Button>
         </div>
-
         <Button
           variant="outline"
           className={cn(
@@ -90,6 +96,23 @@ export function SubscriptionsToolbar({
           <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
           <span className="hidden sm:inline">{t("sort")}</span>
         </Button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {onDeleteAll && (
+          <Button
+            variant="outline"
+            className="h-[42px] gap-2 border-destructive/40 text-destructive"
+            disabled={deleteAllDisabled}
+            onClick={onDeleteAll}
+            title={t("delete_all_subscriptions")}
+            aria-label={t("delete_all_subscriptions")}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="hidden xl:inline">{t("delete_all_subscriptions")}</span>
+          </Button>
+        )}
+        {transferActions}
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import {
   Pencil,
   Tag,
   Trash2,
+  Undo2,
   Users,
 } from "lucide-react";
 
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
+import { editablePaymentNotes, isRecoveredPaymentNote } from "@/lib/paymentNotes";
 import { isCredit } from "@/lib/recordTypes";
 import { daysUntil, formatDate, formatPrice, sanitizeHref } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -27,7 +29,7 @@ import { paymentRecordsService } from "@/services/paymentRecords";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
 import { InfoRow } from "./InfoRow";
-import { getLogoUrl, toDateStr, toMain } from "./types";
+import { getLogoUrl, toMain } from "./types";
 
 interface SubDetailDialogProps {
   sub: Subscription;
@@ -39,6 +41,8 @@ interface SubDetailDialogProps {
   onClose: () => void;
   onEdit: (s: Subscription) => void;
   onMarkAsPaid: () => void;
+  onMarkAsUnpaid?: () => void;
+  markingUnpaid?: boolean;
   onDeletePayment?: () => void;
   deletingPayment?: boolean;
   t: (k: string) => string;
@@ -53,15 +57,21 @@ export function SubDetailDialog({
   onClose,
   onEdit,
   onMarkAsPaid,
+  onMarkAsUnpaid,
+  markingUnpaid,
   onDeletePayment,
   deletingPayment,
   t,
 }: SubDetailDialogProps) {
-  const cur = sub.expand?.currency ?? currencies.find((c) => c.id === sub.currency);
+  const cur =
+    paymentRecord?.expand?.currency ??
+    currencies.find((c) => c.id === paymentRecord?.currency) ??
+    sub.expand?.currency ??
+    currencies.find((c) => c.id === sub.currency);
   const cycle = sub.expand?.cycle;
-  const category = sub.expand?.category;
-  const paymentMethod = sub.expand?.payment_method;
-  const payer = sub.expand?.payer;
+  const category = paymentRecord?.expand?.category ?? sub.expand?.category;
+  const paymentMethod = paymentRecord?.expand?.payment_method ?? sub.expand?.payment_method;
+  const payer = paymentRecord?.expand?.payer ?? sub.expand?.payer;
   const logo = getLogoUrl(sub);
   const credit = isCredit(sub);
 
@@ -74,6 +84,7 @@ export function SubDetailDialog({
   const dLeft = daysUntil(sub.next_payment);
   const isPaid = !!paymentRecord?.paid_at;
   const amount = paymentRecord?.amount ?? sub.price;
+  const notes = editablePaymentNotes(paymentRecord ? paymentRecord.notes : sub.notes);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const isAwaitingConfirmation = !isPaid && date <= today;
@@ -197,18 +208,10 @@ export function SubDetailDialog({
             <div className="rounded-2xl border bg-card p-4">
               <p className="text-sm font-semibold mb-3">{t("details")}</p>
               <div className="space-y-3">
-                {!credit && paymentRecord && !sub.standalone_payment_id && (
-                  <InfoRow
-                    icon={<CalendarDays className="h-4 w-4" />}
-                    label={t("historical_due_date")}
-                  >
-                    {formatDate(toDateStr(date))}
-                  </InfoRow>
-                )}
                 <InfoRow
                   icon={<CalendarDays className="h-4 w-4" />}
                   label={t(
-                    sub.standalone_payment_id
+                    paymentRecord || sub.standalone_payment_id
                       ? "historical_due_date"
                       : credit
                         ? "received_on"
@@ -216,16 +219,16 @@ export function SubDetailDialog({
                   )}
                 >
                   <span className="flex items-center gap-1.5 flex-wrap">
-                    <span>{formatDate(sub.next_payment)}</span>
-                    {dLeft === 0 && (
+                    <span>{formatDate(paymentRecord?.due_date ?? sub.next_payment)}</span>
+                    {!paymentRecord && dLeft === 0 && (
                       <Badge className="text-[10px] bg-amber-500 text-white">{t("today")}</Badge>
                     )}
-                    {dLeft > 0 && (
+                    {!paymentRecord && dLeft > 0 && (
                       <Badge variant="secondary" className="text-[10px]">
                         {dLeft} {t("days_short")}
                       </Badge>
                     )}
-                    {dLeft < 0 && !credit && !sub.standalone_payment_id && (
+                    {!paymentRecord && dLeft < 0 && !credit && !sub.standalone_payment_id && (
                       <Badge variant="destructive" className="text-[10px]">
                         {t("overdue")}
                       </Badge>
@@ -285,7 +288,7 @@ export function SubDetailDialog({
                     );
                   })()}
 
-                {!credit && (
+                {!credit && !paymentRecord && (
                   <InfoRow icon={<Banknote className="h-4 w-4" />} label={t("auto_renew")}>
                     {sub.auto_renew ? t("yes") : t("no")}
                   </InfoRow>
@@ -294,35 +297,52 @@ export function SubDetailDialog({
             </div>
           </div>
 
-          {sub.notes && (
+          {paymentRecord && isRecoveredPaymentNote(paymentRecord.notes) && (
+            <p className="rounded-xl border bg-muted/30 p-3 text-sm text-muted-foreground">
+              {t("payment_estimated_hint")}
+            </p>
+          )}
+          {notes && (
             <div className="rounded-2xl border bg-muted/30 p-4">
               <p className="text-sm font-semibold mb-2">{t("notes")}</p>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                {sub.notes}
+                {notes}
               </p>
             </div>
           )}
 
-          <div className="flex gap-2 justify-end flex-wrap border-t pt-4">
+          <div className="grid grid-cols-1 gap-2 border-t pt-4 sm:grid-cols-2 [&>button]:w-full">
+            {!credit && isPaid && onMarkAsUnpaid && (
+              <Button
+                variant="outline"
+                onClick={onMarkAsUnpaid}
+                disabled={markingUnpaid || deletingPayment}
+              >
+                <Undo2 className="mr-2 h-4 w-4" />
+                {markingUnpaid ? t("saving") : t("mark_as_unpaid")}
+              </Button>
+            )}
             {!credit && paymentRecord && onDeletePayment && (
-              <Button variant="destructive" disabled={deletingPayment} onClick={onDeletePayment}>
+              <Button
+                variant="destructive"
+                className={!isPaid ? "sm:col-span-2" : undefined}
+                disabled={deletingPayment || markingUnpaid}
+                onClick={onDeletePayment}
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
                 {t("calendar_delete_payment")}
               </Button>
             )}
-            <Button variant="outline" onClick={onClose}>
-              {t("close")}
-            </Button>
             {!credit && isPaid && (
               <Button variant="ghost" className="text-muted-foreground" onClick={onMarkAsPaid}>
                 <FileText className="h-4 w-4 mr-2" />
                 {t("view_payment")}
               </Button>
             )}
-            {!sub.standalone_payment_id && (
+            {!credit && (
               <Button variant="outline" onClick={() => onEdit(sub)}>
                 <Pencil className="h-4 w-4 mr-2" />
-                {t("edit")}
+                {t("edit_payment")}
               </Button>
             )}
             {!credit && !isPaid && (
@@ -331,6 +351,9 @@ export function SubDetailDialog({
                 {t("mark_as_paid")}
               </Button>
             )}
+            <Button variant="outline" className="sm:col-span-2" onClick={onClose}>
+              {t("close")}
+            </Button>
           </div>
         </div>
       </DialogContent>

@@ -2,7 +2,7 @@
   "name": "monline",
   "description": "Web application for the Monline self-hosted subscription tracker.",
   "private": true,
-  "version": "1.0.21",
+  "version": "1.1.0",
   "packageManager": "bun@1.4.3",
   "license": "GPL-3.0-only",
   "author": {
