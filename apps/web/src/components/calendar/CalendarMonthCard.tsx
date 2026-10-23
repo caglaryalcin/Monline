@@ -248,7 +248,7 @@ export function CalendarMonthCard({
 
                             {!credit && (isPaid || isAwaitingConfirmation) ? (
                               <span
-                                className="absolute -right-0.5 -top-0.5 shrink-0 sm:static"
+                                className="absolute right-0.5 top-0.5 shrink-0 rounded-full bg-background ring-1 ring-background sm:static sm:bg-transparent sm:ring-0"
                                 title={t(isPaid ? "paid" : "payment_confirmation_pending")}
                               >
                                 {isPaid ? (

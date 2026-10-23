@@ -119,30 +119,30 @@ export function DayPanel({
                   )}
                 >
                   {/* Logo */}
-                  {logo ? (
-                    <div className="h-11 w-11 shrink-0 rounded-xl overflow-hidden border bg-background p-1.5 relative">
-                      <SubscriptionLogo sub={sub} className="h-full w-full object-contain" />
-                      {isAwaitingConfirmation && (
-                        <span className="absolute -bottom-1 -right-1 rounded-full bg-red-500 p-0.5">
-                          <CircleDot className="h-3 w-3 text-white" />
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <div
-                      className={cn(
-                        "h-11 w-11 shrink-0 rounded-xl flex items-center justify-center text-base font-bold relative",
-                        colorClass,
-                      )}
-                    >
-                      {sub.name[0]?.toUpperCase()}
-                      {isAwaitingConfirmation && (
-                        <span className="absolute -bottom-1 -right-1 rounded-full bg-red-500 p-0.5">
-                          <CircleDot className="h-3 w-3 text-white" />
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  <div className="relative h-11 w-11 shrink-0">
+                    {logo ? (
+                      <div className="h-full w-full overflow-hidden rounded-xl border bg-background p-1.5">
+                        <SubscriptionLogo sub={sub} className="h-full w-full object-contain" />
+                      </div>
+                    ) : (
+                      <div
+                        className={cn(
+                          "flex h-full w-full items-center justify-center rounded-xl text-base font-bold",
+                          colorClass,
+                        )}
+                      >
+                        {sub.name[0]?.toUpperCase()}
+                      </div>
+                    )}
+                    {isAwaitingConfirmation && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute -bottom-1 -right-1 rounded-full bg-red-500 p-0.5 ring-2 ring-background"
+                      >
+                        <CircleDot className="h-3 w-3 text-white" />
+                      </span>
+                    )}
+                  </div>
 
                   {/* Main info */}
                   <div className="flex-1 min-w-0">
