@@ -1,4 +1,4 @@
-import { File as NodeFile } from "node:buffer";
+import { Blob as NodeBlob, File as NodeFile } from "node:buffer";
 
 import { act, renderHook, waitFor } from "@testing-library/react";
 
@@ -48,7 +48,9 @@ describe("useLogoSearch", () => {
   });
 
   it("uses the authenticated download when CORS blocks fetching a provider image", async () => {
-    // Node's Response returns Node Blobs; use a matching File implementation.
+    // Response.blob() can use the global Blob constructor on newer Node versions.
+    // Keep Blob and File in the same realm so file parts preserve their bytes.
+    vi.stubGlobal("Blob", NodeBlob);
     vi.stubGlobal("File", NodeFile);
     const svg = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h48v48H0z"/></svg>';
     vi.mocked(api.get).mockResolvedValue({ contentType: "image/svg+xml", base64: btoa(svg) });
@@ -70,6 +72,7 @@ describe("useLogoSearch", () => {
     );
     expect(result.current.logoResults[0].contentType).toBe("image/svg+xml");
     expect(result.current.logoResults[0].file.size).toBe(svg.length);
+    expect(await result.current.logoResults[0].file.text()).toBe(svg);
     unmount();
     expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:logo");
   });
