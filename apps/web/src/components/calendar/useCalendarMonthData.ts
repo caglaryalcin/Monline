@@ -46,12 +46,14 @@ export function useCalendarMonthData({
     [currencies],
   );
 
-  const entriesByDay = useMemo<Record<number, DayEntry[]>>(() => {
-    const entries: Record<number, DayEntry[]> = {};
+  const entriesByDate = useMemo<Record<string, DayEntry[]>>(() => {
+    const entries: Record<string, DayEntry[]> = {};
+    const rangeStart = new Date(year, month - 2, 1);
+    const rangeEnd = new Date(year, month + 1, 1);
     const recordsBySubscription = new Map<string, PaymentRecord[]>();
     for (const record of paymentRecords) {
       const date = parseLocalDate(record.due_date);
-      if (!date || date.getFullYear() !== year || date.getMonth() + 1 !== month) continue;
+      if (!date || date < rangeStart || date >= rangeEnd) continue;
       const group = recordsBySubscription.get(paymentOwnerId(record)) ?? [];
       group.push(record);
       recordsBySubscription.set(paymentOwnerId(record), group);
@@ -60,16 +62,25 @@ export function useCalendarMonthData({
     for (const subscription of withStandalonePayments(subscriptions, paymentRecords, currencies)) {
       const subscriptionRecords = recordsBySubscription.get(subscription.id) ?? [];
       const dates = new Set(
-        getOccurrencesInMonth(subscription, year, month, cycles).map(toDateStr),
+        [-1, 0, 1].flatMap((offset) => {
+          const date = new Date(year, month - 1 + offset, 1);
+          return getOccurrencesInMonth(
+            subscription,
+            date.getFullYear(),
+            date.getMonth() + 1,
+            cycles,
+            paymentRecords,
+          ).map(toDateStr);
+        }),
       );
       for (const record of subscriptionRecords) {
         dates.add(toDateOnly(record.due_date));
       }
       for (const key of [...dates].sort()) {
         const date = parseLocalDate(key)!;
-        const day = date.getDate();
+
         const record = getPaymentRecord(subscriptionRecords, subscription.id, key);
-        (entries[day] ??= []).push({
+        (entries[key] ??= []).push({
           sub: subscription,
           date,
           ...(record?.amount != null ? { amount: record.amount } : {}),
@@ -79,6 +90,16 @@ export function useCalendarMonthData({
 
     return entries;
   }, [subscriptions, cycles, year, month, paymentRecords, currencies]);
+
+  const entriesByDay = useMemo<Record<number, DayEntry[]>>(() => {
+    const entries: Record<number, DayEntry[]> = {};
+    for (const [key, values] of Object.entries(entriesByDate)) {
+      const date = parseLocalDate(key)!;
+      if (date.getFullYear() === year && date.getMonth() + 1 === month)
+        entries[date.getDate()] = values;
+    }
+    return entries;
+  }, [entriesByDate, year, month]);
 
   const stats = useMemo(() => {
     const today = new Date(localToday + "T00:00:00");
@@ -155,6 +176,7 @@ export function useCalendarMonthData({
     currencyById,
     daysInMonth,
     entriesByDay,
+    entriesByDate,
     mainCurrency,
     selectedDayTotal,
     selectedEntries,

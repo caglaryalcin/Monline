@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { CalendarMonthCard } from "@/components/calendar/CalendarMonthCard";
+import { CalendarMoveDialog } from "@/components/calendar/CalendarMoveDialog";
 import { CalendarOverview } from "@/components/calendar/CalendarOverview";
 import { CalendarPageHeader } from "@/components/calendar/CalendarPageHeader";
 import { DayPanel } from "@/components/calendar/DayPanel";
@@ -54,6 +55,7 @@ export function CalendarPage() {
   const setSelectedDay = (day: number | null) =>
     setSelectedDate(day === null ? null : new Date(year, month - 1, day));
   const [detailEntry, setDetailEntry] = useState<DayEntry | null>(null);
+  const [moveEntry, setMoveEntry] = useState<DayEntry | null>(null);
   const [historicalOpen, setHistoricalOpen] = useState(false);
   const [paymentMode, setPaymentMode] = useState<"confirm" | "edit">("confirm");
   const [markAsPaidEntry, setMarkAsPaidEntry] = useState<DayEntry | null>(null);
@@ -86,6 +88,36 @@ export function CalendarPage() {
   });
 
   const paymentTracking = !!user?.payment_tracking;
+  const movePayment = useMutation({
+    mutationFn: ({ entry, date }: { entry: DayEntry; date: Date }) => {
+      const record = getPaymentRecord(paymentRecords, entry.sub.id, toDateStr(entry.date));
+      return paymentRecordsService.move({
+        ...(record ? { payment_id: record.id } : { subscription_id: entry.sub.id }),
+        from_date: toDateStr(entry.date),
+        to_date: toDateStr(date),
+      });
+    },
+    onSuccess: async () => {
+      setSelectedDate(null);
+      setDetailEntry(null);
+      setMoveEntry(null);
+      await queryClient.invalidateQueries();
+      toast.success(t("calendar_payment_moved"));
+    },
+    onError: (error: unknown) => {
+      const code = error instanceof Error ? error.message : "";
+      toast.error(
+        t(
+          ["calendar_move_conflict", "calendar_move_changed", "calendar_move_invalid"].includes(
+            code,
+          )
+            ? code
+            : "calendar_move_failed",
+        ),
+      );
+      void queryClient.invalidateQueries();
+    },
+  });
 
   const markUnpaid = useMutation({
     mutationFn: (record: PaymentRecord) => paymentRecordsService.markUnpaid(record.id),
@@ -151,10 +183,9 @@ export function CalendarPage() {
 
   const calendarPaymentCount = paymentRecords.length;
   const hasCalendarEntries =
-    calendarPaymentCount > 0 ||
-    subscriptions.some((sub) => !sub.calendar_projection_hidden);
+    calendarPaymentCount > 0 || subscriptions.some((sub) => !sub.calendar_projection_hidden);
 
-  const { allCells, currencyById, daysInMonth, entriesByDay, mainCurrency, stats } =
+  const { allCells, currencyById, daysInMonth, entriesByDay, entriesByDate, mainCurrency, stats } =
     useCalendarMonthData({
       subscriptions,
       cycles,
@@ -222,6 +253,7 @@ export function CalendarPage() {
           clearCalendar.isPending ||
           removePayment.isPending ||
           markUnpaid.isPending ||
+          movePayment.isPending ||
           !hasCalendarEntries
         }
       />
@@ -266,6 +298,25 @@ export function CalendarPage() {
         selectedDate={selectedDate}
         allCells={allCells}
         entriesByDay={entriesByDay}
+        entriesByDate={entriesByDate}
+        movingPayment={
+          movePayment.isPending ||
+          markUnpaid.isPending ||
+          removePayment.isPending ||
+          clearCalendar.isPending
+        }
+        onMovePayment={(entry, date) => movePayment.mutate({ entry, date })}
+        onMoveToMonth={(entry) => {
+          if (
+            movePayment.isPending ||
+            markUnpaid.isPending ||
+            removePayment.isPending ||
+            clearCalendar.isPending
+          )
+            return;
+          setSelectedDate(null);
+          setMoveEntry(entry);
+        }}
         mainCurrency={mainCurrency}
         currencyById={currencyById}
         paymentTracking={paymentTracking}
@@ -321,6 +372,24 @@ export function CalendarPage() {
         </Dialog>
       ) : null}
 
+      {moveEntry && (
+        <CalendarMoveDialog
+          key={`${moveEntry.sub.id}-${toDateStr(moveEntry.date)}`}
+          entry={moveEntry}
+          moving={movePayment.isPending}
+          onClose={() => setMoveEntry(null)}
+          onMove={(date) => {
+            if (
+              !movePayment.isPending &&
+              !markUnpaid.isPending &&
+              !removePayment.isPending &&
+              !clearCalendar.isPending
+            )
+              movePayment.mutate({ entry: moveEntry, date });
+          }}
+        />
+      )}
+
       {detailEntry ? (
         <SubDetailDialog
           sub={detailEntry.sub}
@@ -344,9 +413,25 @@ export function CalendarPage() {
             setMarkAsPaidEntry(detailEntry);
             setDetailEntry(null);
           }}
-          markingUnpaid={markUnpaid.isPending}
+          movingPayment={
+            movePayment.isPending ||
+            markUnpaid.isPending ||
+            removePayment.isPending ||
+            clearCalendar.isPending
+          }
+          onMoveDate={(value) => {
+            const date = parseLocalDate(value);
+            if (date) movePayment.mutate({ entry: detailEntry, date });
+          }}
+          markingUnpaid={markUnpaid.isPending || movePayment.isPending}
           onMarkAsUnpaid={() => {
-            if (markUnpaid.isPending || removePayment.isPending || clearCalendar.isPending) return;
+            if (
+              markUnpaid.isPending ||
+              removePayment.isPending ||
+              clearCalendar.isPending ||
+              movePayment.isPending
+            )
+              return;
             const record = getPaymentRecord(
               paymentRecords,
               detailEntry.sub.id,
@@ -354,7 +439,9 @@ export function CalendarPage() {
             );
             if (record?.paid_at) markUnpaid.mutate(record);
           }}
-          deletingPayment={removePayment.isPending || clearCalendar.isPending}
+          deletingPayment={
+            removePayment.isPending || clearCalendar.isPending || movePayment.isPending
+          }
           onDeletePayment={() => {
             const record = getPaymentRecord(
               paymentRecords,

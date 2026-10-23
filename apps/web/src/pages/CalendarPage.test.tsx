@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   listPaymentRecords: vi.fn(),
   removePayment: vi.fn(),
   markUnpaid: vi.fn(),
+  movePayment: vi.fn(),
   toastError: vi.fn(),
   clearCalendar: vi.fn(),
   useCalendarMonthData: vi.fn(),
@@ -79,6 +80,7 @@ vi.mock("@/services/paymentRecords", () => ({
     remove: mocks.removePayment,
     clearCalendar: mocks.clearCalendar,
     markUnpaid: mocks.markUnpaid,
+    move: mocks.movePayment,
   },
 }));
 
@@ -130,6 +132,7 @@ vi.mock("@/components/calendar/CalendarMonthCard", () => ({
     onSelectDay,
     onSelectDate,
     onAddHistorical,
+    onMoveToMonth,
   }: {
     month: number;
     year: number;
@@ -139,11 +142,23 @@ vi.mock("@/components/calendar/CalendarMonthCard", () => ({
     onSelectDay: (day: number | null) => void;
     onSelectDate?: (date: Date) => void;
     onAddHistorical?: (date: Date) => void;
+    onMoveToMonth?: (entry: CalendarTypes.DayEntry) => void;
   }) => (
     <div>
       <div>
         month:{month}:{year}
       </div>
+      <button
+        type="button"
+        onClick={() =>
+          onMoveToMonth?.({
+            sub: { id: "sub-1", name: "Netflix" } as CalendarTypes.DayEntry["sub"],
+            date: new Date(2026, 2, 10),
+          })
+        }
+      >
+        move-to-month
+      </button>
       <button type="button" onClick={onPrev}>
         prev-month
       </button>
@@ -283,6 +298,28 @@ const dayAfterVisibleMonth = isoDay(
 );
 
 describe("CalendarPage", () => {
+  it("opens the month-move dialog and saves the selected payment's target date", async () => {
+    mocks.movePayment.mockResolvedValue({ updated: 1 });
+    const { client, Wrapper } = createQueryClientWrapper();
+    const invalidate = vi.spyOn(client, "invalidateQueries").mockResolvedValue(undefined);
+    render(<CalendarPage />, { wrapper: Wrapper });
+    await waitFor(() => expect(mocks.listSubscriptions).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: "move-to-month" }));
+    expect(screen.getByRole("dialog", { name: "calendar_move_to_month" })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("calendar_move_date"), {
+      target: { value: "15/04/2026" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "calendar_move_payment" }));
+    await waitFor(() =>
+      expect(mocks.movePayment).toHaveBeenCalledExactlyOnceWith({
+        payment_id: "pr-1",
+        from_date: "2026-03-10",
+        to_date: "2026-04-15",
+      }),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(invalidate).toHaveBeenCalled();
+  });
   it("reverses payment confirmation without deleting the record and refreshes cached totals", async () => {
     let resolveUpdate!: (value: { updated: number }) => void;
     mocks.markUnpaid.mockReturnValue(

@@ -110,6 +110,28 @@ export function getOccurrencesInMonth(
   year: number,
   month: number,
   cycles: Cycle[],
+  records: PaymentRecord[] = [],
+): Date[] {
+  const moved = new Set(
+    records
+      .filter(
+        (record) =>
+          record.subscription_id === sub.id &&
+          record.scheduled_date &&
+          record.scheduled_date !== toDateOnly(record.due_date),
+      )
+      .map((record) => record.scheduled_date),
+  );
+  return projectedDatesInMonth(sub, year, month, cycles).filter(
+    (date) => !moved.has(toDateStr(date)),
+  );
+}
+
+function projectedDatesInMonth(
+  sub: Subscription,
+  year: number,
+  month: number,
+  cycles: Cycle[],
 ): Date[] {
   if (sub.standalone_payment_id || sub.calendar_projection_hidden) return [];
   const cycle = sub.expand?.cycle ?? cycles.find((c) => c.id === sub.cycle);

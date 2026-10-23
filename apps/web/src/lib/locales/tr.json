@@ -1023,5 +1023,18 @@
   "delete_all_subscriptions": "Tüm abonelikleri sil",
   "all_subscriptions_deleted": "Tüm abonelikler silindi",
   "delete_all_subscriptions_confirm": "Filtrelerde görünmeyenler dahil {{count}} aboneliğin tamamı kalıcı olarak silinecek. Takvimdeki ödeme geçmişi, belgeler ve hesap ayarları korunacak. Emin misiniz?",
-  "save_changes": "Değişiklikleri kaydet"
+  "save_changes": "Değişiklikleri kaydet",
+  "calendar_payment_moved": "Ödeme yeni güne taşındı.",
+  "calendar_move_invalid": "Geçerli bir ödeme ve farklı bir tarih seçin.",
+  "calendar_move_changed": "Ödeme başka bir işlemle değişti. Güncel takvimi kontrol edip tekrar deneyin.",
+  "calendar_move_conflict": "Bu aboneliğin seçilen günde başka bir ödemesi var. Farklı bir gün seçin.",
+  "calendar_move_failed": "Ödeme taşınamadı. Önceki tarihi korundu; tekrar deneyin.",
+  "calendar_move_date": "Yeni takvim tarihi",
+  "calendar_move_payment": "Ödemeyi taşı",
+  "calendar_move_help": "Yalnızca bu ödemenin takvim tarihi değişir. Sonraki dönemler, ödendi bilgisi ve gerçek ödeme tarihi korunur.",
+  "calendar_drag_hint": "Basılı tutup başka güne sürükleyin. Ay değiştirmek için ay okunun üzerinde bekleyin.",
+  "calendar_drop_hint": "Yeni günün üzerine getirip bırakın.",
+  "calendar_drag_outside": "Bir takvim gününe sürükleyin veya ay değiştirmek için ay okunun üzerinde bekleyin.",
+  "calendar_move_to_month": "Başka ayın gününe taşı",
+  "calendar_move_month_hint": "Hedef ayı ve günü seçin. Aylar arasında sürükle-bırak ile de taşıyabilirsiniz."
 }

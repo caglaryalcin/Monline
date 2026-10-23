@@ -24,6 +24,7 @@ it("restores older full archives with payment history into a new installation us
       ALTER TABLE payment_records DROP COLUMN name;
       ALTER TABLE payment_records DROP COLUMN currency;
       ALTER TABLE payment_records DROP COLUMN statement_sources;
+      ALTER TABLE payment_records DROP COLUMN scheduled_date;
       ALTER TABLE payment_records DROP COLUMN logo;
       ALTER TABLE payment_records DROP COLUMN category;
       ALTER TABLE payment_records DROP COLUMN payer;
@@ -107,6 +108,7 @@ it("restores older full archives with payment history into a new installation us
       name: "",
       currency: "",
       statement_sources: null,
+      scheduled_date: "",
     });
     expect(
       fs.readFileSync(

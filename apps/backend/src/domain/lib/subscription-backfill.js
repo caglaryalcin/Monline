@@ -17,7 +17,10 @@ function prepareBackfill(app, subscription, input, now = new Date()) {
       subscription.getString("record_type") === "credit"
     )
       throw new Error("backfill_invalid_selection");
-    if (data.mark_as_paid !== undefined && typeof data.mark_as_paid !== "boolean")
+    if (
+      data.mark_as_paid !== undefined &&
+      typeof data.mark_as_paid !== "boolean"
+    )
       throw new Error("backfill_invalid_selection");
     const offset = data.utc_offset_minutes;
     if (!Number.isInteger(offset) || Math.abs(offset) > 840)
@@ -107,8 +110,18 @@ function saveBackfill(app, subscription, payments) {
   for (const payment of payments) {
     const matches = existing.filter(
       (record) =>
-        record.getString("due_date").slice(0, 10) === payment.due_date,
+        record.getString("due_date").slice(0, 10) === payment.due_date ||
+        record.getString("scheduled_date") === payment.due_date,
     );
+    if (
+      matches.some(
+        (record) =>
+          record.getString("scheduled_date") &&
+          record.getString("scheduled_date") !==
+            record.getString("due_date").slice(0, 10),
+      )
+    )
+      continue;
     if (matches.some((record) => !!record.getString("paid_at"))) continue;
     if (!payment.paid_at && matches.length) continue;
     const record =

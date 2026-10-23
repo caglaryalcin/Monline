@@ -1,4 +1,4 @@
-import { CalendarDays, History } from "lucide-react";
+import { CalendarDays, CalendarRange, History } from "lucide-react";
 import { type ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -11,14 +11,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { isCredit } from "@/lib/recordTypes";
 
 import { historicalDateRange } from "./HistoricalPaymentDialog";
-import { toDateStr } from "./types";
+import { type DayEntry, toDateStr } from "./types";
 
 interface DayMenuPosition {
   date: Date;
   x: number;
   y: number;
+  payment?: DayEntry;
 }
 
 export function CalendarDayMenu({
@@ -26,11 +28,17 @@ export function CalendarDayMenu({
   onSelectDate,
   onAddHistorical,
   now,
+  entries = [],
+  onMoveToMonth,
+  movingPayment = false,
 }: {
   children: ReactNode;
   onSelectDate: (date: Date) => void;
   onAddHistorical?: (date: Date) => void;
   now: Date;
+  entries?: DayEntry[];
+  onMoveToMonth?: (entry: DayEntry) => void;
+  movingPayment?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const [position, setPosition] = useState<DayMenuPosition | null>(null);
@@ -41,12 +49,21 @@ export function CalendarDayMenu({
   const inRange = date >= range.min && date <= range.max;
   const canAdd = !!onAddHistorical && inRange;
 
-  function open(element: HTMLElement, x: number, y: number) {
+  function open(element: HTMLElement, x: number, y: number, keyboard = false) {
     const day = element.closest<HTMLButtonElement>("button[data-calendar-date]");
     if (!day || day.disabled) return false;
     target.current = day;
-    restoreFocus.current = true;
-    setPosition({ date: new Date(`${day.dataset.calendarDate}T12:00:00`), x, y });
+    restoreFocus.current = keyboard;
+    if (!keyboard) day.blur();
+    const paymentId =
+      element.closest<HTMLElement>("[data-calendar-payment]")?.dataset.calendarPayment;
+    const payment = paymentId
+      ? entries.find(
+          (entry) =>
+            entry.sub.id === paymentId && toDateStr(entry.date) === day.dataset.calendarDate,
+        )
+      : undefined;
+    setPosition({ date: new Date(`${day.dataset.calendarDate}T12:00:00`), x, y, payment });
     return true;
   }
 
@@ -68,7 +85,7 @@ export function CalendarDayMenu({
           if (event.key !== "ContextMenu" && !(event.shiftKey && event.key === "F10")) return;
           const element = event.target as HTMLElement;
           const rect = element.getBoundingClientRect();
-          if (open(element, rect.left, rect.bottom)) event.preventDefault();
+          if (open(element, rect.left, rect.bottom, true)) event.preventDefault();
         }}
       >
         {children}
@@ -127,6 +144,25 @@ export function CalendarDayMenu({
           <p className="px-2 py-1.5 text-xs leading-relaxed text-muted-foreground">
             {t("calendar_history_range_hint")}
           </p>
+        )}
+        {position?.payment && onMoveToMonth && !isCredit(position.payment.sub) && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="truncate text-xs">
+              {position.payment.sub.name}
+            </DropdownMenuLabel>
+            <DropdownMenuItem
+              disabled={movingPayment}
+              onSelect={() => {
+                if (!position.payment || movingPayment) return;
+                restoreFocus.current = false;
+                onMoveToMonth(position.payment);
+              }}
+            >
+              <CalendarRange />
+              {t("calendar_move_to_month")}
+            </DropdownMenuItem>
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

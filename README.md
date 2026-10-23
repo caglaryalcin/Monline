@@ -20,7 +20,7 @@ A self-hosted home for your subscriptions, recurring payments, and budget. React
 
 ![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/subscriptions.png)
 
-- **Payment calendar** — see every payment on a day, mark payments as paid, and add historical payments individually or in a reviewed batch with editable amounts. Record independent payments with automatic or uploaded logos, categories, payers, and payment methods without creating a subscription.
+- **Payment calendar** — see every payment on a day, mark payments as paid, and add historical payments individually or in a reviewed batch with editable amounts. Record independent payments with automatic or uploaded logos, categories, payers, and payment methods without creating a subscription. Move individual payments by dragging to another day, month, or year, or use the payment’s right-click menu to choose a date in another month. Future billing periods and actual payment details are preserved.
 
 ![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/calendar.png)
 
@@ -67,11 +67,11 @@ GitHub Actions publishes the same **AMD64 and ARM64** image to both registries:
 
 | Trigger | Image tags |
 | ------- | ---------- |
-| Release tag, e.g. `v1.1.0` | `v1.1.0`, `1.1.0`, `1.1`, `1`, `latest` |
+| Release tag, e.g. `v1.2.0` | `v1.2.0`, `1.2.0`, `1.2`, `1`, `latest` |
 
 Images are published for version tags or by manually running the Docker Publish workflow for an existing release tag; pushes to `main` do not publish images. Release tags must match the root, frontend and server package versions. Prereleases publish only their full version tags and leave `latest` unchanged.
 
-For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.1.0` or `image: caglaryalcin/monline:1.1.0`, omit `build`, and run `docker compose up -d`.
+For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.2.0` or `image: caglaryalcin/monline:1.2.0`, omit `build`, and run `docker compose up -d`.
 
 ## Contributors
 

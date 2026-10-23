@@ -7,6 +7,7 @@ const {
   security,
 } = require("../runtime.cjs");
 const domainPath = __dirname;
+const { calendarNextPayment } = require("./lib/calendar-move.js");
 // ================================================================
 // ROUTE: Calendar iCal Feed
 // GET /api/calendar/ical?key=wk_xxx  (requires calendar:read permission)
@@ -100,7 +101,7 @@ routerAdd("GET", "/api/calendar/ical", function (e) {
   ical += "METHOD:PUBLISH\r\n";
   ical += "X-WR-CALNAME:Monline Subscriptions\r\n";
   for (const sub of subs) {
-    const nextPayment = sub.get("next_payment");
+    const nextPayment = calendarNextPayment(repository, sub);
     if (!nextPayment) continue;
     let currencySymbol = "$";
     try {
@@ -140,7 +141,7 @@ routerAdd("GET", "/api/calendar/data", (e) => {
   const range = calendarUtils.buildMonthRange(month, year);
   const subs = repository.findRecordsByFilter(
     "subscriptions",
-    "user = {:userId} && calendar_projection_hidden = false && inactive = false && next_payment >= {:startDate} && next_payment < {:endDate}",
+    "user = {:userId} && calendar_projection_hidden = false && inactive = false",
     "next_payment",
     0,
     0,
@@ -152,6 +153,8 @@ routerAdd("GET", "/api/calendar/data", (e) => {
   );
   const events = [];
   for (const sub of subs) {
+    const date = calendarNextPayment(repository, sub);
+    if (date < range.startDate || date >= range.endDate) continue;
     let currencySymbol = "$";
     try {
       const cur = repository.findRecordById("currencies", sub.get("currency"));
@@ -162,7 +165,7 @@ routerAdd("GET", "/api/calendar/data", (e) => {
       name: sub.get("name"),
       price: sub.get("price"),
       currency: currencySymbol,
-      date: sub.get("next_payment"),
+      date,
       logo: sub.get("logo"),
     });
   }

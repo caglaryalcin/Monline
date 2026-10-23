@@ -56,7 +56,10 @@ function recoverCalendarHistory(app, today, userId = "") {
                   0,
                   { sub: sub.id, user: sub.getString("user") },
                 )
-                .map((record) => record.getString("due_date").slice(0, 10)),
+                .flatMap((record) => [
+                  record.getString("due_date").slice(0, 10),
+                  record.getString("scheduled_date"),
+                ]),
             );
             const history = tx
               .findRecordsByFilter(

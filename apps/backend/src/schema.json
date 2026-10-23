@@ -1614,9 +1614,17 @@
         "maxSelect": 1,
         "collectionId": "pbc_820562264",
         "cascadeDelete": false
+      },
+      {
+        "name": "scheduled_date",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 10
       }
     ],
-    "sql": "CREATE TABLE \"payment_records\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"subscription_id\" TEXT NOT NULL DEFAULT '', \"due_date\" TEXT NOT NULL DEFAULT '', \"paid_at\" TEXT NOT NULL DEFAULT '', \"auto_paid\" INTEGER NOT NULL DEFAULT 0, \"amount\" REAL NOT NULL DEFAULT 0, \"notes\" TEXT NOT NULL DEFAULT '', \"proof\" TEXT NOT NULL DEFAULT '', \"statement_sources\" TEXT DEFAULT 'null', \"name\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '')"
+    "sql": "CREATE TABLE \"payment_records\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"subscription_id\" TEXT NOT NULL DEFAULT '', \"due_date\" TEXT NOT NULL DEFAULT '', \"paid_at\" TEXT NOT NULL DEFAULT '', \"auto_paid\" INTEGER NOT NULL DEFAULT 0, \"amount\" REAL NOT NULL DEFAULT 0, \"notes\" TEXT NOT NULL DEFAULT '', \"proof\" TEXT NOT NULL DEFAULT '', \"statement_sources\" TEXT DEFAULT 'null', \"name\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '', \"scheduled_date\" TEXT NOT NULL DEFAULT '')"
   },
   {
     "name": "api_keys",

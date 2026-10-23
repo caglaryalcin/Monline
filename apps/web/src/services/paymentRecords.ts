@@ -35,6 +35,16 @@ export interface HistoricalPaymentInput {
 }
 
 export const paymentRecordsService = {
+  move: (data: {
+    payment_id?: string;
+    subscription_id?: string;
+    from_date: string;
+    to_date: string;
+  }) =>
+    client.send<{ updated: number; payment: PaymentRecord }>("/api/calendar/move-payment", {
+      method: "POST",
+      body: data,
+    }),
   markUnpaid: (id: string) =>
     client.send<{ updated: number }>(`/api/payments/${encodeURIComponent(id)}/mark-unpaid`, {
       method: "POST",

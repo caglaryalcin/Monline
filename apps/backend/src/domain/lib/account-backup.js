@@ -77,6 +77,7 @@ const FIELDS = {
     "statement_sources",
     "subscription_id",
     "due_date",
+    "scheduled_date",
     "paid_at",
     "auto_paid",
     "amount",

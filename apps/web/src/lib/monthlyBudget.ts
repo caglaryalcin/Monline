@@ -39,7 +39,9 @@ export function buildMonthlyBudget(
     if (isCredit(subscription)) continue;
     const subscriptionRecords = recordsBySubscription.get(subscription.id) ?? [];
     const dates = new Set(
-      getOccurrencesInMonth(subscription, now.getFullYear(), now.getMonth() + 1, []).map(toDateStr),
+      getOccurrencesInMonth(subscription, now.getFullYear(), now.getMonth() + 1, [], records).map(
+        toDateStr,
+      ),
     );
     // Keep saved charges, including unconfirmed ones, after the schedule advances.
     for (const record of subscriptionRecords) {

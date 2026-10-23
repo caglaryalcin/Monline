@@ -41,6 +41,22 @@ const payment = (overrides: Partial<PaymentRecord> = {}): PaymentRecord => ({
 });
 
 describe("this month's subscription charges", () => {
+  it("moves only one occurrence across months without counting it again at its scheduled date", () => {
+    const subscription = sub({ next_payment: "2026-10-05" });
+    const records = [payment({ scheduled_date: "2026-10-05", due_date: "2026-11-03", amount: 80 })];
+    expect(buildMonthlyBudget([subscription], [usd], records, true, now)).toEqual([]);
+    const november = buildMonthlyBudget(
+      [subscription],
+      [usd],
+      records,
+      true,
+      new Date(2026, 10, 10),
+    );
+    expect(november.map(({ date, amount }) => ({ date, amount }))).toEqual([
+      { date: "2026-11-03", amount: 80 },
+      { date: "2026-11-05", amount: 100 },
+    ]);
+  });
   it.each([true, false])(
     "retains unconfirmed past charges at their saved amount after the schedule advances (tracking: %s)",
     (tracking) => {

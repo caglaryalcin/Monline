@@ -1023,5 +1023,18 @@
   "delete_all_subscriptions": "Alle Abonnements löschen",
   "all_subscriptions_deleted": "Alle Abonnements gelöscht",
   "delete_all_subscriptions_confirm": "Alle {{count}} Abonnements einschließlich ausgefilterter Einträge endgültig löschen? Zahlungsverlauf, Belege und Kontoeinstellungen bleiben erhalten.",
-  "save_changes": "Änderungen speichern"
+  "save_changes": "Änderungen speichern",
+  "calendar_payment_moved": "Zahlung auf den neuen Tag verschoben.",
+  "calendar_move_invalid": "Wähle eine gültige Zahlung und ein anderes Datum.",
+  "calendar_move_changed": "Die Zahlung wurde inzwischen geändert. Prüfe den aktualisierten Kalender.",
+  "calendar_move_conflict": "Für dieses Abonnement gibt es an diesem Tag bereits eine Zahlung.",
+  "calendar_move_failed": "Zahlung konnte nicht verschoben werden. Das bisherige Datum bleibt erhalten.",
+  "calendar_move_date": "Neues Kalenderdatum",
+  "calendar_move_payment": "Zahlung verschieben",
+  "calendar_move_help": "Nur das Kalenderdatum dieser Zahlung ändert sich. Folgetermine, Zahlungsbestätigung und tatsächliches Zahlungsdatum bleiben erhalten.",
+  "calendar_drag_hint": "Gedrückt halten und auf einen anderen Tag ziehen. Zum Monatswechsel über einem Monatspfeil halten.",
+  "calendar_drop_hint": "Über dem neuen Tag loslassen.",
+  "calendar_drag_outside": "Auf einen Kalendertag ziehen oder zum Monatswechsel über einem Monatspfeil halten.",
+  "calendar_move_to_month": "Auf einen Tag in einem anderen Monat verschieben",
+  "calendar_move_month_hint": "Wähle den Zielmonat und Tag. Zahlungen lassen sich auch zwischen Monaten ziehen."
 }

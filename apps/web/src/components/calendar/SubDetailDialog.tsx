@@ -14,11 +14,14 @@ import {
   Undo2,
   Users,
 } from "lucide-react";
+import { useState } from "react";
 
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { editablePaymentNotes, isRecoveredPaymentNote } from "@/lib/paymentNotes";
@@ -29,7 +32,7 @@ import { paymentRecordsService } from "@/services/paymentRecords";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
 import { InfoRow } from "./InfoRow";
-import { getLogoUrl, toMain } from "./types";
+import { getLogoUrl, toDateStr, toMain } from "./types";
 
 interface SubDetailDialogProps {
   sub: Subscription;
@@ -45,6 +48,8 @@ interface SubDetailDialogProps {
   markingUnpaid?: boolean;
   onDeletePayment?: () => void;
   deletingPayment?: boolean;
+  onMoveDate?: (date: string) => void;
+  movingPayment?: boolean;
   t: (k: string) => string;
 }
 
@@ -61,8 +66,11 @@ export function SubDetailDialog({
   markingUnpaid,
   onDeletePayment,
   deletingPayment,
+  onMoveDate,
+  movingPayment,
   t,
 }: SubDetailDialogProps) {
+  const [moveDate, setMoveDate] = useState(toDateStr(date));
   const cur =
     paymentRecord?.expand?.currency ??
     currencies.find((c) => c.id === paymentRecord?.currency) ??
@@ -311,6 +319,34 @@ export function SubDetailDialog({
             </div>
           )}
 
+          {!credit && onMoveDate && (
+            <form
+              className="space-y-2 rounded-xl border p-3"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (moveDate && moveDate !== toDateStr(date) && !movingPayment)
+                  onMoveDate(moveDate);
+              }}
+            >
+              <Label htmlFor="calendar-move-date">{t("calendar_move_date")}</Label>
+              <DatePicker
+                id="calendar-move-date"
+                label={t("calendar_move_date")}
+                required
+                value={moveDate}
+                onChange={setMoveDate}
+                disabled={movingPayment}
+              />
+              <p className="text-xs text-muted-foreground">{t("calendar_move_help")}</p>
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={movingPayment || !moveDate || moveDate === toDateStr(date)}
+              >
+                {t(movingPayment ? "saving" : "calendar_move_payment")}
+              </Button>
+            </form>
+          )}
           <div className="grid grid-cols-1 gap-2 border-t pt-4 sm:grid-cols-2 [&>button]:w-full">
             {!credit && isPaid && onMarkAsUnpaid && (
               <Button
@@ -334,19 +370,24 @@ export function SubDetailDialog({
               </Button>
             )}
             {!credit && isPaid && (
-              <Button variant="ghost" className="text-muted-foreground" onClick={onMarkAsPaid}>
+              <Button
+                variant="ghost"
+                className="text-muted-foreground"
+                onClick={onMarkAsPaid}
+                disabled={movingPayment}
+              >
                 <FileText className="h-4 w-4 mr-2" />
                 {t("view_payment")}
               </Button>
             )}
             {!credit && (
-              <Button variant="outline" onClick={() => onEdit(sub)}>
+              <Button variant="outline" onClick={() => onEdit(sub)} disabled={movingPayment}>
                 <Pencil className="h-4 w-4 mr-2" />
                 {t("edit_payment")}
               </Button>
             )}
             {!credit && !isPaid && (
-              <Button onClick={onMarkAsPaid}>
+              <Button onClick={onMarkAsPaid} disabled={movingPayment}>
                 <CheckCircle2 className="h-4 w-4 mr-2" />
                 {t("mark_as_paid")}
               </Button>

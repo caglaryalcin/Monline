@@ -1,4 +1,11 @@
-import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, CircleDot } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  CircleDot,
+  GripVertical,
+} from "lucide-react";
 import type { CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -18,6 +25,7 @@ import type { Currency, PaymentRecord } from "@/types";
 
 import { CalendarDayMenu } from "./CalendarDayMenu";
 import { CalendarMonthPicker } from "./CalendarMonthPicker";
+import { useCalendarDrag } from "./useCalendarDrag";
 
 type CalendarCell = {
   day: number;
@@ -35,6 +43,10 @@ interface CalendarMonthCardProps {
   selectedDate?: Date | null;
   allCells: CalendarCell[];
   entriesByDay: Record<number, DayEntry[]>;
+  entriesByDate?: Record<string, DayEntry[]>;
+  onMovePayment?: (entry: DayEntry, date: Date) => void;
+  movingPayment?: boolean;
+  onMoveToMonth?: (entry: DayEntry) => void;
   mainCurrency?: Currency;
   currencyById: Map<string, Currency>;
   paymentTracking: boolean;
@@ -59,6 +71,10 @@ export function CalendarMonthCard({
   selectedDate,
   allCells,
   entriesByDay,
+  entriesByDate,
+  onMovePayment,
+  movingPayment = false,
+  onMoveToMonth,
   mainCurrency,
   currencyById,
   paymentRecords,
@@ -71,6 +87,7 @@ export function CalendarMonthCard({
   onAddHistorical,
 }: CalendarMonthCardProps) {
   const { t, i18n } = useTranslation();
+  const drag = useCalendarDrag(onMovePayment, movingPayment, onPrev, onNext);
   const weeks = Math.max(1, Math.ceil(allCells.length / 7));
   const weekdayFormatter = new Intl.DateTimeFormat(
     (i18n?.resolvedLanguage || i18n?.language || "en").replace(/_/g, "-"),
@@ -78,16 +95,20 @@ export function CalendarMonthCard({
   );
 
   return (
-    <Card className="monline-calendar-month overflow-hidden">
+    <Card data-calendar-drag-root className="monline-calendar-month overflow-hidden">
       <div className="monline-calendar-month-header flex shrink-0 flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
         <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-3">
           <CalendarMonthPicker month={month} year={year} onSelect={onSelectMonth} />
           <div className="flex items-center gap-1 text-sm font-medium text-foreground sm:text-base">
             <button
               type="button"
+              data-calendar-navigate="prev"
               aria-label={t("prev_month")}
               onClick={onPrev}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className={cn(
+                "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                drag.direction === "prev" && "bg-primary/15 ring-2 ring-primary",
+              )}
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -96,9 +117,13 @@ export function CalendarMonthCard({
             </span>
             <button
               type="button"
+              data-calendar-navigate="next"
               aria-label={t("next_month")}
               onClick={onNext}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className={cn(
+                "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                drag.direction === "next" && "bg-primary/15 ring-2 ring-primary",
+              )}
             >
               <ChevronRight className="h-5 w-5" />
             </button>
@@ -141,6 +166,9 @@ export function CalendarMonthCard({
               onSelectDay(date.getDate());
           }}
           onAddHistorical={onAddHistorical}
+          entries={Object.values(entriesByDate ?? entriesByDay).flat()}
+          onMoveToMonth={onMoveToMonth}
+          movingPayment={movingPayment}
         >
           <div
             className="monline-calendar-grid grid grid-cols-7"
@@ -153,7 +181,9 @@ export function CalendarMonthCard({
                 month - 1 + (cell.type === "prev" ? -1 : cell.type === "next" ? 1 : 0),
                 cell.day,
               );
-              const entries = isOtherMonth ? [] : (entriesByDay[cell.day] ?? []);
+              const entries =
+                entriesByDate?.[toDateStr(cellDate)] ??
+                (isOtherMonth ? [] : (entriesByDay[cell.day] ?? []));
               const columnIndex = index % 7;
               const isWeekend = columnIndex === 0 || columnIndex === 6;
               const isToday =
@@ -177,6 +207,7 @@ export function CalendarMonthCard({
                   data-calendar-date={toDateStr(cellDate)}
                   aria-current={isToday ? "date" : undefined}
                   onClick={() => {
+                    if (drag.suppressClick()) return;
                     if (onSelectDate) {
                       onSelectDate(isSelected ? null : cellDate);
                       return;
@@ -188,19 +219,21 @@ export function CalendarMonthCard({
                     onSelectDay(cell.day === selectedDay ? null : cell.day);
                   }}
                   className={cn(
-                    "group relative flex min-w-0 min-h-[88px] flex-col items-stretch border-b border-r p-1 text-left transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:min-h-[120px] sm:p-2",
+                    "group relative flex min-w-0 min-h-[88px] flex-col items-stretch border-b border-r p-1 text-left transition-all duration-150 outline-none sm:min-h-[120px] sm:p-2",
                     "cursor-pointer",
                     isOtherMonth && "bg-muted/20",
                     isWeekend && !isOtherMonth && !isToday && "bg-muted/10",
                     isToday && "z-10 border-primary ring-2 ring-inset ring-primary",
                     isSelected && !isToday && "bg-primary/5",
                     isSelected && !isToday && "ring-2 ring-inset ring-primary/40",
+                    drag.dropDate === toDateStr(cellDate) &&
+                      "bg-primary/15 ring-2 ring-inset ring-primary",
                   )}
                 >
                   <div className="mb-1.5 flex items-start justify-between">
                     <span
                       className={cn(
-                        "inline-flex h-7 w-7 items-center justify-center text-sm font-medium transition-colors",
+                        "inline-flex h-7 w-7 items-center justify-center text-sm font-medium transition-colors group-focus-visible:underline decoration-primary decoration-2 underline-offset-4",
                         isToday && "rounded-full bg-primary font-bold text-primary-foreground",
                         !isToday &&
                           !isOtherMonth &&
@@ -214,7 +247,9 @@ export function CalendarMonthCard({
 
                   {!loading ? (
                     <div className="space-y-1">
-                      {entries.map(({ sub, date, amount }) => {
+                      {entries.map((entry) => {
+                        const { sub, date, amount } = entry;
+                        const canMove = !!onMovePayment && !movingPayment && !isCredit(sub);
                         const credit = isCredit(sub);
                         const dateStr = toDateStr(date);
                         const paymentRecord = !credit
@@ -234,11 +269,22 @@ export function CalendarMonthCard({
                         return (
                           <div
                             key={`${sub.id}-${dateStr}`}
+                            {...drag.paymentProps(entry, canMove)}
+                            data-calendar-payment={sub.id}
+                            aria-description={canMove ? t("calendar_drag_hint") : undefined}
+                            title={sub.name}
                             className={cn(
                               "relative flex min-w-0 items-center justify-center gap-0.5 rounded-md border px-0.5 py-1 transition-all sm:justify-start sm:gap-1.5 sm:px-1.5 sm:py-0.5",
                               colorClass,
+                              canMove && "cursor-grab active:cursor-grabbing",
                             )}
                           >
+                            {canMove && (
+                              <GripVertical
+                                aria-hidden="true"
+                                className="h-3 w-3 shrink-0 text-muted-foreground"
+                              />
+                            )}
                             <SubscriptionLogo
                               sub={sub}
                               className="h-4 w-4 shrink-0 rounded-sm object-contain text-[9px]"
@@ -294,6 +340,7 @@ export function CalendarMonthCard({
           </div>
         </CalendarDayMenu>
       </CardContent>
+      {drag.preview}
     </Card>
   );
 }

@@ -28,6 +28,25 @@ function setup() {
 }
 
 describe("CalendarDayMenu", () => {
+  it("does not leave the mouse context-menu day focused after dismissing the menu", async () => {
+    setup();
+    const day = screen.getByRole("button", { name: "today" });
+    day.focus();
+    fireEvent.contextMenu(day);
+    const menu = await screen.findByRole("menu");
+    expect(day).not.toHaveFocus();
+    fireEvent.keyDown(menu, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("menu")).not.toBeInTheDocument());
+    expect(day).not.toHaveFocus();
+  });
+  it("restores the day focus after dismissing a keyboard context menu", async () => {
+    setup();
+    const day = screen.getByRole("button", { name: "today" });
+    day.focus();
+    fireEvent.keyDown(day, { key: "ContextMenu" });
+    fireEvent.keyDown(await screen.findByRole("menu"), { key: "Escape" });
+    await waitFor(() => expect(day).toHaveFocus());
+  });
   it("opens at a right-click and forwards the clicked day to the payment form", async () => {
     const { onAddHistorical, onSelectDay } = setup();
     fireEvent.contextMenu(screen.getByText("past day"), { clientX: 220, clientY: 180 });

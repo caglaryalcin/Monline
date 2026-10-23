@@ -1023,5 +1023,18 @@
   "delete_all_subscriptions": "Delete all subscriptions",
   "all_subscriptions_deleted": "All subscriptions deleted",
   "delete_all_subscriptions_confirm": "Permanently delete all {{count}} subscriptions, including those hidden by filters? Calendar payment history, receipts and account settings will be kept.",
-  "save_changes": "Save changes"
+  "save_changes": "Save changes",
+  "calendar_payment_moved": "Payment moved to the new day.",
+  "calendar_move_invalid": "Choose a valid payment and a different date.",
+  "calendar_move_changed": "This payment changed elsewhere. Review the refreshed calendar and try again.",
+  "calendar_move_conflict": "This subscription already has a payment on that day. Choose another day.",
+  "calendar_move_failed": "Could not move payment. Its previous date was retained; try again.",
+  "calendar_move_date": "New calendar date",
+  "calendar_move_payment": "Move payment",
+  "calendar_move_help": "Only this payment’s calendar date changes. Future periods, payment confirmation and actual payment date are preserved.",
+  "calendar_drag_hint": "Hold and drag to another day. Hold over a month arrow to change months.",
+  "calendar_drop_hint": "Release over the new day.",
+  "calendar_drag_outside": "Drag over a calendar day, or hold over a month arrow to change months.",
+  "calendar_move_to_month": "Move to a day in another month",
+  "calendar_move_month_hint": "Choose the target month and day. You can also drag payments between months."
 }

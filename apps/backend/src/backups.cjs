@@ -179,6 +179,7 @@ function validateDatabase(file) {
               (entry.name === "payment_records" &&
                 [
                   "statement_sources",
+                  "scheduled_date",
                   "name",
                   "currency",
                   "logo",

@@ -2,12 +2,18 @@ const { DataRecord } = require("../../storage.cjs");
 
 // Called inside the schedule transaction. Existing records (including pending
 // ones) are authoritative: a retry must not overwrite their amount or status.
-function saveScheduledPayment(app, subscription, dueDate, markPaid, details = {}) {
+function saveScheduledPayment(
+  app,
+  subscription,
+  dueDate,
+  markPaid,
+  details = {},
+) {
   const tomorrow = new Date(dueDate + "T00:00:00.000Z");
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
   const existing = app.findRecordsByFilter(
     "payment_records",
-    "subscription_id = {:sid} && due_date >= {:date} && due_date < {:tomorrow}",
+    "subscription_id = {:sid} && (scheduled_date = {:date} || (due_date >= {:date} && due_date < {:tomorrow}))",
     "",
     1,
     0,

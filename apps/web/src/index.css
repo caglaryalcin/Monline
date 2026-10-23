@@ -49,6 +49,36 @@
   container-type: inline-size;
 }
 
+.monline-calendar-grid > [data-calendar-date] {
+  outline: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .monline-calendar-month [data-calendar-payment] {
+    transition:
+      opacity 180ms ease,
+      filter 180ms ease,
+      background-color 150ms ease,
+      border-color 150ms ease;
+  }
+
+  .monline-calendar-month [data-calendar-date]:hover [data-calendar-payment] {
+    opacity: 0.45;
+    filter: saturate(0.3);
+  }
+
+  .monline-calendar-month [data-calendar-date]:hover [data-calendar-payment]:hover {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .monline-calendar-month [data-calendar-payment] {
+    transition: none;
+  }
+}
+
 @container (min-width: 600px) {
   .calendar-payment-name {
     @apply not-sr-only min-w-0 flex-1 truncate text-[11px] font-medium leading-tight;

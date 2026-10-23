@@ -44,6 +44,7 @@ export interface PaymentRecord {
   };
   user: string;
   due_date: string; // YYYY-MM-DD
+  scheduled_date?: string; // Original occurrence before moving its calendar date
   paid_at?: string; // ISO datetime
   auto_paid?: boolean;
   amount?: number;
