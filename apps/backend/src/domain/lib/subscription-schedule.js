@@ -1,74 +1,83 @@
-/**
- * Shared advancement for subscription schedules.
- *
- * Two entry points advance next_payment: the nightly `updateNextPayment` cron
- * and the admin-triggered `check_subscriptions` job. They drifted apart once
- * already — the admin job kept an unbounded loop that walked straight past
- * end_date and payment_limit — so the query and the write live here instead of
- * being copied into both hooks.
- *
- * DUE_FILTER note: an unset Monline date field is stored as the empty
- * string and date filters are string comparisons, so `end_date < :today` on its
- * own matches every subscription that has no end date at all. The `!= ''` guard
- * is what keeps this a due-only query instead of a nightly full-table rewrite.
- */
-var DUE_FILTER =
-  "inactive = false && auto_renew = true && " +
+const { advanceDate } = require("./date-helpers.js");
+const { isExpense } = require("./pure/record-types.js");
+const {
+  advanceFiniteSchedule,
+  dateOnly,
+} = require("./pure/subscription-limits.js");
+const { saveScheduledPayment } = require("./scheduled-payments.js");
+
+// Non-renewing subscriptions still need their due occurrence recorded, but
+// their next_payment stays unchanged until explicitly renewed.
+const DUE_FILTER =
+  "inactive = false && next_payment != '' && (auto_renew = true || next_payment >= {:today}) && " +
   "(next_payment < {:tomorrow} || (end_date != '' && end_date < {:today}))";
 
-/**
- * Advances every subscription that is due as of `todayStr`.
- *
- * `app` is passed in rather than read from the `repository` global so this stays
- * callable from any hook callback and directly exercisable in tests.
- *
- * @returns {number} how many subscriptions were processed
- */
-function advanceDueSubscriptions(app, todayStr) {
-  var dateHelpers = require("./date-helpers.js");
-  var paymentTracking = require("./auto-mark-paid.js");
-  var recordTypes = require("./pure/record-types.js");
-  var subscriptionLimits = require("./pure/subscription-limits.js");
-
-  // Record due payments before this helper can advance or deactivate their
-  // subscriptions. The dedicated autoMarkPaid fallback runs five minutes
-  // later and deduplicates by subscription and due date.
-  paymentTracking.markDuePaymentsPaid(app, todayStr);
-  var tomorrow = dateHelpers
-    .advanceDate(new Date(todayStr + "T00:00:00.000Z"), "Daily", 1)
-    .toISOString()
-    .slice(0, 10);
-  var subs = app.findRecordsByFilter("subscriptions", DUE_FILTER, "", 0, 0, {
-    today: todayStr,
-    tomorrow: tomorrow,
-  });
-  var processed = 0;
-  for (var i = 0; i < subs.length; i++) {
-    var sub = subs[i];
-    if (!recordTypes.isExpense(sub.get("record_type"))) continue;
-    var cycleRecord = app.findRecordById("cycles", sub.get("cycle"));
-    var result = subscriptionLimits.advanceFiniteSchedule({
-      nextPayment: sub.get("next_payment"),
-      today: todayStr,
-      cycleName: cycleRecord.get("name"),
+function advanceSubscription(app, subscriptionId, today, advance = true) {
+  return app.runInTransaction((tx) => {
+    const sub = tx.findRecordById("subscriptions", subscriptionId);
+    if (!isExpense(sub.get("record_type")) || sub.get("inactive")) return null;
+    const cycle = tx.findRecordById("cycles", sub.get("cycle"));
+    const user = tx.findRecordById("users", sub.get("user"));
+    const markPaid =
+      !!sub.get("auto_mark_paid") && !!user.get("payment_tracking");
+    const anchor = dateOnly(sub.get("next_payment"));
+    const start = dateOnly(sub.get("start_date"));
+    const end =
+      [sub.get("end_date"), sub.get("cancellation_date")]
+        .map(dateOnly)
+        .filter(Boolean)
+        .sort()[0] || "";
+    const result = advanceFiniteSchedule({
+      nextPayment: anchor,
+      today: advance ? today : anchor < today ? anchor : today,
+      cycleName: cycle.get("name"),
       frequency: sub.get("frequency"),
       billingAnchorDay: sub.get("billing_anchor_day"),
-      endDate: sub.get("end_date"),
+      endDate: end,
       paymentLimit: sub.get("payment_limit"),
       paymentsCompleted: sub.get("payments_completed"),
       inactive: sub.get("inactive"),
-      advanceDate: dateHelpers.advanceDate,
+      advanceDate,
+      onOccurrence: (date) => {
+        if (!start || date >= start)
+          saveScheduledPayment(tx, sub, date, markPaid);
+      },
     });
-    sub.set("__monline_schedule_advance", true);
-    sub.set("next_payment", result.nextPayment);
-    sub.set("payments_completed", result.paymentsCompleted);
-    sub.set("inactive", result.inactive);
-    app.save(sub);
-    processed++;
+    if (advance) {
+      sub.set("__monline_schedule_advance", true);
+      sub.set("next_payment", result.nextPayment);
+      sub.set("payments_completed", result.paymentsCompleted);
+      sub.set("inactive", result.inactive);
+      tx.save(sub);
+    }
+    return result;
+  });
+}
+
+function advanceDueSubscriptions(app, today) {
+  const tomorrow = advanceDate(new Date(today + "T00:00:00.000Z"), "Daily", 1)
+    .toISOString()
+    .slice(0, 10);
+  const subs = app.findRecordsByFilter("subscriptions", DUE_FILTER, "", 0, 0, {
+    today,
+    tomorrow,
+  });
+  let processed = 0;
+  for (const sub of subs) {
+    if (!isExpense(sub.get("record_type"))) continue;
+    // Failure rolls back the records and date together. Other subscriptions
+    // can proceed; this one can be retried without losing or duplicating days.
+    try {
+      advanceSubscription(app, sub.id, today, !!sub.get("auto_renew"));
+      processed++;
+    } catch (error) {
+      console.error(
+        "[Monline] Schedule failed for subscription " + sub.id,
+        error.message,
+      );
+    }
   }
   return processed;
 }
-module.exports = {
-  DUE_FILTER,
-  advanceDueSubscriptions,
-};
+
+module.exports = { DUE_FILTER, advanceSubscription, advanceDueSubscriptions };

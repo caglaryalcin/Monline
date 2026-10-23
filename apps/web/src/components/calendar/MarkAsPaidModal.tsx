@@ -53,7 +53,7 @@ export function MarkAsPaidModal({
         user: userId,
         due_date: dueDate,
         paid_at: new Date().toISOString(),
-        amount: parseFloat(amount) || sub.price,
+        amount: Number.isFinite(parseFloat(amount)) ? parseFloat(amount) : sub.price,
         notes: notes || undefined,
       };
       if (proofFile) data.proof = proofFile;
@@ -112,7 +112,9 @@ export function MarkAsPaidModal({
             </div>
 
             <Badge variant="outline" className="shrink-0">
-              {formatPrice(sub.price, cur?.symbol ?? "$", { currencyCode: cur?.code })}
+              {formatPrice(existingRecord?.amount ?? sub.price, cur?.symbol ?? "$", {
+                currencyCode: cur?.code,
+              })}
             </Badge>
           </DialogTitle>
         </DialogHeader>

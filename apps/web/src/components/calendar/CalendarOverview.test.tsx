@@ -20,6 +20,7 @@ describe("CalendarOverview", () => {
     count: 10,
     total: 100,
     due: 50,
+    awaitingConfirmation: 25,
     loading: false,
   };
 
@@ -29,8 +30,9 @@ describe("CalendarOverview", () => {
     expect(screen.getByTestId("stat-subscriptions")).toHaveTextContent("10");
     expect(screen.getByTestId("stat-total")).toHaveTextContent("100.00 $");
     expect(screen.getByTestId("stat-due")).toHaveTextContent("50.00 $");
+    expect(screen.getByTestId("stat-subscription_payments_awaiting")).toHaveTextContent("25.00 $");
     expect(screen.getByTestId("stat-budget_overrun")).toHaveTextContent("0.00 $");
-    expect(screen.getAllByTestId(/^stat-/)).toHaveLength(4);
+    expect(screen.getAllByTestId(/^stat-/)).toHaveLength(5);
     expect(screen.queryByText("over_budget_warning")).not.toBeInTheDocument();
   });
 
@@ -38,7 +40,6 @@ describe("CalendarOverview", () => {
     render(
       <CalendarOverview
         {...defaultProps}
-        due={60}
         total={200}
         mainCurrency={{
           id: "eur",
@@ -57,16 +58,15 @@ describe("CalendarOverview", () => {
   });
 
   it("renders loading state", () => {
-    render(<CalendarOverview {...defaultProps} due={60} loading={true} />);
+    render(<CalendarOverview {...defaultProps} loading={true} />);
 
     expect(screen.getByTestId("stat-subscriptions")).toHaveTextContent("loading");
     expect(screen.getByTestId("stat-total")).toHaveTextContent("loading");
-    expect(screen.getByTestId("stat-due")).toHaveTextContent("loading");
     expect(screen.getByTestId("stat-budget_overrun")).toHaveTextContent("loading");
   });
-  it("shows the budget overrun as a fourth summary card", () => {
+  it("shows the budget overrun alongside subscription count and total", () => {
     render(<CalendarOverview {...defaultProps} budgetOverrun={25} />);
     expect(screen.getByTestId("stat-budget_overrun")).toHaveTextContent("25.00 $");
-    expect(screen.getAllByTestId(/^stat-/)).toHaveLength(4);
+    expect(screen.getAllByTestId(/^stat-/)).toHaveLength(5);
   });
 });

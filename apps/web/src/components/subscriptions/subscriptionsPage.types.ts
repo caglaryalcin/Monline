@@ -1,5 +1,6 @@
 export type SubscriptionSortKey = "name" | "price" | "date" | "status";
 export type SubscriptionPriceDisplay = "billing" | "monthly" | "yearly";
+export type SubscriptionAutomationSetting = "auto_renew" | "auto_mark_paid";
 
 export interface SubscriptionFiltersState {
   categories: string[];

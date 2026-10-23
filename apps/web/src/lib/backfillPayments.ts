@@ -6,6 +6,7 @@ export interface BackfillPayment {
 }
 export interface BackfillInput {
   confirmed: true;
+  mark_as_paid?: boolean;
   utc_offset_minutes: number;
   payments: BackfillPayment[];
 }
@@ -28,6 +29,7 @@ function validDate(value: string) {
 export function backfillDates({
   start,
   anchorDate = start,
+  billingAnchorDay,
   until,
   cycle,
   frequency,
@@ -36,6 +38,7 @@ export function backfillDates({
 }: {
   start: string;
   anchorDate?: string;
+  billingAnchorDay?: number;
   until: string;
   cycle: string;
   frequency: number;
@@ -57,6 +60,10 @@ export function backfillDates({
   )
     throw new Error("backfill_invalid_schedule");
   const anchor = new Date(anchorDate + "T00:00:00.000Z");
+  const dayOfMonth =
+    Number.isInteger(billingAnchorDay) && billingAnchorDay! >= 1 && billingAnchorDay! <= 31
+      ? billingAnchorDay!
+      : anchor.getUTCDate();
   const beginning = new Date(start + "T00:00:00.000Z");
   const monthStep = months[cycle] * frequency;
   const firstIndex = monthStep
@@ -81,7 +88,7 @@ export function backfillDates({
       const last = new Date(target.getTime());
       last.setUTCMonth(last.getUTCMonth() + 1);
       last.setUTCDate(0);
-      target.setUTCDate(Math.min(anchor.getUTCDate(), last.getUTCDate()));
+      target.setUTCDate(Math.min(dayOfMonth, last.getUTCDate()));
       date = target;
     } else {
       date = new Date(anchor.getTime());

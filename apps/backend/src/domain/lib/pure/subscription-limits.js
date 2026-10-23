@@ -65,6 +65,8 @@ function advanceFiniteSchedule(options) {
       inactive = true;
       break;
     }
+    // Persist the occurrence before its date can move out of the schedule.
+    if (options.onOccurrence) options.onOccurrence(nextPayment);
     if (paymentLimit || endDate) paymentsCompleted += 1;
     processed += 1;
     if (paymentLimit && paymentsCompleted >= paymentLimit) {

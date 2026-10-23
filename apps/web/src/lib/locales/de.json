@@ -1,4 +1,8 @@
 {
+  "subscription_payments_awaiting": "Bestätigung ausstehend",
+  "payment_confirmation_pending": "Zahlungsbestätigung ausstehend",
+  "calendar_existing_periods_hint": "Vorhandene Periodeneinträge werden übersprungen und ihre Beträge bleiben unverändert. Hinzugefügte Perioden werden nicht automatisch als bezahlt markiert.",
+  "auto_mark_paid_calendar_hint": "Wenn deaktiviert, bleiben Zahlungstermine im Kalender gespeichert; du bestätigst selbst, ob sie bezahlt wurden.",
   "payment_status": "Zahlungsstatus",
   "payment_to_pay": "Zu zahlen",
   "payment_date_future": "Das Zahlungsdatum muss heute oder früher sein.",
@@ -847,7 +851,7 @@
   "budget_status_scheduled": "Geplant",
   "budget_month_empty": "Diesen Monat sind keine Abonnementzahlungen fällig.",
   "budget_list_error": "Die Zahlungen dieses Monats konnten nicht geladen werden. Bitte neu laden.",
-  "budget_month_note": "Die Liste zeigt in diesem Monat fällige Zahlungen. Bezahlte Beträge stammen aus Zahlungsbelegen, andere aus geplanten Preisen. Alle Beträge werden in deine Hauptwährung umgerechnet.",
+  "budget_month_note": "Zahlungen werden ihrem Fälligkeitsmonat zugeordnet. Vergangene, nicht als bezahlt markierte Zahlungen bleiben in der Liste und im ausstehenden Gesamtbetrag. Gespeicherte Beträge oder geplante Preise ohne Eintrag werden in deine Hauptwährung umgerechnet.",
   "history_select_year": "Jahr auswählen",
   "history_upcoming_payment": "Anstehende Zahlung",
   "history_year_chart_label": "Monatliche Abonnementkosten für {{year}}",

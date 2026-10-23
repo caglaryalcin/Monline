@@ -17,6 +17,8 @@ function prepareBackfill(app, subscription, input, now = new Date()) {
       subscription.getString("record_type") === "credit"
     )
       throw new Error("backfill_invalid_selection");
+    if (data.mark_as_paid !== undefined && typeof data.mark_as_paid !== "boolean")
+      throw new Error("backfill_invalid_selection");
     const offset = data.utc_offset_minutes;
     if (!Number.isInteger(offset) || Math.abs(offset) > 840)
       throw new Error("historical_invalid_date");
@@ -36,6 +38,7 @@ function prepareBackfill(app, subscription, input, now = new Date()) {
         anchorDate:
           subscription.getString("next_payment").slice(0, 10) ||
           subscription.getString("start_date").slice(0, 10),
+        billingAnchorDay: Number(subscription.get("billing_anchor_day")),
         until: today,
         cycle: app
           .findRecordById("cycles", subscription.getString("cycle"))
@@ -71,7 +74,7 @@ function prepareBackfill(app, subscription, input, now = new Date()) {
       return {
         due_date: payment.due_date,
         amount: payment.amount,
-        paid_at: paidAt.toISOString(),
+        paid_at: data.mark_as_paid === false ? "" : paidAt.toISOString(),
       };
     });
   } catch (error) {
@@ -107,6 +110,7 @@ function saveBackfill(app, subscription, payments) {
         record.getString("due_date").slice(0, 10) === payment.due_date,
     );
     if (matches.some((record) => !!record.getString("paid_at"))) continue;
+    if (!payment.paid_at && matches.length) continue;
     const record =
       matches[0] ||
       new DataRecord(app.findCollectionByNameOrId("payment_records"));

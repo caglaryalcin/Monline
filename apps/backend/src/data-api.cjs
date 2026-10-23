@@ -153,7 +153,13 @@ function registerDataApi(app, repository, auth) {
       if (field.type === "file" && body[field.name + "-"])
         record.set(field.name, "");
       if (
-        ["id", "created", "updated", "user"].includes(field.name) ||
+        [
+          "id",
+          "created",
+          "updated",
+          "user",
+          "calendar_history_recovery_passes",
+        ].includes(field.name) ||
         (name === "users" && userDenied.has(field.name))
       )
         continue;

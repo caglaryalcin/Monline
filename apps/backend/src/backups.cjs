@@ -187,7 +187,10 @@ function validateDatabase(file) {
                   "payer",
                 ].includes(field.name)) ||
               (entry.name === "subscriptions" &&
-                field.name === "statement_imported") ||
+                [
+                  "statement_imported",
+                  "calendar_history_recovery_passes",
+                ].includes(field.name)) ||
               (["payment_methods", "household"].includes(entry.name) &&
                 field.name === "is_main")
             ),
@@ -238,6 +241,10 @@ function replaceDatabase(repository, input) {
   repository.repairStatementImportMarkers();
   repository.repairMainPaymentMethods();
   repository.repairMainHousehold();
+  require("./domain/lib/calendar-history-recovery.js").recoverCalendarHistory(
+    repository,
+    require("./domain/lib/date-helpers.js").formatLocalDate(new Date()),
+  );
 }
 
 function registerBackupApi(app, repository, auth) {

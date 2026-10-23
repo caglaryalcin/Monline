@@ -41,6 +41,18 @@ const payment = (overrides: Partial<PaymentRecord> = {}): PaymentRecord => ({
 });
 
 describe("this month's subscription charges", () => {
+  it.each([true, false])(
+    "retains unconfirmed past charges at their saved amount after the schedule advances (tracking: %s)",
+    (tracking) => {
+      const records = [payment({ paid_at: "", amount: 69.9 })];
+      const entries = buildMonthlyBudget([sub({ price: 99.9 })], [usd], records, tracking, now);
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatchObject({ date: "2026-10-05", amount: 69.9, status: "overdue" });
+      expect(buildMonthlyBudget([sub()], [usd], [], tracking, now)).toEqual([]);
+      const paid = buildMonthlyBudget([sub()], [usd], [payment({ amount: 69.9 })], tracking, now);
+      expect(paid[0]).toMatchObject({ amount: 69.9, status: "paid" });
+    },
+  );
   it("includes recorded past charges after next_payment advances and uses actual paid amounts and main-currency conversion", () => {
     const entries = buildMonthlyBudget(
       [sub()],

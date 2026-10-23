@@ -12,6 +12,12 @@ export interface DayEntry {
   amount?: number;
 }
 
+export const PAYMENT_COLORS = {
+  paid: "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30",
+  awaitingConfirmation: "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30",
+  upcoming: "bg-muted/50 text-foreground border-border",
+};
+
 // ─── Category colors ─────────────────────────────────────────────────────────
 
 export const EVENT_COLORS = [

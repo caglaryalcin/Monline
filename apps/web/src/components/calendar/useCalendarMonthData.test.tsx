@@ -37,6 +37,110 @@ function getSubscription(overrides: Partial<Subscription> = {}): Subscription {
 }
 
 describe("useCalendarMonthData", () => {
+  it("scopes awaiting confirmation and upcoming totals to the selected month and excludes paid occurrences", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 23, 12));
+    try {
+      const sub = getSubscription({ next_payment: "2026-11-22", price: 99.9 });
+      const records = [
+        {
+          id: "september",
+          user: sub.user,
+          subscription_id: sub.id,
+          due_date: "2026-09-22",
+          paid_at: "",
+          amount: 49.9,
+        },
+        {
+          id: "october",
+          user: sub.user,
+          subscription_id: sub.id,
+          due_date: "2026-10-22",
+          paid_at: "",
+          amount: 69.9,
+        },
+        {
+          id: "today",
+          user: sub.user,
+          subscription_id: sub.id,
+          due_date: "2026-10-23",
+          paid_at: "",
+          amount: 10,
+        },
+        {
+          id: "future",
+          user: sub.user,
+          subscription_id: sub.id,
+          due_date: "2026-10-30",
+          paid_at: "",
+          amount: 15,
+        },
+      ];
+      const { result, rerender } = renderHook(
+        ({ month, paymentRecords }) =>
+          useCalendarMonthData({
+            subscriptions: [sub],
+            cycles: [{ id: "cycle-monthly", name: "Monthly" }],
+            currencies: [getCurrency({ is_main: true })],
+            year: 2026,
+            month,
+            selectedDay: null,
+            paymentRecords,
+          }),
+        { initialProps: { month: 10, paymentRecords: records } },
+      );
+      expect(result.current.stats.awaitingConfirmation).toBeCloseTo(79.9);
+      expect(result.current.stats.due).toBe(15);
+      rerender({ month: 9, paymentRecords: records });
+      expect(result.current.stats.awaitingConfirmation).toBe(49.9);
+      expect(result.current.stats.due).toBe(0);
+      rerender({ month: 11, paymentRecords: records });
+      expect(result.current.stats.awaitingConfirmation).toBe(0);
+      expect(result.current.stats.due).toBe(99.9);
+      rerender({
+        month: 10,
+        paymentRecords: records.map((record) => ({
+          ...record,
+          paid_at: ["october", "future"].includes(record.id) ? "2026-10-23T08:00:00Z" : "",
+        })),
+      });
+      expect(result.current.stats.awaitingConfirmation).toBe(10);
+      expect(result.current.stats.due).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("keeps unconfirmed history visible at its recorded price after the next payment advances", () => {
+    const sub = getSubscription({
+      name: "Amazon Prime",
+      next_payment: "2026-11-23",
+      price: 99.9,
+      auto_mark_paid: false,
+    });
+    const { result } = renderHook(() =>
+      useCalendarMonthData({
+        subscriptions: [sub],
+        cycles: [{ id: "cycle-monthly", name: "Monthly" }],
+        currencies: [getCurrency({ is_main: true })],
+        year: 2026,
+        month: 10,
+        selectedDay: 23,
+        paymentRecords: [
+          {
+            id: "pending-october",
+            user: sub.user,
+            subscription_id: sub.id,
+            due_date: "2026-10-23",
+            paid_at: "",
+            amount: 69.9,
+          },
+        ],
+      }),
+    );
+    expect(result.current.selectedEntries).toHaveLength(1);
+    expect(result.current.selectedEntries[0].amount).toBe(69.9);
+    expect(result.current.stats.total).toBe(69.9);
+  });
   it.each([false, true])(
     "does not recreate cleared history for Amazon Prime (imported: %s)",
     (imported) => {
@@ -239,6 +343,7 @@ describe("useCalendarMonthData", () => {
       count: 3,
       total: 31,
       due: 21,
+      awaitingConfirmation: 10,
     });
 
     vi.useRealTimers();
@@ -265,7 +370,7 @@ describe("useCalendarMonthData", () => {
 
     expect(result.current.entriesByDay).toEqual({});
     expect(result.current.selectedEntries).toEqual([]);
-    expect(result.current.stats).toEqual({ count: 0, total: 0, due: 0 });
+    expect(result.current.stats).toEqual({ count: 0, total: 0, due: 0, awaitingConfirmation: 0 });
   });
 
   it("shows one-time credits on the calendar without adding them to expense totals", () => {

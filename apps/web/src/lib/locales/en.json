@@ -1,4 +1,8 @@
 {
+  "subscription_payments_awaiting": "Awaiting confirmation",
+  "payment_confirmation_pending": "Awaiting payment confirmation",
+  "calendar_existing_periods_hint": "Existing period records are skipped and their amounts stay unchanged. Added periods are not automatically marked as paid.",
+  "auto_mark_paid_calendar_hint": "When off, payment dates stay on the calendar; you confirm whether they were paid.",
   "payment_status": "Payment status",
   "payment_to_pay": "To be paid",
   "payment_date_future": "The paid date must be today or earlier.",
@@ -869,7 +873,7 @@
   "budget_status_scheduled": "Scheduled",
   "budget_month_empty": "No subscription charges are due this month.",
   "budget_list_error": "This month’s payments could not be loaded. Refresh to retry.",
-  "budget_month_note": "Charges are grouped by their due month. Paid amounts come from payment records; other amounts are scheduled prices, converted to your main currency.",
+  "budget_month_note": "Charges are grouped by their due month. Past charges not marked as paid stay in the list and the pending total. Recorded amounts, or scheduled prices when no record exists, are converted to your main currency.",
   "history_select_year": "Select year",
   "history_upcoming_payment": "Upcoming payment",
   "history_year_chart_label": "Monthly subscription costs for {{year}}",

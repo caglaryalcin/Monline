@@ -320,11 +320,10 @@ cronAdd("sendCancellationNotifications", "0 * * * *", async () => {
 });
 
 // ================================================================
-// CRON 7: Auto-mark Payments as Paid
+// CRON 7: Retry Due Payment Recording
 // ================================================================
-// Five minutes after schedule advancement. updateNextPayment records due
-// payments itself before changing the subscription; this job is a fallback
-// and the offset prevents both callbacks from racing to write the same row.
+// Retry schedules that could not be saved at midnight. Recording and advancing
+// share one transaction; only opted-in subscriptions are confirmed paid.
 cronAdd("autoMarkPaid", "5 0 * * *", () => {
   const dateHelpers = require(domainPath + "/lib/date-helpers.js");
   const paymentTracking = require(domainPath + "/lib/auto-mark-paid.js");
@@ -333,7 +332,7 @@ cronAdd("autoMarkPaid", "5 0 * * *", () => {
   const todayStr = dateHelpers.formatLocalDate(today);
   const created = paymentTracking.markDuePaymentsPaid(repository, todayStr);
   console.log(
-    "[Monline] autoMarkPaid: created " + created + " payment records",
+    "[Monline] autoMarkPaid: processed " + created + " schedules",
   );
 });
 

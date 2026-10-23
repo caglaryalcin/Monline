@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 
+import { buildMonthlyBudget } from "@/lib/monthlyBudget";
 import { monthlyBudgetFixture } from "@/test/fixtures/monthlyBudget";
 
 import { BudgetOverviewCard } from "./BudgetOverviewCard";
@@ -10,6 +11,59 @@ vi.mock("@/components/SubscriptionLogo", () => ({ SubscriptionLogo: () => <span>
 const formatValue = (value: number) => `$${value.toFixed(2)}`;
 
 describe("monthly budget overview", () => {
+  it("keeps a past unconfirmed subscription in the list as not paid, then transfers its amount on confirmation", () => {
+    const now = new Date(2026, 9, 23);
+    const sub = {
+      ...monthlyBudgetFixture(now).entries[0].subscription,
+      name: "Amazon Prime",
+      price: 99.9,
+      next_payment: "2026-11-22",
+      currency: "try",
+    };
+    const record = {
+      id: "prime-october",
+      subscription_id: sub.id,
+      user: sub.user,
+      due_date: "2026-10-22",
+      paid_at: "",
+      amount: 69.9,
+    };
+    const entries = buildMonthlyBudget([sub], [], [record], true, now);
+    const { rerender } = render(
+      <BudgetOverviewCard budget={1000} entries={entries} formatValue={formatValue} />,
+    );
+    const list = screen.getByRole("list", { name: "budget_month_subscriptions" });
+    expect(within(list).getByText("Amazon Prime")).toBeInTheDocument();
+    expect(within(list).getByText("not_paid")).toBeInTheDocument();
+    expect(
+      within(screen.getByText("budget_pending").parentElement!).getByText("$69.90"),
+    ).toBeInTheDocument();
+    rerender(
+      <BudgetOverviewCard
+        budget={1000}
+        entries={buildMonthlyBudget(
+          [sub],
+          [],
+          [{ ...record, paid_at: "2026-10-23T08:00:00Z" }],
+          true,
+          now,
+        )}
+        formatValue={formatValue}
+      />,
+    );
+    expect(screen.queryByText("not_paid")).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("list", { name: "budget_month_subscriptions" })).getByText(
+        "Amazon Prime",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByText("budget_pending").parentElement!).getByText("$0.00"),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByText("budget_paid").parentElement!).getByText("$69.90"),
+    ).toBeInTheDocument();
+  });
   it("lists dated subscription charges, paid and pending totals, and the month-end remainder", () => {
     const preview = monthlyBudgetFixture(new Date(2026, 9, 17));
     render(

@@ -90,3 +90,16 @@ describe("past payment dates", () => {
     );
   });
 });
+
+it("recovers the original billing day from a clamped February anchor", () => {
+  expect(
+    backfillDates({
+      start: "2026-01-31",
+      anchorDate: "2026-02-28",
+      billingAnchorDay: 31,
+      until: "2026-03-31",
+      cycle: "Monthly",
+      frequency: 1,
+    }),
+  ).toEqual(["2026-01-31", "2026-02-28", "2026-03-31"]);
+});

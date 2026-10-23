@@ -108,6 +108,21 @@ async function main() {
     console.info(
       `[Monline] Corrected ${repairedSchedules} imported subscription schedule(s)`,
     );
+  // Catch up after downtime before serving requests. Each schedule and its
+  // payment records commit together, so restarts are safe to retry.
+  require("./domain/lib/subscription-schedule.js").advanceDueSubscriptions(
+    repository,
+    require("./domain/lib/date-helpers.js").formatLocalDate(new Date()),
+  );
+  const recoveredHistory =
+    require("./domain/lib/calendar-history-recovery.js").recoverCalendarHistory(
+      repository,
+      require("./domain/lib/date-helpers.js").formatLocalDate(new Date()),
+    );
+  if (recoveredHistory.created)
+    console.info(
+      `[Monline] Recovered ${recoveredHistory.created} unconfirmed calendar period(s)`,
+    );
   registerSetupApi(app, repository, auth);
   auth.register(app);
   registerOidc(app, repository, auth);
@@ -204,7 +219,7 @@ function seed(repository) {
         repository.findCollectionByNameOrId("admin_settings"),
       );
       settings.set("open_registrations", false);
-      settings.set("latest_version", "1.0.18");
+      settings.set("latest_version", "1.0.19");
       settings.set("smtp_port", 587);
       repository.save(settings);
     }

@@ -8,6 +8,7 @@ import { SubscriptionsFiltersPanel } from "@/components/subscriptions/Subscripti
 import { SubscriptionsGrid } from "@/components/subscriptions/SubscriptionsGrid";
 import {
   INITIAL_SUBSCRIPTION_FILTERS,
+  type SubscriptionAutomationSetting,
   type SubscriptionFiltersState,
   type SubscriptionSortKey,
 } from "@/components/subscriptions/subscriptionsPage.types";
@@ -120,6 +121,34 @@ export function SubscriptionsPage() {
         queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all(userId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.history(userId, id) }),
       ]),
+  });
+
+  const automationMutation = useMutation({
+    mutationFn: ({
+      id,
+      setting,
+      enabled,
+    }: {
+      id: string;
+      setting: SubscriptionAutomationSetting;
+      enabled: boolean;
+    }) => subscriptionsService.update(id, { [setting]: enabled }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Subscription[]>(queryKeys.subscriptions.all(userId), (current) =>
+        current?.map((subscription) =>
+          subscription.id === updated.id
+            ? {
+                ...subscription,
+                auto_renew: updated.auto_renew,
+                auto_mark_paid: updated.auto_mark_paid,
+              }
+            : subscription,
+        ),
+      );
+      return queryClient.invalidateQueries();
+    },
+    onError: (error: Error) =>
+      toast.error(t(error.message === "category_required" ? "category_required" : "unknown_error")),
   });
 
   const deleteMutation = useMutation({
@@ -257,10 +286,20 @@ export function SubscriptionsPage() {
         onHistory={setHistorySubscription}
         onDelete={setDeleteId}
         onToggleActive={(subscription) => {
-          if (!statusMutation.isPending)
+          if (!statusMutation.isPending && !automationMutation.isPending)
             statusMutation.mutate({ id: subscription.id, inactive: !subscription.inactive });
         }}
         statusPendingId={statusMutation.isPending ? statusMutation.variables?.id : null}
+        showAutoMarkPaid={!!user?.payment_tracking}
+        onToggleAutomation={(subscription, setting) => {
+          if (!automationMutation.isPending && !statusMutation.isPending)
+            automationMutation.mutate({
+              id: subscription.id,
+              setting,
+              enabled: !subscription[setting],
+            });
+        }}
+        automationPending={automationMutation.isPending}
       />
 
       {showForm ? (

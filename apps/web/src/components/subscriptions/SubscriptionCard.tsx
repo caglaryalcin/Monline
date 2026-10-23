@@ -1,13 +1,15 @@
 import { Portal as TooltipPortal } from "@radix-ui/react-tooltip";
 import {
+  ArrowLeftRight,
   Calendar,
-  CalendarRange,
+  CalendarCheck,
   Copy,
   Edit,
   ExternalLink,
   History,
   Hourglass,
   RefreshCw,
+  Repeat2,
   Trash2,
 } from "lucide-react";
 import { type CSSProperties, useState } from "react";
@@ -15,7 +17,10 @@ import { useTranslation } from "react-i18next";
 
 import { PaymentMethodIcon } from "@/components/PaymentMethodIcon";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
-import type { SubscriptionPriceDisplay } from "@/components/subscriptions/subscriptionsPage.types";
+import type {
+  SubscriptionAutomationSetting,
+  SubscriptionPriceDisplay,
+} from "@/components/subscriptions/subscriptionsPage.types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -47,6 +52,9 @@ interface SubscriptionActionsProps {
   renewPending?: boolean;
   onHistory: () => void;
   onDelete: () => void;
+  onToggleAutomation?: (setting: SubscriptionAutomationSetting) => void;
+  automationDisabled?: boolean;
+  showAutoMarkPaid?: boolean;
 }
 
 function SubscriptionActions({
@@ -60,6 +68,9 @@ function SubscriptionActions({
   renewPending,
   onHistory,
   onDelete,
+  onToggleAutomation,
+  automationDisabled,
+  showAutoMarkPaid,
 }: SubscriptionActionsProps) {
   const { t } = useTranslation();
   const credit = isCredit(sub);
@@ -77,6 +88,47 @@ function SubscriptionActions({
   const priceActionLabel = t(nextPeriod === "monthly" ? "show_monthly" : "show_yearly");
   const changePeriod = (period: "monthly" | "yearly") =>
     onPriceDisplayChange(period === savedPeriod ? "billing" : period);
+  const finiteSchedule = (sub.payment_limit ?? 0) > 0 || !!sub.end_date;
+  const automationButton = (setting: SubscriptionAutomationSetting) => {
+    const enabled =
+      setting === "auto_renew" ? !sub.inactive && sub.auto_renew : !!sub.auto_mark_paid;
+    const fixedRenewal = setting === "auto_renew" && finiteSchedule && !sub.inactive;
+    const disabled =
+      automationDisabled || (setting === "auto_renew" && (sub.inactive || fixedRenewal));
+    const Icon = setting === "auto_renew" ? Repeat2 : CalendarCheck;
+    return (
+      <TooltipProvider delayDuration={250} key={setting}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "h-7 w-7 rounded-full text-muted-foreground",
+                  enabled &&
+                    "bg-green-500/15 text-green-700 hover:bg-green-500/25 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
+                )}
+                aria-label={t(setting)}
+                aria-pressed={enabled}
+                disabled={disabled}
+                onClick={() => onToggleAutomation?.(setting)}
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </Button>
+            </span>
+          </TooltipTrigger>
+          <TooltipPortal>
+            <TooltipContent side="top" sideOffset={8} className="max-w-60 text-center text-xs">
+              {t(setting)}
+              {fixedRenewal && <p className="mt-1">{t("finite_auto_renew_hint")}</p>}
+            </TooltipContent>
+          </TooltipPortal>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   return (
     <div
@@ -85,6 +137,12 @@ function SubscriptionActions({
         className,
       )}
     >
+      {!credit && onToggleAutomation && (
+        <>
+          {cycleName !== "One-Time" && automationButton("auto_renew")}
+          {showAutoMarkPaid && automationButton("auto_mark_paid")}
+        </>
+      )}
       {!credit && sub.expand?.cycle?.name !== "One-Time" && (
         <Button
           type="button"
@@ -98,7 +156,7 @@ function SubscriptionActions({
           title={priceActionLabel}
           onClick={() => changePeriod(nextPeriod)}
         >
-          <CalendarRange className="h-3.5 w-3.5" />
+          <ArrowLeftRight className="h-3.5 w-3.5" />
         </Button>
       )}
       {sub.url && (
@@ -198,6 +256,9 @@ export function SubscriptionCard({
   onToggleActive,
   statusPending = false,
   statusDisabled = false,
+  onToggleAutomation,
+  automationDisabled = false,
+  showAutoMarkPaid = true,
 }: {
   sub: Subscription;
   mainCurrency?: Currency;
@@ -216,6 +277,9 @@ export function SubscriptionCard({
   onToggleActive?: () => void;
   statusPending?: boolean;
   statusDisabled?: boolean;
+  onToggleAutomation?: (setting: SubscriptionAutomationSetting) => void;
+  automationDisabled?: boolean;
+  showAutoMarkPaid?: boolean;
 }) {
   const { t } = useTranslation();
   const [localPriceDisplay, setLocalPriceDisplay] = useState<SubscriptionPriceDisplay>("billing");
@@ -226,6 +290,7 @@ export function SubscriptionCard({
   const periodLabel = formatBillingPeriod(t, cycleName, sub.frequency || 1);
   const category = sub.expand?.category;
   const payer = sub.expand?.payer;
+  const payerLabel = payer?.name.trim().replace(/\s+(\S)\S*$/u, " $1.");
   const paymentMethod = sub.inactive ? undefined : sub.expand?.payment_method;
   const credit = isCredit(sub);
 
@@ -290,7 +355,7 @@ export function SubscriptionCard({
       <div
         className={cn(
           "group relative flex flex-col gap-3 rounded-xl border bg-card/60 p-3 backdrop-blur-sm transition-colors xl:flex-row xl:items-center",
-          sub.inactive && "grayscale bg-muted/40 text-muted-foreground",
+          sub.inactive && "bg-muted/40 text-muted-foreground",
         )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -360,11 +425,20 @@ export function SubscriptionCard({
           <div className="hidden min-w-[7rem] items-center gap-2 text-xs text-muted-foreground lg:flex">
             {paymentMethod ? <PaymentMethodIcon method={paymentMethod} /> : null}
             {payer ? (
-              <span className="truncate font-medium text-foreground/80">{payer.name}</span>
+              <span
+                className="truncate font-medium text-foreground/80"
+                title={payer.name}
+                aria-label={payer.name}
+              >
+                {payerLabel}
+              </span>
             ) : null}
           </div>
 
           <SubscriptionActions
+            onToggleAutomation={onToggleAutomation}
+            automationDisabled={automationDisabled}
+            showAutoMarkPaid={showAutoMarkPaid}
             sub={sub}
             priceDisplay={priceDisplay}
             onPriceDisplayChange={changePriceDisplay}
@@ -385,7 +459,7 @@ export function SubscriptionCard({
     <div
       className={cn(
         "group relative rounded-2xl border bg-card/60 backdrop-blur-sm p-4 transition-all duration-300 flex flex-col justify-between overflow-hidden",
-        sub.inactive && "grayscale bg-muted/40 text-muted-foreground",
+        sub.inactive && "bg-muted/40 text-muted-foreground",
       )}
     >
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
@@ -505,8 +579,12 @@ export function SubscriptionCard({
           {paymentMethod && <PaymentMethodIcon method={paymentMethod} />}
           <div className="min-w-0">
             {payer && (
-              <span className="block truncate font-medium text-foreground/80">
-                {t("pays")} {payer.name}
+              <span
+                className="block truncate font-medium text-foreground/80"
+                title={payer.name}
+                aria-label={payer.name}
+              >
+                {payerLabel}
               </span>
             )}
             {originalPriceDetails}
@@ -514,6 +592,9 @@ export function SubscriptionCard({
         </div>
 
         <SubscriptionActions
+          onToggleAutomation={onToggleAutomation}
+          automationDisabled={automationDisabled}
+          showAutoMarkPaid={showAutoMarkPaid}
           sub={sub}
           priceDisplay={priceDisplay}
           onPriceDisplayChange={changePriceDisplay}

@@ -468,7 +468,7 @@ describe("CalendarMonthCard", () => {
       />,
     );
 
-    expect(screen.getByText("overdue")).toBeInTheDocument();
+    expect(screen.getByText("payment_confirmation_pending")).toBeInTheDocument();
     expect(container.querySelector("img")).toBeNull();
     expect(screen.getByText("O")).toBeInTheDocument();
   });

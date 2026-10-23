@@ -13,6 +13,7 @@ import type { Currency } from "@/types";
 interface Props {
   start: string;
   anchorDate?: string;
+  billingAnchorDay?: number;
   cycle: string;
   frequency: number;
   price: number | null;
@@ -22,6 +23,8 @@ interface Props {
   disabled?: boolean;
   title?: string;
   description?: string;
+  markAsPaid?: boolean;
+  confirmationLabel?: string;
   fixedStart?: boolean;
   excludeDates?: string[];
   idPrefix?: string;
@@ -38,6 +41,7 @@ const EMPTY_DRAFT: Draft = { signature: "", amounts: {}, excluded: [], confirmed
 export function BackfillPaymentsEditor({
   start,
   anchorDate = start,
+  billingAnchorDay,
   cycle,
   frequency,
   price,
@@ -47,6 +51,8 @@ export function BackfillPaymentsEditor({
   disabled,
   title,
   description,
+  markAsPaid = true,
+  confirmationLabel,
   fixedStart = false,
   excludeDates,
   idPrefix = "",
@@ -61,11 +67,13 @@ export function BackfillPaymentsEditor({
   const signature = JSON.stringify([
     rangeStart,
     anchorDate,
+    billingAnchorDay,
     cycle,
     frequency,
     end,
     limit,
     price,
+    markAsPaid,
     currency?.id,
     today,
     excludeDates,
@@ -78,6 +86,7 @@ export function BackfillPaymentsEditor({
         dates: backfillDates({
           start: rangeStart,
           anchorDate,
+          billingAnchorDay,
           cycle,
           frequency,
           end,
@@ -89,7 +98,7 @@ export function BackfillPaymentsEditor({
     } catch (error) {
       return { dates: [], error: (error as Error).message };
     }
-  }, [rangeStart, anchorDate, cycle, frequency, end, limit, today, excludeDates]);
+  }, [rangeStart, anchorDate, billingAnchorDay, cycle, frequency, end, limit, today, excludeDates]);
   const rows = useMemo(
     () =>
       schedule.dates.map((date) => ({
@@ -119,6 +128,7 @@ export function BackfillPaymentsEditor({
         enabled && valid
           ? {
               confirmed: true,
+              ...(!markAsPaid ? { mark_as_paid: false } : {}),
               utc_offset_minutes: new Date().getTimezoneOffset(),
               payments: selected.map((row) => ({
                 due_date: row.date,
@@ -128,7 +138,7 @@ export function BackfillPaymentsEditor({
             }
           : null,
     });
-  }, [enabled, valid, selected, rangeStart, onChange]);
+  }, [enabled, valid, selected, rangeStart, markAsPaid, onChange]);
 
   const updateDraft = (patch: Partial<Draft>) =>
     setDraft({ ...current, signature, confirmed: false, ...patch });
@@ -249,7 +259,7 @@ export function BackfillPaymentsEditor({
                 {t("backfill_summary", { count: selected.length, total: totalLabel })}
               </p>
               <p className="text-xs leading-relaxed text-muted-foreground">
-                {t("backfill_duplicates_hint")}
+                {t(markAsPaid ? "backfill_duplicates_hint" : "calendar_existing_periods_hint")}
               </p>
               {!validAmounts && (
                 <p role="alert" className="text-sm text-destructive">
@@ -272,7 +282,7 @@ export function BackfillPaymentsEditor({
                   disabled={!validAmounts}
                   onChange={(event) => updateDraft({ confirmed: event.target.checked })}
                 />
-                {t("backfill_confirm")}
+                {confirmationLabel ?? t("backfill_confirm")}
               </label>
             </>
           )}

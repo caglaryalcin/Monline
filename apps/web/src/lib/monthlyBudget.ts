@@ -41,16 +41,19 @@ export function buildMonthlyBudget(
     const dates = new Set(
       getOccurrencesInMonth(subscription, now.getFullYear(), now.getMonth() + 1, []).map(toDateStr),
     );
-    // Keep confirmed charges even if the subscription was subsequently paused or rescheduled.
+    // Keep saved charges, including unconfirmed ones, after the schedule advances.
     for (const record of subscriptionRecords) {
-      if (record.paid_at) dates.add(toDateOnly(record.due_date));
+      dates.add(toDateOnly(record.due_date));
     }
-    const currency = currencyById.get(subscription.currency) ?? subscription.expand?.currency;
-    const rate = currency?.rate || 1;
     for (const date of dates) {
       const record = getPaymentRecord(subscriptionRecords, subscription.id, date);
       const paid = !!record?.paid_at;
-      const price = paid ? (record.amount ?? subscription.price) : subscription.price;
+      const price = record?.amount ?? subscription.price;
+      const currency =
+        currencyById.get(record?.currency || subscription.currency) ??
+        record?.expand?.currency ??
+        subscription.expand?.currency;
+      const rate = currency?.rate || 1;
       entries.push({
         id: `${subscription.id}:${date}`,
         subscription,
@@ -58,10 +61,10 @@ export function buildMonthlyBudget(
         amount: Number(((price / rate) * mainRate).toFixed(2)),
         status: paid
           ? "paid"
-          : !paymentTracking
-            ? "scheduled"
-            : date < today
-              ? "overdue"
+          : date < today
+            ? "overdue"
+            : !paymentTracking
+              ? "scheduled"
               : "pending",
       });
     }

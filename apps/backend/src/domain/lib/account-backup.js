@@ -44,6 +44,7 @@ const FIELDS = {
     "cycle",
     "frequency",
     "billing_anchor_day",
+    "calendar_history_recovery_passes",
     "category",
     "payment_method",
     "payer",
@@ -604,6 +605,11 @@ function importAccount(app, userId, backup, restoreSettings) {
           tx.save(currency);
         }
     }
+    require("./calendar-history-recovery.js").recoverCalendarHistory(
+      tx,
+      require("./date-helpers.js").formatLocalDate(new Date()),
+      userId,
+    );
   });
   return result;
 }

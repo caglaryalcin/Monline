@@ -9,6 +9,7 @@ import {
   toDateStr,
   toMain,
 } from "@/components/calendar/types";
+import { useLocalToday } from "@/hooks/useLocalToday";
 import { isExpense } from "@/lib/recordTypes";
 import { paymentOwnerId, withStandalonePayments } from "@/lib/standalonePayments";
 import type { Currency, Cycle, PaymentRecord, Subscription } from "@/types";
@@ -34,6 +35,7 @@ export function useCalendarMonthData({
   selectedDay,
   paymentRecords = NO_RECORDS,
 }: UseCalendarMonthDataParams) {
+  const localToday = useLocalToday();
   const mainCurrency = useMemo(
     () => currencies.find((currency) => currency.is_main) ?? currencies[0],
     [currencies],
@@ -61,7 +63,7 @@ export function useCalendarMonthData({
         getOccurrencesInMonth(subscription, year, month, cycles).map(toDateStr),
       );
       for (const record of subscriptionRecords) {
-        if (record.paid_at) dates.add(toDateOnly(record.due_date));
+        dates.add(toDateOnly(record.due_date));
       }
       for (const key of [...dates].sort()) {
         const date = parseLocalDate(key)!;
@@ -70,7 +72,7 @@ export function useCalendarMonthData({
         (entries[day] ??= []).push({
           sub: subscription,
           date,
-          ...(record?.paid_at && record.amount != null ? { amount: record.amount } : {}),
+          ...(record?.amount != null ? { amount: record.amount } : {}),
         });
       }
     }
@@ -79,12 +81,12 @@ export function useCalendarMonthData({
   }, [subscriptions, cycles, year, month, paymentRecords, currencies]);
 
   const stats = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = new Date(localToday + "T00:00:00");
 
     let count = 0;
     let total = 0;
     let due = 0;
+    let awaitingConfirmation = 0;
 
     for (const entries of Object.values(entriesByDay)) {
       for (const { sub, date, amount: recordedAmount } of entries) {
@@ -94,14 +96,16 @@ export function useCalendarMonthData({
         if (!isExpense(sub)) continue;
         total += amount;
 
-        if (date >= today) {
-          due += amount;
+        const paid = !!getPaymentRecord(paymentRecords, sub.id, toDateStr(date))?.paid_at;
+        if (!paid) {
+          if (date > today) due += amount;
+          else awaitingConfirmation += amount;
         }
       }
     }
 
-    return { count, total, due };
-  }, [entriesByDay, currencyById]);
+    return { count, total, due, awaitingConfirmation };
+  }, [entriesByDay, currencyById, paymentRecords, localToday]);
 
   const daysInMonth = useMemo(() => new Date(year, month, 0).getDate(), [year, month]);
 

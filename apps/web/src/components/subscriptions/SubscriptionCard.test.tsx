@@ -100,6 +100,55 @@ function getSubscription(overrides: Partial<Subscription> = {}): Subscription {
 
 describe("SubscriptionCard", () => {
   it.each(["grid", "list"] as const)(
+    "shows automation states and toggles the selected setting in %s layout",
+    (layout) => {
+      const onToggleAutomation = vi.fn();
+      const props = {
+        sub: getSubscription({ auto_renew: true, auto_mark_paid: false }),
+        layout,
+        onToggleAutomation,
+        onEdit: vi.fn(),
+        onClone: vi.fn(),
+        onRenew: vi.fn(),
+        onHistory: vi.fn(),
+        onDelete: vi.fn(),
+      };
+      const { rerender } = render(<SubscriptionCard {...props} />);
+      const renewal = screen.getByRole("button", { name: "auto_renew", pressed: true });
+      const paid = screen.getByRole("button", { name: "auto_mark_paid", pressed: false });
+      expect(renewal).toHaveClass("text-green-700");
+      expect(paid).not.toHaveClass("text-green-700");
+      fireEvent.click(renewal);
+      fireEvent.click(paid);
+      expect(onToggleAutomation.mock.calls).toEqual([["auto_renew"], ["auto_mark_paid"]]);
+      rerender(<SubscriptionCard {...props} automationDisabled />);
+      expect(renewal).toBeDisabled();
+      expect(paid).toBeDisabled();
+      rerender(<SubscriptionCard {...props} showAutoMarkPaid={false} />);
+      expect(screen.queryByRole("button", { name: "auto_mark_paid" })).not.toBeInTheDocument();
+      rerender(<SubscriptionCard {...props} sub={{ ...props.sub, record_type: "credit" }} />);
+      expect(screen.queryByRole("button", { name: "auto_renew" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "auto_mark_paid" })).not.toBeInTheDocument();
+    },
+  );
+
+  it("protects finite and inactive renewal settings", () => {
+    const props = {
+      sub: getSubscription({ payment_limit: 12 }),
+      onToggleAutomation: vi.fn(),
+      onEdit: vi.fn(),
+      onClone: vi.fn(),
+      onRenew: vi.fn(),
+      onHistory: vi.fn(),
+      onDelete: vi.fn(),
+    };
+    const { rerender } = render(<SubscriptionCard {...props} />);
+    expect(screen.getByRole("button", { name: "auto_renew" })).toBeDisabled();
+    rerender(<SubscriptionCard {...props} sub={getSubscription({ inactive: true })} />);
+    expect(screen.getByRole("button", { name: "auto_renew", pressed: false })).toBeDisabled();
+  });
+
+  it.each(["grid", "list"] as const)(
     "disables renewal while rates refresh in %s layout",
     (layout) => {
       const onRenew = vi.fn();
@@ -185,7 +234,7 @@ describe("SubscriptionCard", () => {
       />,
     );
     expect(screen.getByAltText("Enpara")).toHaveAttribute("src", "/assets/logos/banks/enpara.svg");
-    expect(screen.getByText("pays Daniel").parentElement?.parentElement).toContainElement(
+    expect(screen.getByText("Daniel").parentElement?.parentElement).toContainElement(
       screen.getByAltText("Enpara"),
     );
   });
@@ -277,7 +326,7 @@ describe("SubscriptionCard", () => {
     expect(screen.queryByText("3 days_short")).not.toBeInTheDocument();
     expect(screen.getByText("billing_days_remaining")).toBeInTheDocument();
     expect(screen.getByText("billing_cycle")).toBeInTheDocument();
-    expect(screen.getByText("pays Daniel")).toBeInTheDocument();
+    expect(screen.getByText("Daniel")).toBeInTheDocument();
     expect(screen.getByAltText("Netflix")).toHaveAttribute(
       "src",
       "https://cdn.example.com/netflix.png",

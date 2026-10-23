@@ -110,6 +110,8 @@ export interface SubscriptionHistory {
 }
 
 export interface Subscription {
+  /** Original billing day, preserved when shorter months clamp the due date. */
+  billing_anchor_day?: number;
   id: string;
   /** Present only on the display model of an independent payment. */
   standalone_payment_id?: string;

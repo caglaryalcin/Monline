@@ -214,7 +214,7 @@ describe("DayPanel", () => {
       />,
     );
 
-    expect(screen.getByText("overdue")).toBeInTheDocument();
+    expect(screen.getByText("payment_confirmation_pending")).toBeInTheDocument();
   });
 
   it("shows today badge in price section when diffDays is 0", () => {
@@ -382,7 +382,7 @@ describe("DayPanel", () => {
     );
 
     // Both "overdue" badge (in info section) and CircleDot (in logo-image div) are rendered
-    expect(screen.getByText("overdue")).toBeInTheDocument();
+    expect(screen.getByText("payment_confirmation_pending")).toBeInTheDocument();
     // The logo img must be present (getLogoUrl returned a URL)
     expect(screen.getByAltText("Netflix")).toBeInTheDocument();
   });

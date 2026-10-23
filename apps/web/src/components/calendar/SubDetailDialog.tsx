@@ -27,7 +27,7 @@ import { paymentRecordsService } from "@/services/paymentRecords";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
 import { InfoRow } from "./InfoRow";
-import { getLogoUrl, toMain } from "./types";
+import { getLogoUrl, toDateStr, toMain } from "./types";
 
 interface SubDetailDialogProps {
   sub: Subscription;
@@ -49,7 +49,6 @@ export function SubDetailDialog({
   date,
   currencies,
   mainCurrency,
-  paymentTracking,
   paymentRecord,
   onClose,
   onEdit,
@@ -74,10 +73,10 @@ export function SubDetailDialog({
 
   const dLeft = daysUntil(sub.next_payment);
   const isPaid = !!paymentRecord?.paid_at;
-  const amount = isPaid ? (paymentRecord.amount ?? sub.price) : sub.price;
+  const amount = paymentRecord?.amount ?? sub.price;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const isOverdue = paymentTracking && !isPaid && date < today;
+  const isAwaitingConfirmation = !isPaid && date <= today;
 
   const proofUrl = paymentRecord ? paymentRecordsService.proofUrl(paymentRecord) : null;
 
@@ -143,13 +142,13 @@ export function SubDetailDialog({
         </DialogHeader>
 
         <div className="p-4 space-y-5 sm:p-6">
-          {(paymentTracking || isPaid) && !credit && (
+          {!credit && (
             <div
               className={cn(
                 "flex items-center gap-3 rounded-2xl border px-4 py-3.5",
                 isPaid
                   ? "bg-green-500/10 border-green-500/20"
-                  : isOverdue
+                  : isAwaitingConfirmation
                     ? "bg-red-500/10 border-red-500/20"
                     : "bg-muted/50 border-border",
               )}
@@ -178,11 +177,11 @@ export function SubDetailDialog({
                     </a>
                   )}
                 </>
-              ) : isOverdue ? (
+              ) : isAwaitingConfirmation ? (
                 <>
                   <CircleDot className="h-5 w-5 text-red-500 shrink-0" />
                   <p className="font-semibold text-red-700 dark:text-red-400">
-                    {t("overdue")} · {t("not_paid")}
+                    {t("payment_confirmation_pending")}
                   </p>
                 </>
               ) : (
@@ -198,6 +197,14 @@ export function SubDetailDialog({
             <div className="rounded-2xl border bg-card p-4">
               <p className="text-sm font-semibold mb-3">{t("details")}</p>
               <div className="space-y-3">
+                {!credit && paymentRecord && !sub.standalone_payment_id && (
+                  <InfoRow
+                    icon={<CalendarDays className="h-4 w-4" />}
+                    label={t("historical_due_date")}
+                  >
+                    {formatDate(toDateStr(date))}
+                  </InfoRow>
+                )}
                 <InfoRow
                   icon={<CalendarDays className="h-4 w-4" />}
                   label={t(
@@ -306,7 +313,7 @@ export function SubDetailDialog({
             <Button variant="outline" onClick={onClose}>
               {t("close")}
             </Button>
-            {paymentTracking && !credit && !isPaid && (
+            {!credit && !isPaid && (
               <Button
                 variant="outline"
                 className="border-green-500/40 text-green-700 dark:text-green-400"

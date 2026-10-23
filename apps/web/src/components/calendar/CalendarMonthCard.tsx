@@ -5,8 +5,8 @@ import { useTranslation } from "react-i18next";
 import { DOW_KEYS, MONTH_KEYS } from "@/components/calendar/constants";
 import {
   type DayEntry,
-  getColorForSub,
   getPaymentRecord,
+  PAYMENT_COLORS,
   toDateStr,
 } from "@/components/calendar/types";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
@@ -61,7 +61,6 @@ export function CalendarMonthCard({
   entriesByDay,
   mainCurrency,
   currencyById,
-  paymentTracking,
   paymentRecords,
   onPrev,
   onNext,
@@ -215,19 +214,22 @@ export function CalendarMonthCard({
 
                   {!loading ? (
                     <div className="space-y-1">
-                      {entries.map(({ sub, date, amount }, entryIndex) => {
+                      {entries.map(({ sub, date, amount }) => {
                         const credit = isCredit(sub);
-                        const colorClass = getColorForSub(sub, entryIndex);
                         const dateStr = toDateStr(date);
                         const paymentRecord = !credit
                           ? getPaymentRecord(paymentRecords, sub.id, dateStr)
                           : undefined;
                         const isPaid = !!paymentRecord?.paid_at;
-                        const isOverdue =
-                          paymentTracking &&
+                        const isAwaitingConfirmation =
                           !credit &&
                           !isPaid &&
-                          date < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                          date <= new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        const colorClass = isPaid
+                          ? PAYMENT_COLORS.paid
+                          : isAwaitingConfirmation
+                            ? PAYMENT_COLORS.awaitingConfirmation
+                            : PAYMENT_COLORS.upcoming;
 
                         return (
                           <div
@@ -244,10 +246,10 @@ export function CalendarMonthCard({
 
                             <span className="calendar-payment-name sr-only">{sub.name}</span>
 
-                            {(paymentTracking || isPaid) && !credit && (isPaid || isOverdue) ? (
+                            {!credit && (isPaid || isAwaitingConfirmation) ? (
                               <span
                                 className="absolute -right-0.5 -top-0.5 shrink-0 sm:static"
-                                title={t(isPaid ? "paid" : "overdue")}
+                                title={t(isPaid ? "paid" : "payment_confirmation_pending")}
                               >
                                 {isPaid ? (
                                   <CheckCircle2
@@ -260,7 +262,9 @@ export function CalendarMonthCard({
                                     className="h-3 w-3 text-red-600 dark:text-red-400"
                                   />
                                 )}
-                                <span className="sr-only">{t(isPaid ? "paid" : "overdue")}</span>
+                                <span className="sr-only">
+                                  {t(isPaid ? "paid" : "payment_confirmation_pending")}
+                                </span>
                               </span>
                             ) : null}
 

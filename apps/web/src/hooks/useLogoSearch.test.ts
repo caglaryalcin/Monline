@@ -1,3 +1,5 @@
+import { File as NodeFile } from "node:buffer";
+
 import { act, renderHook, waitFor } from "@testing-library/react";
 
 import { api } from "@/lib/api";
@@ -46,6 +48,8 @@ describe("useLogoSearch", () => {
   });
 
   it("uses the authenticated download when CORS blocks fetching a provider image", async () => {
+    // Node's Response returns Node Blobs; use a matching File implementation.
+    vi.stubGlobal("File", NodeFile);
     const svg = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h48v48H0z"/></svg>';
     vi.mocked(api.get).mockResolvedValue({ contentType: "image/svg+xml", base64: btoa(svg) });
     vi.stubGlobal(

@@ -29,7 +29,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLogoSearch } from "@/hooks/useLogoSearch";
 import type { SubscriptionFormValues } from "@/hooks/useSubscriptionForm";
 import { useSubscriptionForm } from "@/hooks/useSubscriptionForm";
-import { type BackfillSelection,localToday } from "@/lib/backfillPayments";
+import { type BackfillSelection, localToday } from "@/lib/backfillPayments";
 import {
   availableBillingPresets,
   CUSTOM_BILLING_PRESET,
@@ -736,13 +736,22 @@ export function SubscriptionFormModal({
             </div>
             {!!authUser?.payment_tracking && !isCredit && (
               <div className="flex items-center justify-between">
-                <Label htmlFor="subscription-auto-mark-paid">{t("auto_mark_paid")}</Label>
+                <div className="space-y-1 pr-4">
+                  <Label htmlFor="subscription-auto-mark-paid">{t("auto_mark_paid")}</Label>
+                  <p
+                    id="subscription-auto-mark-paid-hint"
+                    className="text-xs text-muted-foreground"
+                  >
+                    {t("auto_mark_paid_calendar_hint")}
+                  </p>
+                </div>
                 <Controller
                   name="auto_mark_paid"
                   control={control}
                   render={({ field }) => (
                     <Switch
                       id="subscription-auto-mark-paid"
+                      aria-describedby="subscription-auto-mark-paid-hint"
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />

@@ -197,6 +197,15 @@ class Repository {
     this.connection.exec(
       "UPDATE subscriptions SET billing_anchor_day = CAST(substr(next_payment, 9, 2) AS INTEGER) WHERE billing_anchor_day = 0 AND length(next_payment) >= 10",
     );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("subscriptions")')
+        .all()
+        .some((column) => column.name === "calendar_history_recovery_passes")
+    )
+      this.connection.exec(
+        "ALTER TABLE subscriptions ADD COLUMN calendar_history_recovery_passes REAL NOT NULL DEFAULT 0",
+      );
     const notificationColumns = new Set(
       this.connection
         .prepare('PRAGMA table_info("notifications_config")')

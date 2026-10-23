@@ -9,9 +9,10 @@ function validDate(value) {
 }
 
 // Always advance from the original day: Jan 31 -> Feb 28 -> Mar 31.
-function backfillDates({
+function* iterateBackfillDates({
   start,
   anchorDate = start,
+  billingAnchorDay,
   until,
   cycle,
   frequency,
@@ -33,6 +34,12 @@ function backfillDates({
   )
     throw new Error("backfill_invalid_schedule");
   const anchor = new Date(anchorDate + "T00:00:00.000Z");
+  const dayOfMonth =
+    Number.isInteger(billingAnchorDay) &&
+    billingAnchorDay >= 1 &&
+    billingAnchorDay <= 31
+      ? billingAnchorDay
+      : anchor.getUTCDate();
   const beginning = new Date(start + "T00:00:00.000Z");
   const monthStep = months[cycle] * frequency;
   const firstIndex = monthStep
@@ -47,8 +54,8 @@ function backfillDates({
           (86400000 * frequency * (cycle === "Weekly" ? 7 : 1)),
       );
   const cutoff = end && end < until ? end : until;
-  const dates = [];
-  for (let index = firstIndex; !limit || dates.length < limit; index++) {
+  let count = 0;
+  for (let index = firstIndex; !limit || count < limit; index++) {
     let date;
     if (months[cycle]) {
       const target = new Date(anchor.getTime());
@@ -59,7 +66,7 @@ function backfillDates({
       const last = new Date(target.getTime());
       last.setUTCMonth(last.getUTCMonth() + 1);
       last.setUTCDate(0);
-      target.setUTCDate(Math.min(anchor.getUTCDate(), last.getUTCDate()));
+      target.setUTCDate(Math.min(dayOfMonth, last.getUTCDate()));
       date = target;
     } else {
       date = new Date(anchor.getTime());
@@ -71,10 +78,22 @@ function backfillDates({
     const day = date.toISOString().slice(0, 10);
     if (day > cutoff) break;
     if (day < start) continue;
+    count++;
+    yield day;
+  }
+}
+function backfillDates(options) {
+  const dates = [];
+  for (const day of iterateBackfillDates(options)) {
     if (dates.length === MAX_BACKFILL_PAYMENTS)
       throw new Error("backfill_too_many");
     dates.push(day);
   }
   return dates;
 }
-module.exports = { backfillDates, validDate, MAX_BACKFILL_PAYMENTS };
+module.exports = {
+  backfillDates,
+  iterateBackfillDates,
+  validDate,
+  MAX_BACKFILL_PAYMENTS,
+};

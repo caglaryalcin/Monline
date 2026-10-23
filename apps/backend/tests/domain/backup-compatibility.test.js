@@ -14,6 +14,11 @@ it("restores older full archives with payment history into a new installation us
   try {
     source.connection.exec(`
       INSERT INTO users (id,email) VALUES ('aaaaaaaaaaaaaaa','backup@example.test');
+      INSERT INTO cycles (id,name) VALUES ('ddddddddddddddd','Monthly');
+      INSERT INTO currencies (id,user,code,name,symbol,rate)
+        VALUES ('eeeeeeeeeeeeeee','aaaaaaaaaaaaaaa','TRY','Turkish Lira','₺',1);
+      INSERT INTO subscriptions (id,user,name,price,frequency,currency,cycle,start_date,next_payment,auto_renew)
+        VALUES ('ccccccccccccccc','aaaaaaaaaaaaaaa','Amazon Prime',69.9,1,'eeeeeeeeeeeeeee','ddddddddddddddd','2026-09-01','2026-11-01',1);
       INSERT INTO payment_records (id,user,subscription_id,due_date,paid_at,amount)
         VALUES ('bbbbbbbbbbbbbbb','aaaaaaaaaaaaaaa','ccccccccccccccc','2026-10-01','2026-10-01T12:00:00Z',69.9);
       ALTER TABLE payment_records DROP COLUMN name;
@@ -24,6 +29,7 @@ it("restores older full archives with payment history into a new installation us
       ALTER TABLE payment_records DROP COLUMN payer;
       ALTER TABLE payment_records DROP COLUMN payment_method;
       ALTER TABLE subscriptions DROP COLUMN statement_imported;
+      ALTER TABLE subscriptions DROP COLUMN calendar_history_recovery_passes;
       ALTER TABLE payment_methods DROP COLUMN is_main;
       ALTER TABLE household DROP COLUMN is_main;
     `);
@@ -73,6 +79,24 @@ it("restores older full archives with payment history into a new installation us
     const result = await response.json();
     expect(response.status, JSON.stringify(result)).toBe(200);
     expect(target.countRecords("users")).toBe(1);
+    expect(
+      target
+        .findRecordById("subscriptions", "ccccccccccccccc")
+        .getFloat("calendar_history_recovery_passes"),
+    ).toBe(2);
+    const [recovered] = target.findRecordsByFilter(
+      "payment_records",
+      "subscription_id = {:sub} && due_date = {:date}",
+      "",
+      0,
+      0,
+      { sub: "ccccccccccccccc", date: "2026-09-01" },
+    );
+    expect(recovered.publicExport()).toMatchObject({
+      paid_at: "",
+      amount: 69.9,
+      auto_paid: false,
+    });
     expect(
       target
         .findRecordById("payment_records", "bbbbbbbbbbbbbbb")

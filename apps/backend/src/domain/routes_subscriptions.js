@@ -460,9 +460,6 @@ routerAdd("POST", "/api/subscription/clone", (e) => {
 routerAdd("POST", "/api/subscription/renew", (e) => {
   const dateHelpers = require(domainPath + "/lib/date-helpers.js");
   const recordTypes = require(domainPath + "/lib/pure/record-types.js");
-  const subscriptionLimits = require(
-    domainPath + "/lib/pure/subscription-limits.js",
-  );
   if (!e.auth) throw new ForbiddenError("Authentication required");
   const data = e.requestInfo().body;
   const subId = data.id;
@@ -483,32 +480,14 @@ routerAdd("POST", "/api/subscription/renew", (e) => {
       error: "Credits cannot be renewed",
     });
   }
-  const cycleRecord = repository.findRecordById("cycles", sub.get("cycle"));
-  const cycleName = cycleRecord.get("name");
-  const frequency = sub.get("frequency");
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const result = subscriptionLimits.advanceFiniteSchedule({
-    nextPayment: sub.get("next_payment"),
-    today: dateHelpers.formatLocalDate(today),
-    cycleName: cycleName,
-    frequency: frequency,
-    billingAnchorDay: sub.get("billing_anchor_day"),
-    endDate: sub.get("end_date"),
-    paymentLimit: sub.get("payment_limit"),
-    paymentsCompleted: sub.get("payments_completed"),
-    inactive: sub.get("inactive"),
-    advanceDate: dateHelpers.advanceDate,
-  });
-  sub.set("__monline_schedule_advance", true);
-  sub.set("next_payment", result.nextPayment);
-  sub.set("payments_completed", result.paymentsCompleted);
-  sub.set("inactive", result.inactive);
-  repository.save(sub);
+  require(domainPath + "/lib/subscription-schedule.js").advanceSubscription(
+    repository, sub.id, dateHelpers.formatLocalDate(new Date()),
+  );
+  const updated = repository.findRecordById("subscriptions", sub.id);
   return e.json(200, {
-    next_payment: sub.get("next_payment"),
-    payments_completed: sub.get("payments_completed"),
-    inactive: sub.get("inactive"),
+    next_payment: updated.get("next_payment"),
+    payments_completed: updated.get("payments_completed"),
+    inactive: updated.get("inactive"),
   });
 });
 

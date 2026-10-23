@@ -2498,3 +2498,35 @@ it("requires a second factor before issuing a session and consumes challenges on
     );
   }
 });
+
+it("recovers pending history through the API and confirms the same record later", async () => {
+  const now = new Date();
+  const due = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 10);
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
+  const created = await request("/api/data/subscriptions", { token: owner.token, method: "POST", body: {
+    name: "Pending history recovery", price: 69.9, cycle: cycle.id, currency: currency.id,
+    category: category.id, frequency: 1, start_date: due, next_payment: next,
+  } });
+  expect(created.status).toBe(201);
+  const id = created.data.id;
+  try {
+    const input = { confirmed: true, mark_as_paid: false, utc_offset_minutes: 0,
+      payments: [{ due_date: due, amount: 49.9, paid_utc_offset_minutes: 0 }] };
+    const recover = () => request(`/api/data/subscriptions/${id}`, { token: owner.token, method: "PATCH", body: { historical_payments: input } });
+    expect((await recover()).status).toBe(200);
+    expect((await recover()).status).toBe(200);
+    const records = () => request("/api/data/payment_records", { token: owner.token }).then((response) => response.data.items.filter((item) => item.subscription_id === id));
+    const pending = await records();
+    expect(pending).toHaveLength(1);
+    expect(pending[0]).toMatchObject({ due_date: due, amount: 49.9, paid_at: "", auto_paid: false });
+    const paid = await request("/api/payments/history", { token: owner.token, method: "POST", body: {
+      subscription_id: id, due_date: due, paid_date: due, amount: 49.9,
+      utc_offset_minutes: 0, paid_utc_offset_minutes: 0,
+    } });
+    expect(paid.status).toBe(201);
+    expect((await records())[0]).toMatchObject({ id: pending[0].id, amount: 49.9 });
+    expect((await records())[0].paid_at).toBeTruthy();
+  } finally {
+    await request(`/api/data/subscriptions/${id}`, { token: owner.token, method: "DELETE" });
+  }
+});

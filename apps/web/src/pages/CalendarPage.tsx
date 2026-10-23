@@ -91,7 +91,11 @@ export function CalendarPage() {
 
   const paymentTracking = !!user?.payment_tracking;
 
-  const { data: subscriptions = [], isLoading: loadingSubscriptions } = useQuery({
+  const {
+    data: subscriptions = [],
+    isLoading: loadingSubscriptions,
+    isError: subscriptionsError,
+  } = useQuery({
     queryKey: queryKeys.subscriptions.all(userId),
     queryFn: () => subscriptionsService.list(userId),
     enabled: !!userId,
@@ -102,7 +106,11 @@ export function CalendarPage() {
     queryFn: () => cyclesService.list(),
   });
 
-  const { data: currencies = [] } = useQuery({
+  const {
+    data: currencies = [],
+    isLoading: loadingCurrencies,
+    isError: currenciesError,
+  } = useQuery({
     queryKey: queryKeys.currencies.all(userId),
     queryFn: () => currenciesService.list(userId),
     enabled: !!userId,
@@ -126,7 +134,11 @@ export function CalendarPage() {
     enabled: !!userId,
   });
 
-  const { data: paymentRecords = [], isLoading: loadingPayments } = useQuery({
+  const {
+    data: paymentRecords = [],
+    isLoading: loadingPayments,
+    isError: paymentsError,
+  } = useQuery({
     queryKey: queryKeys.paymentRecords.all(userId),
     queryFn: () => paymentRecordsService.listForUser(userId),
     enabled: !!userId,
@@ -228,7 +240,9 @@ export function CalendarPage() {
         count={stats.count}
         total={stats.total}
         due={stats.due}
-        loading={loadingSubscriptions}
+        awaitingConfirmation={stats.awaitingConfirmation}
+        loading={loadingSubscriptions || loadingCurrencies || loadingPayments}
+        hasError={subscriptionsError || currenciesError || paymentsError}
         mainCurrency={mainCurrency}
         budgetOverrun={budgetOverrun}
       />

@@ -229,7 +229,7 @@ describe("MarkAsPaidModal", () => {
     );
   });
 
-  it("falls back to sub.price when the entered amount is invalid or zero", async () => {
+  it("preserves a zero amount when confirming a pending payment", async () => {
     renderComponent({
       id: "rec-1",
       subscription_id: "sub-1",
@@ -247,7 +247,7 @@ describe("MarkAsPaidModal", () => {
       expect(update).toHaveBeenCalledWith(
         "rec-1",
         expect.objectContaining({
-          amount: sub.price,
+          amount: 0,
         }),
       ),
     );

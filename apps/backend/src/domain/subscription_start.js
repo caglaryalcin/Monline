@@ -2,6 +2,10 @@ const { onRecordCreate, onRecordUpdate } = require("../runtime.cjs");
 const { automaticStartDate } = require("./lib/pure/subscription-start.js");
 
 onRecordCreate((e) => {
+  // New subscriptions already use durable period records. Only records restored
+  // from an older version need the one-off historical recovery.
+  if (e.record.get("__monline_restore") !== true)
+    e.record.set("calendar_history_recovery_passes", 2);
   const anchor = Number(e.record.get("billing_anchor_day"));
   if (
     e.record.get("__monline_restore") !== true ||

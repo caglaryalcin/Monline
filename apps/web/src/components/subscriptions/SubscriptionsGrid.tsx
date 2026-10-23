@@ -3,7 +3,10 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { SubscriptionCard } from "@/components/subscriptions/SubscriptionCard";
-import type { SubscriptionPriceDisplay } from "@/components/subscriptions/subscriptionsPage.types";
+import type {
+  SubscriptionAutomationSetting,
+  SubscriptionPriceDisplay,
+} from "@/components/subscriptions/subscriptionsPage.types";
 import { cn } from "@/lib/utils";
 import type { Currency, Subscription } from "@/types";
 
@@ -80,6 +83,9 @@ interface SubscriptionsGridProps {
   onDelete: (id: string) => void;
   onToggleActive?: (subscription: Subscription) => void;
   statusPendingId?: string | null;
+  onToggleAutomation?: (subscription: Subscription, setting: SubscriptionAutomationSetting) => void;
+  automationPending?: boolean;
+  showAutoMarkPaid?: boolean;
 }
 
 export function SubscriptionsGrid({
@@ -98,6 +104,9 @@ export function SubscriptionsGrid({
   onDelete,
   onToggleActive,
   statusPendingId,
+  onToggleAutomation,
+  automationPending,
+  showAutoMarkPaid,
 }: SubscriptionsGridProps) {
   const [priceDisplays, setPriceDisplays] = useState<Record<string, SubscriptionPriceDisplay>>({});
   if (isLoading) {
@@ -130,7 +139,12 @@ export function SubscriptionsGrid({
         onDelete={() => onDelete(subscription.id)}
         onToggleActive={onToggleActive ? () => onToggleActive(subscription) : undefined}
         statusPending={statusPendingId === subscription.id}
-        statusDisabled={!!statusPendingId}
+        statusDisabled={!!statusPendingId || automationPending}
+        onToggleAutomation={
+          onToggleAutomation ? (setting) => onToggleAutomation(subscription, setting) : undefined
+        }
+        automationDisabled={automationPending || !!statusPendingId}
+        showAutoMarkPaid={showAutoMarkPaid}
       />
     ));
 

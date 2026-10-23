@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   deleteSubscription: vi.fn(),
   cloneSubscription: vi.fn(),
   renewSubscription: vi.fn(),
+  updateSubscription: vi.fn(),
   updateRates: vi.fn(),
   toastWarning: vi.fn(),
   exportSubscriptions: vi.fn(),
@@ -54,6 +55,7 @@ vi.mock("@/services/subscriptions", () => ({
     delete: mocks.deleteSubscription,
     clone: mocks.cloneSubscription,
     renew: mocks.renewSubscription,
+    update: mocks.updateSubscription,
     export: mocks.exportSubscriptions,
     import: mocks.importSubscriptions,
   },
@@ -150,6 +152,8 @@ vi.mock("@/components/subscriptions/SubscriptionsGrid", () => ({
     renewPending,
     onHistory,
     onDelete,
+    onToggleAutomation,
+    automationPending,
   }: {
     subscriptions: Array<{ id: string; name: string }>;
     layout: "grid" | "list";
@@ -159,10 +163,29 @@ vi.mock("@/components/subscriptions/SubscriptionsGrid", () => ({
     renewPending?: boolean;
     onHistory: (subscription: { id: string; name: string }) => void;
     onDelete: (id: string) => void;
+    onToggleAutomation: (
+      subscription: { id: string; name: string },
+      setting: "auto_renew" | "auto_mark_paid",
+    ) => void;
+    automationPending?: boolean;
   }) => (
     <div>
       <div>grid:{subscriptions.length}</div>
       <div>layout:{layout}</div>
+      <button
+        type="button"
+        disabled={automationPending}
+        onClick={() => onToggleAutomation(subscriptions[0], "auto_renew")}
+      >
+        toggle-auto-renew
+      </button>
+      <button
+        type="button"
+        disabled={automationPending}
+        onClick={() => onToggleAutomation(subscriptions[0], "auto_mark_paid")}
+      >
+        toggle-auto-paid
+      </button>
       <button type="button" onClick={() => onEdit(subscriptions[0])}>
         edit-subscription
       </button>
@@ -306,6 +329,55 @@ describe("SubscriptionsPage", () => {
       expect(invalidateQueries).toHaveBeenCalledWith();
       expect(screen.queryByText("form:new")).not.toBeInTheDocument();
     });
+  });
+
+  it.each([
+    ["toggle-auto-renew", "auto_renew"],
+    ["toggle-auto-paid", "auto_mark_paid"],
+  ] as const)(
+    "saves %s directly and blocks repeated changes during saving",
+    async (label, setting) => {
+      let resolveUpdate!: (value: unknown) => void;
+      mocks.updateSubscription.mockReturnValue(
+        new Promise((resolve) => {
+          resolveUpdate = resolve;
+        }),
+      );
+      const { client, Wrapper } = createQueryClientWrapper();
+      const invalidate = vi.spyOn(client, "invalidateQueries").mockResolvedValue(undefined);
+      render(<SubscriptionsPage />, { wrapper: Wrapper });
+      await screen.findByText("grid:1");
+      fireEvent.click(screen.getByRole("button", { name: label }));
+      await waitFor(() =>
+        expect(mocks.updateSubscription).toHaveBeenCalledWith("sub-1", { [setting]: true }),
+      );
+      expect(screen.getByRole("button", { name: "toggle-auto-renew" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "toggle-auto-paid" })).toBeDisabled();
+      resolveUpdate({
+        id: "sub-1",
+        auto_renew: setting === "auto_renew",
+        auto_mark_paid: setting === "auto_mark_paid",
+      });
+      await waitFor(() => expect(invalidate).toHaveBeenCalledWith());
+      expect(
+        client.getQueryData<Array<Record<string, unknown>>>(
+          queryKeys.subscriptions.all("user-1"),
+        )?.[0][setting],
+      ).toBe(true);
+    },
+  );
+
+  it("keeps the saved automation state when updating fails", async () => {
+    mocks.updateSubscription.mockRejectedValue(new Error("network failure"));
+    const original = { id: "sub-1", name: "Netflix", auto_renew: false, auto_mark_paid: false };
+    mocks.listSubscriptions.mockResolvedValue([original]);
+    const { client, Wrapper } = createQueryClientWrapper();
+    render(<SubscriptionsPage />, { wrapper: Wrapper });
+    await screen.findByText("grid:1");
+    fireEvent.click(screen.getByRole("button", { name: "toggle-auto-renew" }));
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith("unknown_error"));
+    expect(client.getQueryData(queryKeys.subscriptions.all("user-1"))).toEqual([original]);
+    expect(screen.getByRole("button", { name: "toggle-auto-renew" })).toBeEnabled();
   });
 
   it("handles edit, clone, renew, and delete flows with query invalidation", async () => {

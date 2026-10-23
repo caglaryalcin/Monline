@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useLocalToday } from "@/hooks/useLocalToday";
 import type { MonthlyBudgetEntry } from "@/lib/monthlyBudget";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export function BudgetOverviewCard({
   formatValue,
 }: BudgetOverviewCardProps) {
   const { t, i18n } = useTranslation();
+  const today = useLocalToday();
   const language = (i18n?.resolvedLanguage ?? i18n?.language ?? "en").replace("_", "-");
   const month = new Intl.DateTimeFormat(language, { month: "long", year: "numeric" }).format(
     new Date(),
@@ -140,7 +142,11 @@ export function BudgetOverviewCard({
                         <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                           <time
                             dateTime={entry.date}
-                            className={entry.status === "overdue" ? "text-destructive" : undefined}
+                            className={
+                              entry.status !== "paid" && entry.date <= today
+                                ? "text-red-600 dark:text-red-400"
+                                : undefined
+                            }
                           >
                             {dateLabel(entry.date)}
                           </time>
@@ -167,7 +173,11 @@ export function BudgetOverviewCard({
                                   : undefined
                             }
                           >
-                            {t(`budget_status_${entry.status}`)}
+                            {t(
+                              entry.status === "overdue"
+                                ? "not_paid"
+                                : `budget_status_${entry.status}`,
+                            )}
                           </span>
                         </p>
                       </div>

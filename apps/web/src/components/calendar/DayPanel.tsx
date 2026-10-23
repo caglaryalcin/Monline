@@ -13,9 +13,9 @@ import type { Currency, PaymentRecord } from "@/types";
 
 import {
   type DayEntry,
-  getColorForSub,
   getLogoUrl,
   getPaymentRecord,
+  PAYMENT_COLORS,
   toDateStr,
   toMain,
 } from "./types";
@@ -46,7 +46,6 @@ export function DayPanel({
   currencies,
   now,
   t,
-  paymentTracking,
   paymentRecords,
   onSelectEntry,
   onClose,
@@ -91,7 +90,7 @@ export function DayPanel({
         {/* Subscription list */}
         {entries.length > 0 && (
           <div className="divide-y">
-            {entries.map((entry, idx) => {
+            {entries.map((entry) => {
               const { sub, date, amount } = entry;
               const credit = isCredit(sub);
               const logo = getLogoUrl(sub);
@@ -99,24 +98,31 @@ export function DayPanel({
               const cycle = sub.expand?.cycle;
               const category = sub.expand?.category;
               const diffDays = Math.ceil((thisDay.getTime() - today.getTime()) / 86400000);
-              const colorClass = getColorForSub(sub, idx);
               const dateStr = toDateStr(date);
               const rec = !credit ? getPaymentRecord(paymentRecords, sub.id, dateStr) : undefined;
               const isPaid = !!rec?.paid_at;
-              const isOverdue = paymentTracking && !credit && !isPaid && thisDay < today;
+              const isAwaitingConfirmation = !credit && !isPaid && thisDay <= today;
+              const colorClass = isPaid
+                ? PAYMENT_COLORS.paid
+                : isAwaitingConfirmation
+                  ? PAYMENT_COLORS.awaitingConfirmation
+                  : PAYMENT_COLORS.upcoming;
 
               return (
                 <button
                   key={sub.id}
                   type="button"
                   onClick={() => onSelectEntry(entry)}
-                  className="group flex w-full min-w-0 items-center gap-2 px-4 py-3 text-left transition-colors sm:gap-4"
+                  className={cn(
+                    "group flex w-full min-w-0 items-center gap-2 px-4 py-3 text-left transition-colors sm:gap-4",
+                    colorClass,
+                  )}
                 >
                   {/* Logo */}
                   {logo ? (
                     <div className="h-11 w-11 shrink-0 rounded-xl overflow-hidden border bg-background p-1.5 relative">
                       <SubscriptionLogo sub={sub} className="h-full w-full object-contain" />
-                      {isOverdue && (
+                      {isAwaitingConfirmation && (
                         <span className="absolute -bottom-1 -right-1 rounded-full bg-red-500 p-0.5">
                           <CircleDot className="h-3 w-3 text-white" />
                         </span>
@@ -130,7 +136,7 @@ export function DayPanel({
                       )}
                     >
                       {sub.name[0]?.toUpperCase()}
-                      {isOverdue && (
+                      {isAwaitingConfirmation && (
                         <span className="absolute -bottom-1 -right-1 rounded-full bg-red-500 p-0.5">
                           <CircleDot className="h-3 w-3 text-white" />
                         </span>
@@ -162,12 +168,12 @@ export function DayPanel({
                           {t("paid")}
                         </Badge>
                       )}
-                      {isOverdue && (
+                      {isAwaitingConfirmation && (
                         <Badge
-                          variant="destructive"
-                          className="text-[10px] h-4 px-1.5 rounded-full"
+                          variant="outline"
+                          className="text-[10px] h-4 px-1.5 rounded-full border-red-500/30 text-red-700 dark:text-red-400"
                         >
-                          {t("overdue")}
+                          {t("payment_confirmation_pending")}
                         </Badge>
                       )}
                     </div>
