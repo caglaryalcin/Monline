@@ -58,15 +58,20 @@ HTTP requests are limited per client IP and running instance: 600 requests per m
 
 Monline checks its official GitHub releases automatically. Newer stable versions appear in the sidebar with a release-notes link. Checks are cached for one hour. Install updates by pulling the new Docker image and recreating the container.
 
-GitHub Actions publishes **AMD64 and ARM64** images to `ghcr.io/caglaryalcin/monline`:
+GitHub Actions publishes the same **AMD64 and ARM64** image to both registries:
 
-| Trigger                    | Image tags        |
-| -------------------------- | ----------------- |
-| Release tag, e.g. `v1.1.0` | `1.1.0`, `latest` |
+| Registry | Image |
+| -------- | ----- |
+| GitHub Container Registry (GHCR) | `ghcr.io/caglaryalcin/monline` |
+| Docker Hub | `caglaryalcin/monline` |
 
-Images are published only for version tags; pushes to `main` do not publish images. Release tags must match the root, frontend and server package versions. Prereleases publish only their full version and leave `latest` unchanged. Publishing uses GitHub's built-in `GITHUB_TOKEN`.
+| Trigger | Image tags |
+| ------- | ---------- |
+| Release tag, e.g. `v1.1.0` | `v1.1.0`, `1.1.0`, `1.1`, `1`, `latest` |
 
-For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.1.0`, omit `build`, and run `docker compose up -d`. Authenticate to GHCR before pulling private images. Keep the package private unless you intend to publish it publicly.
+Images are published for version tags or by manually running the Docker Publish workflow for an existing release tag; pushes to `main` do not publish images. Release tags must match the root, frontend and server package versions. Prereleases publish only their full version tags and leave `latest` unchanged.
+
+For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.1.0` or `image: caglaryalcin/monline:1.1.0`, omit `build`, and run `docker compose up -d`.
 
 ## Contributors
 
