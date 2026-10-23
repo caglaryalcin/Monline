@@ -313,16 +313,6 @@ export function SubDetailDialog({
             <Button variant="outline" onClick={onClose}>
               {t("close")}
             </Button>
-            {!credit && !isPaid && (
-              <Button
-                variant="outline"
-                className="border-green-500/40 text-green-700 dark:text-green-400"
-                onClick={onMarkAsPaid}
-              >
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                {t("mark_as_paid")}
-              </Button>
-            )}
             {!credit && isPaid && (
               <Button variant="ghost" className="text-muted-foreground" onClick={onMarkAsPaid}>
                 <FileText className="h-4 w-4 mr-2" />
@@ -330,9 +320,15 @@ export function SubDetailDialog({
               </Button>
             )}
             {!sub.standalone_payment_id && (
-              <Button onClick={() => onEdit(sub)}>
+              <Button variant="outline" onClick={() => onEdit(sub)}>
                 <Pencil className="h-4 w-4 mr-2" />
                 {t("edit")}
+              </Button>
+            )}
+            {!credit && !isPaid && (
+              <Button onClick={onMarkAsPaid}>
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                {t("mark_as_paid")}
               </Button>
             )}
           </div>
