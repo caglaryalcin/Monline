@@ -4,13 +4,23 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing release tag to publish (for example, v1.1.0)
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: docker-${{ github.ref }}
+  group: docker-publish
   cancel-in-progress: false
+
+env:
+  VERSION: ${{ inputs.version || github.ref_name }}
+  DOCKERHUB_IMAGE: caglaryalcin/monline
 
 jobs:
   build-and-push:
@@ -22,9 +32,21 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout
+      - name: Validate publishing configuration
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
+          test -n "$DOCKERHUB_USERNAME"
+          test -n "$DOCKERHUB_TOKEN"
+
+      - name: Check out the release tag
         uses: actions/checkout@v6
         with:
+          ref: refs/tags/${{ env.VERSION }}
           persist-credentials: false
 
       - name: Prepare image name and verify release version
@@ -34,6 +56,7 @@ jobs:
           python3 - <<'PY'
           import json
           import os
+          import subprocess
           from pathlib import Path
 
           version = json.loads(Path("package.json").read_text())["version"]
@@ -41,13 +64,15 @@ jobs:
           server_version = json.loads(Path("apps/backend/package.json").read_text())["version"]
           if version != web_version or version != server_version:
               raise SystemExit("Root, web and server package versions must match.")
-          if os.environ["GITHUB_REF_TYPE"] == "tag":
-              if os.environ["GITHUB_REF_NAME"] != f"v{version}":
-                  raise SystemExit("Release tag must match the package version.")
+          if os.environ["VERSION"] != f"v{version}":
+              raise SystemExit("Release tag must match the package version.")
 
           image = "ghcr.io/" + os.environ["GITHUB_REPOSITORY"].lower()
+          revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
               output.write(f"image={image}\n")
+              output.write(f"version={version}\n")
+              output.write(f"revision={revision}\n")
           PY
 
       - name: Set up QEMU
@@ -65,19 +90,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Generate image tags and labels
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ steps.project.outputs.image }}
+          images: |
+            ${{ steps.project.outputs.image }}
+            ${{ env.DOCKERHUB_IMAGE }}
           flavor: latest=false
           tags: |
-            type=semver,pattern={{version}}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref_name, '-') }}
+            type=semver,pattern={{version}},value=${{ steps.project.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.project.outputs.version }},enable=${{ !contains(env.VERSION, '-') }}
+            type=semver,pattern={{major}},value=${{ steps.project.outputs.version }},enable=${{ !contains(env.VERSION, '-') }}
+            type=raw,value=${{ env.VERSION }}
+            type=raw,value=latest,enable=${{ !contains(env.VERSION, '-') }}
           labels: |
             org.opencontainers.image.title=Monline
             org.opencontainers.image.description=Self-hosted subscription and recurring payment tracking.
             org.opencontainers.image.licenses=GPL-3.0-only
+            org.opencontainers.image.version=${{ steps.project.outputs.version }}
+            org.opencontainers.image.revision=${{ steps.project.outputs.revision }}
 
       - name: Build and publish
         id: build
@@ -92,11 +130,15 @@ jobs:
           cache-from: type=gha,scope=monline
           cache-to: type=gha,mode=max,scope=monline
 
-      - name: Inspect published image
+      - name: Verify the same image in both registries
         env:
           IMAGE: ${{ steps.project.outputs.image }}
           DIGEST: ${{ steps.build.outputs.digest }}
-        run: docker buildx imagetools inspect "$IMAGE@$DIGEST"
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools inspect "$IMAGE@$DIGEST"
+          docker buildx imagetools inspect "$DOCKERHUB_IMAGE@$DIGEST"
 
       - name: Write publication summary
         env:
@@ -109,8 +151,9 @@ jobs:
           import os
 
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
-              summary.write("## Published Docker image\n\n")
-              summary.write(f"Image: {os.environ['IMAGE']}@{os.environ['DIGEST']}\n\n")
+              summary.write("## Published Docker images\n\n")
+              summary.write(f"GHCR: {os.environ['IMAGE']}@{os.environ['DIGEST']}\n\n")
+              summary.write(f"Docker Hub: {os.environ['DOCKERHUB_IMAGE']}@{os.environ['DIGEST']}\n\n")
               summary.write("Platforms: linux/amd64, linux/arm64\n\n")
               summary.write("Tags:\n\n")
               for tag in os.environ["IMAGE_TAGS"].splitlines():
