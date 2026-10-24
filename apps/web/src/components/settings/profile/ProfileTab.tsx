@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
+import { LanguageLabel } from "@/components/LanguageLabel";
 import {
   buildProfileSchema,
   type ProfileFormValues,
@@ -210,8 +211,8 @@ export function ProfileTab() {
                     </SelectTrigger>
                     <SelectContent>
                       {SUPPORTED_LANGUAGES.map((l) => (
-                        <SelectItem key={l.code} value={l.code}>
-                          {l.name}
+                        <SelectItem key={l.code} value={l.code} textValue={l.name}>
+                          <LanguageLabel {...l} />
                         </SelectItem>
                       ))}
                     </SelectContent>

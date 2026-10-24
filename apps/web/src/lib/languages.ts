@@ -15,4 +15,5 @@ export const SUPPORTED_LANGUAGES = [
   { code: "uk", name: "Українська" },
   { code: "cs", name: "Čeština" },
   { code: "da", name: "Dansk" },
+  { code: "bg", name: "Български" },
 ];

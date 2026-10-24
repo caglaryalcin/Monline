@@ -22,6 +22,7 @@ const LANGUAGES = new Set([
   "uk",
   "cs",
   "da",
+  "bg",
 ]);
 const CURRENCIES = new Set([
   "TRY",

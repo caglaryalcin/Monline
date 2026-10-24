@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import { LogoWithName } from "@/components/AppLogo";
+import { LanguageLabel } from "@/components/LanguageLabel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -215,8 +216,8 @@ export function RegisterPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {SUPPORTED_LANGUAGES.map((l) => (
-                        <SelectItem key={l.code} value={l.code}>
-                          {l.name}
+                        <SelectItem key={l.code} value={l.code} textValue={l.name}>
+                          <LanguageLabel {...l} />
                         </SelectItem>
                       ))}
                     </SelectContent>

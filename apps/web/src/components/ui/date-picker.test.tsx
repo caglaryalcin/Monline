@@ -23,6 +23,7 @@ async function renderPicker(language = "tr", value = "2026-06-01", openCalendar 
       tr: { translation: { today: "Bugün" } },
       en: { translation: { today: "Today" } },
       de: { translation: { today: "Heute" } },
+      bg: { translation: { today: "Днес" } },
     },
   });
   const onChange = vi.fn();
@@ -113,6 +114,22 @@ describe("localized date picker", () => {
     expect(screen.getByRole("button", { name: "Temizle" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Bugün" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sonraki aya git" })).toBeInTheDocument();
+  });
+  it("uses Bulgarian month names, weekdays and controls while keeping ISO dates", async () => {
+    const { user, onChange } = await renderPicker("bg");
+    expect(screen.getByRole("combobox", { name: "Изберете месец" })).toHaveTextContent("юни");
+    expect(screen.getAllByRole("columnheader", { hidden: true })[0]).toHaveAttribute(
+      "aria-label",
+      "понеделник",
+    );
+    expect(screen.getByRole("textbox", { name: "Başlangıç tarihi" })).toHaveAttribute(
+      "placeholder",
+      "ДД/ММ/ГГГГ",
+    );
+    expect(screen.getByRole("button", { name: "Днес" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Към следващия месец" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Изчистване" }));
+    expect(onChange).toHaveBeenCalledWith("");
   });
   it("stores a local ISO date and closes after a day is selected", async () => {
     const { user, onChange } = await renderPicker();

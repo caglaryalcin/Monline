@@ -74,6 +74,11 @@
     "body": "Konfigurace SMTP Monline funguje správně.",
     "logoAlt": "Logo Monline"
   },
+  "bg": {
+    "subject": "Monline — SMTP тест",
+    "body": "SMTP настройките на Monline работят правилно.",
+    "logoAlt": "Лого на Monline"
+  },
   "da": {
     "subject": "Monline — SMTP-test",
     "body": "Din SMTP-konfiguration til Monline fungerer korrekt.",

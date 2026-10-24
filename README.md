@@ -32,7 +32,7 @@ A self-hosted home for your subscriptions, recurring payments, and budget. React
 
 ![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/import-export.png)
 
-- **Your language, your theme** — Turkish, English, German, light/dark modes, and customizable accent colors.
+- **Your language, your theme** — Turkish, English, German, Bulgarian and more, light/dark modes, and customizable accent colors.
 - **Private accounts** — optional 30-day sign-in, two-factor authentication, trusted devices, OIDC sign-in, and scoped API keys.
 - **Payment reminders** — email and configurable notification providers, with SMTP tests during setup and in settings, and email templates that follow the selected language.
 
@@ -67,11 +67,11 @@ GitHub Actions publishes the same **AMD64 and ARM64** image to both registries:
 
 | Trigger | Image tags |
 | ------- | ---------- |
-| Release tag, e.g. `v1.2.1` | `v1.2.1`, `1.2.1`, `1.2`, `1`, `latest` |
+| Release tag, e.g. `v1.3.0` | `v1.3.0`, `1.3.0`, `1.3`, `1`, `latest` |
 
 Images are published for version tags or by manually running the Docker Publish workflow for an existing release tag; pushes to `main` do not publish images. Release tags must match the root, frontend and server package versions. Prereleases publish only their full version tags and leave `latest` unchanged.
 
-For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.2.1` or `image: caglaryalcin/monline:1.2.1`, omit `build`, and run `docker compose up -d`.
+For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.3.0` or `image: caglaryalcin/monline:1.3.0`, omit `build`, and run `docker compose up -d`.
 
 ## Contributors
 

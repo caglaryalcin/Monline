@@ -44,7 +44,7 @@ beforeAll(() => {
 });
 
 beforeEach(() => send.mockClear());
-it.each(["tr", "en", "de"])(
+it.each(["tr", "en", "de", "bg"])(
   "uses the setup template for both settings email tests in %s",
   async (selectedLanguage) => {
     language = selectedLanguage;

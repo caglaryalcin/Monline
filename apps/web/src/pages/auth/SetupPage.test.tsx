@@ -127,18 +127,19 @@ describe("setup SMTP test button", () => {
     );
     expect(screen.getByRole("button", { name: "next" })).toBeEnabled();
   });
-  it("includes the selected installation language in the SMTP test", async () => {
-    mocks.i18n.resolvedLanguage = "tr";
-    const user = await openSmtpStep();
-    await enableSmtp(user);
-    vi.mocked(setupService.testSmtp).mockResolvedValue({ message: "setup_smtp_test_success" });
-    await user.click(screen.getByRole("button", { name: "send_test_email" }));
-    await waitFor(() =>
-      expect(setupService.testSmtp).toHaveBeenCalledWith(
-        expect.objectContaining({ language: "tr" }),
-      ),
-    );
-  });
+  it.each(["tr", "bg"])(
+    "includes the selected installation language %s in the SMTP test",
+    async (language) => {
+      mocks.i18n.resolvedLanguage = language;
+      const user = await openSmtpStep();
+      await enableSmtp(user);
+      vi.mocked(setupService.testSmtp).mockResolvedValue({ message: "setup_smtp_test_success" });
+      await user.click(screen.getByRole("button", { name: "send_test_email" }));
+      await waitFor(() =>
+        expect(setupService.testSmtp).toHaveBeenCalledWith(expect.objectContaining({ language })),
+      );
+    },
+  );
 
   it("uses one language picker and carries changes into SMTP tests and the setup review", async () => {
     const user = userEvent.setup();

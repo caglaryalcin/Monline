@@ -91,15 +91,18 @@ it("rejects tests once setup is complete or a restore is running", async () => {
   expect((await testSmtp()).status).toBe(409);
   expect(send).not.toHaveBeenCalled();
 });
-it("uses the selected setup language for both subject and content", async () => {
-  const body = { ...configuration(), language: "tr" };
-  expect((await testSmtp(body)).status).toBe(200);
-  const message = send.mock.calls[0][0];
-  expect(message.subject).toBe("Monline — SMTP Testi");
-  expect(message.text).toBe(emailLocales.tr.body);
-  expect(message.html).toContain(emailLocales.tr.body);
-  expect(message.html).toContain('<html lang="tr">');
-});
+it.each(["tr", "bg"])(
+  "uses the selected setup language %s for both subject and content",
+  async (language) => {
+    const body = { ...configuration(), language };
+    expect((await testSmtp(body)).status).toBe(200);
+    const message = send.mock.calls[0][0];
+    expect(message.subject).toBe(emailLocales[language].subject);
+    expect(message.text).toBe(emailLocales[language].body);
+    expect(message.html).toContain(emailLocales[language].body);
+    expect(message.html).toContain(`<html lang="${language}">`);
+  },
+);
 it("rejects unsupported setup languages without sending", async () => {
   expect(
     (await testSmtp({ ...configuration(), language: "<script>" })).status,
@@ -127,6 +130,7 @@ it.each(Object.keys(emailLocales))(
 it.each([
   ["tr-TR", "tr"],
   ["de-DE", "de"],
+  ["bg-BG", "bg"],
   ["pt-BR", "pt_BR"],
   ["zh-CN", "zh_CN"],
   ["unsupported", "en"],

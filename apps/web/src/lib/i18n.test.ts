@@ -18,23 +18,28 @@ describe("i18n", () => {
     expect(i18n.t("statistics_categories_upcoming", { lng: "tr" })).toBe("Gelecek ödemeler");
     expect(i18n.t("statistics_next_months", { lng: "tr", count: 6 })).toBe("Önümüzdeki 6 ay");
   });
-  it("uses real Turkish weekdays in the calendar", () => {
+  it.each(["tr", "bg"])("uses real %s weekdays in the calendar", (language) => {
     const keys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
     keys.forEach((key, index) => {
       const day = new Date(2026, 9, 11 + index);
-      expect(i18n.t(key, { lng: "tr" })).toBe(
-        new Intl.DateTimeFormat("tr", { weekday: "long" }).format(day),
+      expect(i18n.t(key, { lng: language }).toLocaleLowerCase(language)).toBe(
+        new Intl.DateTimeFormat(language, { weekday: "long" })
+          .format(day)
+          .toLocaleLowerCase(language),
       );
     });
   });
-  it("fully translates Monline workflows in Turkish and German with matching placeholders", () => {
+  it("fully translates Monline workflows in Turkish, German and Bulgarian with matching placeholders", () => {
     const english = i18n.getResourceBundle("en", "translation");
-    for (const language of ["tr", "de"]) {
+    for (const language of ["tr", "de", "bg"]) {
       const resources = i18n.getResourceBundle(language, "translation");
       for (const key of Object.keys(english)) {
         expect(resources[key], `${language}.${key}`).toBeTruthy();
         expect((resources[key].match(/\{\{.*?\}\}/g) ?? []).sort(), `${language}.${key}`).toEqual(
           (english[key].match(/\{\{.*?\}\}/g) ?? []).sort(),
+        );
+        expect((resources[key].match(/<\/?\w+>/g) ?? []).sort(), `${language}.${key}`).toEqual(
+          (english[key].match(/<\/?\w+>/g) ?? []).sort(),
         );
       }
     }
@@ -48,15 +53,26 @@ describe("i18n", () => {
     });
   });
 
+  it("renders Bulgarian plural forms and interpolates translated statements", () => {
+    expect(i18n.t("billing_days_remaining", { lng: "bg", count: 1 })).toBe("Остава 1 ден");
+    expect(i18n.t("billing_days_remaining", { lng: "bg", count: 5 })).toBe("Остават 5 дни");
+    expect(i18n.t("billing_days_overdue", { lng: "bg", count: 1 })).toBe("Просрочено с 1 ден");
+    expect(i18n.t("billing_days_overdue", { lng: "bg", count: 5 })).toBe("Просрочено с 5 дни");
+    expect(i18n.t("statement_progress", { lng: "bg", current: 2, total: 4 })).toBe(
+      "Четене на страница 2 от 4…",
+    );
+  });
+
   it("exposes the supported languages list", () => {
     expect(SUPPORTED_LANGUAGES).toEqual(
       expect.arrayContaining([
         { code: "en", name: "English" },
         { code: "pt_BR", name: "Português (Brasil)" },
         { code: "zh_CN", name: "中文 (简体)" },
+        { code: "bg", name: "Български" },
       ]),
     );
-    expect(SUPPORTED_LANGUAGES).toHaveLength(16);
+    expect(SUPPORTED_LANGUAGES).toHaveLength(17);
   });
 
   it("translates the income-credit workflow in every supported language", () => {

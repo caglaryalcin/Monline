@@ -1,6 +1,6 @@
-import { Globe2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { LanguageLabel } from "@/components/LanguageLabel";
 import {
   Select,
   SelectContent,
@@ -25,8 +25,9 @@ export function LanguagePicker() {
           aria-label={t("language")}
           className="h-10 w-auto max-w-full gap-2.5 rounded-full px-3.5 text-xs font-medium shadow-sm [&>svg:last-child]:h-3.5 [&>svg:last-child]:w-3.5 [&>svg:last-child]:transition-transform data-[state=open]:[&>svg:last-child]:rotate-180"
         >
-          <Globe2 className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-          <SelectValue>{selected.name}</SelectValue>
+          <SelectValue>
+            <LanguageLabel {...selected} />
+          </SelectValue>
         </SelectTrigger>
         <SelectContent
           align="center"
@@ -45,7 +46,7 @@ export function LanguagePicker() {
                 className="my-0.5 cursor-pointer rounded-xl py-2.5 pl-8 pr-3 text-sm transition-colors data-[state=checked]:font-medium data-[highlighted]:[&>span:first-child]:text-primary-foreground [&>span:first-child]:text-primary [&>span:last-child]:w-full"
               >
                 <span className="flex items-center justify-between gap-4">
-                  <span lang={language.code.replace("_", "-")}>{language.name}</span>
+                  <LanguageLabel {...language} />
                   <span
                     aria-hidden="true"
                     className="rounded-md border border-border/60 bg-background/50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"

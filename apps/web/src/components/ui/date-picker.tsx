@@ -3,6 +3,7 @@ import { CalendarDays } from "lucide-react";
 import { forwardRef, useId, useState } from "react";
 import { DayPicker, type DropdownProps } from "react-day-picker";
 import {
+  bg,
   cs,
   da,
   de,
@@ -30,6 +31,7 @@ import { displayDateInput, isValidISODate, parseDateInput } from "@/lib/dateInpu
 
 const locales = {
   en: enUS,
+  bg,
   tr,
   de,
   pt: ptBR,
@@ -63,6 +65,7 @@ const clearLabels: Record<string, string> = {
   uk: "Очистити",
   cs: "Vymazat",
   da: "Ryd",
+  bg: "Изчистване",
 };
 
 function CalendarDropdown({
@@ -146,7 +149,9 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
               autoComplete="off"
               maxLength={10}
               value={displayDateInput(value)}
-              placeholder={language === "tr" ? "GG/AA/YYYY" : "DD/MM/YYYY"}
+              placeholder={
+                language === "tr" ? "GG/AA/YYYY" : language === "bg" ? "ДД/ММ/ГГГГ" : "DD/MM/YYYY"
+              }
               aria-label={label}
               {...props}
               aria-invalid={invalid || props["aria-invalid"]}

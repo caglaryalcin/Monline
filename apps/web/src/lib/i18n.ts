@@ -4,6 +4,7 @@ import { initReactI18next } from "react-i18next";
 
 import { LS_KEYS } from "@/lib/constants";
 
+import bg from "./locales/bg.json";
 import cs from "./locales/cs.json";
 import da from "./locales/da.json";
 import de from "./locales/de.json";
@@ -43,6 +44,7 @@ i18n
       uk: { translation: uk },
       cs: { translation: cs },
       da: { translation: da },
+      bg: { translation: bg },
     },
     fallbackLng: "en",
     interpolation: { escapeValue: false },
