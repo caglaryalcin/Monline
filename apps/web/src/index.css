@@ -207,10 +207,14 @@
   samp {
     @apply font-mono;
   }
-  /* Password managers and browser autofill use the current theme's text color. */
-  input:is(:autofill, :-webkit-autofill) {
+  /* Set the fill before autofill is committed so password previews inherit it too. */
+  input,
+  textarea {
     -webkit-text-fill-color: hsl(var(--foreground));
-    caret-color: hsl(var(--foreground));
+  }
+  input::placeholder,
+  textarea::placeholder {
+    -webkit-text-fill-color: currentColor;
   }
   input:not([type]),
   input:is(
