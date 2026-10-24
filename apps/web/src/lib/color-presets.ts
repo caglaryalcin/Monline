@@ -158,12 +158,13 @@ export function buildColorCSS(preset: ColorPreset): string {
   return `
     :root {
       --primary: ${preset.light} !important;
-      --primary-text: var(--primary) !important;
+      --primary-text: var(--foreground) !important;
       --primary-foreground: ${lightFg} !important;
       --ring: ${preset.light} !important;
     }
     :root.dark {
       --primary: ${preset.dark} !important;
+      --primary-text: var(--primary) !important;
       --primary-foreground: ${fg} !important;
       --ring: ${preset.dark} !important;
     }

@@ -126,6 +126,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: var(--light-text);
     --primary: 75.496689 100% 70.392157%;
+    --primary-text: var(--foreground);
     --primary-foreground: var(--light-text);
     --secondary: 60 10% 92%;
     --secondary-foreground: var(--light-text);
@@ -163,6 +164,7 @@
     --popover: 200 5% 13%;
     --popover-foreground: 0 0% 98%;
     --primary: 75.496689 100% 70.392157%;
+    --primary-text: var(--primary);
     --primary-foreground: 222.2 47.4% 11.2%;
     /* secondary, muted, accent */
     --secondary: 90 5% 19%;
@@ -196,7 +198,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-primary;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20 selection:text-foreground;
     caret-color: transparent;
   }
   code,
@@ -204,6 +206,11 @@
   pre,
   samp {
     @apply font-mono;
+  }
+  /* Password managers and browser autofill use the current theme's text color. */
+  input:is(:autofill, :-webkit-autofill) {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    caret-color: hsl(var(--foreground));
   }
   input:not([type]),
   input:is(
@@ -319,7 +326,7 @@
 .monline-sidebar-toggle:hover {
   border-color: hsl(var(--primary));
   background: hsl(var(--primary) / 0.14);
-  color: color-mix(in srgb, hsl(var(--primary)) 60%, hsl(var(--foreground)));
+  color: hsl(var(--primary-text));
 }
 .dark .monline-sidebar-toggle:hover {
   color: #d8d3d0;

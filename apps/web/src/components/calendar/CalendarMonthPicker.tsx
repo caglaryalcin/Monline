@@ -37,7 +37,7 @@ export function CalendarMonthPicker({ month, year, onSelect }: CalendarMonthPick
           type="button"
           aria-label={`${t("calendar_choose_month")}: ${t(MONTH_KEYS[month - 1])} ${year}`}
           title={t("calendar_choose_month")}
-          className="flex min-w-[52px] flex-col items-center rounded-lg bg-primary/10 px-2.5 py-1 text-[hsl(var(--primary))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="flex min-w-[52px] flex-col items-center rounded-lg bg-primary/10 px-2.5 py-1 text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <span className="text-[10px] font-bold uppercase leading-tight">
             {shortMonth(month - 1)}
