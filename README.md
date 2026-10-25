@@ -75,6 +75,8 @@ For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.3.0` or `ima
 
 ## Contributors
 
+Special thanks to [@mariushosting](https://github.com/mariushosting) for creating the [Monline installation guide for Synology NAS](https://mariushosting.com/how-to-install-monline-on-your-synology-nas/) and contributing to the fix released in v1.2.1.
+
 Special thanks to [@macitozcan](https://github.com/macitozcan) for reviewing Monline and reporting the billing schedule, cost calculation, backup restore, iCalendar, and external API issues addressed in v1.0.14.
 
 ## License
