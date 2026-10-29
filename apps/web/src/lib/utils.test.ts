@@ -84,6 +84,48 @@ describe("toMainCurrency", () => {
 // formatPrice
 // ---------------------------------------------------------------------------
 describe("formatPrice", () => {
+  it.each([
+    ["USD", "$", "$30.00 USD"],
+    ["HKD", "HK$", "HK$30.00 HKD"],
+    ["TRY", "₺", "₺30.00 TRY"],
+    ["JPY", "¥", "¥30 JPY"],
+    ["BHD", "د.ب", "د.ب30.000 BHD"],
+  ])(
+    "optionally identifies %s while preserving its currency precision",
+    (currencyCode, symbol, expected) => {
+      expect(
+        formatPrice(30, symbol, { currencyCode, showCurrencyCode: true, locale: "en-US" }),
+      ).toBe(expected);
+      expect(
+        formatPrice(30, symbol, { currencyCode, showCurrencyCode: false, locale: "en-US" }),
+      ).not.toContain(currencyCode);
+    },
+  );
+
+  it("supports the optional code for every runtime-supported ISO currency", () => {
+    const currencies = (
+      Intl as typeof Intl & { supportedValuesOf(key: string): string[] }
+    ).supportedValuesOf("currency");
+    for (const currencyCode of currencies) {
+      const formatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: currencyCode,
+      });
+      const precision = formatter.resolvedOptions().maximumFractionDigits;
+      const expected = new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: precision,
+        maximumFractionDigits: precision,
+      }).format(1234.5);
+      expect(
+        formatPrice(1234.5, "¤", { currencyCode, showCurrencyCode: true, locale: "en-US" }),
+      ).toBe(`¤${expected} ${currencyCode}`);
+    }
+  });
+
+  it("keeps legacy output when the setting or currency is absent", () => {
+    expect(formatPrice(30, "$", { currencyCode: "USD", locale: "en-US" })).toBe("30.00 $");
+    expect(formatPrice(30, "¤", { showCurrencyCode: true, locale: "en-US" })).toBe("30.00 ¤");
+  });
   it("formats price with symbol", () => {
     expect(formatPrice(9.99, "$")).toBe("9.99 $");
   });

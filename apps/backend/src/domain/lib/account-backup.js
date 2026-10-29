@@ -9,6 +9,7 @@ const PROFILE = [
   "custom_css",
   "monthly_price",
   "show_original_price",
+  "show_currency_code",
   "hide_disabled",
   "disabled_to_bottom",
   "subscription_progress",

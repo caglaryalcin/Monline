@@ -12,6 +12,7 @@ import { SMTPStatusCard } from "@/components/settings/smtp/SMTPStatusCard";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { LS_KEYS } from "@/lib/constants";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { serverSettingsService } from "@/services/serverSettings";
@@ -44,7 +45,22 @@ export const SMTPTab = forwardRef<
     qc.invalidateQueries({ queryKey: ["admin-channels"] });
     qc.invalidateQueries({ queryKey: ["notifications_config"] });
   };
-  const [expanded, setExpanded] = useState(true);
+  const disclosureKey = LS_KEYS.notificationDisclosure("global", "smtp");
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      return localStorage.getItem(disclosureKey) !== "false";
+    } catch {
+      return true;
+    }
+  });
+  const changeExpansion = (next: boolean) => {
+    setExpanded(next);
+    try {
+      localStorage.setItem(disclosureKey, String(next));
+    } catch {
+      /* Keep the current disclosure usable without browser storage. */
+    }
+  };
   const contentId = useId();
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -89,7 +105,7 @@ export const SMTPTab = forwardRef<
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const toggleEnabled = async (enabled: boolean) => {
-    if (enabled) setExpanded(true);
+    if (enabled) changeExpansion(true);
     const previous = form.enabled;
     set("enabled", enabled);
     if (!embedded && !inline) return;
@@ -187,7 +203,7 @@ export const SMTPTab = forwardRef<
             expanded={form.enabled && expanded}
             controls={contentId}
             disabled={!form.enabled}
-            onToggle={() => setExpanded((current) => !current)}
+            onToggle={() => changeExpansion(!expanded)}
           />
         </div>
       )}
@@ -211,21 +227,21 @@ export const SMTPTab = forwardRef<
 
         {(form.enabled || inline) && (
           <fieldset
-            disabled={
-              saving ||
-              isSaving ||
-              testing ||
-              smtpQuery.isPending ||
-              smtpQuery.isError ||
-              (inline && !channelEnabled)
-            }
+            disabled={saving || isSaving || testing || smtpQuery.isPending || smtpQuery.isError}
             className="space-y-8"
           >
-            <SMTPServerSection form={form} setField={set} />
-
-            <Separator />
-
-            <SMTPAuthSection form={form} hasExistingPassword={hasExistingPassword} setField={set} />
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+              <div className="min-w-0">
+                <SMTPServerSection form={form} setField={set} />
+              </div>
+              <div className="min-w-0 border-t pt-6 lg:border-t-0 lg:border-l lg:pl-8 lg:pt-0">
+                <SMTPAuthSection
+                  form={form}
+                  hasExistingPassword={hasExistingPassword}
+                  setField={set}
+                />
+              </div>
+            </div>
 
             <Separator />
 

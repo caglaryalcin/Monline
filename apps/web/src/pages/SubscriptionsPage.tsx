@@ -298,6 +298,7 @@ export function SubscriptionsPage() {
         mainCurrency={mainCurrency}
         currencies={currencies}
         convertCurrency={user?.convert_currency}
+        showCurrencyCode={user?.show_currency_code}
         showProgress={user?.subscription_progress}
         onEdit={handleEdit}
         onClone={(id) => cloneMutation.mutate(id)}
@@ -327,7 +328,12 @@ export function SubscriptionsPage() {
         automationPendingSetting={automationMutation.variables?.setting}
       />
 
-      <SharedSubscriptions userId={userId} searchTerm={searchTerm} layout={view} />
+      <SharedSubscriptions
+        userId={userId}
+        searchTerm={searchTerm}
+        layout={view}
+        showCurrencyCode={user?.show_currency_code}
+      />
 
       {sharingSubscription && (
         <SubscriptionSharingDialog

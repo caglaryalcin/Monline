@@ -313,6 +313,7 @@ export function SubscriptionCard({
   mainCurrency,
   currencies,
   convertCurrency,
+  showCurrencyCode = false,
   priceDisplay: controlledPriceDisplay,
   onPriceDisplayChange,
   showProgress,
@@ -338,6 +339,7 @@ export function SubscriptionCard({
   sub: Subscription;
   mainCurrency?: Currency;
   convertCurrency?: boolean;
+  showCurrencyCode?: boolean;
   currencies?: Currency[];
   priceDisplay?: SubscriptionPriceDisplay;
   onPriceDisplayChange?: (value: SubscriptionPriceDisplay) => void;
@@ -399,7 +401,10 @@ export function SubscriptionCard({
         (sub.frequency || 1) !== 1));
   const originalPriceDetails = showOriginalPrice ? (
     <p className="mt-1 truncate text-xs tabular-nums text-muted-foreground">
-      {formatPrice(sub.price, currency?.symbol ?? symbol, { currencyCode: currency?.code })}
+      {formatPrice(sub.price, currency?.symbol ?? symbol, {
+        currencyCode: currency?.code,
+        showCurrencyCode,
+      })}
       {" / "}
       {credit ? t("one_time") : periodLabel}
     </p>
@@ -481,7 +486,7 @@ export function SubscriptionCard({
                 {credit ? "+" : ""}
                 {formatPrice(price, symbol, {
                   currencyCode: displayCurrency?.code,
-                  showCurrencyCode: true,
+                  showCurrencyCode,
                 })}
               </p>
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -601,7 +606,7 @@ export function SubscriptionCard({
               {credit ? "+" : ""}
               {formatPrice(price, symbol, {
                 currencyCode: displayCurrency?.code,
-                showCurrencyCode: true,
+                showCurrencyCode,
               })}
             </p>
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider whitespace-nowrap">

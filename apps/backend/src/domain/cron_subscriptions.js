@@ -134,18 +134,21 @@ cronAdd("sendNotifications", "0 * * * *", async () => {
         const payerId = sub.getString("payer") || "default";
         if (!grouped[payerId]) grouped[payerId] = [];
         let currencySymbol = "";
+        let currencyCode = "";
         try {
           const cur = repository.findRecordById(
             "currencies",
             sub.getString("currency"),
           );
           currencySymbol = cur.getString("symbol");
+          currencyCode = cur.getString("code");
         } catch (_) {}
         grouped[payerId].push({
           id: sub.id,
           name: sub.getString("name"),
           price: sub.get("price"),
           currency: currencySymbol,
+          currency_code: currencyCode,
           next_payment: nextPayment,
         });
       }
@@ -153,31 +156,28 @@ cronAdd("sendNotifications", "0 * * * *", async () => {
       const logCol = repository.findCollectionByNameOrId("notification_log");
       for (const payerId in grouped) {
         const subList = grouped[payerId];
-        let payerName = "You";
+        let payerName = "";
         if (payerId !== "default") {
           try {
             const payer = repository.findRecordById("household", payerId);
             payerName = payer.getString("name");
           } catch (_) {}
         }
-        const daysLabel = days === 0 ? "today" : "in " + days + " day(s)";
-        const title = "🔔 Monline — Upcoming Payments";
-        let message =
-          "**" +
-          payerName +
-          "** has upcoming payments (" +
-          daysLabel +
-          "):\n\n";
-        for (const sub of subList) {
-          message += "• **" + sub.name + "** — " + sub.currency + sub.price;
-          message += " (due: " + sub.next_payment + ")\n";
-        }
+        const { title, message } =
+          require("../notification-language.cjs").reminderContext({
+            event: "payment",
+            language: notifConfig.getString("language"),
+            payer: payerName,
+            days,
+            subscriptions: subList,
+          });
         await notifHelpers.dispatchToAllProviders(
           repository,
           notifConfig,
           title,
           message,
           subList,
+          { event: "payment", payer: payerName, days },
         );
 
         // Log each sent subscription so we don't re-send
@@ -294,19 +294,20 @@ cronAdd("sendCancellationNotifications", "0 * * * *", async () => {
         });
       }
       if (dueSubs.length === 0) continue;
-      const daysLabel = days === 0 ? "today" : "in " + days + " day(s)";
-      const title = "⚠️ Monline — Upcoming Cancellations";
-      let message = "Subscriptions being cancelled " + daysLabel + ":\n\n";
-      for (const sub of dueSubs) {
-        message +=
-          "• **" + sub.name + "** — cancels on " + sub.cancellation_date + "\n";
-      }
+      const { title, message } =
+        require("../notification-language.cjs").reminderContext({
+          event: "cancellation",
+          language: notifConfig.getString("language"),
+          days,
+          subscriptions: dueSubs,
+        });
       await notifHelpers.dispatchToAllProviders(
         repository,
         notifConfig,
         title,
         message,
         dueSubs,
+        { event: "cancellation", days },
       );
       const logCol = repository.findCollectionByNameOrId("notification_log");
       for (const sub of dueSubs) {

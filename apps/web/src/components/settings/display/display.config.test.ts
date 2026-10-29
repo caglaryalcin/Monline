@@ -4,7 +4,7 @@ describe("display.config", () => {
   it("defines unique toggles with label and description keys", () => {
     const keys = DISPLAY_TOGGLES.map((toggle) => toggle.key);
 
-    expect(keys).toEqual(["hide_disabled"]);
+    expect(keys).toEqual(["show_currency_code", "hide_disabled"]);
     expect(new Set(keys).size).toBe(keys.length);
 
     for (const toggle of DISPLAY_TOGGLES) {

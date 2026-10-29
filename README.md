@@ -83,11 +83,19 @@ GitHub Actions publishes the same **AMD64 and ARM64** image to both registries:
 
 | Trigger | Image tags |
 | ------- | ---------- |
-| Release tag, e.g. `v1.4.0` | `v1.4.0`, `1.4.0`, `1.4`, `1`, `latest` |
+| Release tag, e.g. `v1.5.0` | `v1.5.0`, `1.5.0`, `1.5`, `1`, `latest` |
 
 Images are published for version tags or by manually running the Docker Publish workflow for an existing release tag; pushes to `main` do not publish images. Release tags must match the root, frontend and server package versions. Prereleases publish only their full version tags and leave `latest` unchanged.
 
-For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.4.0` or `image: caglaryalcin/monline:1.4.0`, omit `build`, and run `docker compose up -d`.
+For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.5.0` or `image: caglaryalcin/monline:1.5.0`, omit `build`, and run `docker compose up -d`.
+
+## Upgrading from v1.4.0 to v1.5.0
+
+Export a full instance backup before upgrading, retain the existing `/data` volume and environment, then pull image `1.5.0` and recreate the container. Source installations can use `docker compose up -d --build`. Startup automatically adds the optional currency-code preference; existing accounts keep the previous price display until they enable **Settings → Theme and appearance → Display options → Show currency codes**. Both subscription layouts and shared subscriptions support it, including converted and original prices.
+
+Administration → Channels now combines SMTP configuration, editable payment/cancellation message templates and previews. Templates are saved separately for each language; reminders follow each recipient's saved profile language and use built-in translations when no custom template exists. Template previews do not send messages; the Test button sends the selected reminder type using the current draft.
+
+Administrators manage their personal channel switches inside Administration → Channels. Their old Settings → Notifications links redirect there; regular users retain their personal Notifications page. Global channel configuration and each account's enabled channels remain separate. Existing notification preferences, subscriptions, sharing permissions and login sessions are preserved.
 
 ## Upgrading from v1.3.0 to v1.4.0
 

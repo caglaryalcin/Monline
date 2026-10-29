@@ -78,7 +78,7 @@ describe("SMTPTab", () => {
     );
   });
 
-  it("shows disabled SMTP settings without an inner activation switch", async () => {
+  it("allows configuring SMTP before it is enabled without an inner activation switch", async () => {
     vi.mocked(serverSettingsService.getSmtp).mockResolvedValue({
       enabled: false,
       host: "smtp.example.test",
@@ -90,7 +90,7 @@ describe("SMTPTab", () => {
     );
     expect(await screen.findByDisplayValue("smtp.example.test")).toBeVisible();
     expect(screen.queryByRole("switch", { name: "disabled" })).not.toBeInTheDocument();
-    expect(screen.getByDisplayValue("smtp.example.test")).toBeDisabled();
+    expect(screen.getByDisplayValue("smtp.example.test")).toBeEnabled();
     expect(screen.queryByRole("button", { name: /save/ })).not.toBeInTheDocument();
   });
 

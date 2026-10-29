@@ -17,3 +17,13 @@ export const SUPPORTED_LANGUAGES = [
   { code: "da", name: "Dansk" },
   { code: "bg", name: "Български" },
 ];
+
+export function notificationLanguage(language?: string): string {
+  const normalized = (language || "en").replace(/-/g, "_").toLowerCase();
+  const exact = SUPPORTED_LANGUAGES.find((item) => item.code.toLowerCase() === normalized);
+  if (exact) return exact.code;
+  const base = normalized.split("_")[0];
+  if (base === "pt") return "pt_BR";
+  if (base === "zh") return "zh_CN";
+  return SUPPORTED_LANGUAGES.find((item) => item.code === base)?.code || "en";
+}

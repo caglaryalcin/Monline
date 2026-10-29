@@ -9,7 +9,6 @@ import { FixerTab } from "@/components/settings/exchange-rates/FixerTab";
 import { MaintenanceTab } from "@/components/settings/maintenance/MaintenanceTab";
 import { OIDCTab } from "@/components/settings/oidc/OIDCTab";
 import { RegistrationTab } from "@/components/settings/registration/RegistrationTab";
-import { SMTPTab } from "@/components/settings/smtp/SMTPTab";
 import { SidebarTabsLayout } from "@/components/ui/SidebarTabsLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { adminRoute } from "@/routes";
@@ -51,10 +50,7 @@ export function AdminPage() {
               {t("admin_channels_management_hint")}
             </p>
           </div>
-          <SMTPTab embedded />
-          <div className="border-t pt-6">
-            <NotificationChannelsTab />
-          </div>
+          <NotificationChannelsTab />
         </div>
       )}
       {tab === "api" && (

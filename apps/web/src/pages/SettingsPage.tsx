@@ -26,7 +26,8 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const search = settingsRoute.useSearch();
-  const adminTab = ADMIN_TABS[search.tab ?? ""];
+  const adminTab =
+    isAdmin && search.tab === "notifications" ? "channels" : ADMIN_TABS[search.tab ?? ""];
   useEffect(() => {
     if (!adminTab) return;
     if (isAdmin) navigate({ to: "/admin", search: { tab: adminTab }, replace: true });
@@ -48,6 +49,8 @@ export function SettingsPage() {
   const setActiveTab = (tab: SettingsTabKey) =>
     navigate({ to: "/settings", search: { tab }, replace: true });
   const ActiveComponent = SETTINGS_TAB_COMPONENTS[activeTab] ?? SETTINGS_TAB_COMPONENTS.profile;
+
+  if (isAdmin && search.tab === "notifications") return null;
 
   return (
     <SidebarTabsLayout

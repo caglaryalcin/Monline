@@ -22,7 +22,9 @@ interface ProviderCardProps {
   isTesting: boolean;
   children?: ReactNode;
   toggleDisabled?: boolean;
+  testDisabled?: boolean;
   disclosureStorageKey?: string;
+  onConfigurationEnabledChange?: (enabled: boolean) => void;
 }
 
 export function ProviderCard({
@@ -37,7 +39,9 @@ export function ProviderCard({
   isTesting,
   children,
   toggleDisabled = false,
+  testDisabled = false,
   disclosureStorageKey,
+  onConfigurationEnabledChange,
 }: ProviderCardProps) {
   const { t } = useTranslation();
   const [expansionChoice, setExpansionChoice] = useState<boolean | null>(() => {
@@ -66,6 +70,7 @@ export function ProviderCard({
     ? !!formData.available_channels?.[provider.id]
     : !!formData[provider.enabledKey];
   const expanded = expansionChoice ?? isEnabled;
+  const hasToggle = !configurationOnly || !!onConfigurationEnabledChange;
   const Icon = provider.icon;
 
   return (
@@ -85,7 +90,7 @@ export function ProviderCard({
           aria-expanded={expanded}
           aria-controls={contentId}
           onClick={() => changeExpansion(!expanded)}
-          className={`flex w-full min-w-0 items-center gap-3 px-4 py-3 ${configurationOnly ? "pr-14" : "pr-28"} text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:cursor-default`}
+          className={`flex w-full min-w-0 items-center gap-3 px-4 py-3 ${hasToggle ? "pr-28" : "pr-14"} text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:cursor-default`}
         >
           <div
             className={`notification-provider-icon p-2 rounded-xl shrink-0 transition-colors ${
@@ -112,14 +117,15 @@ export function ProviderCard({
           </div>
         </button>
         <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center gap-3 [&>button]:pointer-events-auto">
-          {!configurationOnly && (
+          {hasToggle && (
             <Switch
               aria-label={provider.label}
               checked={isEnabled}
               disabled={toggleDisabled}
               onCheckedChange={(checked) => {
                 changeExpansion(true);
-                onChange(provider.enabledKey, checked);
+                if (configurationOnly) onConfigurationEnabledChange?.(checked);
+                else onChange(provider.enabledKey, checked);
               }}
             />
           )}
@@ -167,7 +173,13 @@ export function ProviderCard({
               variant="outline"
               size="sm"
               onClick={onTest}
-              disabled={isTesting || (!configurationOnly && !isEnabled) || isSaving || saveDisabled}
+              disabled={
+                testDisabled ||
+                isTesting ||
+                (!configurationOnly && !isEnabled) ||
+                isSaving ||
+                saveDisabled
+              }
               className="h-8 rounded-xl gap-1.5 text-xs"
             >
               <SendHorizontal className="w-4 h-4" />

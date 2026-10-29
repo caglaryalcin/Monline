@@ -46,14 +46,34 @@ function load(repository, key, collection, fields, defaults) {
   if (legacy) for (const field of fields) migrated[field] = legacy.get(field);
   return save(repository, key, migrated);
 }
-const channels = (repository) =>
-  load(
+function channels(repository) {
+  const value = load(
     repository,
     "server_notification_channels",
     "notifications_config",
     [...credentialFields, "reminders"],
     { reminders: [{ days: 3, hour: 8 }] },
   );
+  // Bind previously saved, single-language templates once, before the admin changes language.
+  if (
+    value.templates &&
+    Object.keys(value.templates).length &&
+    !value.template_language
+  ) {
+    const admin = repository.findRecordsByFilter(
+      "users",
+      "",
+      "created,id",
+      1,
+    )[0];
+    value.template_language =
+      require("./notification-language.cjs").resolveLanguage(
+        admin?.getString("language"),
+      );
+    save(repository, "server_notification_channels", value);
+  }
+  return value;
+}
 const exchange = (repository) =>
   load(
     repository,
@@ -79,6 +99,9 @@ function effectiveNotificationConfig(repository, userId, preferences) {
   const user = repository.findRecordById("users", userId);
   const get = (key) => {
     if (key === "email_to") return user.getString("email");
+    if (key === "user_name") return user.getString("name");
+    if (key === "user_email") return user.getString("email");
+    if (key === "language") return user.getString("language") || "en";
     if (key === "reminders") return normalizeReminderSlots(config.reminders);
     if (key.endsWith("_enabled"))
       return !!available[key.slice(0, -8)] && !!preferences?.getBool(key);

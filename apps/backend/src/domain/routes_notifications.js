@@ -70,8 +70,51 @@ routerAdd("POST", "/api/notifications/test", async (e) => {
       repository,
       e.auth.id,
     );
-  const title = "🔔 Monline — Test Notification";
-  const message = "This is a test notification from Monline.";
+  const languageHelpers = require("../notification-language.cjs");
+  const language = e.auth.getString?.("language") || "en";
+  const copy = languageHelpers.copyFor(language);
+  let title = copy.testTitle;
+  let message = copy.testMessage;
+  const templatesModule = require("../notification-templates.cjs");
+  const savedTemplates = languageHelpers.templatesForLanguage(
+    {
+      templates: config.get?.("templates"),
+      template_language: config.get?.("template_language"),
+      localized_templates: config.get?.("localized_templates"),
+    },
+    language,
+  );
+  const useTemplate =
+    Object.hasOwn(body, "localized_templates") ||
+    Object.hasOwn(body, "templates") ||
+    !!savedTemplates[provider];
+  let rendered;
+  if (useTemplate) {
+    if (
+      body.event !== undefined &&
+      !templatesModule.EVENTS.includes(body.event)
+    )
+      return e.json(400, { error: "notification_template_invalid" });
+    const templates = Object.hasOwn(body, "localized_templates")
+      ? languageHelpers.templatesForLanguage(
+          {
+            localized_templates: templatesModule.validateLocalizedTemplates(
+              body.localized_templates,
+            ),
+          },
+          language,
+        )
+      : Object.hasOwn(body, "templates")
+        ? templatesModule.validateTemplates(body.templates)
+        : savedTemplates;
+    rendered = templatesModule.renderNotification(
+      templates,
+      provider,
+      templatesModule.sampleContext(repository, e.auth, body.event),
+    );
+    title = rendered.title;
+    message = rendered.message;
+  }
   try {
     switch (provider) {
       case "discord": {
@@ -261,6 +304,16 @@ routerAdd("POST", "/api/notifications/test", async (e) => {
           return e.json(400, {
             error: "Destination email not configured",
           });
+        if (rendered) {
+          await require("./lib/notifications.js").sendEmail(
+            repository,
+            toEmail,
+            rendered.title,
+            rendered.html,
+            rendered.message,
+          );
+          break;
+        }
         const settings = repository.settings();
         const msg = new MailerMessage(
           smtpTestMessage({

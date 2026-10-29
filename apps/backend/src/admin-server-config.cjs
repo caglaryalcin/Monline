@@ -11,16 +11,70 @@ function registerServerConfigApi(app, repository, auth) {
     id: "global",
     ...config.channels(repository),
     available_channels: config.availability(repository),
+    template_defaults: require("./notification-templates.cjs").defaults(),
   });
   app.get("/api/admin/channels", (req, res) => {
     admin(req);
     res.json(channelOutput());
   });
+  app.post("/api/admin/channels/template-preview", (req, res) => {
+    admin(req);
+    const templates = require("./notification-templates.cjs");
+    const {
+      provider,
+      event,
+      templates: input,
+      localized_templates,
+    } = req.body || {};
+    if (
+      !templates.CHANNELS.includes(provider) ||
+      !templates.EVENTS.includes(event)
+    )
+      throw new BadRequestError("notification_template_invalid");
+    const validated =
+      localized_templates === undefined
+        ? templates.validateTemplates(input)
+        : require("./notification-language.cjs").templatesForLanguage(
+            {
+              localized_templates:
+                templates.validateLocalizedTemplates(localized_templates),
+            },
+            req.user.getString("language"),
+          );
+    res.json(
+      templates.renderNotification(
+        validated,
+        provider,
+        templates.sampleContext(repository, req.user, event),
+      ),
+    );
+  });
   app.patch("/api/admin/channels", (req, res) => {
     admin(req);
     const data = { ...config.channels(repository) };
     for (const [key, value] of Object.entries(req.body || {})) {
-      if (key === "reminders") {
+      if (key === "localized_templates") {
+        const localized =
+          require("./notification-templates.cjs").validateLocalizedTemplates(
+            value,
+          );
+        data.localized_templates = { ...data.localized_templates };
+        for (const [language, templates] of Object.entries(localized)) {
+          data.localized_templates[language] =
+            require("./notification-language.cjs").mergeTemplates(
+              data.localized_templates[language] || {},
+              templates,
+            );
+        }
+      } else if (key === "templates") {
+        const templates =
+          require("./notification-templates.cjs").validateTemplates(value);
+        data.templates = { ...(data.templates || {}), ...templates };
+        data.template_language ||=
+          require("./notification-language.cjs").resolveLanguage(
+            req.user.getString("language"),
+          );
+      } else if (key === "reminders") {
         if (
           !Array.isArray(value) ||
           !value.length ||

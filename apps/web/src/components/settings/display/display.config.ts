@@ -1,4 +1,4 @@
-export type DisplayKey = "hide_disabled";
+export type DisplayKey = "hide_disabled" | "show_currency_code";
 
 export interface DisplayToggleDefinition {
   key: DisplayKey;
@@ -7,6 +7,11 @@ export interface DisplayToggleDefinition {
 }
 
 export const DISPLAY_TOGGLES: DisplayToggleDefinition[] = [
+  {
+    key: "show_currency_code",
+    labelKey: "show_currency_code",
+    descriptionKey: "show_currency_code_desc",
+  },
   {
     key: "hide_disabled",
     labelKey: "hide_disabled",

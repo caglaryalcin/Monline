@@ -15,10 +15,12 @@ export function SharedSubscriptions({
   userId,
   searchTerm,
   layout,
+  showCurrencyCode,
 }: {
   userId: string;
   searchTerm: string;
   layout: "grid" | "list";
+  showCurrencyCode?: boolean;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState<SharedSubscription | null>(null);
@@ -73,6 +75,7 @@ export function SharedSubscriptions({
             <SubscriptionCard
               sub={sub}
               layout={layout}
+              showCurrencyCode={showCurrencyCode}
               readOnly
               onSharedEdit={sub.permission === "edit" ? () => setEditing(sub) : undefined}
               onEdit={noop}

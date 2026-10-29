@@ -1,37 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Settings2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { PROVIDERS } from "@/components/settings/notifications/config";
+import { useNotificationPreferences } from "@/components/settings/notifications/useNotificationPreferences";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
-import { queryKeys } from "@/lib/queryKeys";
-import { toast } from "@/lib/toast";
-import { notificationsService } from "@/services/notifications";
-import type { NotificationsConfig } from "@/types";
 
 export function NotificationsTab() {
   const { t } = useTranslation();
-  const { user, isAdmin } = useAuth();
-  const qc = useQueryClient();
-  const config = useQuery({
-    queryKey: queryKeys.notificationsConfig(user?.id ?? ""),
-    queryFn: () => notificationsService.getConfig(user!.id),
-    enabled: !!user?.id,
-  });
-  const save = useMutation({
-    mutationFn: (data: Partial<NotificationsConfig>) =>
-      config.data?.id
-        ? notificationsService.updateConfig(config.data.id, data)
-        : notificationsService.createConfig({ ...data, user: user!.id }),
-    onSuccess: (record) => {
-      qc.setQueryData(queryKeys.notificationsConfig(user?.id ?? ""), record);
-      toast.success(t("saved"));
-    },
-    onError: (error: Error) => toast.error(t(error.message, { defaultValue: t("error") })),
-  });
+  const { isAdmin } = useAuth();
+  const { config, save } = useNotificationPreferences();
   return (
     <div className="space-y-5">
       <div>

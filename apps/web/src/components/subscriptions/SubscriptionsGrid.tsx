@@ -75,6 +75,7 @@ interface SubscriptionsGridProps {
   mainCurrency?: Currency;
   currencies?: Currency[];
   convertCurrency?: boolean;
+  showCurrencyCode?: boolean;
   showProgress?: boolean;
   onEdit: (subscription: Subscription) => void;
   onClone: (id: string) => void;
@@ -100,6 +101,7 @@ export function SubscriptionsGrid({
   mainCurrency,
   currencies,
   convertCurrency,
+  showCurrencyCode,
   showProgress,
   onEdit,
   onClone,
@@ -135,6 +137,7 @@ export function SubscriptionsGrid({
         mainCurrency={mainCurrency}
         currencies={currencies}
         convertCurrency={convertCurrency}
+        showCurrencyCode={showCurrencyCode}
         priceDisplay={priceDisplays[subscription.id] ?? "billing"}
         onPriceDisplayChange={(mode) =>
           setPriceDisplays((current) => ({ ...current, [subscription.id]: mode }))

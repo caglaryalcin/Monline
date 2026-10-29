@@ -114,7 +114,7 @@ async function sendServerChan(key, title, message) {
     }),
   });
 }
-async function sendEmail(app, toEmail, subject, body) {
+async function sendEmail(app, toEmail, subject, body, text) {
   const message = new MailerMessage({
     from: {
       address: app.settings().meta.senderAddress || "noreply@monline.app",
@@ -126,6 +126,7 @@ async function sendEmail(app, toEmail, subject, body) {
     ],
     subject: subject,
     html: body,
+    ...(typeof text === "string" ? { text } : {}),
   });
   await app.newMailClient().send(message);
 }
@@ -140,12 +141,49 @@ async function dispatchToAllProviders(
   title,
   message,
   subsData,
+  context = {},
 ) {
+  let url = "";
+  try {
+    url =
+      require("../../public-url.cjs").publicUrl(app, "/subscriptions")?.href ||
+      "";
+  } catch {
+    /* Compatibility with transports without installation metadata. */
+  }
+  const cache = {};
+  const language = notifConfig.getString("language") || "en";
+  const selectedTemplates =
+    require("../../notification-language.cjs").templatesForLanguage(
+      {
+        templates: notifConfig.get?.("templates"),
+        template_language: notifConfig.get?.("template_language"),
+        localized_templates: notifConfig.get?.("localized_templates"),
+      },
+      language,
+    );
+  const content = (channel) =>
+    (cache[channel] ||=
+      require("../../notification-templates.cjs").renderNotification(
+        selectedTemplates,
+        channel,
+        {
+          title,
+          message,
+          subscriptions: subsData,
+          url,
+          user_name: notifConfig.getString("user_name"),
+          user_email: notifConfig.getString("user_email"),
+          ...context,
+          language,
+        },
+      ));
   if (notifConfig.getBool("email_enabled")) {
     const to = notifConfig.getString("email_to");
     if (to)
       try {
-        await sendEmail(app, to, title, message);
+        const email = content("email");
+        await sendEmail(app, to, email.title, email.html, email.message);
       } catch (e) {
         console.log("[Monline] email err:", e);
       }
@@ -154,7 +192,11 @@ async function dispatchToAllProviders(
     const url = notifConfig.getString("discord_webhook_url");
     if (url)
       try {
-        await sendDiscord(url, title, message);
+        await sendDiscord(
+          url,
+          content("discord").title,
+          content("discord").message,
+        );
       } catch (e) {
         console.log("[Monline] discord err:", e);
       }
@@ -164,7 +206,7 @@ async function dispatchToAllProviders(
     const chatId = notifConfig.getString("telegram_chat_id");
     if (token && chatId)
       try {
-        await sendTelegram(token, chatId, message);
+        await sendTelegram(token, chatId, content("telegram").message);
       } catch (e) {
         console.log("[Monline] telegram err:", e);
       }
@@ -174,7 +216,12 @@ async function dispatchToAllProviders(
     const token = notifConfig.getString("gotify_token");
     if (url && token)
       try {
-        await sendGotify(url, token, title, message);
+        await sendGotify(
+          url,
+          token,
+          content("gotify").title,
+          content("gotify").message,
+        );
       } catch (e) {
         console.log("[Monline] gotify err:", e);
       }
@@ -184,7 +231,12 @@ async function dispatchToAllProviders(
     const apiToken = notifConfig.getString("pushover_api_token");
     if (userKey && apiToken)
       try {
-        await sendPushover(userKey, apiToken, title, message);
+        await sendPushover(
+          userKey,
+          apiToken,
+          content("pushover").title,
+          content("pushover").message,
+        );
       } catch (e) {
         console.log("[Monline] pushover err:", e);
       }
@@ -194,11 +246,17 @@ async function dispatchToAllProviders(
     const topic = notifConfig.getString("ntfy_topic");
     if (topic)
       try {
-        await sendNtfy(url, topic, title, message, {
-          username: notifConfig.getString("ntfy_username"),
-          password: notifConfig.getString("ntfy_password"),
-          token: notifConfig.getString("ntfy_auth_token"),
-        });
+        await sendNtfy(
+          url,
+          topic,
+          content("ntfy").title,
+          content("ntfy").message,
+          {
+            username: notifConfig.getString("ntfy_username"),
+            password: notifConfig.getString("ntfy_password"),
+            token: notifConfig.getString("ntfy_auth_token"),
+          },
+        );
       } catch (e) {
         console.log("[Monline] ntfy err:", e);
       }
@@ -207,7 +265,11 @@ async function dispatchToAllProviders(
     const token = notifConfig.getString("pushplus_token");
     if (token)
       try {
-        await sendPushPlus(token, title, message);
+        await sendPushPlus(
+          token,
+          content("pushplus").title,
+          content("pushplus").message,
+        );
       } catch (e) {
         console.log("[Monline] pushplus err:", e);
       }
@@ -216,7 +278,7 @@ async function dispatchToAllProviders(
     const url = notifConfig.getString("mattermost_webhook_url");
     if (url)
       try {
-        await sendMattermost(url, message);
+        await sendMattermost(url, content("mattermost").message);
       } catch (e) {
         console.log("[Monline] mattermost err:", e);
       }
@@ -226,8 +288,8 @@ async function dispatchToAllProviders(
     if (url)
       try {
         await sendWebhookNotification(url, {
-          title,
-          message,
+          title: content("webhook").title,
+          message: content("webhook").message,
           subscriptions: subsData,
         });
       } catch (e) {
@@ -238,7 +300,11 @@ async function dispatchToAllProviders(
     const key = notifConfig.getString("serverchan_send_key");
     if (key)
       try {
-        await sendServerChan(key, title, message);
+        await sendServerChan(
+          key,
+          content("serverchan").title,
+          content("serverchan").message,
+        );
       } catch (e) {
         console.log("[Monline] serverchan err:", e);
       }

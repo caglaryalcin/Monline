@@ -21,7 +21,7 @@ export const COLOR_PRESETS: ColorPreset[] = [
     label: "Citrus",
     hex: "#9bbb47",
     light: "82 52% 28%",
-    dark: "76 100% 70%",
+    dark: "76.551724 46.031746% 50.588235%",
     darkFg: true,
   },
   {

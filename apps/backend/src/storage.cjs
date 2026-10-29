@@ -176,6 +176,15 @@ class Repository {
       !this.connection
         .prepare('PRAGMA table_info("users")')
         .all()
+        .some((column) => column.name === "show_currency_code")
+    )
+      this.connection.exec(
+        "ALTER TABLE users ADD COLUMN show_currency_code INTEGER NOT NULL DEFAULT 0",
+      );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("users")')
+        .all()
         .some((column) => column.name === "disabled")
     )
       this.connection.exec(

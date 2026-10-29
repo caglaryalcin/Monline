@@ -33,13 +33,12 @@ describe("settingsPage.config", () => {
     expect(Object.keys(SETTINGS_TAB_COMPONENTS)).toHaveLength(expectedKeys.length);
   });
 
-  it("returns the personal menu order while server sections are managed in administration", () => {
+  it("omits the separate notifications page for administrators", () => {
     const t = (k: string) => k;
     const items = getSettingsPageMenuItems(t as never, true);
     expect(items.map((item) => item.value)).toEqual([
       "profile",
       "security",
-      "notifications",
       "household",
       "groups",
       "categories",

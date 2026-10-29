@@ -53,10 +53,12 @@ export function getCurrencyFractionDigits(currencyCode?: string): number {
   if (!currencyCode) return 2;
 
   try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currencyCode.toUpperCase(),
-    }).resolvedOptions().maximumFractionDigits ?? 2;
+    return (
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: currencyCode.toUpperCase(),
+      }).resolvedOptions().maximumFractionDigits ?? 2
+    );
   } catch {
     return 2;
   }
@@ -70,7 +72,8 @@ export function formatPrice(
 ): string {
   // Keep accepting a locale string for backwards compatibility.
   const opts = typeof options === "string" ? {} : options;
-  const locale = typeof options === "string" ? options : (options.locale ?? i18n.resolvedLanguage ?? "en-US");
+  const locale =
+    typeof options === "string" ? options : (options.locale ?? i18n.resolvedLanguage ?? "en-US");
   const fractionDigits = getCurrencyFractionDigits(opts.currencyCode);
 
   let amount: string;
@@ -84,7 +87,7 @@ export function formatPrice(
   }
 
   // Ambiguous symbols such as "$" are clearer with the ISO code beside them.
-  const code = opts.showCurrencyCode ? opts.currencyCode : undefined;
+  const code = opts.showCurrencyCode ? opts.currencyCode?.trim().toUpperCase() : undefined;
   return code ? `${symbol}${amount} ${code}` : `${amount} ${symbol}`;
 }
 

@@ -16,6 +16,7 @@ export interface User {
   dark_theme_mode?: number; // 0=light, 1=dark, 2=auto
   monthly_price?: boolean;
   show_original_price?: boolean;
+  show_currency_code?: boolean;
   hide_disabled?: boolean;
   disabled_to_bottom?: boolean;
   subscription_progress?: boolean;
@@ -214,7 +215,22 @@ export interface NotificationReminder {
   hour: number; // 0–23
 }
 
+export type NotificationEvent = "payment" | "cancellation";
+export interface NotificationTemplate {
+  title?: string;
+  message?: string;
+  html?: string;
+}
+export type NotificationTemplates = Record<
+  string,
+  Partial<Record<NotificationEvent, NotificationTemplate>>
+>;
+
 export interface NotificationsConfig {
+  template_language?: string;
+  localized_templates?: Record<string, NotificationTemplates>;
+  templates?: NotificationTemplates;
+  template_defaults?: Record<NotificationEvent, NotificationTemplate>;
   available_channels?: Record<string, boolean>;
   id: string;
   user: string;

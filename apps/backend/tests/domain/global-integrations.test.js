@@ -82,12 +82,10 @@ beforeEach(async () => {
   app.use((error, req, res, next) =>
     res.status(error.status || 500).json({ error: error.message }),
   );
-  send = vi
-    .spyOn(runtime.httpClient, "send")
-    .mockResolvedValue({
-      statusCode: 200,
-      json: { success: true, rates: { EUR: 1, USD: 1.2, TRY: 50 } },
-    });
+  send = vi.spyOn(runtime.httpClient, "send").mockResolvedValue({
+    statusCode: 200,
+    json: { success: true, rates: { EUR: 1, USD: 1.2, TRY: 50 } },
+  });
   server = await new Promise((resolve) => {
     const instance = app.listen(0, "127.0.0.1", () => resolve(instance));
   });
@@ -308,6 +306,92 @@ it("uses one exchange key for every user's own currencies and a single fetch for
   expect(
     (await request("/api/admin/exchange/update", first, "POST", {})).status,
   ).toBe(403);
+});
+
+it("saves independent language templates and retains them when the database reopens", async () => {
+  const save = async (localized_templates) =>
+    request("/api/admin/channels", admin, "PATCH", { localized_templates });
+  expect(
+    (
+      await save({
+        tr: {
+          email: {
+            payment: { title: "Türkçe ödeme" },
+            cancellation: { title: "Türkçe iptal" },
+          },
+        },
+      })
+    ).status,
+  ).toBe(200);
+  expect(
+    (await save({ en: { email: { payment: { title: "English payment" } } } }))
+      .status,
+  ).toBe(200);
+  expect((await save({ tr: { email: { payment: {} } } })).status).toBe(200);
+  const reopened = new Repository(directory);
+  try {
+    const templates = config.channels(reopened).localized_templates;
+    expect(templates.tr.email.payment).toEqual({});
+    expect(templates.tr.email.cancellation.title).toBe("Türkçe iptal");
+    expect(templates.en.email.payment.title).toBe("English payment");
+  } finally {
+    reopened.connection.close();
+  }
+});
+
+it("previews in the administrator's saved language without sending a notification", async () => {
+  const user = repository.findRecordById("users", admin);
+  user.set("language", "tr");
+  user.set("password", "fixture-password-hash");
+  repository.save(user);
+  const body = {
+    provider: "email",
+    event: "payment",
+    localized_templates: {
+      tr: { email: { payment: { title: "Türkçe {{user_name}}" } } },
+      en: { email: { payment: { title: "English" } } },
+    },
+  };
+  const result = await request(
+    "/api/admin/channels/template-preview",
+    admin,
+    "POST",
+    body,
+  );
+  expect(result.status).toBe(200);
+  expect(result.data.title).toContain("Türkçe");
+  expect(result.data.message).toContain("Örnek abonelik");
+  expect(send).not.toHaveBeenCalled();
+  expect(
+    (await request("/api/admin/channels/template-preview", first, "POST", body))
+      .status,
+  ).toBe(403);
+  expect(
+    (await request("/api/admin/channels/template-preview", null, "POST", body))
+      .status,
+  ).toBe(401);
+  expect(
+    (
+      await request("/api/admin/channels", first, "PATCH", {
+        localized_templates: body.localized_templates,
+      })
+    ).status,
+  ).toBe(403);
+});
+
+it("exposes each recipient's saved language through their effective channel configuration", () => {
+  for (const [id, language] of [
+    [first, "tr"],
+    [second, "de"],
+  ]) {
+    const user = repository.findRecordById("users", id);
+    user.set("language", language);
+    user.set("password", "fixture-password-hash");
+    repository.save(user);
+    expect(
+      config.effectiveNotificationConfig(repository, id).getString("language"),
+    ).toBe(language);
+  }
 });
 
 it("applies the shared OIDC configuration to every login and restricts changes to admin", async () => {
