@@ -34,6 +34,7 @@ const CURRENCIES = new Set([
   "CAD",
   "AUD",
   "CHF",
+  "HKD",
 ]);
 
 function invalid(field) {

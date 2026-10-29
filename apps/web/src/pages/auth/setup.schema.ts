@@ -13,6 +13,7 @@ export const SETUP_CURRENCIES = [
   "CAD",
   "AUD",
   "CHF",
+  "HKD",
 ] as const;
 
 export function setupSchema(t: TFunction) {

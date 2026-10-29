@@ -38,6 +38,7 @@ const COMMON_CURRENCIES = [
   { code: "CAD", symbol: "CA$", name: "Canadian Dollar" },
   { code: "AUD", symbol: "A$", name: "Australian Dollar" },
   { code: "CHF", symbol: "CHF", name: "Swiss Franc" },
+  { code: "HKD", symbol: "HK$", name: "Hong Kong Dollar" },
 ];
 
 type RegisterForm = {
