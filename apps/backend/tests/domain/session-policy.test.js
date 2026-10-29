@@ -3,14 +3,18 @@ const { createAuth, hash } = require("../../src/auth.cjs");
 
 const DAY = 86400000;
 let db, auth, repository;
-const user = { id: "user-1", publicExport: () => ({ id: "user-1" }) };
+const user = {
+  id: "user-1",
+  publicExport: () => ({ id: "user-1" }),
+  getBool: () => false,
+};
 beforeEach(() => {
   vi.useFakeTimers();
   db = new DatabaseSync(":memory:");
   db.exec(
     "CREATE TABLE monline_sessions (hash TEXT PRIMARY KEY,user_id TEXT,expires INTEGER,purpose TEXT,remember INTEGER DEFAULT 0)",
   );
-  repository = { connection: db };
+  repository = { connection: db, findRecordById: () => user };
   auth = createAuth(repository);
 });
 afterEach(() => {

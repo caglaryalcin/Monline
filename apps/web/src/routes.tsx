@@ -42,6 +42,7 @@ const DataTransferPage = lazyRouteComponent(
 );
 const StatementsPage = lazyRouteComponent(() => import("@/pages/StatementsPage"), "StatementsPage");
 const SettingsPage = lazyRouteComponent(() => import("@/pages/SettingsPage"), "SettingsPage");
+const AdminPage = lazyRouteComponent(() => import("@/pages/AdminPage"), "AdminPage");
 
 // Types for router context
 import type { SettingsSearch, User } from "@/types";
@@ -189,6 +190,18 @@ export const settingsRoute = createRoute({
   }),
 });
 
+export const adminRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: "/admin",
+  component: AdminPage,
+  validateSearch: (search: Record<string, unknown>): { tab?: string } => ({
+    tab: typeof search.tab === "string" ? search.tab : undefined,
+  }),
+  beforeLoad: ({ context }) => {
+    if (!context.auth.isLoading && !context.auth.isAdmin) throw redirect({ to: "/dashboard" });
+  },
+});
+
 // ─── Catch-all ─────────────────────────────────────────────────────────────────
 
 const catchAllRoute = createRoute({
@@ -218,6 +231,7 @@ const routeTree = rootRoute.addChildren([
     dataTransferRoute,
     statementsRoute,
     settingsRoute,
+    adminRoute,
   ]),
   catchAllRoute,
 ]);

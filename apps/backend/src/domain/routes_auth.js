@@ -276,6 +276,7 @@ routerAdd("POST", "/api/auth/totp/login-verify", function (e) {
       error: "Invalid or expired login challenge",
     });
   }
+  if (user.getBool("disabled")) throw new ForbiddenError("account_disabled");
   if (!user.get("totp_enabled")) {
     totpChallenge.clearTotpLoginChallenge(user);
     repository.save(user);

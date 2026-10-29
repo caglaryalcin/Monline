@@ -180,6 +180,7 @@ function getHousehold(overrides: Partial<Household> = {}): Household {
     id: "hh-1",
     name: "Daniel",
     user: "user-1",
+    account_confirmed: true,
     ...overrides,
   };
 }
@@ -315,7 +316,7 @@ describe("SubscriptionFormModal", () => {
     expect(mocks.createSubscription.mock.calls[0][0]).toHaveProperty("next_payment", "2026-10-20");
   });
   it.each(["new", "legacy", "assigned"])(
-    "uses the main household payer for %s subscriptions without overwriting an assigned payer",
+    "defaults the payer only for new subscriptions and preserves the saved payer for %s records",
     async (mode) => {
       render(
         <SubscriptionFormModal
@@ -344,7 +345,7 @@ describe("SubscriptionFormModal", () => {
       const save = mode === "new" ? mocks.createSubscription : mocks.updateSubscription;
       await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
       expect(save.mock.calls[0][mode === "new" ? 0 : 1]).toMatchObject({
-        payer: mode === "assigned" ? "hh-1" : "hh-main",
+        payer: mode === "new" ? "hh-main" : mode === "assigned" ? "hh-1" : null,
       });
     },
   );

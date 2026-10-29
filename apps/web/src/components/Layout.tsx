@@ -7,6 +7,7 @@ import {
   FileText,
   LayoutDashboard,
   Menu,
+  ShieldCheck,
   X,
 } from "lucide-react";
 import { type CSSProperties, Suspense, useEffect, useRef, useState } from "react";
@@ -42,7 +43,7 @@ export function Layout() {
     (i18n.resolvedLanguage || i18n.language || "en").replace(/_/g, "-"),
     { day: "numeric", month: "long", year: "numeric" },
   ).format(new Date(year, month - 1, day));
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const summary = useSummaryData(user?.id ?? "");
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -62,7 +63,9 @@ export function Layout() {
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [sidebarOpen]);
 
-  const navItems = baseNavItems;
+  const navItems = isAdmin
+    ? [...baseNavItems, { key: "admin_panel", path: "/admin" as const, icon: ShieldCheck }]
+    : baseNavItems;
 
   return (
     <div

@@ -63,9 +63,8 @@ vi.mock("@tanstack/react-query", () => ({
 vi.mock("@/services/fixer", () => ({
   fixerService: {
     getSettings: vi.fn(),
-    updateSettings: vi.fn().mockResolvedValue({}),
-    createSettings: vi.fn().mockResolvedValue({}),
-    updateRates: vi.fn().mockResolvedValue({}),
+    saveSettings: vi.fn().mockResolvedValue({}),
+    updateAllRates: vi.fn().mockResolvedValue({}),
   },
 }));
 
@@ -216,7 +215,7 @@ describe("FixerTab", () => {
 
     expect((document.querySelector("input[type='password']") as HTMLInputElement).value).toBe("");
     expect(mockInvalidateQueries).toHaveBeenCalledWith({
-      queryKey: ["fixer_settings", "u1"],
+      queryKey: ["admin-exchange"],
     });
   });
 
@@ -291,7 +290,7 @@ describe("FixerTab", () => {
     const { fixerService } = await import("@/services/fixer");
     render(<FixerTab />);
     await capturedQueryFn?.();
-    expect(vi.mocked(fixerService.getSettings)).toHaveBeenCalledWith("u1");
+    expect(vi.mocked(fixerService.getSettings)).toHaveBeenCalledWith();
   });
 
   // --- enabled: !!user?.id branch ---
@@ -310,21 +309,21 @@ describe("FixerTab", () => {
 
   // --- saveMut mutationFn tests ---
 
-  it("saveMut mutationFn calls fixerService.createSettings when no existing settings", async () => {
+  it("saveMut mutationFn calls fixerService.saveSettings when no existing settings", async () => {
     const { fixerService } = await import("@/services/fixer");
     settingsData = undefined;
     render(<FixerTab />);
     await latestSaveOpts().mutationFn?.();
-    expect(vi.mocked(fixerService.createSettings)).toHaveBeenCalled();
+    expect(vi.mocked(fixerService.saveSettings)).toHaveBeenCalled();
   });
 
-  it("saveMut mutationFn calls fixerService.updateSettings when settings exist", async () => {
+  it("saveMut mutationFn calls fixerService.saveSettings when settings exist", async () => {
     const { fixerService } = await import("@/services/fixer");
     settingsData = { id: "f1", api_key_configured: true, provider: "fixer" };
     render(<FixerTab />);
     // useEffect fires on render due to settingsData, causing a re-render; use latestSaveOpts()
     await latestSaveOpts().mutationFn?.();
-    expect(vi.mocked(fixerService.updateSettings)).toHaveBeenCalledWith("f1", expect.any(Object));
+    expect(vi.mocked(fixerService.saveSettings)).toHaveBeenCalledWith(expect.any(Object));
   });
 
   it("saveMut mutationFn includes api_key when new key is entered", async () => {
@@ -335,7 +334,7 @@ describe("FixerTab", () => {
     // fireEvent.change triggers a re-render; use latestSaveOpts() to get fresh closure
     fireEvent.change(input, { target: { value: "secretkey" } });
     await latestSaveOpts().mutationFn?.();
-    expect(vi.mocked(fixerService.createSettings)).toHaveBeenCalledWith(
+    expect(vi.mocked(fixerService.saveSettings)).toHaveBeenCalledWith(
       expect.objectContaining({ api_key: "secretkey" }),
     );
   });
@@ -347,8 +346,7 @@ describe("FixerTab", () => {
     // clicking "remove" triggers re-render; use latestSaveOpts() for fresh closure
     fireEvent.click(screen.getByText("remove"));
     await latestSaveOpts().mutationFn?.();
-    expect(vi.mocked(fixerService.updateSettings)).toHaveBeenCalledWith(
-      "f1",
+    expect(vi.mocked(fixerService.saveSettings)).toHaveBeenCalledWith(
       expect.objectContaining({ api_key: "" }),
     );
   });
@@ -360,16 +358,16 @@ describe("FixerTab", () => {
     render(<FixerTab />);
     // No key entered, no remove clicked → third branch: !settings?.id || !apiKeyConfigured
     await latestSaveOpts().mutationFn?.();
-    expect(vi.mocked(fixerService.createSettings)).toHaveBeenCalledWith(
+    expect(vi.mocked(fixerService.saveSettings)).toHaveBeenCalledWith(
       expect.objectContaining({ api_key: "" }),
     );
   });
 
-  it("updateRatesMut mutationFn calls fixerService.updateRates", async () => {
+  it("updateRatesMut mutationFn calls fixerService.updateAllRates", async () => {
     const { fixerService } = await import("@/services/fixer");
     render(<FixerTab />);
     await latestUpdateRatesOpts().mutationFn?.();
-    expect(vi.mocked(fixerService.updateRates)).toHaveBeenCalled();
+    expect(vi.mocked(fixerService.updateAllRates)).toHaveBeenCalled();
   });
 
   // --- ?? '' / || fallback branches ---

@@ -10,7 +10,6 @@ import {
 import { ApiKeyListCard } from "@/components/settings/api-keys/ApiKeyListCard";
 import { ApiKeyRevealDialog } from "@/components/settings/api-keys/ApiKeyRevealDialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useAuth } from "@/contexts/AuthContext";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { apiKeysService } from "@/services/apiKeys";
@@ -18,10 +17,9 @@ import type { ApiKey, ApiKeyCreated, ApiKeyPermission } from "@/types";
 
 export function ApiKeyTab() {
   const { t } = useTranslation();
-  const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const userId = user?.id ?? "";
+  const userId = "global";
 
   const [showCreate, setShowCreate] = useState(false);
   const [justCreated, setJustCreated] = useState<ApiKeyCreated | null>(null);
@@ -31,17 +29,11 @@ export function ApiKeyTab() {
   const { data: keys = [], isLoading } = useQuery({
     queryKey: queryKeys.apiKeys(userId),
     queryFn: () => apiKeysService.list(),
-    enabled: !!userId,
   });
 
   const createMutation = useMutation({
-    mutationFn: ({
-      name,
-      permissions,
-    }: {
-      name: string;
-      permissions: ApiKeyPermission[];
-    }) => apiKeysService.create(name, permissions),
+    mutationFn: ({ name, permissions }: { name: string; permissions: ApiKeyPermission[] }) =>
+      apiKeysService.create(name, permissions),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.apiKeys(userId) });
       setShowCreate(false);
@@ -93,7 +85,6 @@ export function ApiKeyTab() {
 
   return (
     <div className="animate-in slide-in-from-bottom-4 space-y-8 fade-in duration-500">
-
       <ApiKeyListCard
         keys={keys}
         isLoading={isLoading}
@@ -107,16 +98,11 @@ export function ApiKeyTab() {
       <CreateApiKeyDialog
         open={showCreate}
         onClose={() => setShowCreate(false)}
-        onSubmit={(name, permissions) =>
-          createMutation.mutate({ name, permissions })
-        }
+        onSubmit={(name, permissions) => createMutation.mutate({ name, permissions })}
         isPending={createMutation.isPending}
       />
 
-      <ApiKeyRevealDialog
-        created={justCreated}
-        onClose={() => setJustCreated(null)}
-      />
+      <ApiKeyRevealDialog created={justCreated} onClose={() => setJustCreated(null)} />
 
       <ConfirmDialog
         open={!!pendingDeleteId}

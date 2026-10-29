@@ -68,6 +68,7 @@ function SubscriptionsEmptyState() {
 }
 
 interface SubscriptionsGridProps {
+  onShare?: (subscription: Subscription) => void;
   isLoading: boolean;
   subscriptions: Subscription[];
   layout?: "grid" | "list";
@@ -92,6 +93,7 @@ interface SubscriptionsGridProps {
 }
 
 export function SubscriptionsGrid({
+  onShare,
   isLoading,
   subscriptions,
   layout = "grid",
@@ -126,6 +128,7 @@ export function SubscriptionsGrid({
   const renderCards = (items: Subscription[]) =>
     items.map((subscription) => (
       <SubscriptionCard
+        onShare={onShare ? () => onShare(subscription) : undefined}
         key={subscription.id}
         sub={subscription}
         layout={layout}

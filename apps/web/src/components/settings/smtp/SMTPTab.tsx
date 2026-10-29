@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mail, SendHorizontal } from "lucide-react";
 import { forwardRef, useEffect, useId, useImperativeHandle, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -39,6 +39,11 @@ export const SMTPTab = forwardRef<
   ref,
 ) {
   const { t } = useTranslation();
+  const qc = useQueryClient();
+  const refreshChannelAvailability = () => {
+    qc.invalidateQueries({ queryKey: ["admin-channels"] });
+    qc.invalidateQueries({ queryKey: ["notifications_config"] });
+  };
   const [expanded, setExpanded] = useState(true);
   const contentId = useId();
   const [saving, setSaving] = useState(false);
@@ -91,6 +96,7 @@ export const SMTPTab = forwardRef<
     setSaving(true);
     try {
       await serverSettingsService.updateSmtp({ enabled });
+      refreshChannelAvailability();
       toast.success(t("saved"));
     } catch (error) {
       set("enabled", previous);
@@ -106,6 +112,7 @@ export const SMTPTab = forwardRef<
     if (inline) body.enabled = channelEnabled;
     if (!form.password) delete body.password;
     await serverSettingsService.updateSmtp(body);
+    refreshChannelAvailability();
     if (form.password) setHasExistingPassword(true);
     setForm((prev) => ({ ...prev, password: "" }));
     const settings = { ...body };

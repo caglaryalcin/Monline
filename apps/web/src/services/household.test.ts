@@ -52,13 +52,14 @@ describe("householdService", () => {
       .mockReturnValueOnce(getCollectionMock({ update }))
       .mockReturnValueOnce(getCollectionMock({ delete: remove }));
 
-    await householdService.create("user-1", "Daniel");
+    await householdService.create("user-1", "Daniel", "daniel@example.com");
     await householdService.update("member-1", "Ana");
     await householdService.delete("member-1");
 
     expect(create).toHaveBeenCalledWith({
       name: "Daniel",
       user: "user-1",
+      account_email: "daniel@example.com",
     });
     expect(update).toHaveBeenCalledWith("member-1", { name: "Ana" });
     expect(remove).toHaveBeenCalledWith("member-1");

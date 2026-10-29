@@ -45,8 +45,8 @@ export function CurrenciesTab() {
 
   // Needed to auto-refresh rates when main currency changes
   const { data: fixerSettings } = useQuery({
-    queryKey: ["fixer_settings", user?.id ?? ""],
-    queryFn: () => fixerService.getSettings(user!.id),
+    queryKey: ["exchange-status"],
+    queryFn: () => fixerService.getStatus(),
     enabled: !!user?.id,
   });
 
@@ -112,7 +112,7 @@ export function CurrenciesTab() {
       toast.success(t("success_update"));
 
       // Rates are relative to the main currency — auto-refresh when base changes
-      if (fixerSettings?.api_key_configured) {
+      if (fixerSettings?.enabled && fixerSettings.api_key_configured) {
         fixerService
           .updateRates()
           .then(() =>

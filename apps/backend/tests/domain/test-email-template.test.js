@@ -7,7 +7,12 @@ let language = "tr";
 const user = {
   id: "user-1",
   get: (key) => (key === "email" ? "account@example.test" : language),
-  getString: (key) => (key === "language" ? language : ""),
+  getString: (key) =>
+    key === "email"
+      ? "account@example.test"
+      : key === "language"
+        ? language
+        : "",
 };
 const repository = {
   settings: () => ({
@@ -52,7 +57,7 @@ it.each(["tr", "en", "de", "bg"])(
       const json = vi.fn();
       await routes.get(route)({
         auth: user,
-        requestInfo: () => ({ body: { provider: "email" } }),
+        requestInfo: () => ({ body: { provider: "email", config: {} } }),
         json,
       });
       expect(json).toHaveBeenCalledWith(200, expect.any(Object));
@@ -74,9 +79,7 @@ it.each(["tr", "en", "de", "bg"])(
       });
       expect(message.to).toEqual([
         {
-          address: route.includes("notifications")
-            ? "notifications@example.test"
-            : "account@example.test",
+          address: "account@example.test",
         },
       ]);
     }

@@ -759,3 +759,43 @@ html[data-theme-changing] *::after {
     width: 24px;
   }
 }
+
+/* Light-mode accents; dark mode keeps the original switch and provider styles. */
+:root:not(.dark) .monline-switch {
+  border-width: 1px;
+  border-color: color-mix(in srgb, hsl(var(--primary)) 60%, hsl(var(--foreground)) 40%);
+  padding: 1px;
+}
+
+:root:not(.dark) .monline-switch[data-state="unchecked"] {
+  background-color: hsl(var(--primary) / 0.2);
+}
+
+:root:not(.dark) .monline-switch:focus-visible {
+  --tw-ring-color: hsl(var(--primary));
+}
+
+:root:not(.dark) .monline-switch-thumb {
+  background-color: #adadad;
+}
+
+:root:not(.dark) .sharing-recipients-field[data-invalid="false"]:not(:focus-within) {
+  border-color: hsl(var(--foreground) / 0.35);
+}
+
+:root:not(.dark) .sharing-recipient-chip {
+  border-color: hsl(var(--foreground) / 0.3);
+}
+
+:root:not(.dark) .sharing-recipient-chip[data-selected="true"] {
+  border-color: color-mix(in srgb, hsl(var(--primary)) 60%, hsl(var(--foreground)) 40%);
+}
+
+:root:not(.dark) .notification-provider-card[data-configured="true"] {
+  border-color: hsl(var(--primary) / 0.4);
+}
+
+:root:not(.dark) .notification-provider-card[data-configured="true"] .notification-provider-icon {
+  background-color: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary-text, var(--primary)));
+}

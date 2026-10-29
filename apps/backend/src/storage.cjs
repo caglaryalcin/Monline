@@ -148,12 +148,39 @@ class Repository {
       this.collections.set(entry.name, collection);
       this.collections.set(entry.legacyId, collection);
     }
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("subscriptions")')
+        .all()
+        .some((column) => column.name === "sharing")
+    )
+      this.connection.exec(
+        "ALTER TABLE subscriptions ADD COLUMN sharing JSON DEFAULT NULL",
+      );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("sharing_groups")')
+        .all()
+        .some((column) => column.name === "pending_members")
+    )
+      this.connection.exec(
+        "ALTER TABLE sharing_groups ADD COLUMN pending_members JSON DEFAULT NULL",
+      );
     const paymentColumns = new Set(
       this.connection
         .prepare('PRAGMA table_info("payment_records")')
         .all()
         .map((column) => column.name),
     );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("users")')
+        .all()
+        .some((column) => column.name === "disabled")
+    )
+      this.connection.exec(
+        "ALTER TABLE users ADD COLUMN disabled INTEGER NOT NULL DEFAULT 0",
+      );
     for (const name of [
       "name",
       "currency",
@@ -246,6 +273,28 @@ class Repository {
       this.connection.exec(
         "ALTER TABLE household ADD COLUMN is_main INTEGER NOT NULL DEFAULT 0",
       );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("household")')
+        .all()
+        .some((column) => column.name === "account")
+    )
+      this.connection.exec(
+        "ALTER TABLE household ADD COLUMN account TEXT NOT NULL DEFAULT ''",
+      );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("household")')
+        .all()
+        .some((column) => column.name === "account_approval")
+    )
+      this.connection.exec(
+        "ALTER TABLE household ADD COLUMN account_approval JSON DEFAULT NULL",
+      );
+    this.connection.exec(
+      "CREATE INDEX IF NOT EXISTS household_approval_token ON household(json_extract(account_approval,'$.token_hash'))",
+    );
+    this.repairSelfHousehold();
     this.repairMainHousehold();
     this.connection.exec(`
       CREATE TABLE IF NOT EXISTS monline_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -299,6 +348,48 @@ class Repository {
   }
   dataDir() {
     return this.directory;
+  }
+  repairSelfHousehold() {
+    this.runInTransaction(() => {
+      const users = this.connection
+        .prepare("SELECT id,name,email FROM users")
+        .all();
+      const findSelf = this.connection.prepare(
+        "SELECT id,name FROM household WHERE user=? AND account=? ORDER BY is_main DESC,id LIMIT 1",
+      );
+      const findLegacy = this.connection.prepare(
+        "SELECT id FROM household WHERE user=? AND account='' AND lower(trim(name))='me' ORDER BY is_main DESC,id LIMIT 1",
+      );
+      const link = this.connection.prepare(
+        "UPDATE household SET account=?,name=? WHERE id=?",
+      );
+      const insert = this.connection.prepare(
+        "INSERT INTO household (id,name,user,account,is_main) VALUES (?,?,?,?,?)",
+      );
+      const hasMain = this.connection.prepare(
+        "SELECT id FROM household WHERE user=? AND is_main=1 LIMIT 1",
+      );
+      for (const user of users) {
+        const name = user.name?.trim() || user.email;
+        const self = findSelf.get(user.id, user.id);
+        if (self) {
+          // Only rename the old generated label; preserve custom display names.
+          if (self.name.trim().toLowerCase() === "me")
+            link.run(user.id, name, self.id);
+          continue;
+        }
+        const legacy = findLegacy.get(user.id);
+        if (legacy) link.run(user.id, name, legacy.id);
+        else
+          insert.run(
+            newId(),
+            name,
+            user.id,
+            user.id,
+            hasMain.get(user.id) ? 0 : 1,
+          );
+      }
+    });
   }
   repairMainHousehold() {
     const seen = new Set();
@@ -608,6 +699,8 @@ class Repository {
     return this.runInTransaction(() =>
       this.emit("delete", record, () => {
         const name = record.collection().name;
+        if (name === "household")
+          require("./sharing-consent.cjs").removeContactAccess(this, record);
         if (name === "users") {
           for (const entry of schema) {
             const owner =
@@ -623,6 +716,9 @@ class Repository {
               ))
                 this.delete(row);
           }
+          this.connection
+            .prepare("UPDATE household SET account='' WHERE account=?")
+            .run(record.id);
           this.connection
             .prepare("DELETE FROM monline_sessions WHERE user_id=?")
             .run(record.id);

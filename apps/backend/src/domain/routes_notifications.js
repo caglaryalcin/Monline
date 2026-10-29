@@ -8,7 +8,7 @@ const domainPath = __dirname;
 const { smtpTestMessage } = require("../email-templates.cjs");
 const { ntfyRequest } = require("./lib/ntfy.js");
 const providerFields = {
-  email: ["email_to"],
+  email: [],
   discord: ["discord_webhook_url"],
   telegram: ["telegram_bot_token", "telegram_chat_id"],
   gotify: ["gotify_url", "gotify_token"],
@@ -58,30 +58,18 @@ routerAdd("POST", "/api/notifications/test", async (e) => {
       return e.json(400, { error: "Invalid notification test configuration" });
     // A supplied draft is authoritative. Never mix it with saved secrets or save it.
     config = {
-      getString: (key) => (Object.hasOwn(draft, key) ? draft[key] : ""),
+      getString: (key) =>
+        key === "email_to"
+          ? e.auth.getString("email")
+          : Object.hasOwn(draft, key)
+            ? draft[key]
+            : "",
     };
   } else
-    try {
-      const records = repository.findRecordsByFilter(
-        "notifications_config",
-        "user = {:userId}",
-        "",
-        1,
-        0,
-        {
-          userId: e.auth.id,
-        },
-      );
-      if (records.length === 0)
-        return e.json(404, {
-          error: "No notification config found",
-        });
-      config = records[0];
-    } catch (err) {
-      return e.json(500, {
-        error: "Failed to load config",
-      });
-    }
+    config = require("../server-config.cjs").effectiveNotificationConfig(
+      repository,
+      e.auth.id,
+    );
   const title = "🔔 Monline — Test Notification";
   const message = "This is a test notification from Monline.";
   try {
@@ -276,7 +264,9 @@ routerAdd("POST", "/api/notifications/test", async (e) => {
         const settings = repository.settings();
         const msg = new MailerMessage(
           smtpTestMessage({
-            language: e.auth.getString("language"),
+            language: repository
+              .findRecordById("users", e.auth.id)
+              .getString("language"),
             from: {
               address: settings.meta.senderAddress || "noreply@monline.app",
               name: settings.meta.senderName || "Monline",

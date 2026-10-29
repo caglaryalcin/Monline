@@ -1,7 +1,7 @@
 const { Record, repository, routerAdd, security } = require("../runtime.cjs");
 const domainPath = __dirname;
 // ================================================================
-// GET /api/api-keys  — list keys for the authenticated user
+// GET /api/api-keys  — administrator-managed integration keys
 // ================================================================
 routerAdd("GET", "/api/api-keys", function (e) {
   try {
@@ -9,16 +9,7 @@ routerAdd("GET", "/api/api-keys", function (e) {
       return e.json(401, {
         error: "Authentication required",
       });
-    var keys = repository.findRecordsByFilter(
-      "api_keys",
-      "user = {:userId}",
-      "",
-      0,
-      0,
-      {
-        userId: e.auth.id,
-      },
-    );
+    var keys = repository.findRecordsByFilter("api_keys", "", "", 0, 0, {});
     var items = [];
     for (var i = 0; i < keys.length; i++) {
       var k = keys[i];
@@ -91,16 +82,7 @@ routerAdd("POST", "/api/api-keys", function (e) {
         });
       }
     }
-    var existing = repository.findRecordsByFilter(
-      "api_keys",
-      "user = {:userId}",
-      "",
-      0,
-      0,
-      {
-        userId: e.auth.id,
-      },
-    );
+    var existing = repository.findRecordsByFilter("api_keys", "", "", 0, 0, {});
     if (existing.length >= 20)
       return e.json(400, {
         error: "Maximum of 20 API keys reached",
@@ -153,7 +135,7 @@ routerAdd("DELETE", "/api/api-keys/{id}", function (e) {
         error: "API key not found",
       });
     }
-    if (keyRecord.get("user") !== e.auth.id)
+    if (!require("../managed-config.cjs").isAdmin(repository, e.auth))
       return e.json(403, {
         error: "Forbidden",
       });
@@ -186,7 +168,7 @@ routerAdd("PUT", "/api/api-keys/{id}", function (e) {
         error: "API key not found",
       });
     }
-    if (keyRecord.get("user") !== e.auth.id)
+    if (!require("../managed-config.cjs").isAdmin(repository, e.auth))
       return e.json(403, {
         error: "Forbidden",
       });
@@ -2021,6 +2003,10 @@ routerAdd("DELETE", "/api/external/household/{id}", function (e) {
     if (record.get("user") !== userId)
       return e.json(403, {
         error: "Forbidden",
+      });
+    if (record.get("account") === userId)
+      return e.json(403, {
+        error: "cannot_delete_yourself",
       });
     repository.delete(record);
     return e.json(200, {

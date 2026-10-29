@@ -20,7 +20,7 @@ vi.mock("@/components/settings/registration/RegistrationTab", () => ({
   ),
 }));
 
-it("keeps password and 2FA settings visible and restricts registration settings to administrators", () => {
+it("keeps password and 2FA personal while registration remains in administration", () => {
   isAdmin = false;
   const { Wrapper } = createQueryClientWrapper();
   const { rerender } = render(<SecurityTab />, { wrapper: Wrapper });
@@ -30,7 +30,7 @@ it("keeps password and 2FA settings visible and restricts registration settings 
   expect(screen.queryByText("Limits and URLs settings")).not.toBeInTheDocument();
   isAdmin = true;
   rerender(<SecurityTab />);
-  expect(screen.getByRole("heading", { name: "registration" })).toBeInTheDocument();
-  expect(screen.getByText("Registration settings")).toBeInTheDocument();
-  expect(screen.getByText("Limits and URLs settings")).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "registration" })).not.toBeInTheDocument();
+  expect(screen.queryByText("Registration settings")).not.toBeInTheDocument();
+  expect(screen.queryByText("Limits and URLs settings")).not.toBeInTheDocument();
 });

@@ -12,7 +12,7 @@ const domainPath = __dirname;
  * - 11 default subscription categories
  * - 34 default currencies (EUR as main)
  * - 29 default payment methods
- * - 1 default household member ("Me")
+ * - 1 default household member linked to the account itself
  *
  * Uses onRecordAfterCreateSuccess so the user record is already persisted.
  */
@@ -45,8 +45,13 @@ onRecordAfterCreateSuccess((e) => {
   // ================================================================
   const householdCol = repository.findCollectionByNameOrId("household");
   const member = new Record(householdCol);
-  member.set("name", "Me");
+  member.set(
+    "name",
+    e.record.getString("name").trim() || e.record.getString("email"),
+  );
   member.set("user", userId);
+  member.set("account", userId);
+  member.set("is_main", true);
   repository.save(member);
 
   // ================================================================

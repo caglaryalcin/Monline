@@ -101,24 +101,17 @@ const FIELDS = {
   ],
   yearly_costs: ["year", "month", "total"],
   notifications_config: [
-    "reminders",
     "email_enabled",
-    "email_to",
     "discord_enabled",
     "telegram_enabled",
-    "telegram_chat_id",
     "gotify_enabled",
-    "gotify_url",
     "pushover_enabled",
     "ntfy_enabled",
-    "ntfy_url",
-    "ntfy_topic",
     "pushplus_enabled",
     "mattermost_enabled",
     "webhook_enabled",
     "serverchan_enabled",
   ],
-  fixer_settings: ["provider", "base_currency", "enabled"],
   notification_log: ["subscription_id", "sent_date", "reminder_key"],
   bank_statements: [
     "bank",
@@ -538,19 +531,9 @@ function importAccount(
         if (name === "fixer_settings" && !record.getString("api_key"))
           record.set("enabled", false);
         if (name === "notifications_config") {
-          const required = {
-            discord: "discord_webhook_url",
-            telegram: "telegram_bot_token",
-            gotify: "gotify_token",
-            pushover: "pushover_api_token",
-            pushplus: "pushplus_token",
-            mattermost: "mattermost_webhook_url",
-            webhook: "webhook_url",
-            serverchan: "serverchan_send_key",
-          };
-          for (const channel of Object.keys(required))
-            if (!record.getString(required[channel]))
-              record.set(channel + "_enabled", false);
+          const available = require("../../server-config.cjs").availability(tx);
+          for (const [channel, configured] of Object.entries(available))
+            if (!configured) record.set(channel + "_enabled", false);
         }
         tx.save(record);
         if (

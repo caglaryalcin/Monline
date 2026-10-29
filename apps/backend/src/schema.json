@@ -328,9 +328,15 @@
         "required": false,
         "min": 0,
         "max": 0
+      },
+      {
+        "name": "disabled",
+        "type": "bool",
+        "hidden": true,
+        "required": false
       }
     ],
-    "sql": "CREATE TABLE \"users\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"password\" TEXT NOT NULL DEFAULT '', \"email\" TEXT NOT NULL DEFAULT '', \"emailVisibility\" INTEGER NOT NULL DEFAULT 0, \"verified\" INTEGER NOT NULL DEFAULT 0, \"name\" TEXT NOT NULL DEFAULT '', \"avatar\" TEXT NOT NULL DEFAULT '', \"created\" TEXT NOT NULL DEFAULT '', \"updated\" TEXT NOT NULL DEFAULT '', \"language\" TEXT NOT NULL DEFAULT '', \"dark_theme\" INTEGER NOT NULL DEFAULT 0, \"display_currency\" TEXT NOT NULL DEFAULT '', \"totp_secret\" TEXT NOT NULL DEFAULT '', \"custom_css\" TEXT NOT NULL DEFAULT '', \"global_currency_prefix\" TEXT NOT NULL DEFAULT '', \"convert_currency\" INTEGER NOT NULL DEFAULT 0, \"monthly_budget\" REAL NOT NULL DEFAULT 0, \"show_logo_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_price_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_cycle_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_payment_method_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_category_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_payer_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_next_payment_on_card\" INTEGER NOT NULL DEFAULT 0, \"sort_order\" TEXT NOT NULL DEFAULT '', \"sort_direction\" TEXT NOT NULL DEFAULT '', \"calendar_view\" TEXT NOT NULL DEFAULT '', \"main_currency\" TEXT NOT NULL DEFAULT '', \"monthly_price\" INTEGER NOT NULL DEFAULT 0, \"show_original_price\" INTEGER NOT NULL DEFAULT 0, \"hide_disabled\" INTEGER NOT NULL DEFAULT 0, \"disabled_to_bottom\" INTEGER NOT NULL DEFAULT 0, \"subscription_progress\" INTEGER NOT NULL DEFAULT 0, \"mobile_navigation\" INTEGER NOT NULL DEFAULT 0, \"remove_background\" INTEGER NOT NULL DEFAULT 0, \"totp_enabled\" INTEGER NOT NULL DEFAULT 0, \"budget\" REAL NOT NULL DEFAULT 0, \"dark_theme_mode\" REAL NOT NULL DEFAULT 0, \"totp_backup_codes\" TEXT NOT NULL DEFAULT '', \"color_theme\" TEXT NOT NULL DEFAULT '', \"payment_tracking\" INTEGER NOT NULL DEFAULT 0, \"totp_configured\" INTEGER NOT NULL DEFAULT 0, \"totp_login_challenge_hash\" TEXT NOT NULL DEFAULT '', \"totp_login_challenge_expires\" TEXT NOT NULL DEFAULT '', \"oidc_subject\" TEXT NOT NULL DEFAULT '')"
+    "sql": "CREATE TABLE \"users\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"password\" TEXT NOT NULL DEFAULT '', \"email\" TEXT NOT NULL DEFAULT '', \"emailVisibility\" INTEGER NOT NULL DEFAULT 0, \"verified\" INTEGER NOT NULL DEFAULT 0, \"name\" TEXT NOT NULL DEFAULT '', \"avatar\" TEXT NOT NULL DEFAULT '', \"created\" TEXT NOT NULL DEFAULT '', \"updated\" TEXT NOT NULL DEFAULT '', \"language\" TEXT NOT NULL DEFAULT '', \"dark_theme\" INTEGER NOT NULL DEFAULT 0, \"display_currency\" TEXT NOT NULL DEFAULT '', \"totp_secret\" TEXT NOT NULL DEFAULT '', \"custom_css\" TEXT NOT NULL DEFAULT '', \"global_currency_prefix\" TEXT NOT NULL DEFAULT '', \"convert_currency\" INTEGER NOT NULL DEFAULT 0, \"monthly_budget\" REAL NOT NULL DEFAULT 0, \"show_logo_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_price_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_cycle_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_payment_method_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_category_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_payer_on_card\" INTEGER NOT NULL DEFAULT 0, \"show_next_payment_on_card\" INTEGER NOT NULL DEFAULT 0, \"sort_order\" TEXT NOT NULL DEFAULT '', \"sort_direction\" TEXT NOT NULL DEFAULT '', \"calendar_view\" TEXT NOT NULL DEFAULT '', \"main_currency\" TEXT NOT NULL DEFAULT '', \"monthly_price\" INTEGER NOT NULL DEFAULT 0, \"show_original_price\" INTEGER NOT NULL DEFAULT 0, \"hide_disabled\" INTEGER NOT NULL DEFAULT 0, \"disabled_to_bottom\" INTEGER NOT NULL DEFAULT 0, \"subscription_progress\" INTEGER NOT NULL DEFAULT 0, \"mobile_navigation\" INTEGER NOT NULL DEFAULT 0, \"remove_background\" INTEGER NOT NULL DEFAULT 0, \"totp_enabled\" INTEGER NOT NULL DEFAULT 0, \"budget\" REAL NOT NULL DEFAULT 0, \"dark_theme_mode\" REAL NOT NULL DEFAULT 0, \"totp_backup_codes\" TEXT NOT NULL DEFAULT '', \"color_theme\" TEXT NOT NULL DEFAULT '', \"payment_tracking\" INTEGER NOT NULL DEFAULT 0, \"totp_configured\" INTEGER NOT NULL DEFAULT 0, \"totp_login_challenge_hash\" TEXT NOT NULL DEFAULT '', \"totp_login_challenge_expires\" TEXT NOT NULL DEFAULT '', \"oidc_subject\" TEXT NOT NULL DEFAULT '', \"disabled\" INTEGER NOT NULL DEFAULT 0)"
   },
   {
     "name": "cycles",
@@ -685,9 +691,24 @@
         "type": "bool",
         "hidden": false,
         "required": false
+      },
+      {
+        "name": "account",
+        "type": "relation",
+        "collectionId": "users",
+        "hidden": true,
+        "required": false,
+        "maxSelect": 1,
+        "cascadeDelete": false
+      },
+      {
+        "name": "account_approval",
+        "type": "json",
+        "hidden": true,
+        "required": false
       }
     ],
-    "sql": "CREATE TABLE \"household\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"is_main\" INTEGER NOT NULL DEFAULT 0)"
+    "sql": "CREATE TABLE \"household\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"is_main\" INTEGER NOT NULL DEFAULT 0, \"account\" TEXT NOT NULL DEFAULT '', \"account_approval\" JSON DEFAULT NULL)"
   },
   {
     "name": "categories",
@@ -771,12 +792,7 @@
         "hidden": false,
         "required": false,
         "maxSize": 2097152,
-        "mimeTypes": [
-          "image/png",
-          "image/jpeg",
-          "image/svg+xml",
-          "image/webp"
-        ],
+        "mimeTypes": ["image/png", "image/jpeg", "image/svg+xml", "image/webp"],
         "maxSelect": 1
       },
       {
@@ -1042,10 +1058,7 @@
         "type": "select",
         "hidden": false,
         "required": false,
-        "values": [
-          "expense",
-          "credit"
-        ],
+        "values": ["expense", "credit"],
         "maxSelect": 1
       },
       {
@@ -1091,9 +1104,15 @@
         "type": "bool",
         "hidden": false,
         "required": false
+      },
+      {
+        "name": "sharing",
+        "type": "json",
+        "hidden": true,
+        "required": false
       }
     ],
-    "sql": "CREATE TABLE \"subscriptions\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"price\" REAL NOT NULL DEFAULT 0, \"frequency\" REAL NOT NULL DEFAULT 0, \"next_payment\" TEXT NOT NULL DEFAULT '', \"auto_renew\" INTEGER NOT NULL DEFAULT 0, \"start_date\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"url\" TEXT NOT NULL DEFAULT '', \"notify\" INTEGER NOT NULL DEFAULT 0, \"notify_days_before\" REAL NOT NULL DEFAULT 0, \"inactive\" INTEGER NOT NULL DEFAULT 0, \"cancellation_date\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"cycle\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"replacement_subscription\" TEXT NOT NULL DEFAULT '', \"auto_mark_paid\" INTEGER NOT NULL DEFAULT 0, \"record_type\" TEXT NOT NULL DEFAULT '', \"end_date\" TEXT NOT NULL DEFAULT '', \"payment_limit\" REAL NOT NULL DEFAULT 0, \"payments_completed\" REAL NOT NULL DEFAULT 0, \"statement_imported\" INTEGER NOT NULL DEFAULT 0, \"billing_anchor_day\" REAL NOT NULL DEFAULT 0, \"calendar_history_recovery_passes\" REAL NOT NULL DEFAULT 0, \"calendar_projection_hidden\" INTEGER NOT NULL DEFAULT 0)"
+    "sql": "CREATE TABLE \"subscriptions\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"price\" REAL NOT NULL DEFAULT 0, \"frequency\" REAL NOT NULL DEFAULT 0, \"next_payment\" TEXT NOT NULL DEFAULT '', \"auto_renew\" INTEGER NOT NULL DEFAULT 0, \"start_date\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"url\" TEXT NOT NULL DEFAULT '', \"notify\" INTEGER NOT NULL DEFAULT 0, \"notify_days_before\" REAL NOT NULL DEFAULT 0, \"inactive\" INTEGER NOT NULL DEFAULT 0, \"cancellation_date\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"cycle\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"replacement_subscription\" TEXT NOT NULL DEFAULT '', \"auto_mark_paid\" INTEGER NOT NULL DEFAULT 0, \"record_type\" TEXT NOT NULL DEFAULT '', \"end_date\" TEXT NOT NULL DEFAULT '', \"payment_limit\" REAL NOT NULL DEFAULT 0, \"payments_completed\" REAL NOT NULL DEFAULT 0, \"statement_imported\" INTEGER NOT NULL DEFAULT 0, \"billing_anchor_day\" REAL NOT NULL DEFAULT 0, \"calendar_history_recovery_passes\" REAL NOT NULL DEFAULT 0, \"calendar_projection_hidden\" INTEGER NOT NULL DEFAULT 0, `sharing` JSON DEFAULT NULL)"
   },
   {
     "name": "notifications_config",
@@ -1341,10 +1360,7 @@
         "type": "select",
         "hidden": false,
         "required": false,
-        "values": [
-          "fixer",
-          "apilayer"
-        ],
+        "values": ["fixer", "apilayer"],
         "maxSelect": 0
       },
       {
@@ -1856,11 +1872,7 @@
         "type": "select",
         "hidden": false,
         "required": true,
-        "values": [
-          "enpara",
-          "denizbank",
-          "garanti"
-        ],
+        "values": ["enpara", "denizbank", "garanti"],
         "maxSelect": 1
       },
       {
@@ -1909,5 +1921,41 @@
       }
     ],
     "sql": "CREATE TABLE \"bank_statements\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"bank\" TEXT NOT NULL DEFAULT '', \"file_name\" TEXT NOT NULL DEFAULT '', \"file_hash\" TEXT NOT NULL DEFAULT '', \"period\" TEXT NOT NULL DEFAULT '', \"page_count\" REAL NOT NULL DEFAULT 0, \"transactions\" TEXT DEFAULT 'null', \"created\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "sharing_groups",
+    "legacyId": "sharing_groups",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "required": true,
+        "min": 15,
+        "max": 15
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "collectionId": "users",
+        "required": true
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "max": 100
+      },
+      {
+        "name": "members",
+        "type": "json",
+        "hidden": true
+      },
+      {
+        "name": "pending_members",
+        "type": "json",
+        "hidden": true
+      }
+    ],
+    "sql": "CREATE TABLE `sharing_groups` (`id` TEXT PRIMARY KEY NOT NULL, `user` TEXT NOT NULL, `name` TEXT NOT NULL, `members` JSON DEFAULT NULL, `pending_members` JSON DEFAULT NULL)"
   }
 ]

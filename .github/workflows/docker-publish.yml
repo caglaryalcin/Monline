@@ -56,6 +56,7 @@ jobs:
           python3 - <<'PY'
           import json
           import os
+          import re
           import subprocess
           from pathlib import Path
 
@@ -64,6 +65,9 @@ jobs:
           server_version = json.loads(Path("apps/backend/package.json").read_text())["version"]
           if version != web_version or version != server_version:
               raise SystemExit("Root, web and server package versions must match.")
+          compose_image = re.search(r"^\s+image:\s+monline:([^\s#]+)", Path("docker-compose.yml").read_text(), re.MULTILINE)
+          if not compose_image or compose_image.group(1) != version:
+              raise SystemExit("The local Compose image tag must match the package version.")
           if os.environ["VERSION"] != f"v{version}":
               raise SystemExit("Release tag must match the package version.")
 

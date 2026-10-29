@@ -106,7 +106,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "http://localhost:8080",
+        target:
+          process.env.MONLINE_API_URL || `http://127.0.0.1:${process.env.MONLINE_PORT || "8080"}`,
         changeOrigin: true,
       },
     },

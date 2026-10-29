@@ -56,7 +56,7 @@ export function LoginPage() {
       }
 
       const msg = err instanceof Error ? err.message : t("unknown_error");
-      toast.error(msg);
+      toast.error(msg === "account_disabled" ? t("account_disabled") : msg);
     }
   };
 

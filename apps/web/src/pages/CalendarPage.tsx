@@ -168,6 +168,8 @@ export function CalendarPage() {
   const { data: household = [] } = useQuery({
     queryKey: queryKeys.household.all(userId),
     queryFn: () => householdService.list(userId),
+    staleTime: 0,
+    refetchOnWindowFocus: "always",
     enabled: !!userId,
   });
 

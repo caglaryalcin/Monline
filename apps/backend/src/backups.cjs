@@ -165,6 +165,15 @@ function validateDatabase(file) {
     if (Object.values(input.prepare("PRAGMA quick_check").get())[0] !== "ok")
       throw new Error("Invalid database");
     for (const entry of schema) {
+      if (
+        entry.name === "sharing_groups" &&
+        !input
+          .prepare(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='sharing_groups'",
+          )
+          .get()
+      )
+        continue;
       const columns = new Set(
         input
           .prepare(`PRAGMA table_info(${identifier(entry.name)})`)
@@ -176,6 +185,7 @@ function validateDatabase(file) {
           (field) =>
             !columns.has(field.name) &&
             !(
+              (entry.name === "users" && field.name === "disabled") ||
               (entry.name === "payment_records" &&
                 [
                   "statement_sources",
@@ -189,12 +199,17 @@ function validateDatabase(file) {
                 ].includes(field.name)) ||
               (entry.name === "subscriptions" &&
                 [
+                  "sharing",
                   "statement_imported",
                   "calendar_history_recovery_passes",
                   "calendar_projection_hidden",
                 ].includes(field.name)) ||
               (["payment_methods", "household"].includes(entry.name) &&
-                field.name === "is_main")
+                field.name === "is_main") ||
+              (entry.name === "household" &&
+                ["account", "account_approval"].includes(field.name)) ||
+              (entry.name === "sharing_groups" &&
+                field.name === "pending_members")
             ),
         )
       )
@@ -224,6 +239,7 @@ function replaceDatabase(repository, input) {
       .map((field) => field.name)
       .filter((name) => sourceColumns.has(name));
     repository.connection.exec(`DELETE FROM ${identifier(entry.name)}`);
+    if (!sourceColumns.size && entry.name === "sharing_groups") continue;
     const insert = repository.connection.prepare(
       `INSERT INTO ${identifier(entry.name)} (${fields.map(identifier)}) VALUES (${fields.map(() => "?")})`,
     );
@@ -242,6 +258,7 @@ function replaceDatabase(repository, input) {
     insertMeta.run(row.key, row.value);
   repository.repairStatementImportMarkers();
   repository.repairMainPaymentMethods();
+  repository.repairSelfHousehold();
   repository.repairMainHousehold();
   require("./domain/lib/calendar-history-recovery.js").recoverCalendarHistory(
     repository,

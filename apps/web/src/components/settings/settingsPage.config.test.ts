@@ -11,6 +11,7 @@ describe("settingsPage.config", () => {
     "2fa",
     "categories",
     "household",
+    "groups",
     "currencies",
     "payment_methods",
     "display",
@@ -32,7 +33,7 @@ describe("settingsPage.config", () => {
     expect(Object.keys(SETTINGS_TAB_COMPONENTS)).toHaveLength(expectedKeys.length);
   });
 
-  it("returns the requested menu order with merged server sections", () => {
+  it("returns the personal menu order while server sections are managed in administration", () => {
     const t = (k: string) => k;
     const items = getSettingsPageMenuItems(t as never, true);
     expect(items.map((item) => item.value)).toEqual([
@@ -40,14 +41,11 @@ describe("settingsPage.config", () => {
       "security",
       "notifications",
       "household",
+      "groups",
       "categories",
       "display",
       "payment_methods",
       "currencies",
-      "api_key",
-      "exchange_rates",
-      "oidc",
-      "maintenance",
       "delete",
     ]);
     expect(SETTINGS_TAB_COMPONENTS.smtp).toBe(SETTINGS_TAB_COMPONENTS.notifications);

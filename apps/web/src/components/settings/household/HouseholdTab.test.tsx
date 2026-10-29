@@ -19,8 +19,8 @@ let mockUseQueryData: { data: unknown[]; isLoading: boolean } = {
 
 const capturedMutOpts: Array<{
   mutationFn?: (...args: unknown[]) => unknown;
-  onSuccess?: () => void;
-  onError?: () => void;
+  onSuccess?: (person?: { account_confirmed?: boolean }) => void;
+  onError?: (error?: Error) => void;
 }> = [];
 
 let capturedQueryFn: (() => unknown) | undefined;
@@ -32,11 +32,11 @@ vi.mock("@tanstack/react-query", () => ({
   },
   useMutation: (opts: {
     mutationFn?: (...args: unknown[]) => unknown;
-    onSuccess?: () => void;
-    onError?: () => void;
+    onSuccess?: (person?: { account_confirmed?: boolean }) => void;
+    onError?: (error?: Error) => void;
   }) => {
     capturedMutOpts.push(opts);
-    return { mutate: mockMutate, isPending: false };
+    return { mutate: mockMutate, reset: vi.fn(), isPending: false, isError: false };
   },
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
@@ -46,7 +46,10 @@ vi.mock("@/services/household", () => ({
 }));
 
 vi.mock("@/lib/queryKeys", () => ({
-  queryKeys: { household: { all: () => ["household"] } },
+  queryKeys: {
+    household: { all: () => ["household"] },
+    subscriptions: { all: () => ["subscriptions"] },
+  },
 }));
 
 const { mockToastSuccess, mockToastError } = vi.hoisted(() => ({
@@ -79,7 +82,10 @@ vi.mock("@/components/ui/confirm-dialog", () => ({
 describe("HouseholdTab", () => {
   beforeEach(() => {
     mockAuthUser = { id: "u1" };
-    mockUseQueryData = { data: [{ id: "h1", name: "John", user: "u1" }], isLoading: false };
+    mockUseQueryData = {
+      data: [{ id: "h1", name: "John", user: "u1", account_email: "john@example.test" }],
+      isLoading: false,
+    };
     mockMutate.mockClear();
     mockToastSuccess.mockClear();
     mockToastError.mockClear();
@@ -96,6 +102,26 @@ describe("HouseholdTab", () => {
   it("renders existing members", () => {
     render(<HouseholdTab />);
     expect(screen.getByText("John")).toBeInTheDocument();
+  });
+
+  it("hides deletion for the signed-in account's own person even when it is not the default", () => {
+    mockUseQueryData = {
+      data: [
+        {
+          id: "self",
+          name: "Myself",
+          user: "u1",
+          account_id: "u1",
+          account_confirmed: true,
+          is_main: false,
+        },
+      ],
+      isLoading: false,
+    };
+    render(<HouseholdTab />);
+    expect(screen.getByText("Myself")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "edit" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "delete" })).not.toBeInTheDocument();
   });
 
   it("renders loading skeletons when isLoading is true", () => {
@@ -132,13 +158,16 @@ describe("HouseholdTab", () => {
     expect(screen.getByText("add")).toBeInTheDocument();
   });
 
-  it("calls mutate when add form submitted with valid name", () => {
+  it("sends the display name and required recipient email when adding a person", () => {
     render(<HouseholdTab />);
     fireEvent.click(screen.getByText("add"));
     const input = screen.getByPlaceholderText("member_name_placeholder");
     fireEvent.change(input, { target: { value: "Jane" } });
-    fireEvent.keyDown(input, { key: "Enter" });
-    expect(mockMutate).toHaveBeenCalledWith("Jane");
+    fireEvent.change(screen.getByLabelText("household_account_email"), {
+      target: { value: "jane@example.test" },
+    });
+    fireEvent.submit(input.closest("form")!);
+    expect(mockMutate).toHaveBeenCalledWith({ name: "Jane", email: "jane@example.test" });
   });
 
   it("does not call mutate when add name is empty", () => {
@@ -160,8 +189,8 @@ describe("HouseholdTab", () => {
     fireEvent.click(screen.getByRole("button", { name: "edit" }));
     const input = screen.getByDisplayValue("John");
     fireEvent.change(input, { target: { value: "Jane" } });
-    fireEvent.keyDown(screen.getByDisplayValue("Jane"), { key: "Enter" });
-    expect(mockMutate).toHaveBeenCalledWith({ id: "h1", name: "Jane" });
+    fireEvent.submit(screen.getByDisplayValue("Jane").closest("form")!);
+    expect(mockMutate).toHaveBeenCalledWith({ id: "h1", name: "Jane", email: "john@example.test" });
   });
 
   it("does not call mutate when edit name is empty", () => {
@@ -214,7 +243,7 @@ describe("HouseholdTab", () => {
     render(<HouseholdTab />);
     // createMut is index 0
     act(() => {
-      capturedMutOpts[0].onSuccess?.();
+      capturedMutOpts[0].onSuccess?.({ account_confirmed: true });
     });
     expect(mockToastSuccess).toHaveBeenCalledWith("success_create");
   });
@@ -224,7 +253,7 @@ describe("HouseholdTab", () => {
     fireEvent.click(screen.getByText("add"));
     expect(screen.queryByText("add")).not.toBeInTheDocument();
     act(() => {
-      capturedMutOpts[0].onSuccess?.();
+      capturedMutOpts[0].onSuccess?.({ account_confirmed: true });
     });
     expect(screen.getByText("add")).toBeInTheDocument();
   });
@@ -232,7 +261,7 @@ describe("HouseholdTab", () => {
   it("createMut onError calls toast.error with error", () => {
     render(<HouseholdTab />);
     act(() => {
-      capturedMutOpts[0].onError?.();
+      capturedMutOpts[0].onError?.(new Error("error"));
     });
     expect(mockToastError).toHaveBeenCalledWith("error");
   });
@@ -241,7 +270,7 @@ describe("HouseholdTab", () => {
     render(<HouseholdTab />);
     // updateMut is index 1
     act(() => {
-      capturedMutOpts[1].onSuccess?.();
+      capturedMutOpts[1].onSuccess?.({ account_confirmed: true });
     });
     expect(mockToastSuccess).toHaveBeenCalledWith("success_update");
   });
@@ -251,7 +280,7 @@ describe("HouseholdTab", () => {
     fireEvent.click(screen.getByRole("button", { name: "edit" }));
     expect(screen.getByDisplayValue("John")).toBeInTheDocument();
     act(() => {
-      capturedMutOpts[1].onSuccess?.();
+      capturedMutOpts[1].onSuccess?.({ account_confirmed: true });
     });
     expect(screen.queryByDisplayValue("John")).not.toBeInTheDocument();
   });
@@ -259,7 +288,7 @@ describe("HouseholdTab", () => {
   it("updateMut onError calls toast.error with error", () => {
     render(<HouseholdTab />);
     act(() => {
-      capturedMutOpts[1].onError?.();
+      capturedMutOpts[1].onError?.(new Error("error"));
     });
     expect(mockToastError).toHaveBeenCalledWith("error");
   });
@@ -276,7 +305,7 @@ describe("HouseholdTab", () => {
   it("deleteMut onError calls toast.error with error", () => {
     render(<HouseholdTab />);
     act(() => {
-      capturedMutOpts[2].onError?.();
+      capturedMutOpts[2].onError?.(new Error("error"));
     });
     expect(mockToastError).toHaveBeenCalledWith("error");
   });
@@ -286,15 +315,18 @@ describe("HouseholdTab", () => {
   it("createMut mutationFn calls householdService.create with user id and name", async () => {
     const { householdService } = await import("@/services/household");
     render(<HouseholdTab />);
-    await capturedMutOpts[0].mutationFn?.("Jane");
-    expect(vi.mocked(householdService.create)).toHaveBeenCalledWith("u1", "Jane");
+    await capturedMutOpts[0].mutationFn?.({ name: "Jane", email: "" });
+    expect(vi.mocked(householdService.create)).toHaveBeenCalledWith("u1", "Jane", "");
   });
 
   it("updateMut mutationFn calls householdService.update with id and name", async () => {
     const { householdService } = await import("@/services/household");
     render(<HouseholdTab />);
-    await capturedMutOpts[1].mutationFn?.({ id: "h1", name: "Updated" });
-    expect(vi.mocked(householdService.update)).toHaveBeenCalledWith("h1", "Updated");
+    await capturedMutOpts[1].mutationFn?.({ id: "h1", name: "Updated", email: "" });
+    expect(vi.mocked(householdService.update)).toHaveBeenCalledWith("h1", {
+      name: "Updated",
+      account_email: "",
+    });
   });
 
   it("deleteMut mutationFn calls householdService.delete with id", async () => {
@@ -323,10 +355,10 @@ describe("HouseholdTab", () => {
     mockAuthUser = null;
     render(<HouseholdTab />);
     act(() => {
-      capturedMutOpts[0].onSuccess?.();
+      capturedMutOpts[0].onSuccess?.({ account_confirmed: true });
     });
     act(() => {
-      capturedMutOpts[1].onSuccess?.();
+      capturedMutOpts[1].onSuccess?.({ account_confirmed: true });
     });
     act(() => {
       capturedMutOpts[2].onSuccess?.();

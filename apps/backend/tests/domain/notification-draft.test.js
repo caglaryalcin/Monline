@@ -15,7 +15,14 @@ beforeAll(() => {
     httpClient: runtime.httpClient,
   };
   Object.assign(runtime, {
-    repository: { findRecordsByFilter },
+    repository: {
+      findRecordsByFilter,
+      connection: {
+        prepare: () => ({ get: () => ({ value: JSON.stringify(saved) }) }),
+      },
+      settings: () => ({ smtp: { enabled: false } }),
+      findRecordById: () => ({ getString: () => "owner@example.test" }),
+    },
     httpClient: { send },
     routerAdd: (method, route, callback) => {
       handler = callback;
@@ -81,16 +88,9 @@ it.each([
     expect(findRecordsByFilter).not.toHaveBeenCalled();
   },
 );
-it("retains owner-scoped saved-config compatibility when no draft is supplied", async () => {
+it("uses the shared saved configuration when no draft is supplied", async () => {
   expect((await testNotification({ provider: "telegram" }))[0]).toBe(200);
-  expect(findRecordsByFilter).toHaveBeenCalledWith(
-    "notifications_config",
-    "user = {:userId}",
-    "",
-    1,
-    0,
-    { userId: "owner-1" },
-  );
+  expect(findRecordsByFilter).not.toHaveBeenCalled();
   expect(send.mock.lastCall[0].url).toBe(
     "https://api.telegram.org/botsaved-token/sendMessage",
   );

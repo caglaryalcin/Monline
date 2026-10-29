@@ -6,24 +6,25 @@ import { FIXER_PROVIDER_LINKS } from "@/components/settings/exchange-rates/fixer
 import { FixerActions } from "@/components/settings/exchange-rates/FixerActions";
 import { FixerApiKeyField } from "@/components/settings/exchange-rates/FixerApiKeyField";
 import { FixerProviderSelect } from "@/components/settings/exchange-rates/FixerProviderSelect";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/lib/toast";
 import { fixerService } from "@/services/fixer";
 import type { FixerSettings } from "@/types";
 
 export function FixerTab() {
   const { t } = useTranslation();
-  const { user } = useAuth();
   const qc = useQueryClient();
 
   const [apiKey, setApiKey] = useState("");
   const [removeStoredApiKey, setRemoveStoredApiKey] = useState(false);
   const [provider, setProvider] = useState<"fixer" | "apilayer">("fixer");
 
-  const { data: settings } = useQuery({
-    queryKey: ["fixer_settings", user?.id ?? ""],
-    queryFn: () => fixerService.getSettings(user!.id),
-    enabled: !!user?.id,
+  const {
+    data: settings,
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: ["admin-exchange"],
+    queryFn: () => fixerService.getSettings(),
   });
 
   // Derived state: is there a key saved on the server?
@@ -46,7 +47,6 @@ export function FixerTab() {
       const payload: Partial<FixerSettings> = {
         provider,
         enabled: hasEffectiveApiKey,
-        user: user!.id,
       };
 
       // API Key Logic:
@@ -66,12 +66,11 @@ export function FixerTab() {
       //    Do NOT include api_key in 'payload' so the server keeps the existing value.
       // api_key_configured is derived server-side (security.client.js) from api_key.
 
-      return settings?.id
-        ? fixerService.updateSettings(settings.id, payload)
-        : fixerService.createSettings(payload);
+      return fixerService.saveSettings(payload);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["fixer_settings", user?.id ?? ""] });
+      qc.invalidateQueries({ queryKey: ["admin-exchange"] });
+      qc.invalidateQueries({ queryKey: ["exchange-status"] });
       setApiKey("");
       setRemoveStoredApiKey(false);
       toast.success(t("success_update"));
@@ -80,7 +79,7 @@ export function FixerTab() {
   });
 
   const updateRatesMut = useMutation({
-    mutationFn: () => fixerService.updateRates(),
+    mutationFn: () => fixerService.updateAllRates(),
     onSuccess: (data) => {
       qc.invalidateQueries();
       toast.success(t("exchange_rates_updated", { updatedCount: data.updated }));
@@ -90,6 +89,14 @@ export function FixerTab() {
 
   const canSave = removeStoredApiKey || apiKey.trim().length > 0 || isKeySavedOnServer;
   const canUpdateRates = !removeStoredApiKey && (isKeySavedOnServer || apiKey.trim().length > 0);
+
+  if (isPending) return <p role="status">{t("loading")}</p>;
+  if (isError)
+    return (
+      <p role="alert" className="text-sm text-destructive">
+        {t("admin_config_load_error")}
+      </p>
+    );
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">

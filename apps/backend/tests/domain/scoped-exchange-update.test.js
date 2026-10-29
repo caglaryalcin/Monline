@@ -42,6 +42,9 @@ beforeEach(async () => {
   repository.connection
     .prepare("INSERT INTO users (id, email) VALUES (?, ?)")
     .run("other", "other@example.test");
+  repository.connection.exec(
+    "UPDATE users SET created = CASE id WHEN 'owner' THEN '2026-01-01' ELSE '2026-02-01' END",
+  );
   createCurrency("try000000000000", "TRY", 1, "owner", true);
   createCurrency("usd000000000000", "USD", 0.02);
   createCurrency("eur000000000000", "EUR", 0.018);
@@ -51,6 +54,7 @@ beforeEach(async () => {
   );
   settings.set("user", "owner");
   settings.set("api_key", "test-key");
+  settings.set("enabled", true);
   repository.save(settings);
   send = vi.spyOn(runtime.httpClient, "send").mockResolvedValue({
     statusCode: 200,

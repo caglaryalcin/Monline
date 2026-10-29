@@ -37,6 +37,8 @@ function createAuth(repository) {
     lifetime = 14 * DAY,
     remember = false,
   ) => {
+    if (repository.findRecordById("users", userId).getBool("disabled"))
+      throw new ForbiddenError("account_disabled");
     const token = tokens();
     db.prepare(
       "INSERT INTO monline_sessions (hash,user_id,expires,purpose,remember) VALUES (?,?,?,?,?)",
@@ -53,13 +55,20 @@ function createAuth(repository) {
     issue(user.id, "session", (remember ? 30 : 14) * DAY, remember);
   const resolve = (token, purpose = "session") => {
     if (!token || token.length > 200) return null;
-    return (
+    const userId =
       db
         .prepare(
           "SELECT user_id FROM monline_sessions WHERE hash=? AND expires>? AND purpose=?",
         )
-        .get(hash(token), Date.now(), purpose)?.user_id || null
-    );
+        .get(hash(token), Date.now(), purpose)?.user_id || null;
+    if (!userId) return null;
+    try {
+      return repository.findRecordById("users", userId).getBool("disabled")
+        ? null
+        : userId;
+    } catch {
+      return null;
+    }
   };
   const sessionDetails = (token) =>
     db
@@ -138,6 +147,24 @@ function createAuth(repository) {
   function middleware(req, res, next) {
     try {
       const bearer = req.get("Authorization")?.replace(/^Bearer\s+/i, "") || "";
+      if (bearer && req.path.startsWith("/api/external/")) {
+        const key = repository.findRecordsByFilter(
+          "api_keys",
+          "key_hash = {:hash}",
+          "",
+          1,
+          0,
+          { hash: hash(bearer) },
+        )[0];
+        if (key) {
+          const account = repository.findRecordById(
+            "users",
+            key.getString("user"),
+          );
+          if (account.getBool("disabled"))
+            throw new ForbiddenError("account_disabled");
+        }
+      }
       req.sessionToken =
         bearer ||
         (req.path.startsWith("/api/files/") ||
@@ -163,14 +190,30 @@ function createAuth(repository) {
         limit(req, 20);
       if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
         const origin = req.get("Origin");
-        if (origin) {
+        // Email approval is authorized by its secret token and reviewed scope,
+        // independently of the browser session. Native forms can send an opaque
+        // origin under privacy policies; this exception is limited to that route.
+        const emailApproval =
+          req.method === "POST" && req.path === "/api/people/confirm";
+        if (origin && !(emailApproval && origin === "null")) {
+          let originUrl;
+          try {
+            originUrl = new URL(origin);
+          } catch {
+            throw new ForbiddenError("Request origin is not allowed");
+          }
           const allowed =
-            new URL(origin).host === req.get("host") ||
+            originUrl.host === req.get("host") ||
             (process.env.NODE_ENV !== "production" &&
-              ["localhost", "127.0.0.1"].includes(new URL(origin).hostname));
+              ["localhost", "127.0.0.1"].includes(originUrl.hostname));
           if (!allowed)
             throw new ForbiddenError("Request origin is not allowed");
-        } else if (!bearer && cookieValue(req, "monline_session"))
+        } else if (
+          !origin &&
+          !emailApproval &&
+          !bearer &&
+          cookieValue(req, "monline_session")
+        )
           throw new ForbiddenError("Origin is required");
       }
       next();
@@ -193,6 +236,8 @@ function createAuth(repository) {
       );
       if (!user || !valid)
         throw new UnauthorizedError("Invalid email or password");
+      if (user.getBool("disabled"))
+        throw new ForbiddenError("account_disabled");
       if (settings()?.getBool("disable_login") && !isAdmin(user))
         throw new ForbiddenError("Logins are currently disabled");
       if (
@@ -318,15 +363,18 @@ function createAuth(repository) {
     });
   }
   function publicUrl(req) {
-    const configured = settings()?.getString("server_url");
-    if (!configured && process.env.NODE_ENV === "production")
+    const url = require("./public-url.cjs").publicUrl(
+      repository,
+      "",
+      process.env.NODE_ENV === "production"
+        ? ""
+        : `${req.protocol}://${req.get("host")}`,
+    );
+    if (!url)
       throw new BadRequestError(
         "Configure the public server URL in administrator settings before sending account emails",
       );
-    return (configured || `${req.protocol}://${req.get("host")}`).replace(
-      /\/$/,
-      "",
-    );
+    return url.href.replace(/\/$/, "");
   }
   async function sendVerification(req, user) {
     const smtp = repository.settings();

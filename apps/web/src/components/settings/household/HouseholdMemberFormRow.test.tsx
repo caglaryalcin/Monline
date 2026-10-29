@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { HouseholdMemberFormRow } from "./HouseholdMemberFormRow";
 
@@ -63,7 +64,7 @@ describe("HouseholdMemberFormRow", () => {
     expect(onNameChange).toHaveBeenCalledWith("Jane");
   });
 
-  it("calls onSubmit when Enter key pressed", () => {
+  it("calls onSubmit when Enter key pressed", async () => {
     const onSubmit = vi.fn();
     render(
       <HouseholdMemberFormRow
@@ -73,7 +74,8 @@ describe("HouseholdMemberFormRow", () => {
         onSubmit={onSubmit}
       />,
     );
-    fireEvent.keyDown(screen.getByRole("textbox"), { key: "Enter" });
+    await userEvent.click(screen.getByRole("textbox"));
+    await userEvent.keyboard("{Enter}");
     expect(onSubmit).toHaveBeenCalled();
   });
 

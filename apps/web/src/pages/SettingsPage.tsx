@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -11,11 +12,26 @@ import { SidebarTabsLayout } from "@/components/ui/SidebarTabsLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { settingsRoute } from "@/routes";
 
+const ADMIN_TABS: Record<string, string> = {
+  api_key: "api",
+  exchange_rates: "api",
+  registration: "registration",
+  smtp: "channels",
+  oidc: "oidc",
+  maintenance: "maintenance",
+};
+
 export function SettingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const search = settingsRoute.useSearch();
+  const adminTab = ADMIN_TABS[search.tab ?? ""];
+  useEffect(() => {
+    if (!adminTab) return;
+    if (isAdmin) navigate({ to: "/admin", search: { tab: adminTab }, replace: true });
+    else navigate({ to: "/settings", search: { tab: "profile" }, replace: true });
+  }, [adminTab, isAdmin, navigate]);
   // Keep old links on their merged tabs with the correct menu selection.
   const requestedTab = (
     search.tab === "theme"

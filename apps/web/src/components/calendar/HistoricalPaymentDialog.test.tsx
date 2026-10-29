@@ -67,7 +67,9 @@ function setup(
       subscriptions={subscriptions}
       categories={[{ id: "category", name: "Video", user: "user-1" }]}
       paymentMethods={[{ id: "method", name: "Card", user: "user-1", is_main: true }]}
-      household={[{ id: "payer", name: "Me", user: "user-1", is_main: true }]}
+      household={[
+        { id: "payer", name: "Me", user: "user-1", is_main: true, account_confirmed: true },
+      ]}
       currencies={[
         {
           id: "eur",

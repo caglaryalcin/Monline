@@ -10,6 +10,7 @@ import {
   Hourglass,
   RefreshCw,
   Repeat2,
+  Share2,
   Trash2,
 } from "lucide-react";
 import { type CSSProperties, useState } from "react";
@@ -43,6 +44,9 @@ import {
 import type { Currency, Subscription } from "@/types";
 
 interface SubscriptionActionsProps {
+  onSharedEdit?: () => void;
+  readOnly?: boolean;
+  onShare?: () => void;
   sub: Subscription;
   className?: string;
   priceDisplay: SubscriptionPriceDisplay;
@@ -61,6 +65,9 @@ interface SubscriptionActionsProps {
 }
 
 function SubscriptionActions({
+  onSharedEdit,
+  readOnly,
+  onShare,
   sub,
   className,
   priceDisplay,
@@ -138,6 +145,28 @@ function SubscriptionActions({
     );
   };
 
+  if (readOnly)
+    return (
+      <div className="flex items-center gap-2">
+        <Badge variant="secondary">
+          {t(onSharedEdit ? "sharing_can_edit" : "sharing_read_only")}
+        </Badge>
+        {onSharedEdit && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-full text-muted-foreground"
+            onClick={onSharedEdit}
+            aria-label={t("edit")}
+            title={t("edit")}
+          >
+            <Edit className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </div>
+    );
+
   return (
     <div
       className={cn(
@@ -181,6 +210,23 @@ function SubscriptionActions({
           disabled={sub.inactive}
         >
           <ExternalLink className="h-3.5 w-3.5" />
+        </Button>
+      )}
+      {onShare && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "h-7 w-7 rounded-full text-muted-foreground",
+            sub.is_shared &&
+              "bg-green-500/15 text-green-700 hover:bg-green-500/25 hover:text-green-700 dark:text-green-400 dark:hover:text-green-400",
+          )}
+          onClick={onShare}
+          title={t("sharing_share")}
+          aria-label={t("sharing_share")}
+          aria-pressed={!!sub.is_shared}
+        >
+          <Share2 className="h-3.5 w-3.5" />
         </Button>
       )}
       <Button
@@ -260,6 +306,9 @@ function SubscriptionActions({
 // ── SubscriptionCard ──────────────────────────────────────────────────────────
 
 export function SubscriptionCard({
+  onSharedEdit,
+  readOnly,
+  onShare,
   sub,
   mainCurrency,
   currencies,
@@ -283,6 +332,9 @@ export function SubscriptionCard({
   automationPendingSetting,
   showAutoMarkPaid = true,
 }: {
+  onSharedEdit?: () => void;
+  readOnly?: boolean;
+  onShare?: () => void;
   sub: Subscription;
   mainCurrency?: Currency;
   convertCurrency?: boolean;
@@ -362,18 +414,19 @@ export function SubscriptionCard({
       : days === 0
         ? t("today")
         : t("billing_days_overdue", { count: Math.abs(days) });
-  const statusToggle = onToggleActive ? (
-    <Switch
-      type="button"
-      className={cn("shadow-sm", !statusPending && "disabled:opacity-100")}
-      checked={!sub.inactive}
-      onCheckedChange={onToggleActive}
-      disabled={statusDisabled || statusPending}
-      aria-label={`${sub.name}: ${t("active")}`}
-      aria-busy={statusPending}
-      title={t(sub.inactive ? "subscription_activate" : "subscription_deactivate")}
-    />
-  ) : null;
+  const statusToggle =
+    onToggleActive && !readOnly ? (
+      <Switch
+        type="button"
+        className={cn("shadow-sm", !statusPending && "disabled:opacity-100")}
+        checked={!sub.inactive}
+        onCheckedChange={onToggleActive}
+        disabled={statusDisabled || statusPending}
+        aria-label={`${sub.name}: ${t("active")}`}
+        aria-busy={statusPending}
+        title={t(sub.inactive ? "subscription_activate" : "subscription_deactivate")}
+      />
+    ) : null;
 
   if (layout === "list") {
     return (
@@ -461,6 +514,9 @@ export function SubscriptionCard({
           </div>
 
           <SubscriptionActions
+            onSharedEdit={onSharedEdit}
+            readOnly={readOnly}
+            onShare={onShare}
             onToggleAutomation={onToggleAutomation}
             automationDisabled={automationDisabled}
             automationPendingSetting={automationPendingSetting}
@@ -619,6 +675,9 @@ export function SubscriptionCard({
         </div>
 
         <SubscriptionActions
+          onSharedEdit={onSharedEdit}
+          readOnly={readOnly}
+          onShare={onShare}
           onToggleAutomation={onToggleAutomation}
           automationDisabled={automationDisabled}
           automationPendingSetting={automationPendingSetting}

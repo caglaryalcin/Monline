@@ -156,6 +156,12 @@ function configure(app, repository, auth) {
     const expressRoute = route.replace(/\{(\w+)\}/g, ":$1");
     app[method.toLowerCase()](expressRoute, async (req, res, next) => {
       try {
+        if (
+          (route.startsWith("/api/api-keys") ||
+            route === "/api/notifications/test") &&
+          !auth.isAdmin(req.user)
+        )
+          throw new errors.ForbiddenError("admin_config_required");
         if (route === "/api/auth/totp/login-verify")
           auth.limitTotp(req.body?.challenge);
         if (

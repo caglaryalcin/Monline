@@ -1,6 +1,8 @@
 vi.mock("@/lib/api", () => ({
   api: {
     post: vi.fn(),
+    get: vi.fn(),
+    patch: vi.fn(),
   },
 }));
 
@@ -30,44 +32,26 @@ describe("fixerService", () => {
     vi.clearAllMocks();
   });
 
-  it("returns the first fixer settings record or null on empty/error", async () => {
-    (client.filter as unknown as ReturnType<typeof vi.fn>).mockReturnValue("filter:user-1");
-    (client.collection as unknown as ReturnType<typeof vi.fn>)
-      .mockReturnValueOnce(
-        getCollectionMock({
-          getList: vi.fn().mockResolvedValue({ items: [{ id: "fixer-1" }] }),
-        }),
-      )
-      .mockReturnValueOnce(
-        getCollectionMock({
-          getList: vi.fn().mockResolvedValue({ items: [] }),
-        }),
-      )
-      .mockReturnValueOnce(
-        getCollectionMock({
-          getList: vi.fn().mockRejectedValue(new Error("boom")),
-        }),
-      );
-
-    await expect(fixerService.getSettings("user-1")).resolves.toEqual({
-      id: "fixer-1",
+  it("loads global settings and propagates failures instead of hiding them", async () => {
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({ id: "global", provider: "fixer", api_key_configured: true })
+      .mockRejectedValueOnce(new Error("boom"));
+    await expect(fixerService.getSettings()).resolves.toMatchObject({
+      id: "global",
+      api_key_configured: true,
     });
-    await expect(fixerService.getSettings("user-1")).resolves.toBeNull();
-    await expect(fixerService.getSettings("user-1")).resolves.toBeNull();
+    expect(api.get).toHaveBeenCalledWith("/api/admin/exchange");
+    await expect(fixerService.getSettings()).rejects.toThrow("boom");
   });
-
-  it("creates and updates fixer settings", async () => {
-    const create = vi.fn();
-    const update = vi.fn();
-    (client.collection as unknown as ReturnType<typeof vi.fn>)
-      .mockReturnValueOnce(getCollectionMock({ create }))
-      .mockReturnValueOnce(getCollectionMock({ update }));
-
-    await fixerService.createSettings({ enabled: true });
-    await fixerService.updateSettings("fixer-1", { enabled: false });
-
-    expect(create).toHaveBeenCalledWith({ enabled: true });
-    expect(update).toHaveBeenCalledWith("fixer-1", { enabled: false });
+  it("saves shared settings without an account selector", async () => {
+    await fixerService.saveSettings({ enabled: true });
+    expect(api.patch).toHaveBeenCalledWith("/api/admin/exchange", { enabled: true });
+  });
+  it("exposes safe availability and a global refresh separately", async () => {
+    await fixerService.getStatus();
+    expect(api.get).toHaveBeenCalledWith("/api/exchange/status");
+    await fixerService.updateAllRates();
+    expect(api.post).toHaveBeenCalledWith("/api/admin/exchange/update");
   });
 
   it("triggers a rates update through the API client", async () => {

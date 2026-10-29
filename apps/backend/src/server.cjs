@@ -99,6 +99,8 @@ async function main() {
     .sort())
     require(path.join(domain, entry));
   seed(repository);
+  require("./server-config.cjs").channels(repository);
+  require("./server-config.cjs").exchange(repository);
   require("./subscription-names.cjs").normalizeStoredSubscriptionNames(
     repository,
   );
@@ -129,7 +131,19 @@ async function main() {
   registerSetupApi(app, repository, auth);
   auth.register(app);
   registerOidc(app, repository, auth);
+  require("./people-invitations.cjs").registerPeopleInvitationsApi(
+    app,
+    repository,
+    auth,
+  );
   registerDataApi(app, repository, auth);
+  require("./sharing.cjs").registerSharingApi(app, repository, auth);
+  require("./admin-users.cjs").registerAdminUsersApi(app, repository, auth);
+  require("./admin-server-config.cjs").registerServerConfigApi(
+    app,
+    repository,
+    auth,
+  );
   app.use("/api", (req, res) =>
     res.status(404).json({ message: "Endpoint not found" }),
   );

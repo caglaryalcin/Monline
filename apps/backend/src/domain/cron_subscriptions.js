@@ -66,7 +66,12 @@ cronAdd("sendNotifications", "0 * * * *", async () => {
       },
     );
     if (configs.length === 0) continue;
-    const notifConfig = configs[0];
+    const notifConfig =
+      require("../server-config.cjs").effectiveNotificationConfig(
+        repository,
+        userId,
+        configs[0],
+      );
 
     // Parse reminders array — default to [{days:3, hour:8}] if absent
     let reminders = [
@@ -236,7 +241,12 @@ cronAdd("sendCancellationNotifications", "0 * * * *", async () => {
       },
     );
     if (configs.length === 0) continue;
-    const notifConfig = configs[0];
+    const notifConfig =
+      require("../server-config.cjs").effectiveNotificationConfig(
+        repository,
+        userId,
+        configs[0],
+      );
     let reminders = [
       {
         days: 3,
@@ -331,9 +341,7 @@ cronAdd("autoMarkPaid", "5 0 * * *", () => {
   today.setHours(0, 0, 0, 0);
   const todayStr = dateHelpers.formatLocalDate(today);
   const created = paymentTracking.markDuePaymentsPaid(repository, todayStr);
-  console.log(
-    "[Monline] autoMarkPaid: processed " + created + " schedules",
-  );
+  console.log("[Monline] autoMarkPaid: processed " + created + " schedules");
 });
 
 // ================================================================
@@ -412,7 +420,12 @@ cronAdd("overduePaymentReminders", "0 9 * * *", async () => {
           },
         );
         if (configs.length === 0) continue;
-        notifConfig = configs[0];
+        notifConfig =
+          require("../server-config.cjs").effectiveNotificationConfig(
+            repository,
+            userId,
+            configs[0],
+          );
       } catch (_) {
         continue;
       }

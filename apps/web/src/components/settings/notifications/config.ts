@@ -27,7 +27,7 @@ export type ProviderConfig = {
     type: "text" | "number" | "password" | "email";
     placeholder?: string;
   }[];
-  enabledKey: keyof NotificationsConfig;
+  enabledKey: Extract<keyof NotificationsConfig, `${string}_enabled`>;
 };
 
 export const PROVIDERS: ProviderConfig[] = [

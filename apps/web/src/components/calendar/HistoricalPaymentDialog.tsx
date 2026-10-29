@@ -34,7 +34,7 @@ import type {
   Subscription,
 } from "@/types";
 
-import { pastePaymentProof,PaymentProofField } from "./PaymentProofField";
+import { pastePaymentProof, PaymentProofField } from "./PaymentProofField";
 import { getPaymentRecord, toDateStr } from "./types";
 
 export function historicalDateRange(now = new Date()) {
@@ -81,8 +81,10 @@ export function HistoricalPaymentDialog({
   const [paymentMethodId, setPaymentMethodId] = useState(
     paymentMethods.find((item) => item.is_main)?.id ?? "",
   );
+  const confirmedPayers = household.filter((item) => item.account_confirmed);
   const [payerId, setPayerId] = useState(
-    household.find((item) => item.is_main)?.id ?? (household.length === 1 ? household[0].id : ""),
+    confirmedPayers.find((item) => item.is_main)?.id ??
+      (confirmedPayers.length === 1 ? confirmedPayers[0].id : ""),
   );
   const range = historicalDateRange();
   const initial =
@@ -311,7 +313,7 @@ export function HistoricalPaymentDialog({
                       onChange={(event) => setPayerId(event.target.value)}
                     >
                       <option value="" />
-                      {household.map((item) => (
+                      {confirmedPayers.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.name}
                         </option>

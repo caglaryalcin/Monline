@@ -32,7 +32,7 @@ vi.mock("@tanstack/react-query", () => ({
   useQuery: (opts: { queryKey: unknown[]; queryFn?: () => unknown }) => {
     if (opts.queryFn) capturedQueryFns.push(opts.queryFn);
     const key = String(opts.queryKey[0]);
-    if (key.includes("fixer") || key === "fixer_settings") return fixerQueryData;
+    if (key === "exchange-status") return fixerQueryData;
     return currenciesQueryData;
   },
   useMutation: (opts: {
@@ -60,7 +60,7 @@ vi.mock("@/services/currencies", () => ({
 const mockFixerUpdateRates = vi.fn().mockResolvedValue({});
 vi.mock("@/services/fixer", () => ({
   fixerService: {
-    getSettings: vi.fn(),
+    getStatus: vi.fn(),
     updateRates: (...args: unknown[]) => mockFixerUpdateRates(...args),
   },
 }));
@@ -406,7 +406,7 @@ describe("CurrenciesTab", () => {
   // --- fixerSettings.api_key_configured branch in setMainCurrency ---
 
   it("setMainCurrency calls fixerService.updateRates when fixerSettings has a saved key", async () => {
-    fixerQueryData = { data: { api_key_configured: true } };
+    fixerQueryData = { data: { api_key_configured: true, enabled: true } };
     render(<CurrenciesTab />);
     const buttons = screen.getAllByRole("button");
     await act(async () => {
@@ -437,7 +437,7 @@ describe("CurrenciesTab", () => {
 
   it("setMainCurrency works with user.id undefined and still runs both invalidate paths", async () => {
     mockAuthUser = { id: undefined };
-    fixerQueryData = { data: { api_key_configured: true } };
+    fixerQueryData = { data: { api_key_configured: true, enabled: true } };
 
     render(<CurrenciesTab />);
     const buttons = screen.getAllByRole("button");
@@ -454,7 +454,7 @@ describe("CurrenciesTab", () => {
   });
 
   it("swallows fixer updateRates rejection after main currency update", async () => {
-    fixerQueryData = { data: { api_key_configured: true } };
+    fixerQueryData = { data: { api_key_configured: true, enabled: true } };
     mockFixerUpdateRates.mockRejectedValueOnce(new Error("fixer fail"));
 
     render(<CurrenciesTab />);
@@ -690,11 +690,11 @@ describe("CurrenciesTab", () => {
     expect(vi.mocked(currenciesService.list)).toHaveBeenCalledWith("u1");
   });
 
-  it("fixer_settings queryFn calls fixerService.getSettings with user id", async () => {
+  it("fixer_settings queryFn calls fixerService.getStatus with user id", async () => {
     const { fixerService } = await import("@/services/fixer");
     render(<CurrenciesTab />);
     await capturedQueryFns[1]?.();
-    expect(vi.mocked(fixerService.getSettings)).toHaveBeenCalledWith("u1");
+    expect(vi.mocked(fixerService.getStatus)).toHaveBeenCalledWith();
   });
 
   // --- edit form: onSymbolChange and onNameChange (covers lines 208-211) ---
@@ -817,7 +817,7 @@ describe("CurrenciesTab", () => {
 
   it("setMainCurrency fixer updateRates invalidateQueries uses ?? '' fallback when user null", async () => {
     // Start with a valid user so we can click the star button
-    fixerQueryData = { data: { api_key_configured: true } };
+    fixerQueryData = { data: { api_key_configured: true, enabled: true } };
     render(<CurrenciesTab />);
     // Now set user to null before the async updateRates chain fires
     // The star button click triggers setMainCurrency which calls fixerService.updateRates().then(...)

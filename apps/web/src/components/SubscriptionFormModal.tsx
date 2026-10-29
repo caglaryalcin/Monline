@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { CreditCard } from "lucide-react";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
@@ -42,6 +43,7 @@ import { compressImage } from "@/lib/image";
 import { ONE_TIME_CYCLE } from "@/lib/recordTypes";
 import { automaticStartDate, nextPaymentDate } from "@/lib/subscriptionStartDate";
 import { toast } from "@/lib/toast";
+import { sharingKeys, sharingService } from "@/services/sharing";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Category, Currency, Household, PaymentMethod, Subscription } from "@/types";
 
@@ -71,6 +73,17 @@ export function SubscriptionFormModal({
 }: Props) {
   const { t } = useTranslation();
   const { user: authUser } = useAuth();
+  const sharedPayers = useQuery({
+    queryKey: sharingKeys.payers(userId, sub?.id ?? ""),
+    queryFn: () => sharingService.payers(sub!.id),
+    enabled: !!sub?.is_shared,
+    staleTime: 0,
+    refetchOnWindowFocus: "always",
+  });
+  const confirmedPayers = household.filter((person) => person.account_confirmed);
+  const additionalPayers = (sharedPayers.data ?? []).filter(
+    (payer) => !confirmedPayers.some((person) => person.id === payer.value),
+  );
   const [backfill, setBackfill] = useState<BackfillSelection>({
     enabled: false,
     valid: true,
@@ -633,18 +646,34 @@ export function SubscriptionFormModal({
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger id="subscription-payer">
-                      <SelectValue />
+                      <SelectValue>
+                        {field.value &&
+                        !confirmedPayers.some((person) => person.id === field.value) &&
+                        !additionalPayers.some((person) => person.value === field.value)
+                          ? t("household_payer_unavailable")
+                          : undefined}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      {household.map((h) => (
+                      {confirmedPayers.map((h) => (
                         <SelectItem key={h.id} value={h.id}>
                           {h.name}
+                        </SelectItem>
+                      ))}
+                      {additionalPayers.map((payer) => (
+                        <SelectItem key={payer.value} value={payer.value}>
+                          {payer.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 )}
               />
+              {sub?.is_shared && sharedPayers.isError && (
+                <p role="alert" className="text-xs text-destructive">
+                  {t("sharing_payers_load_error")}
+                </p>
+              )}
             </div>
           </div>
 

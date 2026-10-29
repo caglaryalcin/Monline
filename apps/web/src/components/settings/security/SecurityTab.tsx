@@ -4,7 +4,6 @@ import { Save } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
-import { RegistrationTab } from "@/components/settings/registration/RegistrationTab";
 import {
   buildPasswordSchema,
   type PasswordFormValues,
@@ -21,7 +20,7 @@ import { usersService } from "@/services/users";
 
 export function SecurityTab() {
   const { t } = useTranslation();
-  const { user, refreshUser, isAdmin } = useAuth();
+  const { user, refreshUser } = useAuth();
   const queryClient = useQueryClient();
   const {
     register,
@@ -105,22 +104,6 @@ export function SecurityTab() {
         </h3>
         <TwoFactorTab />
       </section>
-      {isAdmin && (
-        <>
-          <Separator />
-          <div className="settings-security-grid">
-            <div className="min-w-0">
-              <RegistrationTab section="limits" />
-            </div>
-            <section className="min-w-0 space-y-4" aria-labelledby="security-registration-heading">
-              <h3 id="security-registration-heading" className="text-lg font-semibold">
-                {t("registration")}
-              </h3>
-              <RegistrationTab section="registration" />
-            </section>
-          </div>
-        </>
-      )}
     </div>
   );
 }

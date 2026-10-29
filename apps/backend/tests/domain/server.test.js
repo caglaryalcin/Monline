@@ -3,6 +3,7 @@ const { mkdtempSync, rmSync } = require("node:fs");
 const net = require("node:net");
 const os = require("node:os");
 const path = require("node:path");
+const { Repository, DataRecord } = require("../../src/storage.cjs");
 
 let child,
   directory,
@@ -14,6 +15,37 @@ let child,
   subscription,
   category;
 const password = "Monline-test-password-2026";
+// Seed previously approved contacts in the isolated integration database.
+// Invitation creation and acceptance are exercised in sharing.test.js.
+async function approvedPerson(name, isMain) {
+  const fixture = new Repository(directory);
+  try {
+    const person = new DataRecord(
+      fixture.findCollectionByNameOrId("household"),
+    );
+    person.set("user", owner.record.id);
+    person.set("name", name);
+    person.set("is_main", false);
+    person.set("account_approval", {
+      owner_id: owner.record.id,
+      account_id: "",
+      email: `${name.toLowerCase().replace(/\W+/g, ".")}@example.test`,
+      approved_at: new Date().toISOString(),
+    });
+    fixture.save(person);
+    if (isMain) {
+      const selected = await request(`/api/data/household/${person.id}`, {
+        token: owner.token,
+        method: "PATCH",
+        body: { is_main: true },
+      });
+      expect(selected.status).toBe(200);
+    }
+    return person.id;
+  } finally {
+    fixture.connection.close();
+  }
+}
 async function request(endpoint, { token, body, method = "GET" } = {}) {
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
   if (body && !(body instanceof FormData))
@@ -192,7 +224,7 @@ it("tests unsaved ntfy credentials over HTTP without persisting them and saves t
   });
   await new Promise((resolve) => listener.listen(0, "127.0.0.1", resolve));
   try {
-    const endpoint = "/api/data/notifications_config";
+    const endpoint = "/api/admin/channels";
     const config = {
       ntfy_url: `http://127.0.0.1:${listener.address().port}/`,
       ntfy_topic: "test-topic",
@@ -200,7 +232,7 @@ it("tests unsaved ntfy credentials over HTTP without persisting them and saves t
       ntfy_password: "draft-password",
       ntfy_auth_token: "",
     };
-    const before = (await request(endpoint, { token: owner.token })).data.items;
+    const before = (await request(endpoint, { token: owner.token })).data;
     expect(
       (
         await request("/api/notifications/test", {
@@ -210,9 +242,9 @@ it("tests unsaved ntfy credentials over HTTP without persisting them and saves t
         })
       ).status,
     ).toBe(200);
-    expect(
-      (await request(endpoint, { token: owner.token })).data.items,
-    ).toEqual(before);
+    expect((await request(endpoint, { token: owner.token })).data).toEqual(
+      before,
+    );
     expect(received[0]).toMatchObject({
       url: "/test-topic",
       headers: {
@@ -222,10 +254,10 @@ it("tests unsaved ntfy credentials over HTTP without persisting them and saves t
     });
     const saved = await request(endpoint, {
       token: owner.token,
-      method: "POST",
-      body: { ...config, ntfy_enabled: false, ntfy_password: "saved-password" },
+      method: "PATCH",
+      body: { ...config, ntfy_password: "saved-password" },
     });
-    expect(saved.status).toBe(201);
+    expect(saved.status).toBe(200);
     expect(saved.data.ntfy_username).toBe("demo");
     expect(saved.data.ntfy_password).toBe("saved-password");
     expect(
@@ -238,8 +270,7 @@ it("tests unsaved ntfy credentials over HTTP without persisting them and saves t
       ).status,
     ).toBe(200);
     expect(
-      (await request(endpoint + "/" + saved.data.id, { token: owner.token }))
-        .data.ntfy_password,
+      (await request(endpoint, { token: owner.token })).data.ntfy_password,
     ).toBe("saved-password");
     expect(
       (
@@ -453,17 +484,12 @@ it("keeps a single default person per account and chooses a replacement after de
   const otherMain = (await list(other.token)).find(
     (member) => member.is_main,
   ).id;
-  const created = await request("/api/data/household", {
-    token: owner.token,
-    method: "POST",
-    body: { name: "Main person", is_main: true },
-  });
-  expect(created.status).toBe(201);
+  const personId = await approvedPerson("Main person", true);
   expect(
     (await list(owner.token))
       .filter((member) => member.is_main)
       .map((member) => member.id),
-  ).toEqual([created.data.id]);
+  ).toEqual([personId]);
   expect(
     (
       await request(`/api/data/household/${otherMain}`, {
@@ -478,7 +504,7 @@ it("keeps a single default person per account and chooses a replacement after de
   );
   expect(
     (
-      await request(`/api/data/household/${created.data.id}`, {
+      await request(`/api/data/household/${personId}`, {
         token: owner.token,
         method: "DELETE",
       })
@@ -487,6 +513,41 @@ it("keeps a single default person per account and chooses a replacement after de
   expect(
     (await list(owner.token)).filter((member) => member.is_main),
   ).toHaveLength(1);
+});
+
+it("prevents deleting the account's own person through both session and integration APIs", async () => {
+  const people = (await request("/api/data/household", { token: owner.token }))
+    .data.items;
+  const self = people.find((person) => person.account_id === owner.record.id);
+  expect(self).toBeDefined();
+  const key = await request("/api/api-keys", {
+    token: owner.token,
+    method: "POST",
+    body: {
+      name: "Self person deletion guard",
+      permissions: ["household:write"],
+    },
+  });
+  expect(key.status).toBe(200);
+  try {
+    for (const [endpoint, token] of [
+      [`/api/data/household/${self.id}`, owner.token],
+      [`/api/external/household/${self.id}`, key.data.key],
+    ]) {
+      const result = await request(endpoint, { token, method: "DELETE" });
+      expect(result.status).toBe(403);
+      expect(result.data.message ?? result.data.error).toBe("cannot_delete_yourself");
+    }
+    expect(
+      (await request(`/api/data/household/${self.id}`, { token: owner.token }))
+        .status,
+    ).toBe(200);
+  } finally {
+    await request(`/api/api-keys/${key.data.id}`, {
+      token: owner.token,
+      method: "DELETE",
+    });
+  }
 });
 it("sets exactly one main payment method per account and selects a replacement on deletion", async () => {
   const list = async (token) =>
@@ -1292,17 +1353,8 @@ it("imports statement payments older than one year with original dates and amoun
 });
 
 it("assigns the account's main payer on statement import, preserves assigned payers and fills legacy blanks", async () => {
-  const createPerson = async (name, is_main) => {
-    const response = await request("/api/data/household", {
-      token: owner.token,
-      method: "POST",
-      body: { name, is_main },
-    });
-    expect(response.status).toBe(201);
-    return response.data.id;
-  };
-  const mainPayer = await createPerson("Default statement payer", true);
-  const anotherPayer = await createPerson("Another statement payer", false);
+  const mainPayer = await approvedPerson("Default statement payer", true);
+  const anotherPayer = await approvedPerson("Another statement payer", false);
   const date = new Date().toISOString().slice(0, 10);
   const name = "Statement payer test";
   const statement = await request("/api/statements", {
@@ -2176,8 +2228,15 @@ it.each(["payments"])(
     const remainingSubs = (
       await request("/api/data/subscriptions", { token: other.token })
     ).data.items;
-    expect(remainingSubs.map((sub) => ({ ...sub, calendar_projection_hidden: false }))).toEqual(subscriptionsBefore);
-    expect(remainingSubs.every((sub) => sub.calendar_projection_hidden)).toBe(true);
+    expect(
+      remainingSubs.map((sub) => ({
+        ...sub,
+        calendar_projection_hidden: false,
+      })),
+    ).toEqual(subscriptionsBefore);
+    expect(remainingSubs.every((sub) => sub.calendar_projection_hidden)).toBe(
+      true,
+    );
     expect(remainingSubs.some((item) => item.id === credit.id)).toBe(true);
     expect(
       (await request("/api/data/payment_records", { token: other.token })).data
@@ -2502,97 +2561,212 @@ it("requires a second factor before issuing a session and consumes challenges on
 
 it("recovers pending history through the API and confirms the same record later", async () => {
   const now = new Date();
-  const due = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 10);
-  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
-  const created = await request("/api/data/subscriptions", { token: owner.token, method: "POST", body: {
-    name: "Pending history recovery", price: 69.9, cycle: cycle.id, currency: currency.id,
-    category: category.id, frequency: 1, start_date: due, next_payment: next,
-  } });
+  const due = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1))
+    .toISOString()
+    .slice(0, 10);
+  const next = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+  )
+    .toISOString()
+    .slice(0, 10);
+  const created = await request("/api/data/subscriptions", {
+    token: owner.token,
+    method: "POST",
+    body: {
+      name: "Pending history recovery",
+      price: 69.9,
+      cycle: cycle.id,
+      currency: currency.id,
+      category: category.id,
+      frequency: 1,
+      start_date: due,
+      next_payment: next,
+    },
+  });
   expect(created.status).toBe(201);
   const id = created.data.id;
   try {
-    const input = { confirmed: true, mark_as_paid: false, utc_offset_minutes: 0,
-      payments: [{ due_date: due, amount: 49.9, paid_utc_offset_minutes: 0 }] };
-    const recover = () => request(`/api/data/subscriptions/${id}`, { token: owner.token, method: "PATCH", body: { historical_payments: input } });
+    const input = {
+      confirmed: true,
+      mark_as_paid: false,
+      utc_offset_minutes: 0,
+      payments: [{ due_date: due, amount: 49.9, paid_utc_offset_minutes: 0 }],
+    };
+    const recover = () =>
+      request(`/api/data/subscriptions/${id}`, {
+        token: owner.token,
+        method: "PATCH",
+        body: { historical_payments: input },
+      });
     expect((await recover()).status).toBe(200);
     expect((await recover()).status).toBe(200);
-    const records = () => request("/api/data/payment_records", { token: owner.token }).then((response) => response.data.items.filter((item) => item.subscription_id === id));
+    const records = () =>
+      request("/api/data/payment_records", { token: owner.token }).then(
+        (response) =>
+          response.data.items.filter((item) => item.subscription_id === id),
+      );
     const pending = await records();
     expect(pending).toHaveLength(1);
-    expect(pending[0]).toMatchObject({ due_date: due, amount: 49.9, paid_at: "", auto_paid: false });
-    const paid = await request("/api/payments/history", { token: owner.token, method: "POST", body: {
-      subscription_id: id, due_date: due, paid_date: due, amount: 49.9,
-      utc_offset_minutes: 0, paid_utc_offset_minutes: 0,
-    } });
+    expect(pending[0]).toMatchObject({
+      due_date: due,
+      amount: 49.9,
+      paid_at: "",
+      auto_paid: false,
+    });
+    const paid = await request("/api/payments/history", {
+      token: owner.token,
+      method: "POST",
+      body: {
+        subscription_id: id,
+        due_date: due,
+        paid_date: due,
+        amount: 49.9,
+        utc_offset_minutes: 0,
+        paid_utc_offset_minutes: 0,
+      },
+    });
     expect(paid.status).toBe(201);
-    expect((await records())[0]).toMatchObject({ id: pending[0].id, amount: 49.9 });
+    expect((await records())[0]).toMatchObject({
+      id: pending[0].id,
+      amount: 49.9,
+    });
     expect((await records())[0].paid_at).toBeTruthy();
   } finally {
-    await request(`/api/data/subscriptions/${id}`, { token: owner.token, method: "DELETE" });
+    await request(`/api/data/subscriptions/${id}`, {
+      token: owner.token,
+      method: "DELETE",
+    });
   }
 });
 
 it("reverses a paid occurrence atomically, preserves its details and permits paying again", async () => {
   const created = await request("/api/data/subscriptions", {
-    token: owner.token, method: "POST", body: {
-      name: "Reversible confirmation", price: 49.9, cycle: cycle.id,
-      currency: currency.id, category: category.id, frequency: 1,
-      start_date: "2026-01-01", next_payment: "2099-01-10", auto_mark_paid: true,
+    token: owner.token,
+    method: "POST",
+    body: {
+      name: "Reversible confirmation",
+      price: 49.9,
+      cycle: cycle.id,
+      currency: currency.id,
+      category: category.id,
+      frequency: 1,
+      start_date: "2026-01-01",
+      next_payment: "2099-01-10",
+      auto_mark_paid: true,
     },
   });
   expect(created.status).toBe(201);
   const subId = created.data.id;
   const records = [];
   try {
-    for (const [index, dueDate] of ["2026-03-10", "2026-03-10T12:00:00Z", "2026-04-10"].entries()) {
+    for (const [index, dueDate] of [
+      "2026-03-10",
+      "2026-03-10T12:00:00Z",
+      "2026-04-10",
+    ].entries()) {
       const form = new FormData();
       for (const [key, value] of Object.entries({
-        subscription_id: subId, due_date: dueDate, amount: 49.9 + index,
-        paid_at: "2026-03-10T15:00:00Z", auto_paid: true, notes: "Keep receipt and notes",
-      })) form.set(key, String(value));
-      if (index === 0) form.set("proof", new Blob(["%PDF-1.4\nreceipt"], { type: "application/pdf" }), "receipt.pdf");
-      const saved = await request("/api/data/payment_records", { token: owner.token, method: "POST", body: form });
+        subscription_id: subId,
+        due_date: dueDate,
+        amount: 49.9 + index,
+        paid_at: "2026-03-10T15:00:00Z",
+        auto_paid: true,
+        notes: "Keep receipt and notes",
+      }))
+        form.set(key, String(value));
+      if (index === 0)
+        form.set(
+          "proof",
+          new Blob(["%PDF-1.4\nreceipt"], { type: "application/pdf" }),
+          "receipt.pdf",
+        );
+      const saved = await request("/api/data/payment_records", {
+        token: owner.token,
+        method: "POST",
+        body: form,
+      });
       expect(saved.status).toBe(201);
       records.push(saved.data);
     }
     const endpoint = `/api/payments/${records[0].id}/mark-unpaid`;
     expect((await request(endpoint, { method: "POST" })).status).toBe(401);
-    expect((await request(endpoint, { token: other.token, method: "POST" })).status).toBe(404);
+    expect(
+      (await request(endpoint, { token: other.token, method: "POST" })).status,
+    ).toBe(404);
 
     // A failure on one legacy duplicate must leave the entire occurrence paid.
     const { DatabaseSync } = require("node:sqlite");
     const db = new DatabaseSync(path.join(directory, "monline.db"));
-    db.exec(`CREATE TRIGGER reject_unpaid_test BEFORE UPDATE ON payment_records WHEN OLD.id = '${records[1].id}' AND NEW.paid_at = '' BEGIN SELECT RAISE(ABORT, 'test undo failure'); END`);
+    db.exec(
+      `CREATE TRIGGER reject_unpaid_test BEFORE UPDATE ON payment_records WHEN OLD.id = '${records[1].id}' AND NEW.paid_at = '' BEGIN SELECT RAISE(ABORT, 'test undo failure'); END`,
+    );
     try {
-      expect((await request(endpoint, { token: owner.token, method: "POST" })).status).toBe(500);
-      for (const record of records) expect(db.prepare("SELECT paid_at FROM payment_records WHERE id=?").get(record.id).paid_at).toBeTruthy();
+      expect(
+        (await request(endpoint, { token: owner.token, method: "POST" }))
+          .status,
+      ).toBe(500);
+      for (const record of records)
+        expect(
+          db
+            .prepare("SELECT paid_at FROM payment_records WHERE id=?")
+            .get(record.id).paid_at,
+        ).toBeTruthy();
     } finally {
       db.exec("DROP TRIGGER reject_unpaid_test");
       db.close();
     }
 
-    const undone = await request(endpoint, { token: owner.token, method: "POST" });
+    const undone = await request(endpoint, {
+      token: owner.token,
+      method: "POST",
+    });
     expect(undone.status).toBe(200);
     expect(undone.data).toEqual({ updated: 2 });
     for (const record of records.slice(0, 2)) {
-      const pending = await request(`/api/data/payment_records/${record.id}`, { token: owner.token });
+      const pending = await request(`/api/data/payment_records/${record.id}`, {
+        token: owner.token,
+      });
       expect(pending.data).toMatchObject({
-        id: record.id, paid_at: "", auto_paid: false, amount: record.amount,
-        due_date: record.due_date, notes: record.notes, proof: record.proof,
+        id: record.id,
+        paid_at: "",
+        auto_paid: false,
+        amount: record.amount,
+        due_date: record.due_date,
+        notes: record.notes,
+        proof: record.proof,
       });
     }
-    expect((await request(`/api/data/payment_records/${records[2].id}`, { token: owner.token })).data.paid_at).toBeTruthy();
-    expect((await request(endpoint, { token: owner.token, method: "POST" })).data).toEqual({ updated: 0 });
-    const subscriptionAfter = await request(`/api/data/subscriptions/${subId}`, { token: owner.token });
+    expect(
+      (
+        await request(`/api/data/payment_records/${records[2].id}`, {
+          token: owner.token,
+        })
+      ).data.paid_at,
+    ).toBeTruthy();
+    expect(
+      (await request(endpoint, { token: owner.token, method: "POST" })).data,
+    ).toEqual({ updated: 0 });
+    const subscriptionAfter = await request(
+      `/api/data/subscriptions/${subId}`,
+      { token: owner.token },
+    );
     expect(subscriptionAfter.data.next_payment).toBe(created.data.next_payment);
     expect(subscriptionAfter.data.auto_mark_paid).toBe(true);
-    const paidAgain = await request(`/api/data/payment_records/${records[0].id}`, {
-      token: owner.token, method: "PATCH", body: { paid_at: "2026-03-11T10:00:00Z" },
-    });
+    const paidAgain = await request(
+      `/api/data/payment_records/${records[0].id}`,
+      {
+        token: owner.token,
+        method: "PATCH",
+        body: { paid_at: "2026-03-11T10:00:00Z" },
+      },
+    );
     expect(paidAgain.status).toBe(200);
     expect(paidAgain.data.paid_at).toBeTruthy();
   } finally {
-    await request(`/api/data/subscriptions/${subId}`, { token: owner.token, method: "DELETE" });
+    await request(`/api/data/subscriptions/${subId}`, {
+      token: owner.token,
+      method: "DELETE",
+    });
   }
 });
 
@@ -2601,112 +2775,354 @@ it("reverses only the selected standalone payment", async () => {
   try {
     for (const name of ["First standalone", "Second standalone"]) {
       const saved = await request("/api/payments/history", {
-        token: owner.token, method: "POST", body: {
-          name, currency: currency.id, due_date: "2026-01-01", paid_date: "2026-01-01",
-          amount: 20, utc_offset_minutes: 0, paid_utc_offset_minutes: 0,
+        token: owner.token,
+        method: "POST",
+        body: {
+          name,
+          currency: currency.id,
+          due_date: "2026-01-01",
+          paid_date: "2026-01-01",
+          amount: 20,
+          utc_offset_minutes: 0,
+          paid_utc_offset_minutes: 0,
         },
       });
       expect(saved.status).toBe(201);
       records.push(saved.data);
     }
-    const result = await request(`/api/payments/${records[0].id}/mark-unpaid`, { token: owner.token, method: "POST" });
+    const result = await request(`/api/payments/${records[0].id}/mark-unpaid`, {
+      token: owner.token,
+      method: "POST",
+    });
     expect(result.status).toBe(200);
     expect(result.data).toEqual({ updated: 1 });
-    expect((await request(`/api/data/payment_records/${records[1].id}`, { token: owner.token })).data.paid_at).toBeTruthy();
+    expect(
+      (
+        await request(`/api/data/payment_records/${records[1].id}`, {
+          token: owner.token,
+        })
+      ).data.paid_at,
+    ).toBeTruthy();
   } finally {
-    for (const record of records) await request(`/api/data/payment_records/${record.id}`, { token: owner.token, method: "DELETE" });
+    for (const record of records)
+      await request(`/api/data/payment_records/${record.id}`, {
+        token: owner.token,
+        method: "DELETE",
+      });
   }
 });
 it("keeps scoped transfers separate, round-trips receipts, and deletes only the owner's subscriptions", async () => {
-  const create = await request('/api/data/subscriptions', { token: owner.token, method: 'POST', body: { name: 'Scoped proof sample', price: 33, frequency: 1, cycle: cycle.id, currency: currency.id, category: category.id, next_payment: '2099-01-01', start_date: '2026-01-01' } });
+  const create = await request("/api/data/subscriptions", {
+    token: owner.token,
+    method: "POST",
+    body: {
+      name: "Scoped proof sample",
+      price: 33,
+      frequency: 1,
+      cycle: cycle.id,
+      currency: currency.id,
+      category: category.id,
+      next_payment: "2099-01-01",
+      start_date: "2026-01-01",
+    },
+  });
   expect(create.status).toBe(201);
   const form = new FormData();
   const day = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-  for (const [key, value] of Object.entries({ subscription_id: create.data.id, due_date: day, paid_date: day, amount: 33, utc_offset_minutes: 0, paid_utc_offset_minutes: 0, notes: 'Receipt survives scoped export' })) form.set(key, String(value));
-  form.set('proof', new Blob(['%PDF-1.4 original receipt'], { type: 'application/pdf' }), 'proof.pdf');
-  const paid = await request('/api/payments/history', { token: owner.token, method: 'POST', body: form });
+  for (const [key, value] of Object.entries({
+    subscription_id: create.data.id,
+    due_date: day,
+    paid_date: day,
+    amount: 33,
+    utc_offset_minutes: 0,
+    paid_utc_offset_minutes: 0,
+    notes: "Receipt survives scoped export",
+  }))
+    form.set(key, String(value));
+  form.set(
+    "proof",
+    new Blob(["%PDF-1.4 original receipt"], { type: "application/pdf" }),
+    "proof.pdf",
+  );
+  const paid = await request("/api/payments/history", {
+    token: owner.token,
+    method: "POST",
+    body: form,
+  });
   expect(paid.status).toBe(201);
   expect(paid.data.proof).toBeTruthy();
   const changeProof = new FormData();
-  changeProof.set('proof', new Blob(['%PDF-1.4 new receipt'], { type: 'application/pdf' }), 'new-proof.pdf');
-  const edited = await request('/api/data/payment_records/' + paid.data.id, { token: owner.token, method: 'PATCH', body: changeProof });
+  changeProof.set(
+    "proof",
+    new Blob(["%PDF-1.4 new receipt"], { type: "application/pdf" }),
+    "new-proof.pdf",
+  );
+  const edited = await request("/api/data/payment_records/" + paid.data.id, {
+    token: owner.token,
+    method: "PATCH",
+    body: changeProof,
+  });
   expect(edited.data.paid_at).toBe(paid.data.paid_at);
   const hydrate = async (scope) => {
-    const response = await request('/api/transfer/' + scope + '/export', { token: owner.token });
+    const response = await request("/api/transfer/" + scope + "/export", {
+      token: owner.token,
+    });
     expect(response.status).toBe(200);
     const scoped = response.data;
     for (const file of scoped.backup.files) {
-      const content = await fetch(base + '/api/files/' + file.collection + '/' + file.recordId + '/' + encodeURIComponent(file.name), { headers: { Authorization: 'Bearer ' + owner.token } });
+      const content = await fetch(
+        base +
+          "/api/files/" +
+          file.collection +
+          "/" +
+          file.recordId +
+          "/" +
+          encodeURIComponent(file.name),
+        { headers: { Authorization: "Bearer " + owner.token } },
+      );
       expect(content.status).toBe(200);
-      file.base64 = Buffer.from(await content.arrayBuffer()).toString('base64');
+      file.base64 = Buffer.from(await content.arrayBuffer()).toString("base64");
     }
     return scoped;
   };
-  const calendar = await hydrate('calendar');
-  const plans = await hydrate('subscriptions');
+  const calendar = await hydrate("calendar");
+  const plans = await hydrate("subscriptions");
   expect(calendar.backup.data.subscriptions).toEqual([]);
   expect(plans.backup.data.payment_records).toEqual([]);
   expect(calendar.backup.profile).toEqual({ id: owner.record.id });
-  expect((await request('/api/transfer/calendar/export')).status).toBe(401);
-  const subCountBefore = (await request('/api/data/subscriptions', { token: other.token })).data.totalItems;
-  const restoredCalendar = await request('/api/transfer/calendar/import', { token: other.token, method: 'POST', body: calendar });
+  expect((await request("/api/transfer/calendar/export")).status).toBe(401);
+  const subCountBefore = (
+    await request("/api/data/subscriptions", { token: other.token })
+  ).data.totalItems;
+  const restoredCalendar = await request("/api/transfer/calendar/import", {
+    token: other.token,
+    method: "POST",
+    body: calendar,
+  });
   expect(restoredCalendar.status).toBe(200);
-  expect((await request('/api/data/subscriptions', { token: other.token })).data.totalItems).toBe(subCountBefore);
-  const targetPayments = (await request('/api/data/payment_records?perPage=500', { token: other.token })).data.items;
-  const receipt = targetPayments.find((row) => row.notes === 'Receipt survives scoped export');
-  expect(receipt).toMatchObject({ name: 'Scoped proof sample', subscription_id: '', amount: 33, paid_at: paid.data.paid_at });
-  const downloaded = await fetch(base + '/api/files/payment_records/' + receipt.id + '/' + encodeURIComponent(receipt.proof), { headers: { Authorization: 'Bearer ' + other.token } });
-  expect(await downloaded.text()).toBe('%PDF-1.4 new receipt');
-  expect((await request('/api/transfer/calendar/import', { token: other.token, method: 'POST', body: plans })).status).toBe(400);
+  expect(
+    (await request("/api/data/subscriptions", { token: other.token })).data
+      .totalItems,
+  ).toBe(subCountBefore);
+  const targetPayments = (
+    await request("/api/data/payment_records?perPage=500", {
+      token: other.token,
+    })
+  ).data.items;
+  const receipt = targetPayments.find(
+    (row) => row.notes === "Receipt survives scoped export",
+  );
+  expect(receipt).toMatchObject({
+    name: "Scoped proof sample",
+    subscription_id: "",
+    amount: 33,
+    paid_at: paid.data.paid_at,
+  });
+  const downloaded = await fetch(
+    base +
+      "/api/files/payment_records/" +
+      receipt.id +
+      "/" +
+      encodeURIComponent(receipt.proof),
+    { headers: { Authorization: "Bearer " + other.token } },
+  );
+  expect(await downloaded.text()).toBe("%PDF-1.4 new receipt");
+  expect(
+    (
+      await request("/api/transfer/calendar/import", {
+        token: other.token,
+        method: "POST",
+        body: plans,
+      })
+    ).status,
+  ).toBe(400);
   const contaminated = structuredClone(calendar);
   contaminated.backup.data.subscriptions = plans.backup.data.subscriptions;
-  expect((await request('/api/transfer/calendar/import', { token: other.token, method: 'POST', body: contaminated })).status).toBe(400);
-  const importPlans = await request('/api/transfer/subscriptions/import', { token: other.token, method: 'POST', body: plans });
+  expect(
+    (
+      await request("/api/transfer/calendar/import", {
+        token: other.token,
+        method: "POST",
+        body: contaminated,
+      })
+    ).status,
+  ).toBe(400);
+  const importPlans = await request("/api/transfer/subscriptions/import", {
+    token: other.token,
+    method: "POST",
+    body: plans,
+  });
   expect(importPlans.status).toBe(200);
-  expect((await request('/api/data/payment_records?perPage=500', { token: other.token })).data.totalItems).toBe(targetPayments.length);
-  expect((await request('/api/transfer/calendar/import', { token: other.token, method: 'POST', body: calendar })).data.imported).toBe(0);
-  const targetSub = (await request('/api/data/subscriptions?perPage=500', { token: other.token })).data.items.find((row) => row.name === 'Scoped proof sample');
-  const linkedPayment = await request('/api/data/payment_records', { token: other.token, method: 'POST', body: { subscription_id: targetSub.id, due_date: day, paid_at: paid.data.paid_at, amount: 7 } });
+  expect(
+    (
+      await request("/api/data/payment_records?perPage=500", {
+        token: other.token,
+      })
+    ).data.totalItems,
+  ).toBe(targetPayments.length);
+  expect(
+    (
+      await request("/api/transfer/calendar/import", {
+        token: other.token,
+        method: "POST",
+        body: calendar,
+      })
+    ).data.imported,
+  ).toBe(0);
+  const targetSub = (
+    await request("/api/data/subscriptions?perPage=500", { token: other.token })
+  ).data.items.find((row) => row.name === "Scoped proof sample");
+  const linkedPayment = await request("/api/data/payment_records", {
+    token: other.token,
+    method: "POST",
+    body: {
+      subscription_id: targetSub.id,
+      due_date: day,
+      paid_at: paid.data.paid_at,
+      amount: 7,
+    },
+  });
   expect(linkedPayment.status).toBe(201);
-  const ownerSubs = (await request('/api/data/subscriptions', { token: owner.token })).data.totalItems;
-  expect((await request('/api/subscriptions/delete-all', { token: other.token, method: 'POST', body: {} })).status).toBe(400);
-  const deleted = await request('/api/subscriptions/delete-all', { token: other.token, method: 'POST', body: { confirmed: true, user: owner.record.id } });
+  const ownerSubs = (
+    await request("/api/data/subscriptions", { token: owner.token })
+  ).data.totalItems;
+  expect(
+    (
+      await request("/api/subscriptions/delete-all", {
+        token: other.token,
+        method: "POST",
+        body: {},
+      })
+    ).status,
+  ).toBe(400);
+  const deleted = await request("/api/subscriptions/delete-all", {
+    token: other.token,
+    method: "POST",
+    body: { confirmed: true, user: owner.record.id },
+  });
   expect(deleted.status).toBe(200);
-  expect((await request('/api/data/subscriptions', { token: other.token })).data.totalItems).toBe(0);
-  expect((await request('/api/data/subscriptions', { token: owner.token })).data.totalItems).toBe(ownerSubs);
-  expect((await request('/api/data/payment_records?perPage=500', { token: other.token })).data.totalItems).toBe(targetPayments.length + 1);
-  expect((await request('/api/data/payment_records/' + linkedPayment.data.id, { token: other.token })).data).toMatchObject({ subscription_id: '', name: 'Scoped proof sample', amount: 7 });
-  expect((await request('/api/data/payment_records?perPage=500', { token: other.token })).data.items.every((row) => row.name)).toBe(true);
+  expect(
+    (await request("/api/data/subscriptions", { token: other.token })).data
+      .totalItems,
+  ).toBe(0);
+  expect(
+    (await request("/api/data/subscriptions", { token: owner.token })).data
+      .totalItems,
+  ).toBe(ownerSubs);
+  expect(
+    (
+      await request("/api/data/payment_records?perPage=500", {
+        token: other.token,
+      })
+    ).data.totalItems,
+  ).toBe(targetPayments.length + 1);
+  expect(
+    (
+      await request("/api/data/payment_records/" + linkedPayment.data.id, {
+        token: other.token,
+      })
+    ).data,
+  ).toMatchObject({
+    subscription_id: "",
+    name: "Scoped proof sample",
+    amount: 7,
+  });
+  expect(
+    (
+      await request("/api/data/payment_records?perPage=500", {
+        token: other.token,
+      })
+    ).data.items.every((row) => row.name),
+  ).toBe(true);
 });
 it("deletes the complete statement archive atomically without touching other accounts, subscriptions or payments", async () => {
   const ownedIds = [];
   for (let index = 0; index < 13; index++) {
-    const saved = await request('/api/statements', { token: other.token, method: 'POST', body: {
-      bank: 'enpara', file_name: 'bulk-' + index + '.pdf', file_hash: require('node:crypto').createHash('sha256').update('bulk-delete-' + index).digest('hex'), period: '2026-10', page_count: 1,
-      transactions: [{ id: 'row-' + index, date: '2026-10-01', merchant: 'NETFLIX', amount: 15, currency: 'EUR', kind: 'charge', page: 1, installment: '', subscription_service: 'Netflix', subscription_match: 'catalog' }],
-    } });
+    const saved = await request("/api/statements", {
+      token: other.token,
+      method: "POST",
+      body: {
+        bank: "enpara",
+        file_name: "bulk-" + index + ".pdf",
+        file_hash: require("node:crypto")
+          .createHash("sha256")
+          .update("bulk-delete-" + index)
+          .digest("hex"),
+        period: "2026-10",
+        page_count: 1,
+        transactions: [
+          {
+            id: "row-" + index,
+            date: "2026-10-01",
+            merchant: "NETFLIX",
+            amount: 15,
+            currency: "EUR",
+            kind: "charge",
+            page: 1,
+            installment: "",
+            subscription_service: "Netflix",
+            subscription_match: "catalog",
+          },
+        ],
+      },
+    });
     expect(saved.status).toBe(201);
     ownedIds.push(saved.data.id);
   }
-  const list = (name, token) => request('/api/data/' + name + '?perPage=500', { token }).then((res) => res.data.items);
-  const beforeArchive = await list('bank_statements', other.token);
-  const ownerArchive = await list('bank_statements', owner.token);
-  const beforePayments = await list('payment_records', other.token);
-  const beforeSubs = await list('subscriptions', other.token);
-  expect((await request('/api/statements/delete-all', { method: 'POST', body: { confirmed: true } })).status).toBe(401);
-  expect((await request('/api/statements/delete-all', { token: other.token, method: 'POST', body: {} })).status).toBe(400);
-  const { DatabaseSync } = require('node:sqlite');
-  const db = new DatabaseSync(path.join(directory, 'monline.db'));
+  const list = (name, token) =>
+    request("/api/data/" + name + "?perPage=500", { token }).then(
+      (res) => res.data.items,
+    );
+  const beforeArchive = await list("bank_statements", other.token);
+  const ownerArchive = await list("bank_statements", owner.token);
+  const beforePayments = await list("payment_records", other.token);
+  const beforeSubs = await list("subscriptions", other.token);
+  expect(
+    (
+      await request("/api/statements/delete-all", {
+        method: "POST",
+        body: { confirmed: true },
+      })
+    ).status,
+  ).toBe(401);
+  expect(
+    (
+      await request("/api/statements/delete-all", {
+        token: other.token,
+        method: "POST",
+        body: {},
+      })
+    ).status,
+  ).toBe(400);
+  const { DatabaseSync } = require("node:sqlite");
+  const db = new DatabaseSync(path.join(directory, "monline.db"));
   try {
-    db.exec(`CREATE TRIGGER reject_archive_clear BEFORE DELETE ON bank_statements WHEN OLD.id = '${ownedIds[6]}' BEGIN SELECT RAISE(ABORT, 'test archive failure'); END`);
-    expect((await request('/api/statements/delete-all', { token: other.token, method: 'POST', body: { confirmed: true } })).status).toBe(500);
-    expect(await list('bank_statements', other.token)).toEqual(beforeArchive);
-  } finally { db.exec('DROP TRIGGER reject_archive_clear'); db.close(); }
-  const deleted = await request('/api/statements/delete-all', { token: other.token, method: 'POST', body: { confirmed: true, user: owner.record.id } });
+    db.exec(
+      `CREATE TRIGGER reject_archive_clear BEFORE DELETE ON bank_statements WHEN OLD.id = '${ownedIds[6]}' BEGIN SELECT RAISE(ABORT, 'test archive failure'); END`,
+    );
+    expect(
+      (
+        await request("/api/statements/delete-all", {
+          token: other.token,
+          method: "POST",
+          body: { confirmed: true },
+        })
+      ).status,
+    ).toBe(500);
+    expect(await list("bank_statements", other.token)).toEqual(beforeArchive);
+  } finally {
+    db.exec("DROP TRIGGER reject_archive_clear");
+    db.close();
+  }
+  const deleted = await request("/api/statements/delete-all", {
+    token: other.token,
+    method: "POST",
+    body: { confirmed: true, user: owner.record.id },
+  });
   expect(deleted.status).toBe(200);
   expect(deleted.data).toEqual({ deleted: beforeArchive.length });
-  expect(await list('bank_statements', other.token)).toEqual([]);
-  expect(await list('bank_statements', owner.token)).toEqual(ownerArchive);
-  expect(await list('payment_records', other.token)).toEqual(beforePayments);
-  expect(await list('subscriptions', other.token)).toEqual(beforeSubs);
+  expect(await list("bank_statements", other.token)).toEqual([]);
+  expect(await list("bank_statements", owner.token)).toEqual(ownerArchive);
+  expect(await list("payment_records", other.token)).toEqual(beforePayments);
+  expect(await list("subscriptions", other.token)).toEqual(beforeSubs);
 });

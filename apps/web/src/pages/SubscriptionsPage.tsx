@@ -4,9 +4,11 @@ import { useTranslation } from "react-i18next";
 
 import { ScopedTransferActions } from "@/components/ScopedTransferActions";
 import { SubscriptionFormModal } from "@/components/SubscriptionFormModal";
+import { SharedSubscriptions } from "@/components/subscriptions/SharedSubscriptions";
 import { SubscriptionHistoryDialog } from "@/components/subscriptions/SubscriptionHistoryDialog";
 import { SubscriptionsFiltersPanel } from "@/components/subscriptions/SubscriptionsFiltersPanel";
 import { SubscriptionsGrid } from "@/components/subscriptions/SubscriptionsGrid";
+import { SubscriptionSharingDialog } from "@/components/subscriptions/SubscriptionSharingDialog";
 import {
   INITIAL_SUBSCRIPTION_FILTERS,
   type SubscriptionAutomationSetting,
@@ -41,6 +43,7 @@ export function SubscriptionsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editSubscription, setEditSubscription] = useState<Subscription | null>(null);
   const [historySubscription, setHistorySubscription] = useState<Subscription | null>(null);
+  const [sharingSubscription, setSharingSubscription] = useState<Subscription | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const deleteAllMutation = useMutation({
@@ -82,6 +85,8 @@ export function SubscriptionsPage() {
   const { data: household = [] } = useQuery({
     queryKey: queryKeys.household.all(userId),
     queryFn: () => householdService.list(userId),
+    staleTime: 0,
+    refetchOnWindowFocus: "always",
     enabled: !!userId,
   });
 
@@ -286,6 +291,7 @@ export function SubscriptionsPage() {
       ) : null}
 
       <SubscriptionsGrid
+        onShare={setSharingSubscription}
         isLoading={isLoading}
         subscriptions={filteredSubscriptions}
         layout={view}
@@ -320,6 +326,16 @@ export function SubscriptionsPage() {
         automationPendingId={automationMutation.variables?.id}
         automationPendingSetting={automationMutation.variables?.setting}
       />
+
+      <SharedSubscriptions userId={userId} searchTerm={searchTerm} layout={view} />
+
+      {sharingSubscription && (
+        <SubscriptionSharingDialog
+          sub={sharingSubscription}
+          userId={userId}
+          onClose={() => setSharingSubscription(null)}
+        />
+      )}
 
       {showForm ? (
         <SubscriptionFormModal

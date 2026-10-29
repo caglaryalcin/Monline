@@ -111,6 +111,11 @@ routerAdd("POST", "/api/payments/history", (e) => {
         }
         if (related.getString("user") !== e.auth.id)
           throw new BadRequestError("historical_invalid_details");
+        if (
+          key === "payer" &&
+          !require("../people-invitations.cjs").isPersonConfirmed(tx, related)
+        )
+          throw new BadRequestError("historical_invalid_details");
         record.set(key, related.id);
       }
       let logo;

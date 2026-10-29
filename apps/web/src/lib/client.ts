@@ -1,6 +1,7 @@
 import type { User } from "@/types";
 
 type QueryOptions = {
+  owner?: string;
   filter?: string;
   sort?: string;
   expand?: string;
@@ -100,6 +101,7 @@ function queryString(options: QueryOptions, page: number, perPage: number) {
     const value = options[field];
     if (value) query.set(field, value);
   }
+  if (options.owner) query.set("owner", options.owner);
   return query;
 }
 type FileRecord = { id: string; collectionId?: string; collectionName?: string };

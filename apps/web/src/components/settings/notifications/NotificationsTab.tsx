@@ -1,218 +1,114 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Settings2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { DEFAULT_REMINDERS, PROVIDERS } from "@/components/settings/notifications/config";
-import { ProviderCard } from "@/components/settings/notifications/ProviderCard";
-import { RemindersEditor } from "@/components/settings/notifications/RemindersEditor";
-import { SMTPTab, type SMTPTabHandle } from "@/components/settings/smtp/SMTPTab";
+import { PROVIDERS } from "@/components/settings/notifications/config";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
-import { LS_KEYS } from "@/lib/constants";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { notificationsService } from "@/services/notifications";
-import { serverSettingsService } from "@/services/serverSettings";
-import type { NotificationReminder, NotificationsConfig } from "@/types";
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Main component
-// ──────────────────────────────────────────────────────────────────────────────
+import type { NotificationsConfig } from "@/types";
 
 export function NotificationsTab() {
   const { t } = useTranslation();
   const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
-
-  const { data: config, isLoading } = useQuery({
+  const config = useQuery({
     queryKey: queryKeys.notificationsConfig(user?.id ?? ""),
     queryFn: () => notificationsService.getConfig(user!.id),
     enabled: !!user?.id,
   });
-
-  const [formData, setFormData] = useState<Partial<NotificationsConfig>>({});
-  const [reminders, setReminders] = useState<NotificationReminder[]>(DEFAULT_REMINDERS);
-  const hydratedUser = useRef<string | null>(null);
-  const smtpForm = useRef<SMTPTabHandle>(null);
-
-  const smtpQuery = useQuery({
-    queryKey: queryKeys.admin.smtp(),
-    queryFn: serverSettingsService.getSmtp,
-    enabled: isAdmin,
-  });
-
-  useEffect(() => {
-    if (
-      !isLoading &&
-      !(isAdmin && smtpQuery.isPending) &&
-      hydratedUser.current !== (user?.id ?? "")
-    ) {
-      hydratedUser.current = user?.id ?? "";
-      setFormData(
-        isAdmin
-          ? {
-              ...config,
-              email_enabled: !!config?.email_enabled && !!smtpQuery.data?.enabled,
-            }
-          : (config ?? {}),
-      );
-      setReminders(
-        Array.isArray(config?.reminders) && config.reminders.length > 0
-          ? config.reminders
-          : DEFAULT_REMINDERS,
-      );
-    }
-  }, [config, isLoading, isAdmin, smtpQuery.isPending, smtpQuery.data, user?.id]);
-
-  const handleChange = (key: keyof NotificationsConfig, value: unknown) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const saveMut = useMutation({
-    mutationFn: async ({
-      section,
-      data,
-    }: {
-      section: string;
-      data: Partial<NotificationsConfig>;
-    }) => {
-      if (!user?.id) throw new Error("Authentication required");
-      let smtpSettings: Record<string, unknown> | undefined;
-      if (section === "email" && isAdmin) {
-        if (!smtpForm.current) throw new Error("SMTP settings are unavailable");
-        smtpSettings = await smtpForm.current.save();
-      }
-      const record = config?.id
-        ? await notificationsService.updateConfig(config.id, data)
-        : await notificationsService.createConfig({ ...data, user: user.id });
-      return { record, smtpSettings };
-    },
-    onSuccess: ({ record, smtpSettings }) => {
-      // Keep other cards' drafts intact and reuse the first created record.
+  const save = useMutation({
+    mutationFn: (data: Partial<NotificationsConfig>) =>
+      config.data?.id
+        ? notificationsService.updateConfig(config.data.id, data)
+        : notificationsService.createConfig({ ...data, user: user!.id }),
+    onSuccess: (record) => {
       qc.setQueryData(queryKeys.notificationsConfig(user?.id ?? ""), record);
-      if (smtpSettings) qc.setQueryData(queryKeys.admin.smtp(), smtpSettings);
-      toast.success(t("success_save", "Saved successfully"));
+      toast.success(t("saved"));
     },
-    onError: () => toast.error(t("error_save", "Error saving")),
+    onError: (error: Error) => toast.error(t(error.message, { defaultValue: t("error") })),
   });
-
-  const handleSave = (section: string) => {
-    if (saveMut.isPending) return;
-    if (section === "reminders") {
-      saveMut.mutate({ section, data: { reminders } });
-      return;
-    }
-    const provider = PROVIDERS.find((item) => item.id === section)!;
-    const data = Object.fromEntries([
-      [provider.enabledKey, !!formData[provider.enabledKey]],
-      ...provider.fields.map(({ key }) => [key, formData[key] ?? ""]),
-    ]);
-    saveMut.mutate({ section, data });
-  };
-
-  const [testingProvider, setTestingProvider] = useState<string | null>(null);
-
-  const handleTest = async (providerId: string) => {
-    setTestingProvider(providerId);
-    try {
-      const provider = PROVIDERS.find((item) => item.id === providerId)!;
-      const draft = Object.fromEntries(
-        provider.fields.map(({ key }) => [key, formData[key] ?? ""]),
-      );
-      await notificationsService.test(providerId, draft);
-      toast.success(t("notification_sent", "Test notification sent!"));
-    } catch {
-      toast.error(t("error_sending_notification", "Error sending notification"));
-    } finally {
-      setTestingProvider(null);
-    }
-  };
-
-  if (isLoading || (isAdmin && smtpQuery.isPending)) {
-    return (
-      <div className="space-y-4">
-        <div className="h-24 rounded-2xl bg-muted/30 animate-pulse" />
-        <div className="grid grid-cols-2 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-14 rounded-2xl bg-muted/30 animate-pulse" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const enabledCount = PROVIDERS.filter((p) => !!formData[p.enabledKey]).length;
-
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Reminder schedule */}
-      {enabledCount > 0 && (
-        <RemindersEditor
-          reminders={reminders}
-          onChange={setReminders}
-          onSave={() => handleSave("reminders")}
-          isSaving={saveMut.isPending && saveMut.variables?.section === "reminders"}
-          saveDisabled={saveMut.isPending}
-        />
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-lg font-semibold">{t("notification_channels")}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          {t("admin_channels_personal_hint")}
+        </p>
+      </div>
+      {config.isPending && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {t("loading")}
+        </p>
       )}
-
-      {/* Channels section */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-            {t("notification_channels", "Channels")}
-          </p>
-          {enabledCount > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {enabledCount} {t("enabled", "enabled")}
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {[...PROVIDERS]
-            .sort((a, b) => {
-              const aOn = !!formData[a.enabledKey];
-              const bOn = !!formData[b.enabledKey];
-              return aOn === bOn ? 0 : aOn ? -1 : 1;
-            })
-            .map((provider) => (
-              <ProviderCard
-                key={`${user?.id}:${provider.id}`}
-                disclosureStorageKey={
-                  user?.id ? LS_KEYS.notificationDisclosure(user.id, provider.id) : undefined
-                }
-                provider={
-                  provider.id === "email"
-                    ? { ...provider, label: `${t("email")} (SMTP)` }
-                    : provider
-                }
-                formData={formData}
-                onChange={handleChange}
-                onSave={() => handleSave(provider.id)}
-                isSaving={saveMut.isPending && saveMut.variables?.section === provider.id}
-                saveDisabled={
-                  saveMut.isPending ||
-                  !user?.id ||
-                  (provider.id === "email" && isAdmin && smtpQuery.isError)
-                }
-                onTest={() => handleTest(provider.id)}
-                isTesting={testingProvider === provider.id}
-                toggleDisabled={
-                  saveMut.isPending || (provider.id === "email" && isAdmin && smtpQuery.isError)
+      {config.isError && (
+        <p role="alert" className="text-sm text-destructive">
+          {t("admin_config_load_error")}
+        </p>
+      )}
+      {PROVIDERS.map((provider) => {
+        const available = !!config.data?.available_channels?.[provider.id];
+        const checked = !!config.data?.[provider.enabledKey];
+        const Icon = provider.icon;
+        return (
+          <div
+            key={provider.id}
+            className="flex items-center justify-between gap-4 rounded-2xl border bg-card p-4"
+          >
+            <div className="flex min-w-0 items-center gap-3">
+              <span
+                className={
+                  checked
+                    ? "rounded-xl bg-primary p-2 text-primary-foreground"
+                    : "rounded-xl bg-muted/50 p-2 text-muted-foreground"
                 }
               >
-                {provider.id === "email" && isAdmin && (
-                  <SMTPTab
-                    ref={smtpForm}
-                    inline
-                    channelEnabled={!!formData.email_enabled}
-                    isSaving={saveMut.isPending}
-                  />
+                <Icon className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium">
+                  {provider.id === "email" ? t("email") : provider.label}
+                </p>
+                {!isAdmin && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t(available ? "admin_channel_ready" : "admin_channel_waiting")}
+                  </p>
                 )}
-              </ProviderCard>
-            ))}
-        </div>
-      </div>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
+              {isAdmin && config.isSuccess && !available && (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="h-7 gap-1.5 rounded-lg border-primary/40 bg-primary/10 px-2.5 text-xs"
+                >
+                  <Link
+                    to="/admin"
+                    search={{ tab: "channels" }}
+                    aria-label={`${provider.label}: ${t("admin_channel_configure")}`}
+                  >
+                    <Settings2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    {t("admin_channel_configure")}
+                  </Link>
+                </Button>
+              )}
+              <Switch
+                aria-label={provider.label}
+                checked={checked}
+                disabled={
+                  save.isPending || config.isPending || config.isError || (!available && !checked)
+                }
+                onCheckedChange={(enabled) => save.mutate({ [provider.enabledKey]: enabled })}
+              />
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

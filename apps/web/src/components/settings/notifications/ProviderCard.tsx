@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import type { NotificationsConfig } from "@/types";
 
 interface ProviderCardProps {
+  configurationOnly?: boolean;
   provider: ProviderConfig;
   formData: Partial<NotificationsConfig>;
   onChange: (key: keyof NotificationsConfig, value: unknown) => void;
@@ -25,6 +26,7 @@ interface ProviderCardProps {
 }
 
 export function ProviderCard({
+  configurationOnly = false,
   provider,
   formData,
   onChange,
@@ -60,14 +62,17 @@ export function ProviderCard({
     }
   };
   const contentId = useId();
-  const isEnabled = !!formData[provider.enabledKey];
+  const isEnabled = configurationOnly
+    ? !!formData.available_channels?.[provider.id]
+    : !!formData[provider.enabledKey];
   const expanded = expansionChoice ?? isEnabled;
   const Icon = provider.icon;
 
   return (
     <section
       aria-label={provider.label}
-      className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+      data-configured={isEnabled}
+      className={`notification-provider-card rounded-2xl border transition-all duration-200 overflow-hidden ${
         isEnabled
           ? `bg-card ${expanded ? "md:col-span-2" : ""} ${provider.borderClass}`
           : `${expanded ? "md:col-span-2" : ""} bg-muted/20 border-border/50`
@@ -80,10 +85,10 @@ export function ProviderCard({
           aria-expanded={expanded}
           aria-controls={contentId}
           onClick={() => changeExpansion(!expanded)}
-          className="flex w-full min-w-0 items-center gap-3 px-4 py-3 pr-28 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:cursor-default"
+          className={`flex w-full min-w-0 items-center gap-3 px-4 py-3 ${configurationOnly ? "pr-14" : "pr-28"} text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:cursor-default`}
         >
           <div
-            className={`p-2 rounded-xl shrink-0 transition-colors ${
+            className={`notification-provider-icon p-2 rounded-xl shrink-0 transition-colors ${
               isEnabled
                 ? `${provider.bgClass} ${provider.colorClass}`
                 : "bg-muted text-muted-foreground"
@@ -107,15 +112,17 @@ export function ProviderCard({
           </div>
         </button>
         <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center gap-3 [&>button]:pointer-events-auto">
-          <Switch
-            aria-label={provider.label}
-            checked={isEnabled}
-            disabled={toggleDisabled}
-            onCheckedChange={(checked) => {
-              changeExpansion(true);
-              onChange(provider.enabledKey, checked);
-            }}
-          />
+          {!configurationOnly && (
+            <Switch
+              aria-label={provider.label}
+              checked={isEnabled}
+              disabled={toggleDisabled}
+              onCheckedChange={(checked) => {
+                changeExpansion(true);
+                onChange(provider.enabledKey, checked);
+              }}
+            />
+          )}
           <SettingsDisclosureButton
             name={provider.label}
             expanded={expanded}
@@ -140,7 +147,7 @@ export function ProviderCard({
                 <Input
                   id={`${contentId}-${field.key}`}
                   type={field.type}
-                  disabled={!isEnabled}
+                  disabled={isSaving || saveDisabled || (!configurationOnly && !isEnabled)}
                   value={(formData[field.key] as string) || ""}
                   onChange={(e) => onChange(field.key, e.target.value)}
                   placeholder={field.placeholder}
@@ -160,7 +167,7 @@ export function ProviderCard({
               variant="outline"
               size="sm"
               onClick={onTest}
-              disabled={isTesting || !isEnabled || isSaving || saveDisabled}
+              disabled={isTesting || (!configurationOnly && !isEnabled) || isSaving || saveDisabled}
               className="h-8 rounded-xl gap-1.5 text-xs"
             >
               <SendHorizontal className="w-4 h-4" />

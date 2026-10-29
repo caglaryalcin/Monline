@@ -3,18 +3,12 @@ import client from "@/lib/client";
 import type { NotificationsConfig } from "@/types";
 
 export const notificationsService = {
-  getConfig: async (userId: string): Promise<NotificationsConfig | null> => {
-    try {
-      const result = await client
-        .collection("notifications_config")
-        .getList<NotificationsConfig>(1, 1, {
-          filter: client.filter("user = {:userId}", { userId }),
-        });
-      return result.items[0] ?? null;
-    } catch {
-      return null;
-    }
-  },
+  getConfig: (_userId: string): Promise<NotificationsConfig> =>
+    api.get<NotificationsConfig>("/api/notifications/preferences"),
+
+  getChannels: () => api.get<NotificationsConfig>("/api/admin/channels"),
+  saveChannels: (data: Partial<NotificationsConfig>) =>
+    api.patch<NotificationsConfig>("/api/admin/channels", data),
 
   createConfig: (data: Partial<NotificationsConfig>) =>
     client.collection("notifications_config").create<NotificationsConfig>(data),
@@ -22,9 +16,10 @@ export const notificationsService = {
   updateConfig: (id: string, data: Partial<NotificationsConfig>) =>
     client.collection("notifications_config").update<NotificationsConfig>(id, data),
 
-  test: (provider: string, config?: Partial<NotificationsConfig>) =>
+  test: (provider: string, config?: Partial<NotificationsConfig>, userId?: string) =>
     api.post<{ success: boolean }>("/api/notifications/test", {
       provider,
+      ...(userId ? { userId } : {}),
       ...(config === undefined ? {} : { config }),
     }),
 };

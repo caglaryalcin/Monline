@@ -1,6 +1,8 @@
 vi.mock("@/lib/api", () => ({
   api: {
     post: vi.fn(),
+    get: vi.fn(),
+    patch: vi.fn(),
   },
 }));
 
@@ -30,30 +32,21 @@ describe("notificationsService", () => {
     vi.clearAllMocks();
   });
 
-  it("returns the first config or null on empty/error", async () => {
-    (client.filter as unknown as ReturnType<typeof vi.fn>).mockReturnValue("filter:user-1");
-    (client.collection as unknown as ReturnType<typeof vi.fn>)
-      .mockReturnValueOnce(
-        getCollectionMock({
-          getList: vi.fn().mockResolvedValue({ items: [{ id: "cfg-1" }] }),
-        }),
-      )
-      .mockReturnValueOnce(
-        getCollectionMock({
-          getList: vi.fn().mockResolvedValue({ items: [] }),
-        }),
-      )
-      .mockReturnValueOnce(
-        getCollectionMock({
-          getList: vi.fn().mockRejectedValue(new Error("boom")),
-        }),
-      );
-
-    await expect(notificationsService.getConfig("user-1")).resolves.toEqual({
-      id: "cfg-1",
+  it("loads the authenticated account's preferences including shared availability", async () => {
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({ id: "", email_enabled: false, available_channels: { email: true } })
+      .mockRejectedValueOnce(new Error("boom"));
+    await expect(notificationsService.getConfig("user-1")).resolves.toMatchObject({
+      available_channels: { email: true },
     });
-    await expect(notificationsService.getConfig("user-1")).resolves.toBeNull();
-    await expect(notificationsService.getConfig("user-1")).resolves.toBeNull();
+    expect(api.get).toHaveBeenCalledWith("/api/notifications/preferences");
+    await expect(notificationsService.getConfig("user-1")).rejects.toThrow("boom");
+  });
+  it("loads and saves shared channels through admin endpoints", async () => {
+    await notificationsService.getChannels();
+    await notificationsService.saveChannels({ telegram_chat_id: "shared" });
+    expect(api.get).toHaveBeenCalledWith("/api/admin/channels");
+    expect(api.patch).toHaveBeenCalledWith("/api/admin/channels", { telegram_chat_id: "shared" });
   });
 
   it("creates, updates, and tests notification config", async () => {

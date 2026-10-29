@@ -4,6 +4,8 @@ const bcrypt = require("bcryptjs");
 const { DataRecord, schema, identifier } = require("./storage.cjs");
 const { validatePassword } = require("./auth.cjs");
 const { isValidEmail } = require("./email.cjs");
+const managedConfig = require("./managed-config.cjs");
+const peopleInvitations = require("./people-invitations.cjs");
 const {
   BadRequestError,
   ForbiddenError,
@@ -17,7 +19,6 @@ const writable = new Set([
   "payment_methods",
   "subscriptions",
   "notifications_config",
-  "fixer_settings",
   "payment_records",
   "yearly_costs",
 ]);
@@ -31,6 +32,7 @@ const readable = new Set([
   "bank_statements",
 ]);
 const userDenied = new Set([
+  "disabled",
   "id",
   "created",
   "updated",
@@ -68,6 +70,43 @@ function registerDataApi(app, repository, auth) {
   function output(record, req) {
     repository.emit("enrich", record);
     const data = record.publicExport();
+    if (record.collection().name === "notifications_config") {
+      for (const key of Object.keys(data))
+        if (
+          !["id", "user", "collectionId", "collectionName"].includes(key) &&
+          !managedConfig.toggleFields.has(key)
+        )
+          delete data[key];
+      data.available_channels = managedConfig.availability(repository, record);
+    }
+    if (record.collection().name === "household") {
+      data.account_id = "";
+      data.account_email = peopleInvitations.personEmail(repository, record);
+      data.account_name = "";
+      data.account_confirmed = peopleInvitations.isPersonConfirmed(
+        repository,
+        record,
+      );
+      data.invitation_status = peopleInvitations.invitationState(
+        repository,
+        record,
+      );
+      try {
+        const account = repository.findRecordById(
+          "users",
+          record.getString("account"),
+        );
+        data.account_id = account.id;
+        data.account_name = account.getString("name");
+      } catch {
+        /* Existing people can remain unlinked. */
+      }
+    }
+    if (record.collection().name === "subscriptions")
+      data.is_shared = require("./sharing.cjs").isSubscriptionShared(
+        repository,
+        record,
+      );
     const expand = String(req.query.expand || "")
       .split(",")
       .filter(Boolean);
@@ -108,7 +147,9 @@ function registerDataApi(app, repository, auth) {
       ? "1=1"
       : `${ownerField(collection.name)} = {:monlineOwner}`;
     const filter = filtered ? `(${scope}) && (${filtered})` : scope,
-      params = { monlineOwner: req.user.id };
+      params = {
+        monlineOwner: req.user.id,
+      };
     const total = repository.countRecords(collection.name, filter, params);
     const perPage = Math.min(
       500,
@@ -159,7 +200,10 @@ function registerDataApi(app, repository, auth) {
           "updated",
           "user",
           "calendar_history_recovery_passes",
+          "sharing",
         ].includes(field.name) ||
+        (name === "household" &&
+          ["account", "account_approval"].includes(field.name)) ||
         (name === "users" && userDenied.has(field.name))
       )
         continue;
@@ -181,6 +225,16 @@ function registerDataApi(app, repository, auth) {
       record.set(field.name, value);
     }
     if (name !== "users") record.set("user", req.user.id);
+    if (managedConfig.managedCollections.has(name))
+      managedConfig.guardWrite(repository, req.user, record, body);
+    const peopleInvitation =
+      name === "household" && (create || Object.hasOwn(body, "account_email"))
+        ? peopleInvitations.prepareInvitation(
+            repository,
+            record,
+            body.account_email,
+          )
+        : null;
     if (name === "subscriptions") record.set("record_type", "expense");
     for (const file of req.files || []) {
       if (
@@ -270,20 +324,27 @@ function registerDataApi(app, repository, auth) {
       (!create || Object.hasOwn(body, "historical_payments"))
     )
       throw new BadRequestError("backfill_invalid_selection");
-    const backfill = hasInitialPayment
-      ? backfillHelper.prepareInitialPayment(
+    repository.runInTransaction(() => {
+      if (name === "subscriptions" && typeof body.payer === "string")
+        require("./sharing-payers.cjs").applyPayer(
           repository,
           record,
-          body.initial_payment,
-        )
-      : name === "subscriptions" && Object.hasOwn(body, "historical_payments")
-        ? backfillHelper.prepareBackfill(
+          body.payer,
+          req.user.id,
+        );
+      const backfill = hasInitialPayment
+        ? backfillHelper.prepareInitialPayment(
             repository,
             record,
-            body.historical_payments,
+            body.initial_payment,
           )
-        : null;
-    repository.runInTransaction(() => {
+        : name === "subscriptions" && Object.hasOwn(body, "historical_payments")
+          ? backfillHelper.prepareBackfill(
+              repository,
+              record,
+              body.historical_payments,
+            )
+          : null;
       repository.emit(
         create ? "createRequest" : "updateRequest",
         record,
@@ -297,6 +358,12 @@ function registerDataApi(app, repository, auth) {
           .run(record.id, require("./auth.cjs").hash(req.sessionToken || ""));
       }
     });
+    if (peopleInvitation)
+      await peopleInvitations.deliverInvitation(
+        repository,
+        record,
+        peopleInvitation,
+      );
     if (
       name === "users" &&
       (create || emailChanged) &&
@@ -320,6 +387,13 @@ function registerDataApi(app, repository, auth) {
     if (!writable.has(collection.name) && collection.name !== "bank_statements")
       throw new ForbiddenError();
     const record = findOwned(req, collection);
+    if (
+      collection.name === "household" &&
+      record.getString("account") === req.user.id
+    )
+      throw new ForbiddenError("cannot_delete_yourself");
+    if (collection.name === "notifications_config" && !auth.isAdmin(req.user))
+      throw new ForbiddenError("admin_channels_toggle_only");
     if (collection.name === "categories")
       require("./domain/lib/subscription-category.js").requireUnusedCategory(
         repository,
@@ -341,6 +415,14 @@ function registerDataApi(app, repository, auth) {
     const record = repository.findRecordById(collection.name, req.params.id);
     if (
       !owned(record, user) &&
+      !(
+        collection.name === "subscriptions" &&
+        require("./sharing.cjs").canReadSubscription(
+          repository,
+          record,
+          user.id,
+        )
+      ) &&
       !(collection.name === "users" && auth.isAdmin(user))
     )
       throw new NotFoundError();
@@ -363,7 +445,7 @@ function registerDataApi(app, repository, auth) {
     );
     if (!fs.existsSync(target)) throw new NotFoundError();
     res.set({
-      "Cache-Control": "private, max-age=3600",
+      "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
       "Content-Security-Policy": "default-src 'none'; sandbox",
     });

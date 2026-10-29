@@ -204,11 +204,24 @@ it("rejects invalid external payment input and enforces ownership and permission
     (await request(endpoint, { token: "invalid", method: "POST", body: {} }))
       .status,
   ).toBe(401);
-  const foreignKey = await request("/api/api-keys", {
+  const denied = await request("/api/api-keys", {
     token: other.token,
     method: "POST",
     body: { name: "Foreign", permissions: ["subscriptions:write"] },
   });
+  expect(denied.status).toBe(403);
+  const foreignKey = await request("/api/api-keys", {
+    method: "POST",
+    body: { name: "Legacy foreign key", permissions: ["subscriptions:write"] },
+  });
+  const fixture = new DatabaseSync(path.join(directory, "monline.db"));
+  try {
+    fixture
+      .prepare("UPDATE api_keys SET user=? WHERE id=?")
+      .run(other.record.id, foreignKey.data.id);
+  } finally {
+    fixture.close();
+  }
   expect(
     (
       await request(endpoint, {

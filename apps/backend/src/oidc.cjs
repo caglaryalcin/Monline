@@ -227,6 +227,8 @@ function registerOidc(app, repository, auth) {
         0,
         { email: profile.email },
       )[0];
+      if (user?.getBool("disabled"))
+        throw new ForbiddenError("account_disabled");
       if (user && (!profile.emailVerified || user.getString("oidc_subject")))
         throw new ForbiddenError("OIDC account cannot be linked");
       if (!user) {
@@ -261,6 +263,7 @@ function registerOidc(app, repository, auth) {
       user.set("oidc_subject", profile.subject);
       repository.save(user);
     }
+    if (user.getBool("disabled")) throw new ForbiddenError("account_disabled");
     if (
       user.getBool("totp_enabled") &&
       auth.resolve(auth.cookieValue(req, "monline_device"), "device") !==

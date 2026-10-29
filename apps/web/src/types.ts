@@ -111,6 +111,7 @@ export interface SubscriptionHistory {
 }
 
 export interface Subscription {
+  is_shared?: boolean;
   calendar_projection_hidden?: boolean;
   /** Original billing day, preserved when shorter months clamp the due date. */
   billing_anchor_day?: number;
@@ -185,6 +186,11 @@ export interface PaymentMethod {
 }
 
 export interface Household {
+  account_id?: string;
+  account_email?: string;
+  account_name?: string;
+  account_confirmed?: boolean;
+  invitation_status?: "confirmed" | "pending" | "expired" | "delivery_failed" | "not_requested";
   id: string;
   name: string;
   user: string;
@@ -209,6 +215,7 @@ export interface NotificationReminder {
 }
 
 export interface NotificationsConfig {
+  available_channels?: Record<string, boolean>;
   id: string;
   user: string;
   reminders?: NotificationReminder[];

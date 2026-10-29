@@ -83,24 +83,21 @@ describe("createAppRouter", () => {
 describe("settingsRoute.validateSearch", () => {
   it("returns tab when search.tab is a string", () => {
     const validateSearch = settingsRoute.options.validateSearch as
-      | ((search: Record<string, unknown>) => { tab?: string })
-      | undefined;
+      ((search: Record<string, unknown>) => { tab?: string }) | undefined;
     const result = validateSearch?.({ tab: "general" });
     expect(result).toEqual({ tab: "general" });
   });
 
   it("returns undefined tab when search.tab is not a string", () => {
     const validateSearch = settingsRoute.options.validateSearch as
-      | ((search: Record<string, unknown>) => { tab?: string })
-      | undefined;
+      ((search: Record<string, unknown>) => { tab?: string }) | undefined;
     const result = validateSearch?.({ tab: 42 });
     expect(result).toEqual({ tab: undefined });
   });
 
   it("returns undefined tab when search.tab is absent", () => {
     const validateSearch = settingsRoute.options.validateSearch as
-      | ((search: Record<string, unknown>) => { tab?: string })
-      | undefined;
+      ((search: Record<string, unknown>) => { tab?: string }) | undefined;
     const result = validateSearch?.({});
     expect(result).toEqual({ tab: undefined });
   });
@@ -247,11 +244,11 @@ describe("route navigation guards", () => {
     expect(router.state.location.pathname).toBe("/dashboard");
   });
 
-  it("removed admin URL redirects to /dashboard for administrators", async () => {
+  it("opens the administration route for administrators", async () => {
     window.history.pushState({}, "", "/admin");
     const router = createAppRouter(makeContext({ user: fakeUser, isAdmin: true }));
     await router.load();
-    expect(router.state.location.pathname).toBe("/dashboard");
+    expect(router.state.location.pathname).toBe("/admin");
   });
 
   it("catchAllRoute: redirects to /dashboard for unknown paths", async () => {

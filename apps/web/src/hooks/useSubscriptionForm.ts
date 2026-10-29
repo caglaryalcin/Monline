@@ -236,7 +236,9 @@ export function useSubscriptionForm({
 
   // ── Pre-fill / reset form when sub or dependencies change ─────────────────
   useEffect(() => {
-    const defaultPayer = household.find((member) => member.is_main)?.id || household[0]?.id || "";
+    const confirmedPayers = household.filter((member) => member.account_confirmed);
+    const defaultPayer =
+      confirmedPayers.find((member) => member.is_main)?.id || confirmedPayers[0]?.id || "";
     if (sub) {
       reset({
         record_type: sub.record_type === "credit" ? "credit" : "expense",
@@ -253,7 +255,7 @@ export function useSubscriptionForm({
         payment_status: "unpaid",
         start_date: toDateOnly(sub.start_date) || new Date().toISOString().split("T")[0],
         payment_method: sub.payment_method || "",
-        payer: household.some((member) => member.id === sub.payer) ? sub.payer : defaultPayer,
+        payer: sub.payer || "",
         category: sub.category || "",
         notes: sub.notes || "",
         url: sub.url || "",
