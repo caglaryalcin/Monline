@@ -426,7 +426,10 @@ export function SubscriptionCard({
                 )}
               >
                 {credit ? "+" : ""}
-                {formatPrice(price, symbol, { currencyCode: displayCurrency?.code })}
+                {formatPrice(price, symbol, {
+                  currencyCode: displayCurrency?.code,
+                  showCurrencyCode: true,
+                })}
               </p>
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 {displayPeriod}
@@ -540,7 +543,10 @@ export function SubscriptionCard({
               )}
             >
               {credit ? "+" : ""}
-              {formatPrice(price, symbol, { currencyCode: displayCurrency?.code })}
+              {formatPrice(price, symbol, {
+                currencyCode: displayCurrency?.code,
+                showCurrencyCode: true,
+              })}
             </p>
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider whitespace-nowrap">
               {displayPeriod}

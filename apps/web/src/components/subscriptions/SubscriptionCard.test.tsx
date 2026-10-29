@@ -6,7 +6,12 @@ import type { Currency, PaymentMethod, Subscription } from "@/types";
 const mocks = vi.hoisted(() => ({
   paymentIconUrl: vi.fn(),
   subscriptionLogoUrl: vi.fn(),
-  formatPrice: vi.fn((price: number, symbol: string) => `${price.toFixed(2)} ${symbol}`),
+  formatPrice: vi.fn(
+    (price: number, symbol: string, options?: { currencyCode?: string; showCurrencyCode?: boolean }) =>
+      options?.showCurrencyCode && options.currencyCode
+        ? `${symbol}${price.toFixed(2)} ${options.currencyCode}`
+        : `${price.toFixed(2)} ${symbol}`,
+  ),
   formatDate: vi.fn(() => "Apr 10, 2026"),
   daysUntil: vi.fn((_date: string) => 3),
   subscriptionProgress: vi.fn((_start: string, _next: string) => 75),
@@ -306,7 +311,7 @@ describe("SubscriptionCard", () => {
         onDelete={vi.fn()}
       />,
     );
-    expect(screen.getByText("10.00 ₺")).toBeInTheDocument();
+    expect(screen.getByText("₺10.00 TRY")).toBeInTheDocument();
     rerender(
       <SubscriptionCard
         sub={sub}
@@ -320,8 +325,8 @@ describe("SubscriptionCard", () => {
         onDelete={vi.fn()}
       />,
     );
-    expect(screen.getByText("500.00 ₺")).toBeInTheDocument();
-    expect(screen.queryByText("10.00 ₺")).not.toBeInTheDocument();
+    expect(screen.getByText("₺500.00 TRY")).toBeInTheDocument();
+    expect(screen.queryByText("₺10.00 TRY")).not.toBeInTheDocument();
   });
   beforeEach(() => {
     vi.clearAllMocks();
@@ -362,7 +367,7 @@ describe("SubscriptionCard", () => {
 
     expect(screen.getByText("Netflix")).toBeInTheDocument();
     expect(screen.getByText("Streaming")).toBeInTheDocument();
-    expect(screen.getByText("20.00 $")).toBeInTheDocument();
+    expect(screen.getByText("$20.00 USD")).toBeInTheDocument();
     expect(screen.getByText("monthly", { selector: "p" })).toBeInTheDocument();
     expect(screen.getByText("next_payment")).toBeInTheDocument();
     expect(screen.queryByText("next")).not.toBeInTheDocument();
@@ -517,6 +522,7 @@ describe("SubscriptionCard", () => {
     // formatPrice called with raw price 99
     expect(mocks.formatPrice).toHaveBeenCalledWith(99, expect.any(String), {
       currencyCode: "USD",
+      showCurrencyCode: true,
     });
   });
 
@@ -549,7 +555,8 @@ describe("SubscriptionCard", () => {
 
     expect(screen.getByText("Bonus")).toBeInTheDocument();
     expect(screen.getByText("credit_income")).toBeInTheDocument();
-    expect(screen.getByText("+500.00 $")).toBeInTheDocument();
+    expect(screen.queryByText("+500.00 $")).not.toBeInTheDocument();
+    expect(screen.getByText("+$500.00 USD")).toBeInTheDocument();
     expect(screen.getByText("one_time")).toBeInTheDocument();
     expect(screen.getByText("received_on")).toBeInTheDocument();
     expect(screen.queryByText("billing_cycle")).not.toBeInTheDocument();
@@ -642,6 +649,7 @@ describe("SubscriptionCard", () => {
     expect(mocks.toMonthly).toHaveBeenCalledWith(20, "Monthly", 1);
     expect(mocks.formatPrice).toHaveBeenCalledWith(expect.any(Number), "$", {
       currencyCode: undefined,
+      showCurrencyCode: true,
     });
   });
 
@@ -661,6 +669,7 @@ describe("SubscriptionCard", () => {
     );
     expect(mocks.formatPrice).toHaveBeenCalledWith(expect.any(Number), "$", {
       currencyCode: "USD",
+      showCurrencyCode: true,
     });
   });
 
@@ -746,7 +755,7 @@ describe("SubscriptionCard", () => {
       );
       expect(screen.getByText("Streaming")).toBeInTheDocument();
       // toMonthly halves 20 → 10, then conversion doubles it → 20.
-      expect(screen.getByText("20.00 $")).toBeInTheDocument();
+      expect(screen.getByText("$20.00 USD")).toBeInTheDocument();
       expect(screen.getByText("monthly", { selector: "p" })).toBeInTheDocument();
       expect(screen.getByText("next_payment")).toBeInTheDocument();
       expect(screen.getByText("Apr 10, 2026")).toBeInTheDocument();
@@ -803,7 +812,7 @@ describe("SubscriptionCard", () => {
       expect(screen.getByText("B")).toBeInTheDocument();
       expect(screen.getByText("credit_income")).toBeInTheDocument();
       expect(screen.getByText("inactive_label")).toBeInTheDocument();
-      expect(screen.getByText("+20.00 $")).toBeInTheDocument();
+      expect(screen.getByText("+$20.00 USD")).toBeInTheDocument();
       expect(screen.getByText("one_time")).toBeInTheDocument();
       expect(screen.queryByText("received_on")).not.toBeInTheDocument();
 

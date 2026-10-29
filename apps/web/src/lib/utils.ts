@@ -44,6 +44,8 @@ export function getColorForSub(sub: Subscription, index: number): string {
 interface PriceFormatOptions {
   currencyCode?: string;
   locale?: string;
+  /** Render as "$30.00 USD": symbol before the amount, ISO code after it. */
+  showCurrencyCode?: boolean;
 }
 
 /** Return the number of fraction digits defined for an ISO 4217 currency. */
@@ -67,23 +69,23 @@ export function formatPrice(
   options: PriceFormatOptions | string = {},
 ): string {
   // Keep accepting a locale string for backwards compatibility.
+  const opts = typeof options === "string" ? {} : options;
   const locale = typeof options === "string" ? options : (options.locale ?? i18n.resolvedLanguage ?? "en-US");
-  const fractionDigits = getCurrencyFractionDigits(
-    typeof options === "string" ? undefined : options.currencyCode,
-  );
+  const fractionDigits = getCurrencyFractionDigits(opts.currencyCode);
 
+  let amount: string;
   try {
-    return (
-      new Intl.NumberFormat(locale, {
-        minimumFractionDigits: fractionDigits,
-        maximumFractionDigits: fractionDigits,
-      }).format(price) +
-      " " +
-      symbol
-    );
+    amount = new Intl.NumberFormat(locale, {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(price);
   } catch {
-    return price.toFixed(fractionDigits) + " " + symbol;
+    amount = price.toFixed(fractionDigits);
   }
+
+  // Ambiguous symbols such as "$" are clearer with the ISO code beside them.
+  const code = opts.showCurrencyCode ? opts.currencyCode : undefined;
+  return code ? `${symbol}${amount} ${code}` : `${amount} ${symbol}`;
 }
 
 /**
