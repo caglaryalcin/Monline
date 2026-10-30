@@ -3,8 +3,7 @@ WORKDIR /app/web
 COPY apps/web/package.json apps/web/bun.lock ./
 RUN bun install --frozen-lockfile
 COPY apps/web/ .
-COPY apps/backend/src/domain/lib/pure/statement-refunds.mjs /app/backend/src/domain/lib/pure/statement-refunds.mjs
-COPY apps/backend/src/domain/lib/pure/statement-refunds.d.mts /app/backend/src/domain/lib/pure/statement-refunds.d.mts
+COPY apps/backend/src/domain/lib/pure/ /app/backend/src/domain/lib/pure/
 RUN bun run build
 
 FROM --platform=$BUILDPLATFORM oven/bun:1.4.3-alpine AS server-dependencies
