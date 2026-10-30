@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { api } from "@/lib/api";
 import { findLogoService, normalizeLogoName } from "@/lib/logoServices";
-import { publicLogoDomain } from "@/lib/subscriptionLogo";
+import { prepareLogoBlob, publicLogoDomain } from "@/lib/subscriptionLogo";
 
 export type LogoResult = {
   previewUrl: string;
@@ -86,30 +86,19 @@ export function useLogoSearch(automaticName = "", hasSavedLogo = false) {
         const contentType = (res.headers.get("content-type") || "").toLowerCase();
         /* v8 ignore next */
         if (!contentType.startsWith("image/")) return null;
-        const blob = await res.blob();
+        let blob = await res.blob();
         if (cancelled || blob.size > 2 * 1024 * 1024) return null;
-        if (blob.size < (contentType.includes("svg") ? 16 : 64)) return null;
+        if (!blob.size) return null;
+        blob = await prepareLogoBlob(blob, abort.signal);
+        if (cancelled || blob.size > 2 * 1024 * 1024) return null;
 
         /* v8 ignore next */
-        const type = (contentType || blob.type || "image/png").split(";")[0];
-
-        if (!type.includes("svg")) {
-          try {
-            const bitmap = await createImageBitmap(blob);
-            const tooSmall = bitmap.width < 16 || bitmap.height < 16;
-            bitmap.close();
-            /* v8 ignore next */
-            if (tooSmall) return null;
-          } catch {
-            // Cannot check dimensions — accept
-          }
-        }
+        const type = (blob.type || contentType || "image/png").split(";")[0];
 
         /* v8 ignore next */
         const extRaw = type.split("/")[1] || "png";
         const ext = type.includes("icon") ? "ico" : extRaw.replace("svg+xml", "svg");
         const file = new File([blob], `logo-${key}.${ext}`, { type });
-        if (cancelled) return null;
         const previewUrl = URL.createObjectURL(blob);
         previewUrls.add(previewUrl);
         return { previewUrl, file, source: url, contentType: type };
@@ -260,11 +249,9 @@ export function useLogoSearch(automaticName = "", hasSavedLogo = false) {
           if (r.status === "fulfilled" && r.value) results.push(r.value);
         }
         if (!cancelled) {
-          setLogoResults(results.slice(0, 15));
+          setLogoResults(results);
           chooseAutomatic(results[0] ?? null);
         }
-        /* v8 ignore next */
-        if (results.length >= 15) break;
       }
 
       const sorted = results.sort((a, b) => {
@@ -283,11 +270,8 @@ export function useLogoSearch(automaticName = "", hasSavedLogo = false) {
         return null;
       }
 
-      sorted.slice(15).forEach((logo) => {
-        URL.revokeObjectURL(logo.previewUrl);
-        previewUrls.delete(logo.previewUrl);
-      });
-      setLogoResults(sorted.slice(0, 15));
+      // At most four domains (two sources each), four slugs and one bundled logo are probed.
+      setLogoResults(sorted);
       return chosen ?? sorted[0] ?? null;
     };
 

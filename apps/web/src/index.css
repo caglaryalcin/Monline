@@ -62,15 +62,35 @@
       border-color 150ms ease;
   }
 
-  .monline-calendar-month [data-calendar-date]:hover [data-calendar-payment] {
+  .monline-calendar-month:not([data-calendar-dragging])
+    [data-calendar-date]:hover
+    [data-calendar-payment] {
     opacity: 0.45;
     filter: saturate(0.3);
   }
 
-  .monline-calendar-month [data-calendar-date]:hover [data-calendar-payment]:hover {
+  .monline-calendar-month:not([data-calendar-dragging])
+    [data-calendar-date]:hover
+    [data-calendar-payment]:hover {
     opacity: 1;
     filter: none;
   }
+}
+
+.monline-calendar-month [data-calendar-drop-target]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: -2px;
+  pointer-events: none;
+}
+
+/* Avoid animated filters and whole-cell paints while moving a payment. */
+.monline-calendar-month[data-calendar-dragging] [data-calendar-date],
+.monline-calendar-month[data-calendar-dragging] [data-calendar-payment] {
+  transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -170,7 +190,7 @@
     --secondary: 90 5% 19%;
     --secondary-foreground: 0 0% 98%;
     --muted: 90 5% 19%;
-    --muted-foreground: 240 5% 65%;
+    --muted-foreground: 0 0% 74.901961%; /* #bfbfbf */
     --accent: 90 7% 21%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 50.6%;
@@ -438,6 +458,40 @@ html[data-theme-changing] *::after {
 .summary-card-icon {
   color: rgb(var(--summary-accent));
   background: rgb(var(--summary-accent) / 0.16);
+}
+.finance-salary-charts {
+  --salary-chart-tl: #a16207;
+  --salary-chart-usd: #0284c7;
+  --salary-chart-eur: #e11d48;
+  --salary-chart-minimum: #7c3aed;
+  --salary-chart-multiple: #b45309;
+}
+.dark .finance-salary-charts {
+  --salary-chart-tl: #facc15;
+  --salary-chart-usd: #38bdf8;
+  --salary-chart-eur: #fb7185;
+  --salary-chart-minimum: #a78bfa;
+  --salary-chart-multiple: #f59e0b;
+}
+@container summary-card (max-width: 220px) {
+  .summary-card__content {
+    padding-inline: 12px;
+  }
+  .summary-card__header {
+    gap: 8px;
+  }
+  .summary-card-icon {
+    padding: 6px;
+  }
+  .summary-card__year {
+    margin-bottom: 0;
+    font-size: 12px;
+    line-height: 12px;
+  }
+  .summary-card__title {
+    font-size: 14px;
+    line-height: 16px;
+  }
 }
 .monline-distribution .recharts-pie-label-text {
   fill: hsl(var(--foreground));

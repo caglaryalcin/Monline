@@ -39,6 +39,7 @@ import {
 } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { displayDateInput } from "@/lib/dateInput";
+import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { compressImage } from "@/lib/image";
 import { ONE_TIME_CYCLE } from "@/lib/recordTypes";
 import { automaticStartDate, nextPaymentDate } from "@/lib/subscriptionStartDate";
@@ -120,6 +121,7 @@ export function SubscriptionFormModal({
   const watchedCycle = watch("cycle");
   const watchedFrequency = Number(watch("frequency"));
   const watchedCycleName = cycles.find((cycle) => cycle.id === watchedCycle)?.name;
+  const dateCycleName = watchedCycleName || "Monthly";
   const customPeriodLabel =
     watchedCycleName && Number.isInteger(watchedFrequency) && watchedFrequency >= 1
       ? formatBillingPeriod(t, watchedCycleName, watchedFrequency)
@@ -168,14 +170,14 @@ export function SubscriptionFormModal({
                   ? backfill.startDate
                   : automaticStartDate(
                       data.next_payment,
-                      watchedCycleName || "Monthly",
+                      dateCycleName,
                       parseInt(data.frequency),
                     ),
             }
           : {}),
         payment_method: data.payment_method || null,
         payer: data.payer || null,
-        category: data.category || null,
+        category: data.category,
         notes: data.notes,
         url: sub?.url || "",
         auto_renew:
@@ -277,18 +279,20 @@ export function SubscriptionFormModal({
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
+  const requestClose = () => {
+    if (!isSubmitting) onClose();
+  };
+
   return (
     <Dialog
       open
-      onOpenChange={(open) => {
-        if (!open && !isSubmitting) onClose();
-      }}
+      onOpenChange={dialogDismissHandler(requestClose)}
     >
       <DialogContent
         className="max-w-2xl max-h-[90dvh] overflow-y-auto"
         onPointerDownOutside={(event) => {
           event.preventDefault();
-          if (!isSubmitting) onClose();
+          requestClose();
         }}
       >
         <DialogHeader>
@@ -308,6 +312,7 @@ export function SubscriptionFormModal({
                   <SubscriptionLogo
                     sub={{ name: watchedName || "", url: sub?.url, id: sub?.id, logo: sub?.logo }}
                     previewUrl={logo.logoPreview || logo.logoUrl}
+                    previewContentType={logo.logoFile?.type}
                     className="h-full w-full object-contain p-1.5"
                   />
                 ) : (
@@ -519,7 +524,7 @@ export function SubscriptionFormModal({
                       date: displayDateInput(
                         nextPaymentDate(
                           watch("next_payment"),
-                          watchedCycleName || "Monthly",
+                          dateCycleName,
                           watchedFrequency,
                         ),
                       ),
@@ -818,7 +823,7 @@ export function SubscriptionFormModal({
             <BackfillPaymentsEditor
               start={automaticStartDate(
                 watch("next_payment"),
-                watchedCycleName || "Monthly",
+                dateCycleName,
                 watchedFrequency,
               )}
               anchorDate={watch("next_payment")}
@@ -840,7 +845,7 @@ export function SubscriptionFormModal({
             />
           )}
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" disabled={isSubmitting} onClick={requestClose}>
               {t("cancel")}
             </Button>
             <Button

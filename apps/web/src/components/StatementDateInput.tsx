@@ -3,6 +3,7 @@ import { useId, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Input } from "@/components/ui/input";
+import { resolveLocale } from "@/lib/locale";
 import { validStatementDate } from "@/lib/statements";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +26,7 @@ export function StatementDateInput({ value, onChange, disabled, className, ...pr
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   const display = iso ? `${iso[3]}/${iso[2]}/${iso[1]}` : value;
   const fullDate = valid
-    ? new Intl.DateTimeFormat((i18n.resolvedLanguage ?? i18n.language ?? "en").replace("_", "-"), {
+    ? new Intl.DateTimeFormat(resolveLocale(i18n), {
         day: "numeric",
         month: "long",
         year: "numeric",

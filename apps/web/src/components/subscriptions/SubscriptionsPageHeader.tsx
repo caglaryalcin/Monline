@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 
 interface SubscriptionsPageHeaderProps {
   onCreate: () => void;
+  createLabel?: string;
 }
 
-export function SubscriptionsPageHeader({ onCreate }: SubscriptionsPageHeaderProps) {
+export function SubscriptionsPageHeader({ onCreate, createLabel }: SubscriptionsPageHeaderProps) {
   const { t } = useTranslation();
   return (
     <div className="flex shrink-0 justify-start">
@@ -16,7 +17,7 @@ export function SubscriptionsPageHeader({ onCreate }: SubscriptionsPageHeaderPro
         onClick={onCreate}
       >
         <Plus className="mr-1.5 h-5 w-5" />
-        {t("add_subscription")}
+        {createLabel || t("add_subscription")}
       </Button>
     </div>
   );

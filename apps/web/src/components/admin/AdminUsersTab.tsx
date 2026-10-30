@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { resolveLocale } from "@/lib/locale";
 import { toast } from "@/lib/toast";
 import type { AdminUser } from "@/services/adminUsers";
 import { adminUsersKeys, adminUsersService } from "@/services/adminUsers";
@@ -54,12 +55,13 @@ export function AdminUsersTab() {
   const [editing, setEditing] = useState<AdminUser | "new" | null>(null);
   const [action, setAction] = useState<AdminAction | null>(null);
   useEffect(() => {
+    if (search.trim() === query) return;
     const timer = setTimeout(() => {
       setQuery(search.trim());
       setPage(1);
     }, 250);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, query]);
   const users = useQuery({
     queryKey: adminUsersKeys.list(query, page, perPage),
     queryFn: ({ signal }) => adminUsersService.list(query, page, signal, perPage),
@@ -87,7 +89,7 @@ export function AdminUsersTab() {
   const formatCreated = (value: string) => {
     const date = new Date(value.replace(" ", "T"));
     return Number.isFinite(date.getTime())
-      ? new Intl.DateTimeFormat((i18n.resolvedLanguage || "en").replace(/_/g, "-"), {
+      ? new Intl.DateTimeFormat(resolveLocale(i18n), {
           dateStyle: "medium",
         }).format(date)
       : "—";

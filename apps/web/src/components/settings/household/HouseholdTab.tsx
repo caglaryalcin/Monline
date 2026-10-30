@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { householdService } from "@/services/household";
@@ -16,6 +17,7 @@ import { householdService } from "@/services/household";
 export function HouseholdTab() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const userId = user?.id ?? "";
   const qc = useQueryClient();
 
   const [isAdding, setIsAdding] = useState(false);
@@ -27,7 +29,7 @@ export function HouseholdTab() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const { data: members = [], isLoading } = useQuery({
-    queryKey: queryKeys.household.all(user?.id ?? ""),
+    queryKey: queryKeys.household.all(userId),
     queryFn: () => householdService.list(user!.id),
     enabled: !!user?.id,
     staleTime: 0,
@@ -41,7 +43,7 @@ export function HouseholdTab() {
       householdService.create(user!.id, name, email),
     onSuccess: (person) => {
       qc.invalidateQueries({
-        queryKey: queryKeys.household.all(user?.id ?? ""),
+        queryKey: queryKeys.household.all(userId),
       });
       setNewName("");
       setNewEmail("");
@@ -58,10 +60,10 @@ export function HouseholdTab() {
       householdService.update(id, { name, account_email: email }),
     onSuccess: (person) => {
       qc.invalidateQueries({
-        queryKey: queryKeys.household.all(user?.id ?? ""),
+        queryKey: queryKeys.household.all(userId),
       });
-      qc.invalidateQueries({ queryKey: queryKeys.subscriptions.all(user?.id ?? "") });
-      qc.invalidateQueries({ queryKey: ["shared-subscription-payers", user?.id ?? ""] });
+      qc.invalidateQueries({ queryKey: queryKeys.subscriptions.all(userId) });
+      qc.invalidateQueries({ queryKey: ["shared-subscription-payers", userId] });
       setEditingId(null);
       if (person.invitation_status === "delivery_failed")
         toast.error(t("people_invitation_delivery_failed_hint"));
@@ -74,12 +76,12 @@ export function HouseholdTab() {
     mutationFn: (id: string) => householdService.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: queryKeys.household.all(user?.id ?? ""),
+        queryKey: queryKeys.household.all(userId),
       });
-      qc.invalidateQueries({ queryKey: queryKeys.subscriptions.all(user?.id ?? "") });
-      qc.invalidateQueries({ queryKey: ["sharing-groups", user?.id ?? ""] });
-      qc.invalidateQueries({ queryKey: ["subscription-access", user?.id ?? ""] });
-      qc.invalidateQueries({ queryKey: ["shared-subscription-payers", user?.id ?? ""] });
+      qc.invalidateQueries({ queryKey: queryKeys.subscriptions.all(userId) });
+      qc.invalidateQueries({ queryKey: ["sharing-groups", userId] });
+      qc.invalidateQueries({ queryKey: ["subscription-access", userId] });
+      qc.invalidateQueries({ queryKey: ["shared-subscription-payers", userId] });
       toast.success(t("success_delete"));
     },
     onError: () => toast.error(t("error")),
@@ -87,7 +89,7 @@ export function HouseholdTab() {
   const setMainMut = useMutation({
     mutationFn: (id: string) => householdService.update(id, { is_main: true }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.household.all(user?.id ?? "") });
+      qc.invalidateQueries({ queryKey: queryKeys.household.all(userId) });
       toast.success(t("success_update"));
     },
     onError: () => toast.error(t("error")),
@@ -95,7 +97,7 @@ export function HouseholdTab() {
   const resendMut = useMutation({
     mutationFn: householdService.resendInvitation,
     onSuccess: (result) => {
-      qc.invalidateQueries({ queryKey: queryKeys.household.all(user?.id ?? "") });
+      qc.invalidateQueries({ queryKey: queryKeys.household.all(userId) });
       if (result.invitation_status === "delivery_failed")
         toast.error(t("people_invitation_delivery_failed_hint"));
       else toast.success(t("people_invitation_sent"));
@@ -216,9 +218,7 @@ export function HouseholdTab() {
       <ConfirmDialog
         confirmOnEnter
         open={!!pendingDeleteId}
-        onOpenChange={(open) => {
-          if (!open) setPendingDeleteId(null);
-        }}
+        onOpenChange={dialogDismissHandler(() => setPendingDeleteId(null))}
         title={t("delete")}
         description={t("household_delete_sharing_hint")}
         onConfirm={() => {

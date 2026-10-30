@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next";
 
 import { PaymentMethodIcon } from "@/components/PaymentMethodIcon";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
+import { SubscriptionSourceBadge } from "@/components/subscriptions/SubscriptionSourceBadge";
 import type {
   SubscriptionAutomationSetting,
   SubscriptionPriceDisplay,
@@ -43,7 +44,15 @@ import {
 } from "@/lib/utils";
 import type { Currency, Subscription } from "@/types";
 
-interface SubscriptionActionsProps {
+interface EditableSubscriptionActions {
+  onEdit: () => void;
+  onClone: () => void;
+  onRenew: () => void;
+  onHistory: () => void;
+  onDelete: () => void;
+}
+
+interface SubscriptionActionsProps extends Partial<EditableSubscriptionActions> {
   onSharedEdit?: () => void;
   readOnly?: boolean;
   onShare?: () => void;
@@ -51,13 +60,8 @@ interface SubscriptionActionsProps {
   className?: string;
   priceDisplay: SubscriptionPriceDisplay;
   onPriceDisplayChange: (value: SubscriptionPriceDisplay) => void;
-  onEdit: () => void;
-  onClone: () => void;
-  onRenew: () => void;
   renewPending?: boolean;
   renewDisabled?: boolean;
-  onHistory: () => void;
-  onDelete: () => void;
   onToggleAutomation?: (setting: SubscriptionAutomationSetting) => void;
   automationDisabled?: boolean;
   automationPendingSetting?: SubscriptionAutomationSetting;
@@ -344,13 +348,8 @@ export function SubscriptionCard({
   priceDisplay?: SubscriptionPriceDisplay;
   onPriceDisplayChange?: (value: SubscriptionPriceDisplay) => void;
   showProgress?: boolean;
-  onEdit: () => void;
-  onClone: () => void;
-  onRenew: () => void;
   renewPending?: boolean;
   renewDisabled?: boolean;
-  onHistory: () => void;
-  onDelete: () => void;
   layout?: "grid" | "list";
   onToggleActive?: () => void;
   statusPending?: boolean;
@@ -359,7 +358,7 @@ export function SubscriptionCard({
   automationDisabled?: boolean;
   automationPendingSetting?: SubscriptionAutomationSetting;
   showAutoMarkPaid?: boolean;
-}) {
+} & (({ readOnly: true } & Partial<EditableSubscriptionActions>) | ({ readOnly?: false } & EditableSubscriptionActions))) {
   const { t } = useTranslation();
   const [localPriceDisplay, setLocalPriceDisplay] = useState<SubscriptionPriceDisplay>("billing");
   const priceDisplay = controlledPriceDisplay ?? localPriceDisplay;
@@ -469,6 +468,11 @@ export function SubscriptionCard({
             <p className="truncate text-xs text-muted-foreground">
               {category ? categoryLabel(category, t) : t("category")}
             </p>
+            {sub.statement_imported && sub.inactive && (
+              <div className="mt-1">
+                <SubscriptionSourceBadge source="statement" />
+              </div>
+            )}
           </div>
         </div>
 
@@ -573,6 +577,11 @@ export function SubscriptionCard({
             >
               {sub.name}
             </h3>
+            {sub.statement_imported && sub.inactive && (
+              <div className="my-1">
+                <SubscriptionSourceBadge source="statement" />
+              </div>
+            )}
             {credit && (
               <Badge className="mr-2 mt-1 bg-green-500/15 text-green-700 dark:text-green-400">
                 {t("credit_income")}

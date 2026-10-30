@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { AppMetadata } from "@/components/AppMetadata";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { MerchantLogosProvider } from "@/contexts/MerchantLogosContext";
 import { createAppRouter } from "@/routes";
 
 const queryClient = new QueryClient({
@@ -52,7 +53,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AppMetadata />
       <AuthProvider>
-        <InnerApp />
+        <MerchantLogosProvider>
+          <InnerApp />
+        </MerchantLogosProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

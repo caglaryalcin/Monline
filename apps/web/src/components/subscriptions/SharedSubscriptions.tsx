@@ -9,8 +9,6 @@ import { sharingErrorMessage } from "@/lib/sharingErrors";
 import type { SharedSubscription } from "@/services/sharing";
 import { sharingKeys, sharingService } from "@/services/sharing";
 
-const noop = () => {};
-
 export function SharedSubscriptions({
   userId,
   searchTerm,
@@ -78,11 +76,6 @@ export function SharedSubscriptions({
               showCurrencyCode={showCurrencyCode}
               readOnly
               onSharedEdit={sub.permission === "edit" ? () => setEditing(sub) : undefined}
-              onEdit={noop}
-              onClone={noop}
-              onRenew={noop}
-              onHistory={noop}
-              onDelete={noop}
             />
             {sub.notes && (
               <p className="whitespace-pre-wrap break-words px-1 text-sm text-muted-foreground">

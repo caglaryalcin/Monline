@@ -1,16 +1,166 @@
 // The rest of the interface falls back to English for languages without these keys.
 export const statementTranslations = {
   tr: {
+    statement_duplicates_title: "Benzer harcamalar bulundu!",
+    statement_duplicates_short_help: "Yükleyeceğin işlemleri mevcut kayıtlarla karşılaştır. Hiçbir kayıt otomatik çıkarılmaz.",
+    statement_duplicates_review_count: "Kontrol et: {{count}} eşleşme",
+    statement_duplicates_transaction: "{{number}}. işlem",
+    statement_duplicates_record_count: "{{count}} ayrı kayıt karşılaştırılıyor",
+    statement_duplicates_review_heading: "Aynı ödeme tekrar kaydediliyor olabilir.",
+    statement_duplicates_legitimate_help: "Eğer bu harcama aynı gün gerçekten {{count}} kez yapıldıysa",
+    statement_duplicates_legitimate_action: "kontrol etmene gerek yok, kaydet!",
+    statement_duplicates_installment_count: "{{count}} işlem farklı taksit olabilir",
+    statement_duplicates_installment_help: "Bunlar farklı aylara ait taksitler. Ek bir işlem yapman gerekmiyor; seçili kayıtlar normal şekilde kaydedilecek.",
+    statement_duplicates_compared_records: "Benzer kayıt",
+    statement_duplicates_amount: "Tutar",
+    statement_duplicates_same_amount: "Tutar aynı",
+    statement_duplicates_other_installment: "Taksit sırası farklı",
+    statement_duplicates_pdf_page: "PDF · sayfa {{page}}",
+    statement_duplicates_view_statement: "Ekstreyi aç",
+    statement_duplicates_rules: "Benzerlik neye göre bulunuyor?",
+    statement_duplicates_help:
+      "Aynı gün, aynı firma ve para birimindeki kayıtlar karşılaştırılır. Yakın tutar sınırı TL için 5 TL, diğer para birimleri için 0,01 birimdir. Hiçbir kayıt otomatik silinmez veya birleştirilmez. Farklı taksitler ayrı ödemeler olabilir. Geri dönerek istemediğin satırların seçimini kaldırabilirsin.",
+    statement_duplicates_possible_duplicate: "Olası mükerrer kayıt — kontrol et",
+    statement_duplicates_installment_continuation: "Aynı alışverişin farklı taksiti olabilir",
+    statement_duplicates_new: "Yüklenecek kayıt",
+    statement_duplicates_source_statement: "Kayıtlı PDF ekstresi",
+    statement_duplicates_source_ledger: "Gelir/Gider",
+    statement_duplicates_source_manual_card: "Elle girilen kart harcaması",
+    statement_duplicates_source_manual_bill: "Elle girilen fatura",
+    statement_duplicates_source_incoming: "Bu PDF içindeki diğer satır",
+    statement_duplicates_difference: "Tutar farkı",
+    statement_duplicates_back: "Geri dön ve kontrol et",
+    statement_duplicates_continue: "Seçili kayıtları kaydet",
+    statement_duplicates_more:
+      "İlk 200 benzerlik gösteriliyor. Diğerlerini görmek için seçimlerini düzenleyip yeniden kontrol et.",
+    statement_duplicate_check_failed:
+      "Benzer harcamalar kontrol edilemedi. Kayıt yapılmadı; tekrar dene.",
+    statement_open_page: "Ekstre sayfasını aç",
+    statement_attention_title: "Kontrol gerektiren işlemler ({{count}})",
+    statement_attention_help:
+      "Bu satırlarda tutar veya metin belirsiz. PDF’deki sayfayı kontrol edip işlem tablosunda düzelt. Belirsiz tutarlar toplamda ve kayıtta kullanılmaz.",
+    statement_text_issue:
+      "Açıklamadaki bazı karakterler çözülemedi. İş yeri adını PDF ile karşılaştır.",
+    statement_review_confirm_incomplete:
+      "{{count}} okuma uyarısını ve kaynak satırlarını PDF ile kontrol ettim. Eksik işlemleri düzelttim veya dışarıda bıraktım; yalnızca seçili işlemlerin kaydedilmesini onaylıyorum.",
+    statement_amount_issue_joined_installment:
+      "Taksit numarası tutarla birleşmiş olabilir. PDF’deki tutarı ve taksiti kontrol edip tutarı elle gir. Satır bu haliyle seçilemez.",
+    statement_amount_issue_invalid_amount:
+      "Tutar eksiksiz ve güvenilir biçimde okunamadı. PDF’deki tutarı elle gir.",
+    statement_amount_issue_multiple_amounts:
+      "Birden fazla tutar sütunu var; hangi tutarın harcama olduğu belirsiz. PDF’deki harcama tutarını elle gir.",
+    statement_amount_issue_installment_total:
+      "Taksit tutarı toplam alışveriş tutarını aşıyor. PDF’deki tutarı ve taksiti kontrol et.",
+    statement_totals_mismatch: "PDF özeti ile okunan işlem toplamları uyuşmuyor.",
+    statement_reconciliation_report_issue: "GitHub’da hata bildir",
+    statement_totals_unverified: "PDF toplamları doğrulanamadı.",
+    statement_verification_check_summary_balance: "PDF özetinin kendi hesabı",
+    statement_verification_check_balance: "Ekstre borcu",
+    statement_verification_check_movement: "Dönemin net hareketi",
+    statement_verification_from_summary: "PDF özetinden hesaplanan",
+    statement_verification_issue_no_source_rows: "Karşılaştırılabilecek işlem satırı bulunamadı.",
+    statement_verification_issue_invalid_source_rows: "Bazı işlem tutarları PDF kaynak satırıyla doğrulanamadı.",
+    statement_verification_issue_conflicting_source_rows: "Aynı PDF satırına ait birbiriyle çelişen kayıtlar var.",
+    statement_verification_issue_unsupported_currency: "TL dışındaki işlemler için toplam doğrulaması yapılamadı.",
+    statement_verification_issue_invalid_summary: "PDF özetindeki bazı tutarlar geçerli değil.",
+    statement_verification_issue_unread_source_rows: "PDF’nin bazı işlem satırları veya sayfaları okunamadı.",
+    statement_verification_issue_incomplete_summary: "Karşılaştırma için PDF’de yeterli özet bilgisi bulunamadı.",
+    statement_verification_override: "Doğrulamadan kaydetme seçeneği",
+    statement_verification_confirm: "Otomatik toplam doğrulaması yapılamadığını biliyorum; kontrol ettiğim seçili işlemleri kaydetmeyi onaylıyorum.",
+    statement_refunds_matched_short: "{{count}} iade harcamayla eşleşti",
+    statement_refund_exact_match: "Harcamayla eşleşti: {{date}} · {{amount}}",
+    statement_excluded_help:
+      "Seçmediğin {{count}} işlem harcama listesine eklenmez. PDF toplamı kontrolünde kaynak olarak saklanır; ekstre borcu değişmez.",
+    statement_reconciliation_values:
+      "Ekstre: {{expected}} · Hesaplanan: {{actual}} · Fark: {{difference}}",
+    statement_reconciliation_pdf: "PDF’deki toplam",
+    statement_reconciliation_calculated: "Satırların toplamı",
+    statement_reconciliation_source_rows: "Hesaba katılan {{count}} satır",
+    statement_reconciliation_cancelled: "Tam iadeyle kapanan {{amount}} tekrar eklenmedi.",
+    statement_reconciliation_override: "Farka rağmen kaydetme seçeneği",
+    statement_reconciliation_confirm:
+      "Bu farkı PDF ile kontrol ettim; yalnızca seçili işlemleri bu haliyle kaydetmeyi onaylıyorum.",
+    statement_installment_invalid:
+      "Geçerli bir taksit yaz (ör. 2/4). Taksit sırası toplam taksit sayısından büyük olamaz.",
+    statement_unmatched_refunds_title: "Eşleşmeyen iadeler ({{count}})",
+    statement_refunds_title: "İadeler ({{count}})",
+    statement_matched_refunds_title: "Eşleşen iadeler ({{count}})",
+    statement_refund_net: "Net {{amount}}",
+    statement_refund_returned_info: "Harcama iade edildi.",
+    statement_refund_installment_info: "Taksit iadesi eşleşti.",
+    statement_refund_difference_info: "İade eşleşti; tutar farkı korunur.",
+    statement_refund_proximity_info: "Sonraki tarih ve yakın TL tutarıyla eşleşti; fark korunur.",
+    statement_refund_merchant_info: "Bu ekstrede aynı mağazaya ait harcama ve iadelerin toplamı.",
+    statement_refund_charge_total: "Harcamalar",
+    statement_refund_refund_total: "İadeler",
+    statement_refund_remaining: "Kalan harcama",
+    statement_refund_group_rows: "İşlemler ({{count}})",
+    statement_refund_original_amount: "Özgün döviz tutarı: {{amount}}",
+    statement_refund_installment_match: "Taksitle eşleşti: {{date}} · {{installment}} · {{amount}}",
+    statement_refund_currency_match: "Döviz tutarıyla eşleşti: {{original}} · {{date}} · {{amount}}",
+    statement_refund_rounding_net: "Harcama − iade: {{amount}}. Tutar farkı toplamda korunur.",
+    statement_unmatched_refunds_help:
+      "Bu iadeler ana işlem tablosundan ayrı tutulur. Seçili olanlar net toplamdan düşülür ve ekstreyle kaydedilir. Kısmi iadeler bir harcamayı otomatik olarak kaldırmaz.",
+    statement_category_digital: "Dijital / Abonelik",
+    statement_category_online: "Online Alışveriş",
+    statement_category_bills: "Fatura / Hizmet",
+    statement_category_shopping: "Giyim / Alışveriş",
+    statement_category_health: "Sağlık",
+    statement_category_groceries: "Market / Gıda",
+    statement_category_dining: "Yemek / Restoran",
+    statement_category_coffee: "Kahve",
+    statement_category_travel: "Seyahat",
+    statement_category_transport: "Ulaşım",
+    statement_category_toys: "Oyuncak",
+    statement_category_foreign: "Yurtdışı Harcamalar",
+    statement_category_other: "Diğer",
+    statement_category_fees: "Faiz / Vergi",
+    statement_category_summary: "Kategori özeti",
+    statement_category_chart: "Kategori dağılımı · {{currency}}",
+    statement_category_details: "{{category}} harcamaları",
+    statement_category_select: "Harcamaları görmek için pasta dilimine veya kategori adına tıkla.",
+    statement_category_net_total: "Net toplam",
+    statement_category_no_positive: "Pozitif net harcama yok.",
+    statement_category_refund: "Net iade",
+    statement_category_positive_only:
+      "Pasta pozitif net kategorileri gösterir. İadeler, listede ve net toplamda korunur.",
+    statement_category: "Kategori",
+    statement_category_filter: "Gösterilen kategori",
+    statement_all_categories: "Tüm kategoriler",
+    statement_account_summary: "Ekstre özeti",
+    statement_account_summary_help:
+      "Ekstrede bulunan özet değerleri otomatik alınır ve değiştirilemez. Okunamayan değerler gösterilmez. Tutarlar TL cinsindedir.",
+    statement_summary_previous_balance: "Önceki ekstre borcu",
+    statement_summary_payments: "Yapılan ödemeler",
+    statement_summary_payments_with_refunds: "Ödemeler ve iadeler",
+    statement_payments_refund_breakdown: "Kart ödemesi {{payments}} + iade {{refunds}}",
+    statement_summary_purchases: "Harcamalar ve geçmiş aydan taksitler",
+    statement_summary_cash: "Nakit avans",
+    statement_summary_fees: "Faiz, vergi ve ücretler",
+    statement_summary_balance: "Ekstre borcu",
+    statement_summary_minimum_payment: "Minimum ödeme",
+    statement_summary_mismatch:
+      "Ekstre özetindeki borç hesabı uyuşmuyor. PDF üzerindeki tutarları kontrol et.",
+    statement_digital_help:
+      "Bu bölümdeki her harcama düzenli abonelik olmayabilir. Tanınan abonelikleri mevcut kayıtlarınla eşleştir; tek seferlik ve belirsiz işlemleri aktarımda ayrıca kontrol et.",
+    statement_financing_interest: "Alışveriş faizi",
+    statement_financing_kkdf: "Faizlerin KKDF’si",
+    statement_financing_bsmv: "Faiz ve ücretlerin BSMV’si",
+    statement_financing_unitemized: "Özetten alınan faiz / masraf",
+    statement_derived_fee_help:
+      "PDF’nin üst özetindeki faiz, vergi ve masraf toplamının ayrı işlem satırlarında yer almayan kısmıdır. Borç hesabına dahil edilir; ayrı bir ödeme kaydı oluşturmaz.",
+    statement_summary_fees_applied:
+      "PDF’nin üst özetinden alınan {{amount}} faiz / masraf borç hesabına dahil edildi. İşlem satırlarında bulunan masraflar tekrar eklenmedi.",
     statement_delete_all: "Tüm ekstreleri sil",
     statement_delete_all_note:
       "Tüm sayfalardaki ekstre arşivinin tamamı kalıcı olarak silinecek. Abonelikler ve takvime aktarılmış ödemeler korunacak. Emin misiniz?",
     statement_import_add_category: "Kategori ekle",
     statement_import_category_name: "Kategori adı",
     statement_import_prepare_note:
-      "İçe aktarmadan önce <categories>kategorilerinizi</categories> ve <paymentMethods>ödeme yöntemlerinizi</paymentMethods> düzenlemenizi tavsiye ederiz.",
-    statement_import_title: "Aboneliklere ve takvime aktar",
+      "Aboneliklere ve takvime aktarmadan önce <categories>kategorilerinizi</categories> ve <paymentMethods>ödeme yöntemlerinizi</paymentMethods> düzenlemenizi tavsiye ederiz.",
+    statement_import_title: "Online abonelikleri aktar",
     statement_import_description:
-      "Eşleşen abonelikler otomatik kullanılır; eşleşme yoksa yeni kayıt oluşturulur. Seçilen işlemler ekstredeki tarih ve tutarla ödenmiş olarak takvime eklenir. İadeler aktarılmaz.",
+      "Bu adımda online abonelikleri mevcut aboneliklerinle eşleştirebilir veya yeni abonelik olarak ekleyebilirsin.",
     statement_import_target: "Bu ödemelerin aboneliği",
     statement_import_no_similar:
       "Aynı para biriminde benzer bir kayıtlı abonelik bulunamadı. Yeni abonelik oluşturabilirsin.",
@@ -28,7 +178,7 @@ export const statementTranslations = {
     statement_import_next_month:
       "Ay ve yıl, aktarım yaptığın tarihin bir sonraki ayından alınır. Gün, seçili en son harcamadan korunur; o gün yoksa ayın son günü kullanılır.",
     statement_import_schedule_note:
-      "Ekstrede seçtiğin ödemeler kendi tarih ve tutarlarıyla aktarılır. İstersen ödeme dönemine göre bugüne kadarki eksik ödemeleri ayrıca kontrol edip ekleyebilirsin. Aktif abonelik oluşturma seçeneği bundan bağımsızdır; kapalıysa yeni abonelik pasif kalır.",
+      "Ekstre kaydedildi. Harcamalar Takvim’de gösteriliyor.",
     statement_import_existing_note:
       "Mevcut aboneliğinin fiyatı ve aktif/pasif durumu korunur. Seçtiğin kategori ve ödeme yöntemi aboneliğe kaydedilir. Seçilen geçmiş ödemeler eklenir; sonraki ödeme tarihi mevcut ayın bir sonraki ayına güncellenir.",
     statement_import_date_range: "Ödeme tarihi geçerli olmalı ve bugünden sonra olmamalıdır.",
@@ -59,7 +209,7 @@ export const statementTranslations = {
     statement_excluded:
       "{{count}} işlem listeden çıkarıldı. Online abonelik dışındaki ve iadeyle kapanan işlemler dahil edilmez.",
     statement_refunded_charges_excluded:
-      "{{count}} abonelik harcaması, aynı ekstredeki aynı işyeri, para birimi ve tutardaki iadesiyle eşleştiği için çıkarıldı. Bu harcamalar kaydedilmeyecek veya takvime aktarılmayacak.",
+      "{{count}} harcama, aynı ekstredeki tam iadesiyle eşleşti. Harcama ve iade satırları listeden çıkarıldı; kaydedilmeyecek veya aktarılmayacak.",
     statement_unmatched_refunds:
       "{{count}} iade, aynı ekstredeki bir harcamayla tam olarak eşleştirilemedi. İlgili harcamaları kontrol et; kısmi, farklı ekstredeki veya tutarı belirsiz iadeler otomatik olarak bir harcamayı kaldırmaz.",
     statement_account_match_unavailable:
@@ -83,9 +233,9 @@ export const statementTranslations = {
     project_github_pending: "GitHub deposu henüz oluşturulmadı.",
     statement_upload: "Kredi kartı ekstresi",
     statement_intro:
-      "Enpara, DenizBank veya Garanti BBVA ekstrenden yalnızca online abonelik ödemelerini çıkar. Eşleşmeleri kontrol edip aylık abonelik listeni kaydet.",
+      "Enpara, DenizBank veya Garanti BBVA ekstreni yükle. Tüm işlemleri kategori özetiyle inceleyip kaydet; Dijital / Abonelik bölümündeki uygun ödemeleri mevcut aboneliklerine ve takvime aktar.",
     statement_privacy:
-      "PDF ve şifresi cihazındaki tarayıcıda işlenir; sunucuya gönderilmez. Yalnızca seçip onayladığın işlem listesi hesabına kaydedilir. AI kullanılmaz.",
+      "PDF ve şifresi cihazındaki tarayıcıda işlenir; sunucuya gönderilmez. AI kullanılmaz.",
     statement_file: "PDF dosyası · en fazla 20 MB",
     statement_choose: "PDF seç",
     statement_no_file: "Dosya seçilmedi",
@@ -93,13 +243,24 @@ export const statementTranslations = {
     statement_auto_bank: "Otomatik algıla",
     statement_period: "Ekstre dönemi",
     statement_password: "PDF şifresi (varsa)",
-    statement_read: "Online abonelikleri bul",
+    statement_read: "Ekstreyi oku",
+    statement_checking_file: "Dosyanın daha önce kaydedilip kaydedilmediği kontrol ediliyor…",
+    statement_file_check_failed: "Dosya kaydı kontrol edilemedi. Yeniden dene.",
+    statement_file_check_retry: "Dosyayı yeniden kontrol et",
     statement_progress: "{{current}} / {{total}} sayfa okunuyor…",
-    statement_review: "Online abonelik ödemelerini incele",
+    statement_review: "Ekstreyi incele",
     statement_saved_list: "Kaydedilen işlem listesi",
     statement_review_note:
-      "Yalnızca tanınan online servisler, kayıtlı aboneliklerinle eşleşen işlemler ve kontrol gerektiren dijital servis ödemeleri gösterilir. Market, akaryakıt, nakit avans, banka ücretleri ve kart borcu ödemeleri dışarıda kalır. Apple/Google gibi açıklamalar tek seferlik alışveriş de olabilir; bu satırlar seçili gelmez. Açıklama, tarih, tutar ve para birimini ekstrenle karşılaştır; eşleşme tek başına abonelik kanıtı değildir.",
-    statement_net: "Toplam online abonelik ödemesi",
+      "Kaydetmeden önce işlemleri ve tutarları kontrol et.",
+    statement_refunds_removed_short: "{{count}} tam iade listeden çıkarıldı",
+    statement_refunds_review_short: "{{count}} iadeyi incele",
+    statement_balance_formula_title: "Ekstre borcu nasıl hesaplanıyor?",
+    statement_net: "İşlemlerden hesaplanan net harcama",
+    statement_net_help:
+      "Seçili harcamalar, faiz/masraflar ve iadelerden hesaplanır. Önceki borcu ve kart borcu ödemelerini içermez; toplam ekstre borcundan farklı olabilir.",
+    statement_pdf_balance: "PDF’deki toplam ekstre borcu: {{amount}}",
+    statement_balance_formula_help:
+      "Önceki borç − ödemeler + harcamalar + nakit avans + faiz/masraflar = ekstre borcu",
     statement_spending: "Abonelik ödemeleri",
     statement_refunds: "İadeler",
     statement_repayments: "Kart borcu ödemeleri (harcamaya dahil değil)",
@@ -123,22 +284,23 @@ export const statementTranslations = {
     statement_kind_charge: "Harcama",
     statement_kind_refund: "İade / alacak",
     statement_kind_repayment: "Kart borcu ödemesi",
+    statement_repayment_no_calendar: "Takvim’e aktarılmaz; Gelir/Gider’deki kart ödemesi esas alınır.",
     statement_kind_fee: "Ücret / faiz / vergi",
     statement_kind_cash: "Nakit avans",
-    statement_unresolved: "{{count}} olası abonelik satırının tutarı veya tarihi okunamadı",
+    statement_unresolved: "{{count}} işlem satırının tutarı veya tarihi okunamadı",
     statement_unresolved_note:
-      "Bu satırlar bir online servisle eşleşiyor ancak tam okunamadı. Eksik abonelik ödemesini yukarıdan elle ekleyebilirsin. Diğer harcamalar filtrelendiği için liste toplamı ekstre borcuna eşit olmayabilir.",
+      "Bu satırlar otomatik olarak çözümlenemedi. PDF ile karşılaştırıp eksik işlemleri elle ekle. Kaynak satırlar ekstreyle birlikte saklanır.",
     statement_empty_pages:
       "{{count}} sayfadan metin alınamadı; bu sayfalardaki işlemler listede eksik olabilir.",
     statement_review_confirm:
-      "Seçtiğim satırların online abonelik ödemesi olduğunu, tarihlerini, tutarlarını ve para birimlerini PDF ile kontrol ettim. İadeler dahil edilmez. Sonraki adımda abonelikleri eşleştirip ödemeleri takvime aktaracağım.",
-    statement_save: "Kaydet ve aktarmaya devam et",
+      "Seçili işlemlerin tarihlerini, tutarlarını, kategorilerini ve para birimlerini PDF ile kontrol ettim. Ekstre özeti ve okunamayan kaynak satırlarıyla birlikte kaydedilmesini onaylıyorum.",
+    statement_save: "Ekstreyi kaydet",
     statement_saved:
-      "İşlem listesi arşive kaydedildi. Aboneliklere ve takvime aktarmak için eşleştirmeleri onayla.",
+      "Ekstre ve kategori özeti arşive kaydedildi. Dijital / Abonelik bölümünden uygun ödemeleri aboneliklerine aktarabilirsin.",
     statement_select_bank: "Kaydetmek için bankayı seç.",
     statement_archive: "Ekstre arşivi",
     statement_archive_note:
-      "Bir ekstreyi açıp aboneliklere ve takvime aktarabilirsin. Arşiv listesi ayrıca harcama sayılmaz; daha önce kaydedilmiş aynı ödemeler tekrar oluşturulmaz.",
+      "Kaydettiğin tam ekstreler, kategori özetleri ve abonelik eşleştirmeleri burada tutulur.",
     statement_archive_empty: "Henüz kaydedilmiş ekstre yok.",
     statement_delete_title: "Ekstre listesi silinsin mi?",
     statement_delete_note:
@@ -150,12 +312,11 @@ export const statementTranslations = {
     statement_password_error: "PDF şifreli veya şifre hatalı. PDF şifresini girip yeniden dene.",
     statement_read_failed:
       "PDF okunamadı. Dosyanın geçerli ve okunabilir metin içerdiğini kontrol et.",
-    statement_no_rows:
-      "Eşleşen online abonelik bulunamadı. Açıklamasından tanınamayan bir abonelik varsa adını ve ödemesini elle ekleyebilirsin. PDF düzeni okunamıyorsa bazı işlemler eksik olabilir.",
+    statement_no_rows: "İşlem bulunamadı. Okunamayan satırları kontrol et veya elle işlem ekle.",
     statement_invalid_rows:
-      "Seçili satırların abonelik adı, tarih, açıklama ve tutarını kontrol et. Tutarlar pozitif ve en fazla iki ondalık basamaklı olmalı. İadeler dahil edilmez. En fazla 3.000 işlem kaydedilebilir.",
+      "Seçili işlemlerin tarih, tutar, kategori ve para birimi bilgilerini kontrol et.",
     statement_duplicate:
-      "Bu PDF için bir işlem listesi zaten kaydedilmiş. Ekstre arşivinden açabilirsin.",
+      "Bu ekstre zaten kayıtlı. Ekstre arşivinden açabilirsin.",
     statement_save_failed: "İşlem listesi kaydedilemedi. Tekrar dene.",
     statement_load_failed: "Ekstre arşivi yüklenemedi.",
     statement_delete_failed: "Ekstre listesi silinemedi.",
@@ -164,16 +325,167 @@ export const statementTranslations = {
       "Ödeme dönemine göre eksik tarihler oluşturulur. Tutarlar son seçili ekstre ödemesinden alınır; her tutarı kontrol edip değiştirebilir veya tarihi çıkarabilirsin. Onayladığın ödemeler ödendi olarak eklenir. Ekstredeki ve daha önce ödenmiş tarihler tekrar eklenmez.",
   },
   en: {
+    statement_duplicates_title: "Similar purchases found!",
+    statement_duplicates_short_help: "Compare incoming transactions with existing records. No records are removed automatically.",
+    statement_duplicates_review_count: "Review: {{count}} matches",
+    statement_duplicates_transaction: "Transaction {{number}}",
+    statement_duplicates_record_count: "Comparing {{count}} separate records",
+    statement_duplicates_review_heading: "These payments may be recorded twice.",
+    statement_duplicates_legitimate_help: "If you really made this purchase {{count}} times on the same day,",
+    statement_duplicates_legitimate_action: "no review is needed — save!",
+    statement_duplicates_installment_count: "Possible other installments: {{count}}",
+    statement_duplicates_installment_help: "These installments belong to different months. No action is needed; selected records will be saved normally.",
+    statement_duplicates_compared_records: "Similar record",
+    statement_duplicates_amount: "Amount",
+    statement_duplicates_same_amount: "Same amount",
+    statement_duplicates_other_installment: "Different installment number",
+    statement_duplicates_pdf_page: "PDF · page {{page}}",
+    statement_duplicates_view_statement: "Open statement",
+    statement_duplicates_rules: "How are similar transactions found?",
+    statement_duplicates_help:
+      "Records with the same date, merchant and currency are compared. The tolerance is TRY 5 or 0.01 for other currencies. Nothing is deleted or merged automatically. Different installments can be separate payments. Go back to deselect unwanted rows.",
+    statement_duplicates_possible_duplicate: "Possible duplicate — review",
+    statement_duplicates_installment_continuation:
+      "May be another installment of the same purchase",
+    statement_duplicates_new: "Incoming record",
+    statement_duplicates_source_statement: "Saved PDF statement",
+    statement_duplicates_source_ledger: "Income / Expenses",
+    statement_duplicates_source_manual_card: "Manual card purchase",
+    statement_duplicates_source_manual_bill: "Manual bill",
+    statement_duplicates_source_incoming: "Another row in this PDF",
+    statement_duplicates_difference: "Amount difference",
+    statement_duplicates_back: "Go back and review",
+    statement_duplicates_continue: "Save selected records",
+    statement_duplicates_more:
+      "Showing the first 200 matches. Adjust your selections and check again to see more.",
+    statement_duplicate_check_failed:
+      "Similar purchases could not be checked. Nothing was saved; try again.",
+    statement_open_page: "Open statement page",
+    statement_attention_title: "Transactions needing review ({{count}})",
+    statement_attention_help:
+      "These rows contain an ambiguous amount or text. Check the PDF page and correct the transaction table. Ambiguous amounts are excluded from totals and saved transactions.",
+    statement_text_issue:
+      "Some description characters could not be decoded. Compare the merchant name with the PDF.",
+    statement_review_confirm_incomplete:
+      "I checked {{count}} extraction warnings and their source lines against the PDF. I corrected or omitted incomplete transactions and approve saving only the selected transactions.",
+    statement_amount_issue_joined_installment:
+      "The installment number may be joined to the amount. Check the PDF and manually enter the amount and installment. This row cannot be selected yet.",
+    statement_amount_issue_invalid_amount:
+      "The complete amount could not be read reliably. Enter the amount from the PDF manually.",
+    statement_amount_issue_multiple_amounts:
+      "There are multiple amount columns. Enter the actual purchase amount from the PDF manually.",
+    statement_amount_issue_installment_total:
+      "The installment amount exceeds the total purchase amount. Check the PDF amount and installment.",
+    statement_totals_mismatch: "PDF summary totals do not match the extracted transactions.",
+    statement_reconciliation_report_issue: "Report an issue on GitHub",
+    statement_totals_unverified: "PDF totals could not be verified.",
+    statement_verification_check_summary_balance: "PDF summary equation",
+    statement_verification_check_balance: "Statement closing balance",
+    statement_verification_check_movement: "Net movement for the period",
+    statement_verification_from_summary: "Calculated from the PDF summary",
+    statement_verification_issue_no_source_rows: "No source transactions were found for comparison.",
+    statement_verification_issue_invalid_source_rows: "Some transaction amounts could not be verified against their PDF source.",
+    statement_verification_issue_conflicting_source_rows: "Conflicting records refer to the same PDF source row.",
+    statement_verification_issue_unsupported_currency: "Totals could not be verified for non-TRY transactions.",
+    statement_verification_issue_invalid_summary: "Some PDF summary amounts are invalid.",
+    statement_verification_issue_unread_source_rows: "Some PDF transaction rows or pages could not be read.",
+    statement_verification_issue_incomplete_summary: "The PDF does not contain enough summary information for comparison.",
+    statement_verification_override: "Option to save without verification",
+    statement_verification_confirm: "I understand that automatic totals verification was unavailable and confirm saving the selected transactions I reviewed.",
+    statement_refunds_matched_short: "Refunds matched to purchases: {{count}}",
+    statement_refund_exact_match: "Matched purchase: {{date}} · {{amount}}",
+    statement_excluded_help:
+      "{{count}} unselected transactions will not be added to spending. They are retained for PDF reconciliation; the statement balance stays unchanged.",
+    statement_reconciliation_values:
+      "Statement: {{expected}} · Calculated: {{actual}} · Difference: {{difference}}",
+    statement_reconciliation_pdf: "PDF total",
+    statement_reconciliation_calculated: "Transaction total",
+    statement_reconciliation_source_rows: "Included source rows: {{count}}",
+    statement_reconciliation_cancelled: "Fully refunded purchases of {{amount}} were not added again.",
+    statement_reconciliation_override: "Option to save with this difference",
+    statement_reconciliation_confirm:
+      "I checked this difference against the PDF and confirm saving only the selected transactions as shown.",
+    statement_installment_invalid:
+      "Enter a valid installment (e.g. 2/4). Its position cannot exceed the total installment count.",
+    statement_unmatched_refunds_title: "Unmatched refunds ({{count}})",
+    statement_refunds_title: "Refunds ({{count}})",
+    statement_matched_refunds_title: "Matched refunds ({{count}})",
+    statement_refund_net: "Net {{amount}}",
+    statement_refund_returned_info: "Purchase refunded.",
+    statement_refund_installment_info: "Installment refund matched.",
+    statement_refund_difference_info: "Refund matched; the amount difference is preserved.",
+    statement_refund_proximity_info: "Matched by a later date and a similar TRY amount; the difference is preserved.",
+    statement_refund_merchant_info: "Purchases and refunds for the same store in this statement.",
+    statement_refund_charge_total: "Purchases",
+    statement_refund_refund_total: "Refunds",
+    statement_refund_remaining: "Net spending",
+    statement_refund_group_rows: "Transactions ({{count}})",
+    statement_refund_original_amount: "Original currency amount: {{amount}}",
+    statement_refund_installment_match: "Matched installment: {{date}} · {{installment}} · {{amount}}",
+    statement_refund_currency_match: "Matched original currency amount: {{original}} · {{date}} · {{amount}}",
+    statement_refund_rounding_net: "Charge − refund: {{amount}}. The amount difference is preserved in totals.",
+    statement_unmatched_refunds_help:
+      "These refunds are kept outside the main transaction table. Selected refunds reduce net spending and are saved with the statement. Partial refunds do not automatically remove a purchase.",
+    statement_category_digital: "Digital / Subscriptions",
+    statement_category_online: "Online shopping",
+    statement_category_bills: "Bills / Services",
+    statement_category_shopping: "Clothing / Shopping",
+    statement_category_health: "Health",
+    statement_category_groceries: "Groceries",
+    statement_category_dining: "Dining / Restaurants",
+    statement_category_coffee: "Coffee",
+    statement_category_travel: "Travel",
+    statement_category_transport: "Transport",
+    statement_category_toys: "Toys",
+    statement_category_foreign: "Foreign purchases",
+    statement_category_other: "Other",
+    statement_category_fees: "Interest / Taxes",
+    statement_category_summary: "Category summary",
+    statement_category_chart: "Category distribution · {{currency}}",
+    statement_category_details: "{{category}} spending",
+    statement_category_select: "Select a pie slice or category name to see its spending.",
+    statement_category_net_total: "Net total",
+    statement_category_no_positive: "No positive net spending.",
+    statement_category_refund: "Net refund",
+    statement_category_positive_only:
+      "The pie shows positive net categories. Refunds remain in the list and net total.",
+    statement_category: "Category",
+    statement_category_filter: "Displayed category",
+    statement_all_categories: "All categories",
+    statement_account_summary: "Statement summary",
+    statement_account_summary_help:
+      "Summary values are read automatically from the statement and cannot be edited. Missing values are omitted. Amounts are in TRY.",
+    statement_summary_previous_balance: "Previous balance",
+    statement_summary_payments: "Payments",
+    statement_summary_payments_with_refunds: "Payments and refunds",
+    statement_payments_refund_breakdown: "Card payments {{payments}} + refunds {{refunds}}",
+    statement_summary_purchases: "Purchases and earlier installments",
+    statement_summary_cash: "Cash advances",
+    statement_summary_fees: "Interest, taxes and fees",
+    statement_summary_balance: "Statement balance",
+    statement_summary_minimum_payment: "Minimum payment",
+    statement_summary_mismatch:
+      "The statement balance equation does not match. Check the source PDF amounts.",
+    statement_digital_help:
+      "A digital purchase is not necessarily a recurring subscription. Match recognized services to your existing subscriptions and review uncertain or one-off purchases before importing.",
+    statement_financing_interest: "Purchase interest",
+    statement_financing_kkdf: "Interest KKDF",
+    statement_financing_bsmv: "Interest and fee BSMV",
+    statement_financing_unitemized: "Interest / fees from the summary",
+    statement_derived_fee_help:
+      "The interest, taxes and fees stated in the PDF summary that do not appear as separate transaction rows. Included in the balance calculation without creating a separate payment.",
+    statement_summary_fees_applied:
+      "{{amount}} in interest / fees from the PDF summary was included in the balance calculation. Fees already present as transaction rows were not added again.",
     statement_delete_all: "Delete all statements",
     statement_delete_all_note:
       "Permanently delete the entire statement archive, across all pages? Subscriptions and payments already imported into the calendar will be kept.",
     statement_import_add_category: "Add category",
     statement_import_category_name: "Category name",
     statement_import_prepare_note:
-      "We recommend organizing your <categories>categories</categories> and <paymentMethods>payment methods</paymentMethods> before importing.",
-    statement_import_title: "Import into subscriptions and calendar",
+      "Before importing into subscriptions and the calendar, we recommend organizing your <categories>categories</categories> and <paymentMethods>payment methods</paymentMethods>.",
+    statement_import_title: "Import online subscriptions",
     statement_import_description:
-      "Matching subscriptions are used automatically; otherwise a new record is created. Selected charges appear as paid with their statement dates and amounts. Refunds are excluded.",
+      "In this step, match online subscriptions to your existing subscriptions or create new ones.",
     statement_import_target: "Subscription for these payments",
     statement_import_no_similar:
       "No similar saved subscription was found in the same currency. You can create a new subscription.",
@@ -191,7 +503,7 @@ export const statementTranslations = {
     statement_import_next_month:
       "The month and year come from the month after the import date. The day is kept from the latest selected charge, or the last day of the month if necessary.",
     statement_import_schedule_note:
-      "Selected statement charges keep their original dates and amounts. Optionally review and add missing payments through today using the billing cycle. Creating an active subscription is independent; new subscriptions remain inactive when it is off.",
+      "Statement saved. Its spending is shown in Calendar.",
     statement_import_existing_note:
       "Your existing subscription’s price and active/inactive status are kept. Your category and payment method selections are saved to the subscription. Selected historical payments are added, and the next payment date is updated to the month after the current month.",
     statement_import_date_range: "The payment date must be valid and cannot be after today.",
@@ -223,7 +535,7 @@ export const statementTranslations = {
     statement_excluded:
       "{{count}} transactions were excluded. Non-subscription transactions and fully refunded charges are not included.",
     statement_refunded_charges_excluded:
-      "{{count}} subscription charges were excluded after matching refunds in the same statement with the same merchant, currency and amount. These charges will not be saved or imported into the calendar.",
+      "{{count}} purchases match full refunds in this statement. Both rows were removed from the list and will not be saved or imported.",
     statement_unmatched_refunds:
       "{{count}} refunds could not be fully matched to a charge in this statement. Check the related charges; partial refunds, refunds in other statements and ambiguous amounts do not automatically remove a charge.",
     statement_account_match_unavailable:
@@ -247,9 +559,9 @@ export const statementTranslations = {
     project_github_pending: "The GitHub repository has not been created yet.",
     statement_upload: "Credit card statement",
     statement_intro:
-      "Extract only online subscription payments from an Enpara, DenizBank or Garanti BBVA statement. Review the matches and save your monthly subscription list.",
+      "Upload an Enpara, DenizBank or Garanti BBVA statement. Review and save all transactions with a category summary, then import eligible Digital / Subscriptions payments into your subscriptions and calendar.",
     statement_privacy:
-      "The PDF and password are processed in your browser and never sent to the server. Only the transaction list you select and approve is saved to your account. No AI is used.",
+      "The PDF and its password are processed in your browser and are not sent to the server. No AI is used.",
     statement_file: "PDF file · up to 20 MB",
     statement_choose: "Choose PDF",
     statement_no_file: "No file selected",
@@ -257,13 +569,24 @@ export const statementTranslations = {
     statement_auto_bank: "Detect automatically",
     statement_period: "Statement period",
     statement_password: "PDF password (if required)",
-    statement_read: "Find online subscriptions",
+    statement_read: "Read statement",
+    statement_checking_file: "Checking whether this file has already been saved…",
+    statement_file_check_failed: "Could not check the file. Please try again.",
+    statement_file_check_retry: "Check the file again",
     statement_progress: "Reading page {{current}} of {{total}}…",
-    statement_review: "Review online subscription payments",
+    statement_review: "Review statement",
     statement_saved_list: "Saved transaction list",
     statement_review_note:
-      "Only recognized online services, matches with your saved subscriptions and possible digital service subscriptions are shown. Groceries, fuel, cash advances, bank fees and card repayments are excluded. Apple/Google descriptors can also be one-off purchases; those rows are not selected. Compare descriptions, dates, amounts and currencies with the statement. A merchant match alone does not prove a subscription.",
-    statement_net: "Total online subscription payments",
+      "Check transactions and amounts before saving.",
+    statement_refunds_removed_short: "Full refunds removed: {{count}}",
+    statement_refunds_review_short: "Review refunds: {{count}}",
+    statement_balance_formula_title: "How is the statement balance calculated?",
+    statement_net: "Net spending from transactions",
+    statement_net_help:
+      "Calculated from selected spending, fees/interest and refunds. Excludes the previous balance and card repayments, so it may differ from the total statement balance.",
+    statement_pdf_balance: "Total statement balance in the PDF: {{amount}}",
+    statement_balance_formula_help:
+      "Previous balance − payments + purchases + cash advances + fees/interest = statement balance",
     statement_spending: "Subscription payments",
     statement_refunds: "Refunds",
     statement_repayments: "Card repayments (excluded from spending)",
@@ -288,23 +611,23 @@ export const statementTranslations = {
     statement_kind_charge: "Purchase",
     statement_kind_refund: "Refund / credit",
     statement_kind_repayment: "Card repayment",
+    statement_repayment_no_calendar: "Not added to Calendar; the card payment in Income/Expenses is used.",
     statement_kind_fee: "Fee / interest / tax",
     statement_kind_cash: "Cash advance",
-    statement_unresolved:
-      "Could not read the amount or date of {{count}} possible subscription rows",
+    statement_unresolved: "Could not read the amount or date of {{count}} transaction rows",
     statement_unresolved_note:
-      "These rows match an online service but could not be fully read. Add the missing subscription payment manually above. Other spending is filtered out, so this total may differ from the statement balance.",
+      "These lines could not be parsed automatically. Compare them with the PDF and add missing transactions manually. Source lines are saved with the statement.",
     statement_empty_pages:
       "No text was found on {{count}} pages; transactions on those pages may be missing.",
     statement_review_confirm:
-      "I checked that the selected rows are online subscription payments and compared their dates, amounts and currencies with the PDF. Refunds are excluded. Next, I will match subscriptions and import the payments into the calendar.",
-    statement_save: "Save and continue to import",
+      "I compared the selected transaction dates, amounts, categories and currencies with the PDF. Save them together with the statement summary and unresolved source lines.",
+    statement_save: "Save statement",
     statement_saved:
-      "Transaction list saved to the archive. Confirm the matches to import into subscriptions and the calendar.",
+      "Statement and category summary archived. Import eligible payments from Digital / Subscriptions into your subscriptions.",
     statement_select_bank: "Choose a bank before saving.",
     statement_archive: "Statement archive",
     statement_archive_note:
-      "Open a statement to import into subscriptions and the calendar. The archive itself is not counted as spending; previously recorded matching payments are not created again.",
+      "Your full statements, category summaries and subscription matches are saved here.",
     statement_archive_empty: "No statements have been saved yet.",
     statement_delete_title: "Delete statement list?",
     statement_delete_note:
@@ -319,11 +642,11 @@ export const statementTranslations = {
     statement_read_failed:
       "Unable to read the PDF. Check that it is valid and contains readable text.",
     statement_no_rows:
-      "No matching online subscriptions were found. Add a subscription and its payment manually if its description was not recognized. Unsupported PDF layouts may also leave transactions unread.",
+      "No transactions found. Check the unresolved lines or add a transaction manually.",
     statement_invalid_rows:
-      "Check subscription names, dates, descriptions and amounts. Amounts must be positive with at most two decimal places. Refunds are excluded. Up to 3,000 transactions can be saved.",
+      "Check the dates, amounts, categories and currencies of the selected transactions.",
     statement_duplicate:
-      "A transaction list for this PDF is already saved. Open it from the statement archive.",
+      "This statement is already saved. Open it from the statement archive.",
     statement_save_failed: "Could not save the transaction list. Please try again.",
     statement_load_failed: "Could not load the statement archive.",
     statement_delete_failed: "Could not delete the statement list.",
@@ -332,16 +655,169 @@ export const statementTranslations = {
       "Missing dates follow the billing cycle. Amounts start from the latest selected statement charge; review, edit or exclude each one. Confirmed entries are marked paid. Statement dates and previously paid dates are not added again.",
   },
   de: {
+    statement_duplicates_title: "Ähnliche Ausgaben gefunden!",
+    statement_duplicates_short_help: "Vergleiche neue Umsätze mit vorhandenen Einträgen. Es wird nichts automatisch entfernt.",
+    statement_duplicates_review_count: "Prüfen: {{count}} Vergleiche",
+    statement_duplicates_transaction: "Umsatz {{number}}",
+    statement_duplicates_record_count: "{{count}} separate Einträge werden verglichen",
+    statement_duplicates_review_heading: "Diese Zahlungen könnten doppelt erfasst werden.",
+    statement_duplicates_legitimate_help: "Wenn du diesen Einkauf am selben Tag tatsächlich {{count}} Mal getätigt hast,",
+    statement_duplicates_legitimate_action: "musst du nichts prüfen – speichern!",
+    statement_duplicates_installment_count: "Mögliche weitere Raten: {{count}}",
+    statement_duplicates_installment_help: "Diese Raten gehören zu unterschiedlichen Monaten. Es ist nichts zu tun; ausgewählte Einträge werden normal gespeichert.",
+    statement_duplicates_compared_records: "Ähnlicher Eintrag",
+    statement_duplicates_amount: "Betrag",
+    statement_duplicates_same_amount: "Gleicher Betrag",
+    statement_duplicates_other_installment: "Andere Ratennummer",
+    statement_duplicates_pdf_page: "PDF · Seite {{page}}",
+    statement_duplicates_view_statement: "Abrechnung öffnen",
+    statement_duplicates_rules: "Wie werden ähnliche Umsätze gefunden?",
+    statement_duplicates_help:
+      "Verglichen werden Datum, Händler und Währung. Die Toleranz beträgt 5 TRY bzw. 0,01 in anderen Währungen. Es wird nichts automatisch gelöscht oder zusammengeführt. Unterschiedliche Raten können separate Zahlungen sein. Zurückgehen, um unerwünschte Zeilen abzuwählen.",
+    statement_duplicates_possible_duplicate: "Mögliches Duplikat — prüfen",
+    statement_duplicates_installment_continuation:
+      "Möglicherweise eine weitere Rate desselben Kaufs",
+    statement_duplicates_new: "Neuer Eintrag",
+    statement_duplicates_source_statement: "Gespeicherte PDF-Abrechnung",
+    statement_duplicates_source_ledger: "Einnahmen / Ausgaben",
+    statement_duplicates_source_manual_card: "Manueller Kartenumsatz",
+    statement_duplicates_source_manual_bill: "Manuelle Rechnung",
+    statement_duplicates_source_incoming: "Andere Zeile in diesem PDF",
+    statement_duplicates_difference: "Betragsdifferenz",
+    statement_duplicates_back: "Zurück und prüfen",
+    statement_duplicates_continue: "Auswahl speichern",
+    statement_duplicates_more:
+      "Die ersten 200 Treffer werden angezeigt. Auswahl anpassen und erneut prüfen, um weitere zu sehen.",
+    statement_duplicate_check_failed:
+      "Ähnliche Ausgaben konnten nicht geprüft werden. Nichts wurde gespeichert; erneut versuchen.",
+    statement_open_page: "Abrechnungsseite öffnen",
+    statement_attention_title: "Zu prüfende Umsätze ({{count}})",
+    statement_attention_help:
+      "Diese Zeilen enthalten einen unklaren Betrag oder Text. Prüfe die PDF-Seite und korrigiere die Tabelle. Unklare Beträge werden weder summiert noch als Umsätze gespeichert.",
+    statement_text_issue:
+      "Einige Zeichen der Beschreibung konnten nicht gelesen werden. Vergleiche den Händlernamen mit dem PDF.",
+    statement_review_confirm_incomplete:
+      "Ich habe {{count}} Lesewarnungen und die Quellzeilen mit dem PDF geprüft. Unvollständige Umsätze wurden korrigiert oder ausgelassen; nur die ausgewählten Umsätze sollen gespeichert werden.",
+    statement_amount_issue_joined_installment:
+      "Die Ratennummer könnte mit dem Betrag verbunden sein. Prüfe das PDF und gib Betrag und Rate manuell ein. Diese Zeile kann noch nicht ausgewählt werden.",
+    statement_amount_issue_invalid_amount:
+      "Der vollständige Betrag konnte nicht sicher gelesen werden. Gib den Betrag aus dem PDF manuell ein.",
+    statement_amount_issue_multiple_amounts:
+      "Es gibt mehrere Betragsspalten. Gib den tatsächlichen Kaufbetrag aus dem PDF manuell ein.",
+    statement_amount_issue_installment_total:
+      "Der Ratenbetrag übersteigt den gesamten Kaufbetrag. Prüfe Betrag und Rate im PDF.",
+    statement_totals_mismatch:
+      "Die PDF-Zusammenfassung stimmt nicht mit den erkannten Umsätzen überein.",
+    statement_excluded_help:
+      "{{count}} abgewählte Umsätze werden nicht zu den Ausgaben hinzugefügt. Sie bleiben für den PDF-Abgleich erhalten; der Abrechnungssaldo bleibt unverändert.",
+    statement_reconciliation_values:
+      "Abrechnung: {{expected}} · Berechnet: {{actual}} · Differenz: {{difference}}",
+    statement_reconciliation_pdf: "PDF-Summe",
+    statement_reconciliation_calculated: "Umsatzsumme",
+    statement_reconciliation_source_rows: "Berücksichtigte Quellzeilen: {{count}}",
+    statement_reconciliation_cancelled: "Vollständig erstattete Einkäufe von {{amount}} wurden nicht erneut addiert.",
+    statement_reconciliation_report_issue: "Fehler auf GitHub melden",
+    statement_totals_unverified: "Die PDF-Summen konnten nicht geprüft werden.",
+    statement_verification_check_summary_balance: "Berechnung der PDF-Zusammenfassung",
+    statement_verification_check_balance: "Abrechnungssaldo",
+    statement_verification_check_movement: "Nettobewegung des Zeitraums",
+    statement_verification_from_summary: "Aus der PDF-Zusammenfassung berechnet",
+    statement_verification_issue_no_source_rows: "Keine ursprünglichen Umsätze zum Vergleich gefunden.",
+    statement_verification_issue_invalid_source_rows: "Einige Umsatzbeträge konnten nicht mit ihrer PDF-Quelle abgeglichen werden.",
+    statement_verification_issue_conflicting_source_rows: "Widersprüchliche Einträge beziehen sich auf dieselbe PDF-Zeile.",
+    statement_verification_issue_unsupported_currency: "Summen für Umsätze außerhalb von TRY konnten nicht geprüft werden.",
+    statement_verification_issue_invalid_summary: "Einige Beträge der PDF-Zusammenfassung sind ungültig.",
+    statement_verification_issue_unread_source_rows: "Einige PDF-Umsatzzeilen oder Seiten konnten nicht gelesen werden.",
+    statement_verification_issue_incomplete_summary: "Die PDF enthält nicht genügend Summeninformationen für einen Vergleich.",
+    statement_verification_override: "Ohne Prüfung speichern",
+    statement_verification_confirm: "Ich weiß, dass die automatische Summenprüfung nicht möglich war, und bestätige das Speichern der ausgewählten, geprüften Umsätze.",
+    statement_refunds_matched_short: "Zugeordnete Erstattungen: {{count}}",
+    statement_refund_exact_match: "Zugeordneter Einkauf: {{date}} · {{amount}}",
+    statement_reconciliation_override: "Trotz Differenz speichern",
+    statement_reconciliation_confirm:
+      "Ich habe die Differenz mit dem PDF geprüft und bestätige das Speichern nur der ausgewählten Umsätze.",
+    statement_installment_invalid:
+      "Gib eine gültige Rate ein (z. B. 2/4). Die Position darf die gesamte Ratenanzahl nicht übersteigen.",
+    statement_unmatched_refunds_title: "Nicht zugeordnete Erstattungen ({{count}})",
+    statement_refunds_title: "Erstattungen ({{count}})",
+    statement_matched_refunds_title: "Zugeordnete Erstattungen ({{count}})",
+    statement_refund_net: "Netto {{amount}}",
+    statement_refund_returned_info: "Einkauf erstattet.",
+    statement_refund_installment_info: "Ratenerstattung zugeordnet.",
+    statement_refund_difference_info: "Erstattung zugeordnet; die Betragsdifferenz bleibt erhalten.",
+    statement_refund_proximity_info: "Über späteres Datum und ähnlichen TRY-Betrag zugeordnet; die Differenz bleibt erhalten.",
+    statement_refund_merchant_info: "Einkäufe und Erstattungen desselben Händlers in dieser Abrechnung.",
+    statement_refund_charge_total: "Einkäufe",
+    statement_refund_refund_total: "Erstattungen",
+    statement_refund_remaining: "Verbleibende Ausgaben",
+    statement_refund_group_rows: "Umsätze ({{count}})",
+    statement_refund_original_amount: "Ursprünglicher Fremdwährungsbetrag: {{amount}}",
+    statement_refund_installment_match: "Zugeordnete Rate: {{date}} · {{installment}} · {{amount}}",
+    statement_refund_currency_match: "Über Originalbetrag zugeordnet: {{original}} · {{date}} · {{amount}}",
+    statement_refund_rounding_net: "Belastung − Erstattung: {{amount}}. Die Betragsdifferenz bleibt in den Summen erhalten.",
+    statement_unmatched_refunds_help:
+      "Diese Erstattungen stehen außerhalb der Haupttabelle. Ausgewählte Erstattungen reduzieren die Nettoausgaben und werden gespeichert. Teilerstattungen entfernen einen Einkauf nicht automatisch.",
+    statement_category_digital: "Digital / Abonnements",
+    statement_category_online: "Online-Einkäufe",
+    statement_category_bills: "Rechnungen / Dienste",
+    statement_category_shopping: "Kleidung / Einkäufe",
+    statement_category_health: "Gesundheit",
+    statement_category_groceries: "Lebensmittel",
+    statement_category_dining: "Essen / Restaurants",
+    statement_category_coffee: "Kaffee",
+    statement_category_travel: "Reisen",
+    statement_category_transport: "Verkehr",
+    statement_category_toys: "Spielzeug",
+    statement_category_foreign: "Auslandseinkäufe",
+    statement_category_other: "Sonstiges",
+    statement_category_fees: "Zinsen / Steuern",
+    statement_category_summary: "Kategorieübersicht",
+    statement_category_chart: "Kategorieverteilung · {{currency}}",
+    statement_category_details: "Ausgaben für {{category}}",
+    statement_category_select:
+      "Wähle ein Tortensegment oder einen Kategorienamen, um die Ausgaben zu sehen.",
+    statement_category_net_total: "Nettosumme",
+    statement_category_no_positive: "Keine positiven Nettoausgaben.",
+    statement_category_refund: "Nettoerstattung",
+    statement_category_positive_only:
+      "Das Diagramm zeigt positive Nettokategorien. Erstattungen bleiben in der Liste und Nettosumme erhalten.",
+    statement_category: "Kategorie",
+    statement_category_filter: "Angezeigte Kategorie",
+    statement_all_categories: "Alle Kategorien",
+    statement_account_summary: "Abrechnungsübersicht",
+    statement_account_summary_help:
+      "Übersichtswerte werden automatisch aus der Abrechnung gelesen und sind schreibgeschützt. Fehlende Werte werden nicht angezeigt. Beträge sind in TRY.",
+    statement_summary_previous_balance: "Vorheriger Saldo",
+    statement_summary_payments: "Zahlungen",
+    statement_summary_payments_with_refunds: "Zahlungen und Erstattungen",
+    statement_payments_refund_breakdown: "Kartenzahlungen {{payments}} + Erstattungen {{refunds}}",
+    statement_summary_purchases: "Einkäufe und frühere Raten",
+    statement_summary_cash: "Bargeldvorschüsse",
+    statement_summary_fees: "Zinsen, Steuern und Gebühren",
+    statement_summary_balance: "Abrechnungssaldo",
+    statement_summary_minimum_payment: "Mindestzahlung",
+    statement_summary_mismatch:
+      "Die Saldenberechnung stimmt nicht überein. Prüfe die Beträge im PDF.",
+    statement_digital_help:
+      "Ein digitaler Einkauf ist nicht immer ein Abonnement. Ordne erkannte Dienste vorhandenen Abonnements zu und prüfe unklare oder einmalige Einkäufe vor dem Import.",
+    statement_financing_interest: "Einkaufszinsen",
+    statement_financing_kkdf: "KKDF auf Zinsen",
+    statement_financing_bsmv: "BSMV auf Zinsen und Gebühren",
+    statement_financing_unitemized: "Zinsen / Gebühren aus der Übersicht",
+    statement_derived_fee_help:
+      "Zinsen, Steuern und Gebühren aus der PDF-Übersicht, die nicht als einzelne Buchungen vorliegen. Sie fließen ohne zusätzliche Zahlung in die Saldenberechnung ein.",
+    statement_summary_fees_applied:
+      "{{amount}} an Zinsen / Gebühren aus der PDF-Übersicht wurden in die Saldenberechnung einbezogen. Bereits vorhandene Gebührenbuchungen wurden nicht erneut addiert.",
     statement_delete_all: "Alle Abrechnungen löschen",
     statement_delete_all_note:
       "Das gesamte Abrechnungsarchiv auf allen Seiten endgültig löschen? Abonnements und bereits importierte Kalenderzahlungen bleiben erhalten.",
     statement_import_add_category: "Kategorie hinzufügen",
     statement_import_category_name: "Kategoriename",
     statement_import_prepare_note:
-      "Wir empfehlen, vor dem Import deine <categories>Kategorien</categories> und <paymentMethods>Zahlungsmethoden</paymentMethods> einzurichten.",
-    statement_import_title: "In Abos und Kalender übernehmen",
+      "Vor der Übernahme in Abonnements und Kalender empfehlen wir, deine <categories>Kategorien</categories> und <paymentMethods>Zahlungsmethoden</paymentMethods> einzurichten.",
+    statement_import_title: "Online-Abos übernehmen",
     statement_import_description:
-      "Passende Abos werden automatisch verwendet; andernfalls wird ein neuer Eintrag erstellt. Ausgewählte Belastungen werden mit Datum und Betrag der Abrechnung als bezahlt übernommen. Erstattungen werden ausgeschlossen.",
+      "Ordne in diesem Schritt Online-Abos deinen bestehenden Abos zu oder lege neue an.",
     statement_import_target: "Abo für diese Zahlungen",
     statement_import_no_similar:
       "Kein ähnliches gespeichertes Abo mit derselben Währung gefunden. Du kannst ein neues Abo erstellen.",
@@ -359,7 +835,7 @@ export const statementTranslations = {
     statement_import_next_month:
       "Monat und Jahr stammen aus dem Monat nach dem Importdatum. Der Tag der letzten ausgewählten Ausgabe bleibt erhalten; falls nötig wird der letzte Monatstag verwendet.",
     statement_import_schedule_note:
-      "Ausgewählte Zahlungen behalten Datum und Betrag der Abrechnung. Fehlende Zahlungen bis heute können nach Prüfung ergänzt werden. Ein aktives Abo wird unabhängig davon erstellt; ohne diese Auswahl bleibt ein neues Abo inaktiv.",
+      "Abrechnung gespeichert. Die Ausgaben werden im Kalender angezeigt.",
     statement_import_existing_note:
       "Preis und Aktivstatus des bestehenden Abos bleiben erhalten. Deine Auswahl für Kategorie und Zahlungsmethode wird im Abo gespeichert. Vergangene Zahlungen werden ergänzt und der nächste Zahlungstermin auf den Monat nach dem aktuellen Monat gesetzt.",
     statement_import_date_range:
@@ -392,7 +868,7 @@ export const statementTranslations = {
     statement_excluded:
       "{{count}} Umsätze wurden ausgeschlossen. Umsätze ohne Online-Abo und vollständig erstattete Belastungen werden nicht übernommen.",
     statement_refunded_charges_excluded:
-      "{{count}} Abo-Belastungen wurden passenden Erstattungen derselben Abrechnung mit gleichem Händler, gleicher Währung und gleichem Betrag zugeordnet. Diese Belastungen werden weder gespeichert noch in den Kalender übernommen.",
+      "{{count}} Einkäufe haben vollständige Erstattungen in dieser Abrechnung. Beide Buchungen wurden aus der Liste entfernt und werden weder gespeichert noch übernommen.",
     statement_unmatched_refunds:
       "{{count}} Erstattungen konnten keiner Belastung dieser Abrechnung eindeutig zugeordnet werden. Prüfe die betreffenden Belastungen; Teilerstattungen, andere Abrechnungen und unklare Beträge entfernen keine Belastung automatisch.",
     statement_account_match_unavailable:
@@ -416,9 +892,9 @@ export const statementTranslations = {
     project_github_pending: "Das GitHub-Repository wurde noch nicht erstellt.",
     statement_upload: "Kreditkartenabrechnung",
     statement_intro:
-      "Lies nur Online-Abozahlungen aus einer Abrechnung von Enpara, DenizBank oder Garanti BBVA aus. Prüfe die Treffer und speichere deine monatliche Aboliste.",
+      "Lade eine Abrechnung von Enpara, DenizBank oder Garanti BBVA hoch. Prüfe und speichere alle Umsätze mit Kategorieübersicht. Geeignete Zahlungen unter Digital / Abonnements können in Abonnements und Kalender übernommen werden.",
     statement_privacy:
-      "PDF und Passwort werden im Browser verarbeitet und nicht an den Server gesendet. Nur die ausgewählten und bestätigten Umsätze werden im Konto gespeichert. Es wird keine KI verwendet.",
+      "PDF und Passwort werden im Browser verarbeitet und nicht an den Server gesendet. Es wird keine KI verwendet.",
     statement_file: "PDF-Datei · bis zu 20 MB",
     statement_choose: "PDF auswählen",
     statement_no_file: "Keine Datei ausgewählt",
@@ -426,13 +902,24 @@ export const statementTranslations = {
     statement_auto_bank: "Automatisch erkennen",
     statement_period: "Abrechnungszeitraum",
     statement_password: "PDF-Passwort (falls erforderlich)",
-    statement_read: "Online-Abonnements finden",
+    statement_read: "Abrechnung lesen",
+    statement_checking_file: "Es wird geprüft, ob diese Datei bereits gespeichert wurde…",
+    statement_file_check_failed: "Die Datei konnte nicht geprüft werden. Bitte erneut versuchen.",
+    statement_file_check_retry: "Datei erneut prüfen",
     statement_progress: "Seite {{current}} von {{total}} wird gelesen…",
-    statement_review: "Online-Abozahlungen prüfen",
+    statement_review: "Abrechnung prüfen",
     statement_saved_list: "Gespeicherte Umsatzliste",
     statement_review_note:
-      "Angezeigt werden nur bekannte Online-Dienste, Treffer zu gespeicherten Abos und mögliche digitale Abonnements. Lebensmittel, Kraftstoff, Bargeldvorschüsse, Bankgebühren und Kartenrückzahlungen bleiben außen vor. Apple-/Google-Buchungen können einmalige Einkäufe sein und sind nicht ausgewählt. Prüfe Beschreibung, Datum, Betrag und Währung im PDF. Ein Händlername allein beweist kein Abonnement.",
-    statement_net: "Gesamte Online-Abozahlungen",
+      "Prüfe Umsätze und Beträge vor dem Speichern.",
+    statement_refunds_removed_short: "Entfernte vollständige Erstattungen: {{count}}",
+    statement_refunds_review_short: "Erstattungen prüfen: {{count}}",
+    statement_balance_formula_title: "Wie wird der Abrechnungssaldo berechnet?",
+    statement_net: "Nettoumsatz aus Buchungen",
+    statement_net_help:
+      "Aus ausgewählten Ausgaben, Zinsen/Gebühren und Erstattungen berechnet. Vorheriger Saldo und Kartenzahlungen sind nicht enthalten; der Abrechnungssaldo kann daher abweichen.",
+    statement_pdf_balance: "Gesamter Abrechnungssaldo im PDF: {{amount}}",
+    statement_balance_formula_help:
+      "Vorheriger Saldo − Zahlungen + Einkäufe + Bargeldvorschüsse + Zinsen/Gebühren = Abrechnungssaldo",
     statement_spending: "Abozahlungen",
     statement_refunds: "Erstattungen",
     statement_repayments: "Kartenrückzahlungen (keine Ausgaben)",
@@ -457,23 +944,24 @@ export const statementTranslations = {
     statement_kind_charge: "Einkauf",
     statement_kind_refund: "Erstattung / Gutschrift",
     statement_kind_repayment: "Kartenrückzahlung",
+    statement_repayment_no_calendar: "Nicht im Kalender; maßgeblich ist die Kartenzahlung in Einnahmen/Ausgaben.",
     statement_kind_fee: "Gebühr / Zinsen / Steuer",
     statement_kind_cash: "Bargeldvorschuss",
     statement_unresolved:
-      "Betrag oder Datum von {{count}} möglichen Abozeilen konnte nicht gelesen werden",
+      "Betrag oder Datum von {{count}} Umsatzzeilen konnte nicht gelesen werden",
     statement_unresolved_note:
-      "Diese Zeilen passen zu einem Online-Dienst, wurden aber nicht vollständig gelesen. Fehlende Abozahlungen lassen sich oben ergänzen. Andere Ausgaben werden gefiltert, daher kann die Summe vom Abrechnungsbetrag abweichen.",
+      "Diese Zeilen konnten nicht automatisch gelesen werden. Vergleiche sie mit dem PDF und ergänze fehlende Umsätze manuell. Die Quellzeilen werden mitgespeichert.",
     statement_empty_pages:
       "Auf {{count}} Seiten wurde kein Text gefunden. Dortige Umsätze können fehlen.",
     statement_review_confirm:
-      "Ich habe die ausgewählten Online-Abozahlungen sowie Datum, Betrag und Währung mit dem PDF verglichen. Erstattungen sind ausgeschlossen. Im nächsten Schritt ordne ich Abos zu und übernehme die Zahlungen in den Kalender.",
-    statement_save: "Speichern und zur Übernahme",
+      "Ich habe Datum, Betrag, Kategorie und Währung der ausgewählten Umsätze mit dem PDF verglichen. Sie werden mit der Abrechnungsübersicht und ungelesenen Quellzeilen gespeichert.",
+    statement_save: "Abrechnung speichern",
     statement_saved:
-      "Umsatzliste archiviert. Bestätige die Zuordnungen, um Abos und Kalenderzahlungen zu übernehmen.",
+      "Abrechnung und Kategorieübersicht archiviert. Geeignete Zahlungen unter Digital / Abonnements können in Abonnements übernommen werden.",
     statement_select_bank: "Wähle vor dem Speichern eine Bank.",
     statement_archive: "Abrechnungsarchiv",
     statement_archive_note:
-      "Öffne eine Abrechnung, um Abos und Kalenderzahlungen zu übernehmen. Das Archiv zählt nicht zusätzlich als Ausgabe; bereits erfasste gleiche Zahlungen werden nicht erneut erstellt.",
+      "Vollständige Abrechnungen, Kategorieübersichten und Abozuordnungen werden hier gespeichert.",
     statement_archive_empty: "Noch keine Abrechnungen gespeichert.",
     statement_delete_title: "Abrechnungsliste löschen?",
     statement_delete_note:
@@ -488,11 +976,10 @@ export const statementTranslations = {
     statement_read_failed:
       "Das PDF konnte nicht gelesen werden. Prüfe, ob es gültig ist und lesbaren Text enthält.",
     statement_no_rows:
-      "Keine passenden Online-Abos gefunden. Nicht erkannte Abos und Zahlungen können manuell ergänzt werden. Bei unbekannten PDF-Layouts können Umsätze fehlen.",
-    statement_invalid_rows:
-      "Prüfe Aboname, Datum, Beschreibung und Betrag. Beträge müssen positiv sein und höchstens zwei Nachkommastellen haben. Erstattungen sind ausgeschlossen. Maximal 3.000 Umsätze sind möglich.",
+      "Keine Umsätze gefunden. Prüfe die ungelesenen Zeilen oder füge einen Umsatz hinzu.",
+    statement_invalid_rows: "Prüfe Datum, Betrag, Kategorie und Währung der ausgewählten Umsätze.",
     statement_duplicate:
-      "Für dieses PDF ist bereits eine Umsatzliste gespeichert. Öffne sie im Archiv.",
+      "Diese Abrechnung ist bereits gespeichert. Öffne sie im Archiv.",
     statement_save_failed:
       "Die Umsatzliste konnte nicht gespeichert werden. Bitte erneut versuchen.",
     statement_load_failed: "Das Abrechnungsarchiv konnte nicht geladen werden.",

@@ -1,3 +1,4 @@
+import { formatMultiplier } from "@/lib/utils";
 import type {
   SubscriptionHistoryEvent,
   SubscriptionHistoryEventType,
@@ -37,10 +38,10 @@ export interface HistoryEntry {
   backfilled: boolean;
 }
 
-/** "Monthly", or "3× Monthly" when the subscription bills every few cycles. */
+/** "Monthly", or "3x Monthly" when the subscription bills every few cycles. */
 export function cycleLabel(cycle: string, frequency: number): string {
   if (!cycle) return "";
-  return frequency > 1 ? `${frequency}× ${cycle}` : cycle;
+  return frequency > 1 ? `${formatMultiplier(frequency)} ${cycle}` : cycle;
 }
 
 /**

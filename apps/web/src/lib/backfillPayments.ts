@@ -78,6 +78,7 @@ export function backfillDates({
           (86400000 * frequency * (cycle === "Weekly" ? 7 : 1)),
       );
   const cutoff = end && end < until ? end : until;
+  const cutoffTime = Date.parse(`${cutoff}T00:00:00.000Z`);
   const dates: string[] = [];
   for (let index = firstIndex; !limit || dates.length < limit; index++) {
     let date: Date;
@@ -94,12 +95,10 @@ export function backfillDates({
       date = new Date(anchor.getTime());
       date.setUTCDate(date.getUTCDate() + index * frequency * (cycle === "Weekly" ? 7 : 1));
     }
-    if (!Number.isFinite(date.getTime())) break;
-    const day = date.toISOString().slice(0, 10);
-    if (day > cutoff) break;
-    if (day < start) continue;
+    if (date.getTime() > cutoffTime) break;
+    if (date < beginning) continue;
     if (dates.length === MAX_BACKFILL_PAYMENTS) throw new Error("backfill_too_many");
-    dates.push(day);
+    dates.push(date.toISOString().slice(0, 10));
   }
   return dates;
 }

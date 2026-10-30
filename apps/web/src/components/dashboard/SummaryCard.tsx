@@ -12,6 +12,9 @@ export function SummaryCard({
   trend,
   trendUp,
   accent,
+  description,
+  comparison,
+  valueLabel,
 }: {
   title: string;
   year?: number;
@@ -21,30 +24,33 @@ export function SummaryCard({
   trend?: string;
   trendUp?: boolean;
   accent: string;
+  description?: string;
+  comparison?: { value: string; label: string; title?: string };
+  valueLabel?: string;
 }) {
   return (
     <Card
-      className="summary-card relative min-w-0 overflow-hidden rounded-3xl border bg-card shadow-sm [container-type:inline-size]"
-      style={{ "--summary-accent": accent } as CSSProperties}
+      className="summary-card relative h-[130px] min-w-0 overflow-hidden rounded-3xl border bg-card shadow-sm [container-type:inline-size]"
+      style={{ "--summary-accent": accent, containerName: "summary-card" } as CSSProperties}
     >
-      <CardContent className="relative px-3 pb-3 pt-3 sm:px-4 sm:pt-4">
-        <div className="mb-3 flex items-center gap-2 sm:gap-3">
-          <div className="summary-card-icon shrink-0 rounded-xl p-2 sm:p-2.5 [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6">
+      <CardContent className="summary-card__content relative grid h-full grid-rows-[2.75rem_1fr_1rem] gap-1 px-4 py-3">
+        <div className="summary-card__header flex items-center gap-3">
+          <div className="summary-card-icon shrink-0 rounded-xl p-2.5 [&>svg]:h-[22px] [&>svg]:w-[22px]">
             {icon}
           </div>
           <div className="min-w-0 flex-1">
             {year !== undefined && (
-              <p className="mb-0.5 text-xs font-semibold leading-tight text-muted-foreground">
+              <p className="summary-card__year mb-0.5 text-sm font-semibold leading-4 text-muted-foreground">
                 {year}
               </p>
             )}
-            <p className="text-xs font-medium leading-snug text-muted-foreground sm:text-sm">
+            <p className="summary-card__title text-base font-medium leading-5 text-muted-foreground" title={title}>
               {title}
             </p>
           </div>
           {trend && (
             <span
-              className={`text-xs font-bold px-2.5 py-1 flex shrink-0 items-center gap-1 rounded-full ${
+              className={`text-sm font-bold px-2.5 py-1 flex shrink-0 items-center gap-1 rounded-full ${
                 trendUp !== false ? "bg-green-500/20 text-green-600" : "bg-red-500/20 text-red-600"
               }`}
             >
@@ -53,14 +59,26 @@ export function SummaryCard({
             </span>
           )}
         </div>
-        <div>
+        <div className="flex min-w-0 items-end">
           {loading ? (
-            <div className="h-8 w-24 animate-pulse rounded-lg bg-background/60" />
+            <div className="h-9 w-28 animate-pulse rounded-lg bg-background/60" />
+          ) : comparison ? (
+            <div className="grid w-full grid-cols-2 items-center gap-2">
+              <p className="truncate text-[length:calc(clamp(0.875rem,8cqi,1.5rem)_+_2px)] font-extrabold leading-7 tracking-tight tabular-nums" title={comparison.title || comparison.value}>{comparison.value}</p>
+              <p className="truncate text-[length:calc(clamp(0.875rem,8cqi,1.5rem)_+_2px)] font-extrabold leading-7 tracking-tight tabular-nums" title={value}>{value}</p>
+            </div>
           ) : (
-            <p className="break-words text-[clamp(1rem,10cqi,1.875rem)] font-extrabold leading-tight tracking-tight tabular-nums sm:text-[clamp(1.25rem,11cqi,1.875rem)]">
+            <p className="truncate text-[length:calc(clamp(1rem,10cqi,1.75rem)_+_2px)] font-extrabold leading-7 tracking-tight tabular-nums" title={value}>
               {value}
             </p>
           )}
+        </div>
+        <div className="text-[13px] leading-4 text-muted-foreground">
+          {!loading && comparison && <div className="grid grid-cols-2 gap-2">
+            <p className="truncate" title={comparison.title}>{comparison.label}</p>
+            <p className="truncate">{valueLabel}</p>
+          </div>}
+          <p className="truncate" title={description}>{!loading ? description : null}</p>
         </div>
       </CardContent>
     </Card>

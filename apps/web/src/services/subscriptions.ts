@@ -6,7 +6,10 @@ const FULL_EXPAND = "currency,cycle,category,payment_method,payer";
 
 export const subscriptionsService = {
   deleteAll: () =>
-    api.post<{ deleted: number }>("/api/subscriptions/delete-all", { confirmed: true }),
+    api.post<{ deleted: number; payments_deleted: number; statements_hidden: number }>(
+      "/api/subscriptions/delete-all",
+      { confirmed: true },
+    ),
   /** All subscriptions for a user (active + inactive), with full relations. */
   list: (userId: string) =>
     client.collection("subscriptions").getFullList<Subscription>({

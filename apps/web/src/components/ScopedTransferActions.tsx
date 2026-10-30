@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { toast } from "@/lib/toast";
 import {
   exportBackup,
@@ -74,7 +75,7 @@ export function ScopedTransferActions({
         aria-label={`${label}: ${t("import")}`}
         disabled={busy}
         onClick={() => input.current?.click()}
-        className="h-[42px] rounded-xl"
+        className={compact ? "h-11 w-11 rounded-xl" : "h-11 rounded-xl"}
       >
         <Upload className={compact ? "h-4 w-4" : "mr-2 h-4 w-4"} />
         {!compact && t("import")}
@@ -87,44 +88,39 @@ export function ScopedTransferActions({
         aria-label={`${label}: ${t("export")}`}
         disabled={busy}
         onClick={() => void run(async () => exportBackup(() => {}, scope))}
-        className="h-[42px] rounded-xl"
+        className={compact ? "h-11 w-11 rounded-xl" : "h-11 rounded-xl"}
       >
         <Download className={compact ? "h-4 w-4" : "mr-2 h-4 w-4"} />
         {!compact && t("export")}
       </Button>
-      <Dialog
-        open={!!selected}
-        onOpenChange={(open) => {
-          if (!open && !busy) setSelected(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{label}</DialogTitle>
-            <DialogDescription>
-              {t(scope === "calendar" ? "calendar_transfer_hint" : "subscriptions_transfer_hint")}
-            </DialogDescription>
-          </DialogHeader>
-          <p className="text-sm">
-            {t("transfer_record_count", {
-              count:
-                selected?.backup.data[scope === "calendar" ? "payment_records" : "subscriptions"]
-                  .length ?? 0,
-            })}
-          </p>
-          {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
+      {selected && (
+        <Dialog open onOpenChange={dialogDismissHandler(() => setSelected(null), busy)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{label}</DialogTitle>
+              <DialogDescription>
+                {t(scope === "calendar" ? "calendar_transfer_hint" : "subscriptions_transfer_hint")}
+              </DialogDescription>
+            </DialogHeader>
+            <p className="text-sm">
+              {t("transfer_record_count", {
+                count:
+                  selected.backup.data[scope === "calendar" ? "payment_records" : "subscriptions"]
+                    .length,
+              })}
             </p>
-          )}
-          <DialogFooter>
-            <Button variant="outline" disabled={busy} onClick={() => setSelected(null)}>
-              {t("cancel")}
-            </Button>
-            <Button
-              disabled={busy}
-              onClick={() => {
-                if (selected)
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+            <DialogFooter>
+              <Button variant="outline" disabled={busy} onClick={() => setSelected(null)}>
+                {t("cancel")}
+              </Button>
+              <Button
+                disabled={busy}
+                onClick={() => {
                   void run(async () => {
                     const result = await importScopedData(selected);
                     await queryClient.invalidateQueries();
@@ -136,13 +132,14 @@ export function ScopedTransferActions({
                       }),
                     );
                   });
-              }}
-            >
-              {t(busy ? "saving" : "import")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                }}
+              >
+                {t(busy ? "saving" : "import")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { MONTH_KEYS } from "@/components/calendar/constants";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { resolveLocale } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 
 interface CalendarMonthPickerProps {
@@ -18,7 +19,7 @@ export function CalendarMonthPicker({ month, year, onSelect }: CalendarMonthPick
   const [open, setOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(year);
   const selectedButton = useRef<HTMLButtonElement>(null);
-  const language = (i18n.resolvedLanguage ?? i18n.language ?? "en").replace("_", "-");
+  const language = resolveLocale(i18n);
   const shortMonth = (index: number) =>
     new Intl.DateTimeFormat(language, { month: "short" })
       .format(new Date(pickerYear, index, 1))
@@ -37,7 +38,7 @@ export function CalendarMonthPicker({ month, year, onSelect }: CalendarMonthPick
           type="button"
           aria-label={`${t("calendar_choose_month")}: ${t(MONTH_KEYS[month - 1])} ${year}`}
           title={t("calendar_choose_month")}
-          className="flex min-w-[52px] flex-col items-center rounded-lg bg-primary/10 px-2.5 py-1 text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="flex min-w-[52px] flex-col items-center rounded-lg bg-primary/10 px-2.5 py-1 text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:text-primary"
         >
           <span className="text-[10px] font-bold uppercase leading-tight">
             {shortMonth(month - 1)}

@@ -29,6 +29,7 @@ import { authService } from "@/services/auth";
 import { setupService } from "@/services/setup";
 
 import { SETUP_CURRENCIES, SETUP_FIELDS, type SetupForm, setupSchema } from "./setup.schema";
+import { revealInvalidSetupStep } from "./setup.validation";
 import { SetupStart } from "./SetupStart";
 
 const STEPS = ["setup_account", "setup_defaults", "setup_notifications", "setup_review"];
@@ -345,10 +346,7 @@ export function SetupPage() {
                   void next();
                 } else
                   void handleSubmit(complete, (invalid) => {
-                    const index = SETUP_FIELDS.findIndex((fields) =>
-                      fields.some((field) => invalid[field]),
-                    );
-                    if (index >= 0) setStep(index);
+                    revealInvalidSetupStep(invalid, setStep);
                   })(event);
               }}
             >

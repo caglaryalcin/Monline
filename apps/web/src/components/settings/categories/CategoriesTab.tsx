@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import { categoryLabel } from "@/lib/categoryLabel";
+import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { categoriesService } from "@/services/categories";
@@ -17,6 +18,7 @@ import { categoriesService } from "@/services/categories";
 export function CategoriesTab() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const userId = user?.id ?? "";
   const qc = useQueryClient();
 
   const [isAdding, setIsAdding] = useState(false);
@@ -26,7 +28,7 @@ export function CategoriesTab() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const { data: categories = [], isLoading } = useQuery({
-    queryKey: queryKeys.categories.all(user?.id ?? ""),
+    queryKey: queryKeys.categories.all(userId),
     queryFn: () => categoriesService.list(user!.id),
     enabled: !!user?.id,
   });
@@ -35,7 +37,7 @@ export function CategoriesTab() {
     mutationFn: (name: string) => categoriesService.create(user!.id, name),
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: queryKeys.categories.all(user?.id ?? ""),
+        queryKey: queryKeys.categories.all(userId),
       });
       setNewCategoryName("");
       setIsAdding(false);
@@ -48,9 +50,9 @@ export function CategoriesTab() {
     mutationFn: ({ id, name }: { id: string; name: string }) => categoriesService.update(id, name),
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: queryKeys.categories.all(user?.id ?? ""),
+        queryKey: queryKeys.categories.all(userId),
       });
-      qc.invalidateQueries({ queryKey: queryKeys.subscriptions.all(user?.id ?? "") });
+      qc.invalidateQueries({ queryKey: queryKeys.subscriptions.all(userId) });
       setEditingId(null);
       toast.success(t("success_update"));
     },
@@ -61,7 +63,7 @@ export function CategoriesTab() {
     mutationFn: (id: string) => categoriesService.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: queryKeys.categories.all(user?.id ?? ""),
+        queryKey: queryKeys.categories.all(userId),
       });
       toast.success(t("success_delete"));
     },
@@ -143,9 +145,7 @@ export function CategoriesTab() {
       <ConfirmDialog
         confirmOnEnter
         open={!!pendingDeleteId}
-        onOpenChange={(open) => {
-          if (!open) setPendingDeleteId(null);
-        }}
+        onOpenChange={dialogDismissHandler(() => setPendingDeleteId(null))}
         title={t("delete")}
         description={t("confirm_delete")}
         onConfirm={() => {

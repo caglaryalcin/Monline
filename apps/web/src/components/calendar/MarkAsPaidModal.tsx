@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, Eye, FileText } from "lucide-react";
 import { useState } from "react";
 
+import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,7 +15,7 @@ import { paymentRecordsService } from "@/services/paymentRecords";
 import type { PaymentRecord, Subscription } from "@/types";
 
 import { pastePaymentProof, PaymentProofField } from "./PaymentProofField";
-import { getLogoUrl, toDateOnly, toDateStr } from "./types";
+import { toDateOnly, toDateStr } from "./types";
 
 interface MarkAsPaidModalProps {
   mode?: "confirm" | "edit";
@@ -95,8 +96,6 @@ export function MarkAsPaidModal({
     },
   });
 
-  const logo = getLogoUrl(sub);
-
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent
@@ -105,15 +104,9 @@ export function MarkAsPaidModal({
       >
         <DialogHeader className="border-b bg-card/70 backdrop-blur px-6 py-5">
           <DialogTitle className="flex items-center gap-4">
-            {logo ? (
-              <div className="h-12 w-12 shrink-0 rounded-2xl overflow-hidden border bg-background p-1.5">
-                <img src={logo} alt="" className="h-full w-full object-contain" />
-              </div>
-            ) : (
-              <div className="h-12 w-12 shrink-0 rounded-2xl bg-primary/10 flex items-center justify-center text-base font-bold text-primary">
-                {sub.name[0]?.toUpperCase()}
-              </div>
-            )}
+            <div className="h-12 w-12 shrink-0 rounded-2xl overflow-hidden border bg-background p-1.5">
+              <SubscriptionLogo sub={sub} className="h-full w-full object-contain" />
+            </div>
 
             <div className="min-w-0 flex-1">
               <p className="text-lg font-bold leading-tight truncate">

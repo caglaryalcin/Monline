@@ -6,6 +6,11 @@ export function categoryLabel(
   t: (key: string, options?: { defaultValue: string }) => string,
 ): string {
   return category.translation_key
-    ? t(`category_default_${category.translation_key}`, { defaultValue: category.name })
+    ? t(
+        category.translation_key.startsWith("statement_")
+          ? `statement_category_${category.translation_key.slice(10)}`
+          : `category_default_${category.translation_key}`,
+        { defaultValue: category.name },
+      )
     : category.name;
 }

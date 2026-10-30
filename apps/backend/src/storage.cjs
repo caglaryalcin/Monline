@@ -7,6 +7,7 @@ const { compileFilter, compileSort } = require("./filter.cjs");
 const { BadRequestError, NotFoundError } = require("./errors.cjs");
 const bcrypt = require("bcryptjs");
 const { normalizeSubscriptionName } = require("./subscription-names.cjs");
+const { LEGACY_EXPENSE_TYPES } = require("./domain/lib/pure/finance.js");
 
 const identifier = (value) => '"' + String(value).replace(/"/g, '""') + '"';
 const newId = () =>
@@ -204,6 +205,34 @@ class Repository {
         );
     if (
       !this.connection
+        .prepare('PRAGMA table_info("finance_rows")')
+        .all()
+        .some((column) => column.name === "expense_type")
+    )
+      this.connection.exec(
+        "ALTER TABLE finance_rows ADD COLUMN expense_type TEXT NOT NULL DEFAULT ''",
+      );
+    for (const name of ["summary", "unresolved", "excluded_transactions"])
+      if (
+        !this.connection
+          .prepare('PRAGMA table_info("bank_statements")')
+          .all()
+          .some((column) => column.name === name)
+      )
+        this.connection.exec(
+          `ALTER TABLE bank_statements ADD COLUMN ${identifier(name)} TEXT DEFAULT 'null'`,
+        );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("bank_statements")')
+        .all()
+        .some((column) => column.name === "tracking_hidden")
+    )
+      this.connection.exec(
+        "ALTER TABLE bank_statements ADD COLUMN tracking_hidden INTEGER NOT NULL DEFAULT 0",
+      );
+    if (
+      !this.connection
         .prepare('PRAGMA table_info("subscriptions")')
         .all()
         .some((column) => column.name === "statement_imported")
@@ -230,9 +259,63 @@ class Repository {
         "ALTER TABLE subscriptions ADD COLUMN billing_anchor_day REAL NOT NULL DEFAULT 0",
       );
     }
-    this.connection.exec(
-      "UPDATE subscriptions SET billing_anchor_day = CAST(substr(next_payment, 9, 2) AS INTEGER) WHERE billing_anchor_day = 0 AND length(next_payment) >= 10",
-    );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("payment_records")')
+        .all()
+        .some((column) => column.name === "scheduled_date")
+    )
+      this.connection.exec(
+        "ALTER TABLE payment_records ADD COLUMN scheduled_date TEXT NOT NULL DEFAULT ''",
+      );
+    this.repairBillingAnchorDays();
+    this.connection
+      .exec(`CREATE UNIQUE INDEX IF NOT EXISTS budget_match_target ON budget_matches(user,target_type,target_id) WHERE relation='same';
+      CREATE UNIQUE INDEX IF NOT EXISTS budget_match_source ON budget_matches(user,statement_id,transaction_id) WHERE relation='same';`);
+    for (const [table, field] of [
+      ["finance_rows", "payment_card"],
+      ["finance_rows", "bill_type"],
+      ["finance_entries", "payment_tag"],
+      ["payment_methods", "finance_card"],
+    ])
+      if (
+        !this.connection
+          .prepare(`PRAGMA table_info(${identifier(table)})`)
+          .all()
+          .some((column) => column.name === field)
+      )
+        this.connection.exec(
+          `ALTER TABLE ${identifier(table)} ADD COLUMN ${identifier(field)} TEXT NOT NULL DEFAULT ''`,
+        );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("finance_rows")')
+        .all()
+        .some((column) => column.name === "row_order")
+    )
+      this.connection.exec(
+        "ALTER TABLE finance_rows ADD COLUMN row_order REAL NOT NULL DEFAULT 0",
+      );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("finance_rows")')
+        .all()
+        .some((column) => column.name === "is_loan")
+    )
+      this.connection.exec(
+        "ALTER TABLE finance_rows ADD COLUMN is_loan INTEGER NOT NULL DEFAULT 0",
+      );
+    for (const [field, definition] of [
+      ["is_rent", "INTEGER NOT NULL DEFAULT 0"],
+      ["is_auto_carryover", "INTEGER NOT NULL DEFAULT 0"],
+      ["year", "REAL NOT NULL DEFAULT 0"],
+      ["origin_row", "TEXT NOT NULL DEFAULT ''"],
+      ["loan_id", "TEXT NOT NULL DEFAULT ''"],
+      ["is_deleted", "INTEGER NOT NULL DEFAULT 0"],
+    ]) {
+      if (!this.connection.prepare('PRAGMA table_info("finance_rows")').all().some((column) => column.name === field))
+        this.connection.exec(`ALTER TABLE finance_rows ADD COLUMN ${identifier(field)} ${definition}`);
+    }
     if (
       !this.connection
         .prepare('PRAGMA table_info("subscriptions")')
@@ -271,6 +354,12 @@ class Repository {
         this.connection.exec(
           `ALTER TABLE notifications_config ADD COLUMN ${identifier(name)} TEXT NOT NULL DEFAULT ''`,
         );
+    if (!this.connection.prepare('PRAGMA table_info("finance_benchmarks")').all().some((column) => column.name === "salary_tag"))
+      this.connection.exec("ALTER TABLE finance_benchmarks ADD COLUMN salary_tag TEXT NOT NULL DEFAULT ''");
+    for (const field of ["row_id", "start_month", "scope", "updated_at"])
+      if (!this.connection.prepare('PRAGMA table_info("merchant_logos")').all().some((column) => column.name === field))
+        this.connection.exec(`ALTER TABLE merchant_logos ADD COLUMN ${identifier(field)} TEXT NOT NULL DEFAULT ''`);
+    this.repairFinanceRowTypes();
     this.repairStatementImportMarkers();
     this.repairMainPaymentMethods();
     if (
@@ -312,6 +401,11 @@ class Repository {
       CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON users(email COLLATE NOCASE);
       CREATE INDEX IF NOT EXISTS payment_due ON payment_records(user,subscription_id,due_date);
       CREATE INDEX IF NOT EXISTS bank_hash ON bank_statements(user,file_hash);
+      CREATE UNIQUE INDEX IF NOT EXISTS finance_statement_cell ON finance_statement_links(user,row_id,month);
+      CREATE UNIQUE INDEX IF NOT EXISTS finance_statement_source ON finance_statement_links(user,statement_id);
+      DROP INDEX IF EXISTS merchant_logo_name;
+      CREATE UNIQUE INDEX IF NOT EXISTS merchant_logo_period ON merchant_logos(user,merchant_key,row_id,start_month,scope);
+      CREATE INDEX IF NOT EXISTS manual_bills_user_date ON manual_bills(user,date);
       CREATE INDEX IF NOT EXISTS sessions_expiry ON monline_sessions(expires);
     `);
     if (
@@ -331,6 +425,13 @@ class Repository {
         );
     }
   }
+  repairFinanceRowTypes() {
+    this.connection
+      .prepare(
+        `UPDATE finance_rows SET expense_type='' WHERE expense_type IN (${LEGACY_EXPENSE_TYPES.map(() => "?").join(",")})`,
+      )
+      .run(...LEGACY_EXPENSE_TYPES);
+  }
   repairStatementImportMarkers() {
     // Recover the marker for older statement payments and restored backups.
     this.connection.exec(`UPDATE subscriptions SET statement_imported=1
@@ -338,6 +439,11 @@ class Repository {
         SELECT 1 FROM payment_records p WHERE p.subscription_id=subscriptions.id
         AND p.user=subscriptions.user AND instr(p.statement_sources, '[monline-statement:')>0
       )`);
+  }
+  repairBillingAnchorDays() {
+    this.connection.exec(
+      "UPDATE subscriptions SET billing_anchor_day = CAST(substr(next_payment, 9, 2) AS INTEGER) WHERE billing_anchor_day = 0 AND length(next_payment) >= 10",
+    );
   }
   repairMainPaymentMethods() {
     const seen = new Set();

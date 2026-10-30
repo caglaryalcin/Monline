@@ -29,6 +29,7 @@ const OIDCCallbackPage = lazyRouteComponent(
 );
 
 const DashboardPage = lazyRouteComponent(() => import("@/pages/DashboardPage"), "DashboardPage");
+const FinancePage = lazyRouteComponent(() => import("@/pages/FinancePage"), "FinancePage");
 const AboutPage = lazyRouteComponent(() => import("@/pages/AboutPage"), "AboutPage");
 const SubscriptionsPage = lazyRouteComponent(
   () => import("@/pages/SubscriptionsPage"),
@@ -36,11 +37,12 @@ const SubscriptionsPage = lazyRouteComponent(
 );
 const CalendarPage = lazyRouteComponent(() => import("@/pages/CalendarPage"), "CalendarPage");
 const StatisticsPage = lazyRouteComponent(() => import("@/pages/StatisticsPage"), "StatisticsPage");
-const DataTransferPage = lazyRouteComponent(
-  () => import("@/pages/DataTransferPage"),
-  "DataTransferPage",
-);
+const DebtPage = lazyRouteComponent(() => import("@/pages/DebtPage"), "DebtPage");
 const StatementsPage = lazyRouteComponent(() => import("@/pages/StatementsPage"), "StatementsPage");
+const StatementDetailPage = lazyRouteComponent(
+  () => import("@/pages/StatementsPage"),
+  "StatementDetailPage",
+);
 const SettingsPage = lazyRouteComponent(() => import("@/pages/SettingsPage"), "SettingsPage");
 const AdminPage = lazyRouteComponent(() => import("@/pages/AdminPage"), "AdminPage");
 
@@ -145,6 +147,11 @@ const dashboardRoute = createRoute({
   path: "/dashboard",
   component: DashboardPage,
 });
+const financeRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: "/finance",
+  component: FinancePage,
+});
 
 const aboutRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
@@ -173,7 +180,17 @@ const statisticsRoute = createRoute({
 const dataTransferRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: "/data-transfer",
-  component: DataTransferPage,
+  beforeLoad: () => {
+    throw redirect({ to: "/settings", search: { tab: "data_transfer" }, replace: true });
+  },
+});
+const debtRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: "/debt",
+  validateSearch: (search: Record<string, unknown>): { tab?: "installments" | "loans" } => ({
+    tab: search.tab === "installments" || search.tab === "loans" ? search.tab : undefined,
+  }),
+  component: DebtPage,
 });
 const statementsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
@@ -190,6 +207,12 @@ export const settingsRoute = createRoute({
   }),
 });
 
+const statementDetailRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: "/statements/$statementId",
+  component: StatementDetailPage,
+});
+
 export const adminRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: "/admin",
@@ -198,7 +221,8 @@ export const adminRoute = createRoute({
     tab: typeof search.tab === "string" ? search.tab : undefined,
   }),
   beforeLoad: ({ context }) => {
-    if (!context.auth.isLoading && !context.auth.isAdmin) throw redirect({ to: "/dashboard" });
+    if (!context.auth.isLoading && !context.auth.isAdmin)
+      throw redirect({ to: "/dashboard" });
   },
 });
 
@@ -224,12 +248,15 @@ const routeTree = rootRoute.addChildren([
   protectedLayoutRoute.addChildren([
     indexRoute,
     dashboardRoute,
+    financeRoute,
     aboutRoute,
     subscriptionsRoute,
     calendarRoute,
     statisticsRoute,
+    debtRoute,
     dataTransferRoute,
     statementsRoute,
+    statementDetailRoute,
     settingsRoute,
     adminRoute,
   ]),

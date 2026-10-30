@@ -1,4 +1,5 @@
 import { isCredit } from "@/lib/recordTypes";
+import type { SpendingEvent } from "@/lib/spending";
 import { paymentOwnerId } from "@/lib/standalonePayments";
 import { automaticLogoUrls } from "@/lib/subscriptionLogo";
 import { subscriptionsService } from "@/services/subscriptions";
@@ -10,6 +11,7 @@ export interface DayEntry {
   sub: Subscription;
   date: Date;
   amount?: number;
+  spending?: SpendingEvent;
 }
 
 export const PAYMENT_COLORS = {

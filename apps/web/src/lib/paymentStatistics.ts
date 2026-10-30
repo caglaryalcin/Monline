@@ -17,6 +17,29 @@ export interface MonthlyPaymentTotal {
   subscriptions: SubscriptionPaymentTotal[];
 }
 
+/** Aggregate arrivals in any order while retaining the earliest upcoming date. */
+export function addPaymentToMonth(
+  month: MonthlyPaymentTotal,
+  subscription: Subscription,
+  amount: number,
+  nextDate?: string,
+) {
+  const detail = month.subscriptions.find((item) => item.subscription.id === subscription.id);
+  if (detail) {
+    detail.amount += amount;
+    detail.count++;
+    if (nextDate && (!detail.nextDate || nextDate < detail.nextDate)) detail.nextDate = nextDate;
+  } else
+    month.subscriptions.push({
+      subscription,
+      amount,
+      count: 1,
+      ...(nextDate ? { nextDate } : {}),
+    });
+  month.total += amount;
+  month.count++;
+}
+
 export function buildPaymentStatistics(
   subscriptions: Subscription[],
   currencies: Currency[],
@@ -51,27 +74,7 @@ export function buildPaymentStatistics(
     const timestamp = new Date(record.paid_at.replace(" ", "T"));
     return Number.isFinite(timestamp.getTime()) && timestamp <= now;
   });
-  const add = (
-    month: MonthlyPaymentTotal,
-    subscription: Subscription,
-    amount: number,
-    nextDate?: string,
-  ) => {
-    const detail = month.subscriptions.find((item) => item.subscription.id === subscription.id);
-    if (detail) {
-      detail.amount += amount;
-      detail.count++;
-      if (nextDate && (!detail.nextDate || nextDate < detail.nextDate)) detail.nextDate = nextDate;
-    } else
-      month.subscriptions.push({
-        subscription,
-        amount,
-        count: 1,
-        ...(nextDate ? { nextDate } : {}),
-      });
-    month.total += amount;
-    month.count++;
-  };
+
   for (const payment of recordedPayments(subscriptions, currencies, records, now)) {
     const date = payment.paidAt;
     const name = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -81,7 +84,7 @@ export function buildPaymentStatistics(
       month.unpricedCount++;
       continue;
     }
-    add(month, payment.subscription, payment.amount);
+    addPaymentToMonth(month, payment.subscription, payment.amount);
   }
   // A recurring cycle alone does not authorize future renewals. Keep dated
   // one-time charges, but only project recurring subscriptions that renew.
@@ -109,7 +112,7 @@ export function buildPaymentStatistics(
         entry.status === "paid"
       )
         continue;
-      add(month, entry.subscription, entry.amount, entry.date);
+      addPaymentToMonth(month, entry.subscription, entry.amount, entry.date);
     }
   }
   for (const month of [...paid, ...upcoming]) {

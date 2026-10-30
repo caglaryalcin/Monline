@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
+import { resolveLocale } from "@/lib/locale";
+
 function setMeta(selector: string, attr: "content", value: string) {
   const el = document.head.querySelector<HTMLMetaElement>(selector);
   if (el) {
@@ -28,6 +30,7 @@ function setMeta(selector: string, attr: "content", value: string) {
 
 export function AppMetadata() {
   const { t, i18n } = useTranslation();
+  const locale = resolveLocale(i18n);
 
   useEffect(() => {
     const appName = t("app_name", { defaultValue: "Monline" });
@@ -39,7 +42,7 @@ export function AppMetadata() {
         "Track subscriptions and monthly online spending, with spreadsheet connections and full control of your data.",
     });
 
-    document.documentElement.lang = i18n.resolvedLanguage ?? i18n.language ?? "en";
+    document.documentElement.lang = locale;
     document.title = `${appName} — ${subtitle}`;
 
     setMeta('meta[name="application-name"]', "content", appName);
@@ -49,7 +52,7 @@ export function AppMetadata() {
     setMeta('meta[property="og:description"]', "content", description);
     setMeta('meta[name="twitter:title"]', "content", appName);
     setMeta('meta[name="twitter:description"]', "content", description);
-  }, [i18n.language, i18n.resolvedLanguage, t]);
+  }, [locale, t]);
 
   return null;
 }

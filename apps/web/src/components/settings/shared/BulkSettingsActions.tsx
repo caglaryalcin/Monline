@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { toast } from "@/lib/toast";
 
 type Item = { id: string; label: string; values: Record<string, string> };
@@ -43,8 +44,7 @@ export function BulkSettingsActions({
   const selectedItems = items.filter((item) => selected.has(item.id));
   const allSelected = items.length > 0 && selectedItems.length === items.length;
 
-  async function apply(action: "update" | "delete") {
-    const targets = action === "update" ? (drafts ?? []) : selectedItems;
+  async function apply(action: "update" | "delete", targets: Item[]) {
     setBusy(true);
     try {
       const results = await Promise.allSettled(
@@ -115,83 +115,83 @@ export function BulkSettingsActions({
           </>
         )}
       </div>
-      <Dialog
-        open={drafts !== null}
-        onOpenChange={(open) => {
-          if (!open && !busy) setDrafts(null);
-        }}
-      >
-        <DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t("edit_selected")}</DialogTitle>
-            <DialogDescription>{t("bulk_edit_hint")}</DialogDescription>
-          </DialogHeader>
-          <form
-            className="space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!busy) void apply("update");
-            }}
-          >
-            <fieldset disabled={busy} className="space-y-3">
-              {drafts?.map((item, index) => (
-                <div key={item.id} className="space-y-3 rounded-xl border bg-card p-4">
-                  <p className="text-sm font-semibold">{item.label}</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {fields.map((field) => (
-                      <label key={field.key} className="space-y-1.5 text-xs text-muted-foreground">
-                        {field.label}
-                        <Input
-                          aria-label={`${item.label} · ${field.label}`}
-                          required={field.required}
-                          value={item.values[field.key] ?? ""}
-                          onChange={(event) =>
-                            setDrafts(
-                              (current) =>
-                                current?.map((entry, row) =>
-                                  row === index
-                                    ? {
-                                        ...entry,
-                                        values: {
-                                          ...entry.values,
-                                          [field.key]: event.target.value,
-                                        },
-                                      }
-                                    : entry,
-                                ) ?? null,
-                            )
-                          }
-                        />
-                      </label>
-                    ))}
+      {drafts && (
+        <Dialog open onOpenChange={dialogDismissHandler(() => setDrafts(null), busy)}>
+          <DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t("edit_selected")}</DialogTitle>
+              <DialogDescription>{t("bulk_edit_hint")}</DialogDescription>
+            </DialogHeader>
+            <form
+              className="space-y-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!busy) void apply("update", drafts);
+              }}
+            >
+              <fieldset disabled={busy} className="space-y-3">
+                {drafts.map((item, index) => (
+                  <div key={item.id} className="space-y-3 rounded-xl border bg-card p-4">
+                    <p className="text-sm font-semibold">{item.label}</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {fields.map((field) => (
+                        <label
+                          key={field.key}
+                          className="space-y-1.5 text-xs text-muted-foreground"
+                        >
+                          {field.label}
+                          <Input
+                            aria-label={`${item.label} · ${field.label}`}
+                            required={field.required}
+                            value={item.values[field.key] ?? ""}
+                            onChange={(event) =>
+                              setDrafts(
+                                (current) =>
+                                  current?.map((entry, row) =>
+                                    row === index
+                                      ? {
+                                          ...entry,
+                                          values: {
+                                            ...entry.values,
+                                            [field.key]: event.target.value,
+                                          },
+                                        }
+                                      : entry,
+                                  ) ?? null,
+                              )
+                            }
+                          />
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </fieldset>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={busy}
-                onClick={() => setDrafts(null)}
-              >
-                {t("cancel")}
-              </Button>
-              <Button
-                type="submit"
-                disabled={
-                  busy ||
-                  drafts?.some((item) =>
-                    fields.some((field) => field.required && !item.values[field.key]?.trim()),
-                  )
-                }
-              >
-                {t(busy ? "loading" : "save")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+                ))}
+              </fieldset>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => setDrafts(null)}
+                >
+                  {t("cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    busy ||
+                    drafts.some((item) =>
+                      fields.some((field) => field.required && !item.values[field.key]?.trim()),
+                    )
+                  }
+                >
+                  {t(busy ? "loading" : "save")}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
       <ConfirmDialog
         confirmOnEnter
         open={confirmDelete}
@@ -201,7 +201,7 @@ export function BulkSettingsActions({
         title={t("delete_selected")}
         description={t("confirm_delete_selected", { count: selectedItems.length })}
         onConfirm={() => {
-          if (!busy) void apply("delete");
+          if (!busy) void apply("delete", selectedItems);
         }}
       />
     </>

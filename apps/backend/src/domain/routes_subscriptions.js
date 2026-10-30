@@ -481,7 +481,9 @@ routerAdd("POST", "/api/subscription/renew", (e) => {
     });
   }
   require(domainPath + "/lib/subscription-schedule.js").advanceSubscription(
-    repository, sub.id, dateHelpers.formatLocalDate(new Date()),
+    repository,
+    sub.id,
+    dateHelpers.formatLocalDate(new Date()),
   );
   const updated = repository.findRecordById("subscriptions", sub.id);
   return e.json(200, {

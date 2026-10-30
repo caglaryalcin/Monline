@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 
-import { cn, getCurrencyFractionDigits } from "@/lib/utils";
+import { cn, getCurrencyFractionDigits, getCurrencySymbol } from "@/lib/utils";
 
 interface CurrencyInputProps {
   value: number | string | null;
@@ -114,6 +114,7 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
     const fractionDigits = getCurrencyFractionDigits(code);
     const displayValue = focused ? raw : hasValue ? formatNumber(numeric, code) : "";
     const resolvedPlaceholder = placeholder ?? (fractionDigits === 0 ? "0" : "0,00");
+    const currencySuffix = getCurrencySymbol(code || symbol || "");
 
     return (
       <div
@@ -127,11 +128,6 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
           className,
         )}
       >
-        {symbol && (
-          <span className="pl-3 pr-1 text-muted-foreground text-sm font-medium select-none shrink-0">
-            {symbol}
-          </span>
-        )}
         <input
           ref={inputRef}
           id={id}
@@ -146,11 +142,11 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
           onBlur={handleBlur}
           placeholder={resolvedPlaceholder}
           disabled={disabled}
-          className="flex-1 min-w-0 bg-transparent px-2 py-2 text-sm font-semibold outline-none placeholder:text-muted-foreground/50"
+          className={cn("flex-1 min-w-0 bg-transparent px-2 py-2 text-sm font-semibold outline-none placeholder:text-muted-foreground/50", currencySuffix && "pr-0 text-right")}
         />
-        {code && (
-          <span className="pr-3 pl-1 text-muted-foreground/60 text-xs font-medium uppercase tracking-wider select-none shrink-0">
-            {code}
+        {currencySuffix && (
+          <span className="pr-3 text-muted-foreground text-sm font-medium select-none shrink-0" title={code}>
+            {currencySuffix}
           </span>
         )}
       </div>

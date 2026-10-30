@@ -114,7 +114,7 @@ function fileUrl(
   return options.token ? `${url}?token=${encodeURIComponent(options.token)}` : url;
 }
 const client = {
-  baseUrl: typeof window !== "undefined" ? window.location.origin : "http://localhost:8080",
+  baseUrl: window.location.origin,
   authStore: {
     get isValid() {
       return !!current?.token && !!current?.record?.id;

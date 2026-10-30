@@ -1,10 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, Plus } from "lucide-react";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
-import { BackfillPaymentsEditor } from "@/components/subscriptions/BackfillPaymentsEditor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,18 +19,22 @@ import { api } from "@/lib/api";
 import { type BackfillSelection, localToday } from "@/lib/backfillPayments";
 import { CYCLE_NAME_KEYS } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
+import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { queryKeys } from "@/lib/queryKeys";
 import { nextStatementPaymentDate } from "@/lib/statementPaymentDate";
 import { type ReviewTransaction, validStatementDate } from "@/lib/statements";
 import { isStatementOnlyTransaction } from "@/lib/statementSubscriptions";
 import { statementSubscriptionSuggestions } from "@/lib/statementSubscriptionSuggestions";
-import { cn } from "@/lib/utils";
+import { statementTranslations } from "@/lib/statementTranslations";
+import { cn, formatCurrency } from "@/lib/utils";
 import { categoriesService } from "@/services/categories";
 import { currenciesService } from "@/services/currencies";
 import { cyclesService } from "@/services/cycles";
 import { paymentMethodsService } from "@/services/paymentMethods";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Category, Currency, Cycle, PaymentMethod, Subscription } from "@/types";
+
+import { StatementHistory } from "./StatementHistory";
 
 export interface StatementImportResult {
   subscriptions_created: number;
@@ -87,67 +90,12 @@ interface Group {
   payment_method: string;
 }
 
-function StatementHistory({
-  group,
-  selected,
-  subscription,
-  currency,
-  cycles,
-  disabled,
-  onChange,
-}: {
-  group: Group;
-  selected: Set<string>;
-  subscription?: Subscription;
-  currency?: Currency;
-  cycles: Cycle[];
-  disabled: boolean;
-  onChange: (key: string, selection: BackfillSelection) => void;
-}) {
-  const { t } = useTranslation();
-  const id = useId();
-  const sourceRows = useMemo(
-    () => group.rows.filter((row) => selected.has(row.id)),
-    [group.rows, selected],
-  );
-  const excludeDates = useMemo(() => sourceRows.map((row) => row.date), [sourceRows]);
-  const latest = sourceRows.at(-1);
-  const amount =
-    latest && group.combineDates.includes(latest.date)
-      ? sourceRows
-          .filter((row) => row.date === latest.date)
-          .reduce((sum, row) => sum + row.amount, 0)
-      : (latest?.amount ?? null);
-  const cycleId = subscription?.cycle ?? group.cycle;
-  const cycle = subscription?.expand?.cycle ?? cycles.find((item) => item.id === cycleId);
-  const handleChange = useCallback(
-    (selection: BackfillSelection) => onChange(group.key, selection),
-    [group.key, onChange],
-  );
-  return (
-    <BackfillPaymentsEditor
-      idPrefix={id}
-      start={sourceRows[0]?.date ?? ""}
-      cycle={cycle?.name ?? "Monthly"}
-      frequency={subscription?.frequency ?? 1}
-      price={amount}
-      currency={currency}
-      end={[subscription?.end_date, subscription?.cancellation_date].filter(Boolean).sort()[0]}
-      limit={subscription?.payment_limit}
-      fixedStart
-      excludeDates={excludeDates}
-      disabled={disabled}
-      title={t("statement_import_history")}
-      description={t("statement_import_history_note")}
-      onChange={handleChange}
-    />
-  );
-}
-
 export function StatementImportDialog(props: Props) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
-  const importRows = props.rows.filter((row) => !isStatementOnlyTransaction(row));
+  const importRows = props.rows.filter(
+    (row) => row.kind === "charge" && !isStatementOnlyTransaction(row),
+  );
   const subscriptions = useQuery({
     queryKey: queryKeys.subscriptions.all(props.userId),
     queryFn: () => subscriptionsService.list(props.userId),
@@ -180,12 +128,7 @@ export function StatementImportDialog(props: Props) {
     categories.isError ||
     paymentMethods.isError;
   return (
-    <Dialog
-      open
-      onOpenChange={(open) => {
-        if (!open && !busy) props.onClose();
-      }}
-    >
+    <Dialog open onOpenChange={dialogDismissHandler(() => props.onClose(), busy)}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-3xl sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{t("statement_import_title")}</DialogTitle>
@@ -269,7 +212,16 @@ function ImportForm({
     () =>
       new Set(
         rows
-          .filter((row) => row.kind === "charge" && !!row.subscription_service && eligible(row))
+          .filter(
+            (row) =>
+              row.kind === "charge" &&
+              !!row.subscription_service &&
+              row.included &&
+              !row.uncertain &&
+              row.subscription_match !== "provider" &&
+              row.subscription_match !== "account" &&
+              eligible(row),
+          )
           .map((row) => row.id),
       ),
   );
@@ -288,6 +240,15 @@ function ImportForm({
       );
       const cycle = cycles.find((c) => c.name === "Monthly") || cycleOptions[0];
       const existing = matches.length === 1 ? matches[0] : undefined;
+      const statementCategory = items[0].category || "digital";
+      const categoryNames = Object.values(statementTranslations).map((dict) =>
+        normalize(dict[`statement_category_${statementCategory}`]),
+      );
+      const detectedCategory = categories.find(
+        (category) =>
+          category.translation_key === `statement_${statementCategory}` ||
+          categoryNames.includes(normalize(category.name)),
+      );
       return {
         key,
         name,
@@ -297,7 +258,7 @@ function ImportForm({
         cycle: cycle?.id || "",
         combineDates: [],
         active: false,
-        category: existing?.category ?? "",
+        category: existing?.category ?? detectedCategory?.id ?? "",
         payment_method: existing
           ? (existing.payment_method ?? "")
           : (paymentMethods.find((method) => method.is_main)?.id ?? ""),
@@ -505,8 +466,12 @@ function ImportForm({
   }
   return (
     <div ref={formRef} className="space-y-4">
-      <p className="rounded-xl border bg-muted/20 p-3 text-sm text-muted-foreground">
-        {t("statement_import_schedule_note")}
+      <p className="flex items-start gap-2 rounded-xl border bg-muted/20 p-3 text-sm text-muted-foreground">
+        <Check
+          className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+          aria-hidden="true"
+        />
+        <span>{t("statement_import_schedule_note")}</span>
       </p>
       {groups.map((group) => {
         const currency = currencies.find((c) => c.code === group.currency);
@@ -530,10 +495,7 @@ function ImportForm({
         }
         const combinableDays = [...selectedByDate].filter(([, items]) => items.length > 1);
         const formatAmount = (amount: number) =>
-          new Intl.NumberFormat(i18n.language.replace("_", "-"), {
-            style: "currency",
-            currency: group.currency,
-          }).format(amount);
+          formatCurrency(amount, group.currency, { locale: i18n.language.replace("_", "-") });
         return (
           <section
             key={group.key}
@@ -649,10 +611,9 @@ function ImportForm({
                       )}
                     </span>
                     <span className="shrink-0 tabular-nums">
-                      {new Intl.NumberFormat(i18n.language.replace("_", "-"), {
-                        style: "currency",
-                        currency: row.currency,
-                      }).format(row.amount)}
+                      {formatCurrency(row.amount, row.currency, {
+                        locale: i18n.language.replace("_", "-"),
+                      })}
                     </span>
                   </label>
                 );
@@ -744,7 +705,7 @@ function ImportForm({
                         >
                           {cycleOptions.map((c) => (
                             <option key={c.id} value={c.id}>
-                              {t(CYCLE_NAME_KEYS[c.name] || c.name)}
+                              {t(CYCLE_NAME_KEYS[c.name])}
                             </option>
                           ))}
                         </ThemedSelect>
@@ -950,13 +911,7 @@ function ImportForm({
                   type="button"
                   className="block text-left underline underline-offset-4 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={() => {
-                    const section = groupRefs.current.get(group.key);
-                    const target =
-                      section?.querySelector<HTMLElement>(
-                        "[data-backfill-confirmation]:not(:disabled)",
-                      ) ?? section?.querySelector<HTMLElement>('[role="switch"]');
-                    target?.scrollIntoView({ block: "center", behavior: "smooth" });
-                    target?.focus({ preventScroll: true });
+                    focusStatementHistory(groupRefs.current.get(group.key));
                   }}
                 >
                   {group.name}: {t("backfill_confirm_required")}
@@ -981,4 +936,12 @@ function ImportForm({
       </div>
     </div>
   );
+}
+
+export function focusStatementHistory(section?: HTMLElement) {
+  const target =
+    section?.querySelector<HTMLElement>("[data-backfill-confirmation]:not(:disabled)") ??
+    section?.querySelector<HTMLElement>('[role="switch"]');
+  target?.scrollIntoView({ block: "center", behavior: "smooth" });
+  target?.focus({ preventScroll: true });
 }

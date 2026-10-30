@@ -44,8 +44,54 @@ export function getColorForSub(sub: Subscription, index: number): string {
 interface PriceFormatOptions {
   currencyCode?: string;
   locale?: string;
-  /** Render as "$30.00 USD": symbol before the amount, ISO code after it. */
+  /** Append the ISO code while preserving Monline's amount + symbol order. */
   showCurrencyCode?: boolean;
+}
+
+interface CurrencyFormatOptions {
+  locale?: string;
+  minimumFractionDigits?: number;
+  maximumFractionDigits?: number;
+  useGrouping?: boolean;
+}
+
+/** Multipliers always use a leading lowercase x and a decimal point. */
+export function formatMultiplier(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  const rounded = Math.round(value * 100) / 100;
+  return `x${rounded.toFixed(Number.isInteger(rounded) ? 0 : 2)}`;
+}
+
+/** Resolve display symbols without depending on the locale's currency position. */
+export function getCurrencySymbol(currency: string, locale = i18n.resolvedLanguage || "en-US"): string {
+  const code = currency.trim().toUpperCase();
+  if (code === "TRY" || code === "TL") return "₺";
+  if (code === "USD") return "$";
+  if (code === "EUR") return "€";
+  if (!/^[A-Z]{3}$/.test(code)) return currency.trim();
+  try {
+    return new Intl.NumberFormat(locale.replace(/_/g, "-"), { style: "currency", currency: code })
+      .formatToParts(0).find((part) => part.type === "currency")?.value || code;
+  } catch {
+    return code;
+  }
+}
+
+/** All displayed money uses amount + currency, with no intervening space. */
+export function formatCurrency(amount: number, currency: string, options: CurrencyFormatOptions = {}): string {
+  const { locale = i18n.resolvedLanguage || "en-US", ...numberOptions } = options;
+  const digits = getCurrencyFractionDigits(currency);
+  const maximumFractionDigits = numberOptions.maximumFractionDigits ?? digits;
+  const minimumFractionDigits = numberOptions.minimumFractionDigits ?? maximumFractionDigits;
+  let value: string;
+  try {
+    value = new Intl.NumberFormat(locale.replace(/_/g, "-"), {
+      ...numberOptions, minimumFractionDigits, maximumFractionDigits,
+    }).format(amount);
+  } catch {
+    value = amount.toFixed(maximumFractionDigits);
+  }
+  return `${value}${getCurrencySymbol(currency, locale)}`;
 }
 
 /** Return the number of fraction digits defined for an ISO 4217 currency. */
@@ -71,24 +117,12 @@ export function formatPrice(
   options: PriceFormatOptions | string = {},
 ): string {
   // Keep accepting a locale string for backwards compatibility.
-  const opts = typeof options === "string" ? {} : options;
-  const locale =
-    typeof options === "string" ? options : (options.locale ?? i18n.resolvedLanguage ?? "en-US");
-  const fractionDigits = getCurrencyFractionDigits(opts.currencyCode);
-
-  let amount: string;
-  try {
-    amount = new Intl.NumberFormat(locale, {
-      minimumFractionDigits: fractionDigits,
-      maximumFractionDigits: fractionDigits,
-    }).format(price);
-  } catch {
-    amount = price.toFixed(fractionDigits);
-  }
-
-  // Ambiguous symbols such as "$" are clearer with the ISO code beside them.
-  const code = opts.showCurrencyCode ? opts.currencyCode?.trim().toUpperCase() : undefined;
-  return code ? `${symbol}${amount} ${code}` : `${amount} ${symbol}`;
+  const locale = typeof options === "string" ? options : (options.locale ?? i18n.resolvedLanguage ?? "en-US");
+  const code = typeof options === "string" ? undefined : options.currencyCode;
+  const digits = getCurrencyFractionDigits(code);
+  const formatted = formatCurrency(price, symbol, { locale, minimumFractionDigits: digits, maximumFractionDigits: digits });
+  return typeof options !== "string" && options.showCurrencyCode && code?.trim()
+    ? `${formatted} ${code.trim().toUpperCase()}` : formatted;
 }
 
 /**

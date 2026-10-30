@@ -1,0 +1,33 @@
+.calendar-payment-tone {
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, hsl(var(--card)) 78%, var(--payment-from)),
+    color-mix(in srgb, hsl(var(--card)) 84%, var(--payment-to))
+  );
+  border-color: color-mix(in srgb, hsl(var(--border)) 65%, var(--payment-from));
+  color: hsl(var(--foreground));
+}
+.calendar-payment-tone--ledger-paid {
+  --payment-from: #15803d;
+  --payment-to: #166534;
+}
+.calendar-payment-tone--ledger-pending {
+  --payment-from: #ef4444;
+  --payment-to: #dc2626;
+}
+.calendar-payment-tone--manual-paid {
+  --payment-from: #2dd4bf;
+  --payment-to: #5eead4;
+}
+.calendar-payment-tone--manual-pending {
+  --payment-from: #fb8069;
+  --payment-to: #fda18d;
+}
+.calendar-payment-tone--statement-paid {
+  --payment-from: #a3e635;
+  --payment-to: #84cc16;
+}
+.calendar-payment-tone--statement-pending {
+  --payment-from: #be123c;
+  --payment-to: #9f1239;
+}

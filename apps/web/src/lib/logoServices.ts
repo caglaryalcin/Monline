@@ -1,6 +1,8 @@
 /** Shared by inline previews, saved subscription logos and the manual logo search.
  * These are visual name aliases only; they do not classify statement payments.
  */
+import { findMerchantLogo } from "./merchantLogo";
+
 interface LogoService {
   domain: string;
   iconSlug: string;
@@ -90,7 +92,7 @@ const SERVICES: [string, string, string?, string?][] = [
     "YouTube|YouTube Premium|YouTube Music|YouTube Member|YouTube Membership|YouTube Super|YouTube Superchat",
     "youtube",
   ],
-  ["netflix.com", "Netflix"],
+  ["netflix.com", "Netflix", "netflix", "/assets/logos/merchants/netflix.svg"],
   ["spotify.com", "Spotify"],
   ["disneyplus.com", "Disney|Disney Plus|Disney+", "disneyplus"],
   ["primevideo.com", "Prime Video|Amazon Prime|Prime", "primevideo"],
@@ -170,7 +172,7 @@ const SERVICES: [string, string, string?, string?][] = [
   ["grammarly.com", "Grammarly"],
   ["deepl.com", "DeepL"],
   ["openai.com", "OpenAI|ChatGPT|Chat GPT", "openai"],
-  ["claude.ai", "Claude|Anthropic Claude", "claude"],
+  ["claude.ai", "Claude|Anthropic Claude|claude.com", "claude", "/assets/logos/merchants/claude.svg"],
   ["anthropic.com", "Anthropic"],
   ["perplexity.ai", "Perplexity", "perplexity"],
   ["midjourney.com", "Midjourney"],
@@ -227,7 +229,12 @@ for (const [domain, aliases, slug, logoUrl] of SERVICES) {
 export function findLogoService(name: string): LogoService | undefined {
   const normalized = normalizeLogoName(name);
   const exact = byName.get(normalized);
-  if (exact) return exact;
+  const merchant = findMerchantLogo(name);
+  if (exact)
+    return merchant?.domain === exact.domain && merchant.logoUrl
+      ? { ...exact, logoUrl: merchant.logoUrl }
+      : exact;
+  if (merchant) return merchant;
   // Match plan labels without guessing arbitrary company.com addresses or
   // matching part of a different company name (e.g. Kick vs Kickstarter).
   let candidate = normalized;

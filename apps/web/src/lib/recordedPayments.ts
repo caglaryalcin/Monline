@@ -32,6 +32,7 @@ export function recordedPayments(
     const validAmount =
       typeof record.amount === "number" && Number.isFinite(record.amount) && record.amount >= 0;
     return {
+      record,
       subscription,
       paidAt,
       amount: validAmount

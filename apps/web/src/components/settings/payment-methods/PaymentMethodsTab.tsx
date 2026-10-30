@@ -25,6 +25,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { paymentMethodsService } from "@/services/paymentMethods";
@@ -33,6 +34,7 @@ import type { PaymentMethod } from "@/types";
 export function PaymentMethodsTab() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const userId = user?.id ?? "";
   const qc = useQueryClient();
 
   const [isAdding, setIsAdding] = useState(false);
@@ -50,7 +52,7 @@ export function PaymentMethodsTab() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
   const { data: methods = [], isLoading } = useQuery({
-    queryKey: queryKeys.paymentMethods.all(user?.id ?? ""),
+    queryKey: queryKeys.paymentMethods.all(userId),
     queryFn: () => paymentMethodsService.list(user!.id),
     enabled: !!user?.id,
   });
@@ -83,7 +85,7 @@ export function PaymentMethodsTab() {
     },
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: queryKeys.paymentMethods.all(user?.id ?? ""),
+        queryKey: queryKeys.paymentMethods.all(userId),
       });
       resetAddForm();
       toast.success(t("success_create"));
@@ -116,7 +118,7 @@ export function PaymentMethodsTab() {
     },
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: queryKeys.paymentMethods.all(user?.id ?? ""),
+        queryKey: queryKeys.paymentMethods.all(userId),
       });
       resetEditState();
       toast.success(t("success_update"));
@@ -128,7 +130,7 @@ export function PaymentMethodsTab() {
     mutationFn: (id: string) => paymentMethodsService.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: queryKeys.paymentMethods.all(user?.id ?? ""),
+        queryKey: queryKeys.paymentMethods.all(userId),
       });
       toast.success(t("success_delete"));
     },
@@ -137,7 +139,7 @@ export function PaymentMethodsTab() {
   const setMainMut = useMutation({
     mutationFn: (id: string) => paymentMethodsService.update(id, { is_main: true }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.paymentMethods.all(user?.id ?? "") });
+      qc.invalidateQueries({ queryKey: queryKeys.paymentMethods.all(userId) });
       toast.success(t("success_update"));
     },
     onError: () => toast.error(t("error")),
@@ -175,7 +177,7 @@ export function PaymentMethodsTab() {
 
     // Optimistic update
     qc.setQueryData<PaymentMethod[]>(
-      queryKeys.paymentMethods.all(user?.id ?? ""),
+      queryKeys.paymentMethods.all(userId),
       reordered.map((method, order) => ({ ...method, order })),
     );
 
@@ -184,7 +186,7 @@ export function PaymentMethodsTab() {
       if (m.order !== i) {
         paymentMethodsService.update(m.id, { order: i }).catch(() => {
           qc.invalidateQueries({
-            queryKey: queryKeys.paymentMethods.all(user?.id ?? ""),
+            queryKey: queryKeys.paymentMethods.all(userId),
           });
         });
       }
@@ -483,9 +485,7 @@ export function PaymentMethodsTab() {
       <ConfirmDialog
         confirmOnEnter
         open={!!pendingDeleteId}
-        onOpenChange={(open) => {
-          if (!open) setPendingDeleteId(null);
-        }}
+        onOpenChange={dialogDismissHandler(() => setPendingDeleteId(null))}
         title={t("delete")}
         description={t("confirm_delete")}
         onConfirm={() => {

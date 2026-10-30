@@ -10,7 +10,8 @@ import { adminUsersService } from "@/services/adminUsers";
 export function AdminAccountScope({ children }: { children: (ownerId: string) => ReactNode }) {
   const { t } = useTranslation();
   const { user, isAdmin } = useAuth();
-  const [selected, setSelected] = useState(user?.id ?? "");
+  const userId = user?.id ?? "";
+  const [selected, setSelected] = useState(userId);
   const accounts = useQuery({
     queryKey: ["admin-users", "options"],
     queryFn: adminUsersService.options,
@@ -18,7 +19,7 @@ export function AdminAccountScope({ children }: { children: (ownerId: string) =>
   });
   const ownerId = accounts.data?.some((account) => account.id === selected)
     ? selected
-    : (user?.id ?? "");
+    : (userId);
   return (
     <div className="space-y-6">
       <div className="space-y-2 rounded-2xl border bg-muted/20 p-4">

@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { resolveLocale } from "@/lib/locale";
 import { isCredit } from "@/lib/recordTypes";
 
 import { historicalDateRange } from "./HistoricalPaymentDialog";
@@ -47,6 +48,7 @@ export function CalendarDayMenu({
   const range = historicalDateRange(now);
   const date = position ? toDateStr(position.date) : "";
   const inRange = date >= range.min && date <= range.max;
+  const payment = position?.payment;
   const canAdd = !!onAddHistorical && inRange;
 
   function open(element: HTMLElement, x: number, y: number, keyboard = false) {
@@ -101,70 +103,69 @@ export function CalendarDayMenu({
         </DropdownMenuTrigger>,
         document.body,
       )}
-      <DropdownMenuContent
-        align="start"
-        sideOffset={2}
-        collisionPadding={12}
-        className="w-64 rounded-xl"
-        onCloseAutoFocus={(event) => {
-          event.preventDefault();
-          if (restoreFocus.current) target.current?.focus();
-        }}
-      >
-        <DropdownMenuLabel className="text-xs capitalize text-muted-foreground">
-          {position?.date.toLocaleDateString(
-            (i18n?.resolvedLanguage ?? i18n?.language ?? "en").replace("_", "-"),
-            { day: "numeric", month: "long", year: "numeric" },
-          )}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={() => {
-            if (position) {
+      {position && (
+        <DropdownMenuContent
+          align="start"
+          sideOffset={2}
+          collisionPadding={12}
+          className="w-64 rounded-xl"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (restoreFocus.current) target.current?.focus();
+          }}
+        >
+          <DropdownMenuLabel className="text-xs capitalize text-muted-foreground">
+            {position.date.toLocaleDateString(resolveLocale(i18n), {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => {
               restoreFocus.current = false;
               onSelectDate(position.date);
-            }
-          }}
-        >
-          <CalendarDays />
-          {t("calendar_day_payments")}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          disabled={!canAdd}
-          onSelect={() => {
-            if (!canAdd || !position) return;
-            restoreFocus.current = false;
-            onAddHistorical?.(position.date);
-          }}
-        >
-          <History />
-          {t("historical_add")}
-        </DropdownMenuItem>
-        {!inRange && (
-          <p className="px-2 py-1.5 text-xs leading-relaxed text-muted-foreground">
-            {t("calendar_history_range_hint")}
-          </p>
-        )}
-        {position?.payment && onMoveToMonth && !isCredit(position.payment.sub) && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="truncate text-xs">
-              {position.payment.sub.name}
-            </DropdownMenuLabel>
-            <DropdownMenuItem
-              disabled={movingPayment}
-              onSelect={() => {
-                if (!position.payment || movingPayment) return;
-                restoreFocus.current = false;
-                onMoveToMonth(position.payment);
-              }}
-            >
-              <CalendarRange />
-              {t("calendar_move_to_month")}
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
+            }}
+          >
+            <CalendarDays />
+            {t("calendar_day_payments")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={!canAdd}
+            onSelect={() => {
+              if (!canAdd) return;
+              restoreFocus.current = false;
+              onAddHistorical?.(position.date);
+            }}
+          >
+            <History />
+            {t("historical_add")}
+          </DropdownMenuItem>
+          {!inRange && (
+            <p className="px-2 py-1.5 text-xs leading-relaxed text-muted-foreground">
+              {t("calendar_history_range_hint")}
+            </p>
+          )}
+          {payment && onMoveToMonth && !isCredit(payment.sub) && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="truncate text-xs">{payment.sub.name}</DropdownMenuLabel>
+              <DropdownMenuItem
+                disabled={movingPayment}
+                onSelect={() => {
+                  if (movingPayment) return;
+                  restoreFocus.current = false;
+                  onMoveToMonth(payment);
+                }}
+              >
+                <CalendarRange />
+                {t("calendar_move_to_month")}
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      )}
     </DropdownMenu>
   );
 }

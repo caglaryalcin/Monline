@@ -2,13 +2,14 @@ name: Docker Publish
 
 on:
   push:
+    branches: [beta]
     tags:
       - "v*.*.*"
   workflow_dispatch:
     inputs:
       version:
-        description: Existing release tag to publish (for example, v1.1.0)
-        required: true
+        description: Existing release tag; leave empty to publish the selected beta branch
+        required: false
         type: string
 
 permissions:
@@ -19,12 +20,20 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  VERSION: ${{ inputs.version || github.ref_name }}
+  VERSION: ${{ inputs.version || (github.ref_type == 'tag' && github.ref_name || '') }}
   DOCKERHUB_IMAGE: caglaryalcin/monline
 
 jobs:
+  verify:
+    if: github.repository == 'caglaryalcin/Monline'
+    uses: ./.github/workflows/validate.yml
+    with:
+      source_ref: ${{ inputs.version && format('refs/tags/{0}', inputs.version) || github.ref }}
+
   build-and-push:
     name: Publish AMD64 and ARM64 images
+    needs: verify
+    if: github.repository == 'caglaryalcin/Monline'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -39,45 +48,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          [[ "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
+          [[ -z "$VERSION" || "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
           test -n "$DOCKERHUB_USERNAME"
           test -n "$DOCKERHUB_TOKEN"
 
-      - name: Check out the release tag
+      - name: Check out the requested branch or release tag
         uses: actions/checkout@v6
         with:
-          ref: refs/tags/${{ env.VERSION }}
+          ref: ${{ inputs.version && format('refs/tags/{0}', inputs.version) || github.ref }}
+          fetch-depth: 0
           persist-credentials: false
 
-      - name: Prepare image name and verify release version
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate channel, branch ancestry and image tags
         id: project
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import json
-          import os
-          import re
-          import subprocess
-          from pathlib import Path
-
-          version = json.loads(Path("package.json").read_text())["version"]
-          web_version = json.loads(Path("apps/web/package.json").read_text())["version"]
-          server_version = json.loads(Path("apps/backend/package.json").read_text())["version"]
-          if version != web_version or version != server_version:
-              raise SystemExit("Root, web and server package versions must match.")
-          compose_image = re.search(r"^\s+image:\s+monline:([^\s#]+)", Path("docker-compose.yml").read_text(), re.MULTILINE)
-          if not compose_image or compose_image.group(1) != version:
-              raise SystemExit("The local Compose image tag must match the package version.")
-          if os.environ["VERSION"] != f"v{version}":
-              raise SystemExit("Release tag must match the package version.")
-
-          image = "ghcr.io/" + os.environ["GITHUB_REPOSITORY"].lower()
-          revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
-              output.write(f"image={image}\n")
-              output.write(f"version={version}\n")
-              output.write(f"revision={revision}\n")
-          PY
+        run: node scripts/docker-publish.cjs
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -100,27 +89,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Generate image tags and labels
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: |
-            ${{ steps.project.outputs.image }}
-            ${{ env.DOCKERHUB_IMAGE }}
-          flavor: latest=false
-          tags: |
-            type=semver,pattern={{version}},value=${{ steps.project.outputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ steps.project.outputs.version }},enable=${{ !contains(env.VERSION, '-') }}
-            type=semver,pattern={{major}},value=${{ steps.project.outputs.version }},enable=${{ !contains(env.VERSION, '-') }}
-            type=raw,value=${{ env.VERSION }}
-            type=raw,value=latest,enable=${{ !contains(env.VERSION, '-') }}
-          labels: |
-            org.opencontainers.image.title=Monline
-            org.opencontainers.image.description=Self-hosted subscription and recurring payment tracking.
-            org.opencontainers.image.licenses=GPL-3.0-only
-            org.opencontainers.image.version=${{ steps.project.outputs.version }}
-            org.opencontainers.image.revision=${{ steps.project.outputs.revision }}
-
       - name: Build and publish
         id: build
         uses: docker/build-push-action@v7
@@ -129,8 +97,8 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.project.outputs.tags }}
+          labels: ${{ steps.project.outputs.labels }}
           cache-from: type=gha,scope=monline
           cache-to: type=gha,mode=max,scope=monline
 
@@ -148,7 +116,7 @@ jobs:
         env:
           IMAGE: ${{ steps.project.outputs.image }}
           DIGEST: ${{ steps.build.outputs.digest }}
-          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+          IMAGE_TAGS: ${{ steps.project.outputs.tags }}
         shell: bash
         run: |
           python3 - <<'PY'

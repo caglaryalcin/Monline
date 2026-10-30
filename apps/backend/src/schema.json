@@ -798,7 +798,12 @@
         "hidden": false,
         "required": false,
         "maxSize": 2097152,
-        "mimeTypes": ["image/png", "image/jpeg", "image/svg+xml", "image/webp"],
+        "mimeTypes": [
+          "image/png",
+          "image/jpeg",
+          "image/svg+xml",
+          "image/webp"
+        ],
         "maxSelect": 1
       },
       {
@@ -823,9 +828,15 @@
         "type": "bool",
         "hidden": false,
         "required": false
+      },
+      {
+        "name": "finance_card",
+        "type": "text",
+        "hidden": false,
+        "required": false
       }
     ],
-    "sql": "CREATE TABLE \"payment_methods\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"icon\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"order\" REAL NOT NULL DEFAULT 0, \"is_main\" INTEGER NOT NULL DEFAULT 0)"
+    "sql": "CREATE TABLE \"payment_methods\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"icon\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"order\" REAL NOT NULL DEFAULT 0, \"is_main\" INTEGER NOT NULL DEFAULT 0, \"finance_card\" TEXT NOT NULL DEFAULT '')"
   },
   {
     "name": "frequencies",
@@ -1064,7 +1075,10 @@
         "type": "select",
         "hidden": false,
         "required": false,
-        "values": ["expense", "credit"],
+        "values": [
+          "expense",
+          "credit"
+        ],
         "maxSelect": 1
       },
       {
@@ -1366,7 +1380,10 @@
         "type": "select",
         "hidden": false,
         "required": false,
-        "values": ["fixer", "apilayer"],
+        "values": [
+          "fixer",
+          "apilayer"
+        ],
         "maxSelect": 0
       },
       {
@@ -1878,7 +1895,11 @@
         "type": "select",
         "hidden": false,
         "required": true,
-        "values": ["enpara", "denizbank", "garanti"],
+        "values": [
+          "enpara",
+          "denizbank",
+          "garanti"
+        ],
         "maxSelect": 1
       },
       {
@@ -1924,9 +1945,656 @@
         "name": "created",
         "type": "autodate",
         "hidden": false
+      },
+      {
+        "name": "summary",
+        "type": "json",
+        "hidden": false
+      },
+      {
+        "name": "unresolved",
+        "type": "json",
+        "hidden": false
+      },
+      {
+        "name": "excluded_transactions",
+        "type": "json",
+        "hidden": false,
+        "maxSize": 2000000
+      },
+      {
+        "name": "tracking_hidden",
+        "type": "bool",
+        "hidden": false
       }
     ],
-    "sql": "CREATE TABLE \"bank_statements\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"bank\" TEXT NOT NULL DEFAULT '', \"file_name\" TEXT NOT NULL DEFAULT '', \"file_hash\" TEXT NOT NULL DEFAULT '', \"period\" TEXT NOT NULL DEFAULT '', \"page_count\" REAL NOT NULL DEFAULT 0, \"transactions\" TEXT DEFAULT 'null', \"created\" TEXT NOT NULL DEFAULT '')"
+    "sql": "CREATE TABLE \"bank_statements\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"bank\" TEXT NOT NULL DEFAULT '', \"file_name\" TEXT NOT NULL DEFAULT '', \"file_hash\" TEXT NOT NULL DEFAULT '', \"period\" TEXT NOT NULL DEFAULT '', \"page_count\" REAL NOT NULL DEFAULT 0, \"transactions\" TEXT DEFAULT 'null', \"created\" TEXT NOT NULL DEFAULT '', \"summary\" TEXT DEFAULT 'null', \"unresolved\" TEXT DEFAULT 'null', \"excluded_transactions\" TEXT DEFAULT 'null', \"tracking_hidden\" INTEGER NOT NULL DEFAULT 0)"
+  },
+  {
+    "name": "finance_rows",
+    "legacyId": "finance_rows",
+    "type": "base",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "collectionId": "_pb_users_auth_",
+        "maxSelect": 1,
+        "cascadeDelete": true,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "max": 160,
+        "hidden": false
+      },
+      {
+        "name": "kind",
+        "type": "text",
+        "max": 20,
+        "hidden": false
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "max": 2000,
+        "hidden": false
+      },
+      {
+        "name": "source_subscription",
+        "type": "text",
+        "max": 15,
+        "hidden": false
+      },
+      {
+        "name": "expense_type",
+        "type": "text",
+        "max": 20,
+        "hidden": false
+      },
+      {
+        "name": "payment_card",
+        "type": "text",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "bill_type",
+        "type": "text",
+        "max": 20,
+        "hidden": false
+      },
+      {
+        "name": "row_order",
+        "type": "number",
+        "hidden": false
+      },
+      {
+        "name": "is_loan",
+        "type": "bool",
+        "hidden": false
+      },
+      {
+        "name": "year",
+        "type": "number",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "origin_row",
+        "type": "text",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "is_deleted",
+        "type": "bool",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "loan_id",
+        "type": "text",
+        "hidden": false,
+        "required": false
+      },
+      {
+        "name": "is_rent",
+        "type": "bool",
+        "hidden": false
+      },
+      {
+        "name": "is_auto_carryover",
+        "type": "bool",
+        "hidden": false
+      }
+    ],
+    "sql": "CREATE TABLE \"finance_rows\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"name\" TEXT NOT NULL DEFAULT '', \"kind\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"source_subscription\" TEXT NOT NULL DEFAULT '', \"expense_type\" TEXT NOT NULL DEFAULT '', \"payment_card\" TEXT NOT NULL DEFAULT '', \"bill_type\" TEXT NOT NULL DEFAULT '', \"row_order\" REAL NOT NULL DEFAULT 0, \"is_loan\" INTEGER NOT NULL DEFAULT 0, \"year\" REAL NOT NULL DEFAULT 0, \"origin_row\" TEXT NOT NULL DEFAULT '', \"is_deleted\" INTEGER NOT NULL DEFAULT 0, \"loan_id\" TEXT NOT NULL DEFAULT '', \"is_rent\" INTEGER NOT NULL DEFAULT 0, \"is_auto_carryover\" INTEGER NOT NULL DEFAULT 0)"
+  },
+  {
+    "name": "finance_entries",
+    "legacyId": "finance_entries",
+    "type": "base",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "collectionId": "_pb_users_auth_",
+        "maxSelect": 1,
+        "cascadeDelete": true,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "row_id",
+        "type": "relation",
+        "collectionId": "finance_rows",
+        "maxSelect": 1,
+        "cascadeDelete": true,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "date",
+        "type": "text",
+        "max": 10,
+        "hidden": false
+      },
+      {
+        "name": "amount",
+        "type": "number",
+        "hidden": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "max": 20,
+        "hidden": false
+      },
+      {
+        "name": "settled_date",
+        "type": "text",
+        "max": 10,
+        "hidden": false
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "max": 2000,
+        "hidden": false
+      },
+      {
+        "name": "source_payment",
+        "type": "text",
+        "max": 15,
+        "hidden": false
+      },
+      {
+        "name": "payment_tag",
+        "type": "text",
+        "max": 20,
+        "hidden": false
+      }
+    ],
+    "sql": "CREATE TABLE \"finance_entries\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"row_id\" TEXT NOT NULL DEFAULT '', \"date\" TEXT NOT NULL DEFAULT '', \"amount\" REAL NOT NULL DEFAULT 0, \"status\" TEXT NOT NULL DEFAULT '', \"settled_date\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"source_payment\" TEXT NOT NULL DEFAULT '', \"payment_tag\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "salary_history",
+    "legacyId": "salary_history",
+    "type": "base",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "collectionId": "_pb_users_auth_",
+        "maxSelect": 1,
+        "cascadeDelete": true,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "effective_date",
+        "type": "text",
+        "max": 10,
+        "hidden": false
+      },
+      {
+        "name": "amount",
+        "type": "number",
+        "hidden": false
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "max": 2000,
+        "hidden": false
+      }
+    ],
+    "sql": "CREATE TABLE \"salary_history\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"effective_date\" TEXT NOT NULL DEFAULT '', \"amount\" REAL NOT NULL DEFAULT 0, \"notes\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "finance_benchmarks",
+    "legacyId": "finance_benchmarks",
+    "type": "base",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "collectionId": "_pb_users_auth_",
+        "maxSelect": 1,
+        "cascadeDelete": true,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "month",
+        "type": "text",
+        "max": 7,
+        "hidden": false
+      },
+      {
+        "name": "usd",
+        "type": "number",
+        "hidden": false
+      },
+      {
+        "name": "eur",
+        "type": "number",
+        "hidden": false
+      },
+      {
+        "name": "minimum_wage",
+        "type": "number",
+        "hidden": false
+      },
+      {
+        "name": "rate_date",
+        "type": "text",
+        "max": 10,
+        "hidden": false
+      },
+      {
+        "name": "source",
+        "type": "text",
+        "max": 100,
+        "hidden": false
+      },
+      {
+        "name": "updated_at",
+        "type": "text",
+        "max": 40,
+        "hidden": false
+      },
+      {
+        "name": "salary_tag",
+        "type": "text",
+        "max": 32,
+        "hidden": false
+      }
+    ],
+    "sql": "CREATE TABLE \"finance_benchmarks\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"month\" TEXT NOT NULL DEFAULT '', \"usd\" REAL NOT NULL DEFAULT 0, \"eur\" REAL NOT NULL DEFAULT 0, \"minimum_wage\" REAL NOT NULL DEFAULT 0, \"rate_date\" TEXT NOT NULL DEFAULT '', \"source\" TEXT NOT NULL DEFAULT '', \"updated_at\" TEXT NOT NULL DEFAULT '', \"salary_tag\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "finance_card_transactions",
+    "legacyId": "finance_card_transactions",
+    "type": "base",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "collectionId": "_pb_users_auth_",
+        "maxSelect": 1,
+        "cascadeDelete": true,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "row_id",
+        "type": "relation",
+        "collectionId": "finance_rows",
+        "maxSelect": 1,
+        "cascadeDelete": true,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "month",
+        "type": "text",
+        "max": 10,
+        "hidden": false
+      },
+      {
+        "name": "date",
+        "type": "text",
+        "max": 10,
+        "hidden": false
+      },
+      {
+        "name": "merchant",
+        "type": "text",
+        "max": 160,
+        "hidden": false
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "max": 2000,
+        "hidden": false
+      },
+      {
+        "name": "amount",
+        "type": "number",
+        "min": 0,
+        "hidden": false
+      }
+    ],
+    "sql": "CREATE TABLE \"finance_card_transactions\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"row_id\" TEXT NOT NULL DEFAULT '', \"month\" TEXT NOT NULL DEFAULT '', \"date\" TEXT NOT NULL DEFAULT '', \"merchant\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"amount\" NUMERIC NOT NULL DEFAULT 0)"
+  },
+  {
+    "name": "finance_statement_links",
+    "legacyId": "finance_statement_links",
+    "type": "base",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "collectionId": "_pb_users_auth_",
+        "maxSelect": 1,
+        "cascadeDelete": true,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "row_id",
+        "type": "relation",
+        "collectionId": "finance_rows",
+        "maxSelect": 1,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "statement_id",
+        "type": "relation",
+        "collectionId": "bank_statements",
+        "maxSelect": 1,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "month",
+        "type": "text",
+        "max": 7,
+        "required": true,
+        "hidden": false
+      }
+    ],
+    "sql": "CREATE TABLE \"finance_statement_links\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"row_id\" TEXT NOT NULL DEFAULT '', \"statement_id\" TEXT NOT NULL DEFAULT '', \"month\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "merchant_logos",
+    "legacyId": "merchant_logos",
+    "type": "base",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "collectionId": "_pb_users_auth_",
+        "maxSelect": 1,
+        "cascadeDelete": true,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "merchant_key",
+        "type": "text",
+        "max": 250,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "merchant_name",
+        "type": "text",
+        "max": 250,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "provider_name",
+        "type": "text",
+        "max": 160,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "domain",
+        "type": "text",
+        "max": 253,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "row_id",
+        "type": "relation",
+        "collectionId": "finance_rows",
+        "maxSelect": 1,
+        "hidden": false
+      },
+      {
+        "name": "start_month",
+        "type": "text",
+        "max": 7,
+        "hidden": false
+      },
+      {
+        "name": "scope",
+        "type": "text",
+        "max": 5,
+        "hidden": false
+      },
+      {
+        "name": "updated_at",
+        "type": "text",
+        "max": 24,
+        "hidden": false
+      }
+    ],
+    "sql": "CREATE TABLE \"merchant_logos\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"merchant_key\" TEXT NOT NULL DEFAULT '', \"merchant_name\" TEXT NOT NULL DEFAULT '', \"provider_name\" TEXT NOT NULL DEFAULT '', \"domain\" TEXT NOT NULL DEFAULT '', \"row_id\" TEXT NOT NULL DEFAULT '', \"start_month\" TEXT NOT NULL DEFAULT '', \"scope\" TEXT NOT NULL DEFAULT '', \"updated_at\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "manual_bills",
+    "legacyId": "manual_bills",
+    "type": "base",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "collectionId": "_pb_users_auth_",
+        "maxSelect": 1,
+        "cascadeDelete": true,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "max": 250,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "date",
+        "type": "text",
+        "max": 10,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "amount",
+        "type": "number",
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "currency",
+        "type": "text",
+        "max": 3,
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "required": true,
+        "hidden": false
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "max": 2000,
+        "hidden": false
+      }
+    ],
+    "sql": "CREATE TABLE \"manual_bills\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"name\" TEXT NOT NULL DEFAULT '', \"date\" TEXT NOT NULL DEFAULT '', \"amount\" REAL NOT NULL DEFAULT 0, \"currency\" TEXT NOT NULL DEFAULT '', \"status\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "budget_matches",
+    "legacyId": "budget_matches",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "user",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "target_type",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "target_id",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "statement_id",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "transaction_id",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "fingerprint",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "relation",
+        "type": "text",
+        "hidden": false,
+        "required": false
+      }
+    ],
+    "sql": "CREATE TABLE \"budget_matches\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"target_type\" TEXT NOT NULL DEFAULT '', \"target_id\" TEXT NOT NULL DEFAULT '', \"statement_id\" TEXT NOT NULL DEFAULT '', \"transaction_id\" TEXT NOT NULL DEFAULT '', \"fingerprint\" TEXT NOT NULL DEFAULT '', \"relation\" TEXT NOT NULL DEFAULT 'same', UNIQUE(\"user\",\"target_type\",\"target_id\",\"statement_id\",\"transaction_id\"))"
+  },
+  {
+    "name": "calendar_moves",
+    "legacyId": "calendar_moves",
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "user",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "source",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "source_id",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "source_date",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      },
+      {
+        "name": "date",
+        "type": "text",
+        "hidden": false,
+        "required": true
+      }
+    ],
+    "sql": "CREATE TABLE \"calendar_moves\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"source\" TEXT NOT NULL DEFAULT '', \"source_id\" TEXT NOT NULL DEFAULT '', \"source_date\" TEXT NOT NULL DEFAULT '', \"date\" TEXT NOT NULL DEFAULT '', UNIQUE(\"user\",\"source\",\"source_id\"))"
   },
   {
     "name": "sharing_groups",

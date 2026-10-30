@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
+import { notificationTemplateInsertion } from "@/lib/notificationTemplateInsertion";
 import { toast } from "@/lib/toast";
 import { notificationsService } from "@/services/notifications";
 import type { NotificationEvent, NotificationTemplate } from "@/types";
@@ -77,16 +78,12 @@ export function NotificationTemplateEditor({
   const insertVariable = (variable: string) => {
     const field = inputs.current[activeField.current] ? activeField.current : "message";
     const input = inputs.current[field];
-    if (!input || disabled || loading) return;
-    const token = `{{${variable}}}`;
-    const start = input.selectionStart ?? input.value.length;
-    const end = input.selectionEnd ?? start;
-    const next = input.value.slice(0, start) + token + input.value.slice(end);
-    if (input.maxLength >= 0 && next.length > input.maxLength) return;
-    update(field, next);
+    const insertion = notificationTemplateInsertion(input, variable, disabled || loading);
+    if (!insertion) return;
+    update(field, insertion.value);
     requestAnimationFrame(() => {
-      input.focus();
-      input.setSelectionRange(start + token.length, start + token.length);
+      insertion.input.focus();
+      insertion.input.setSelectionRange(insertion.cursor, insertion.cursor);
     });
   };
   const dropProps = (field: TemplateField) => ({

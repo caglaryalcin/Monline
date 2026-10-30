@@ -58,6 +58,8 @@ function exportScope(app, userId, scope) {
   backup.cycles = backup.cycles.filter((cycle) => cycleIds.has(cycle.id));
   for (const name of Object.keys(backup.data))
     if (!allowed.includes(name)) backup.data[name] = [];
+  // A scoped transfer contains no ledger cards to remap these v2-only links to.
+  for (const method of backup.data.payment_methods) delete method.finance_card;
   backup.files = backup.files.filter(
     (file) =>
       allowed.includes(file.collection) &&

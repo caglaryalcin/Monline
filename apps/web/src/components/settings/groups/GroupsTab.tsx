@@ -20,6 +20,7 @@ import { parseSharingEmails, sharingKeys, sharingService } from "@/services/shar
 export function GroupsTab() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const userId = user?.id ?? "";
   const qc = useQueryClient();
   const [editing, setEditing] = useState<SharingGroup | "new" | null>(null);
   const [name, setName] = useState("");
@@ -36,7 +37,7 @@ export function GroupsTab() {
     refetch,
     isFetching,
   } = useQuery({
-    queryKey: sharingKeys.groups(user?.id ?? ""),
+    queryKey: sharingKeys.groups(userId),
     queryFn: sharingService.groups,
     enabled: !!user,
     staleTime: 0,
@@ -45,7 +46,7 @@ export function GroupsTab() {
       query.state.data?.some((group) => group.pendingMembers?.length) ? 15000 : false,
   });
   const people = useQuery({
-    queryKey: queryKeys.household.all(user?.id ?? ""),
+    queryKey: queryKeys.household.all(userId),
     queryFn: () => householdService.list(user!.id),
     enabled: !!user?.id,
     staleTime: 0,
@@ -78,9 +79,9 @@ export function GroupsTab() {
   };
   const refresh = () =>
     Promise.all([
-      qc.invalidateQueries({ queryKey: sharingKeys.groups(user?.id ?? "") }),
-      qc.invalidateQueries({ queryKey: queryKeys.subscriptions.all(user?.id ?? "") }),
-      qc.invalidateQueries({ queryKey: queryKeys.household.all(user?.id ?? "") }),
+      qc.invalidateQueries({ queryKey: sharingKeys.groups(userId) }),
+      qc.invalidateQueries({ queryKey: queryKeys.subscriptions.all(userId) }),
+      qc.invalidateQueries({ queryKey: queryKeys.household.all(userId) }),
     ]);
   const save = useMutation({
     mutationFn: (selectedEmails: string[]) =>

@@ -2,13 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { CalendarClearPaymentsDialog } from "@/components/calendar/CalendarClearPaymentsDialog";
 import { CalendarMonthCard } from "@/components/calendar/CalendarMonthCard";
 import { CalendarMoveDialog } from "@/components/calendar/CalendarMoveDialog";
 import { CalendarOverview } from "@/components/calendar/CalendarOverview";
 import { CalendarPageHeader } from "@/components/calendar/CalendarPageHeader";
+import { matchesCalendarSearch } from "@/components/calendar/calendarSearch";
 import { DayPanel } from "@/components/calendar/DayPanel";
 import { HistoricalPaymentDialog } from "@/components/calendar/HistoricalPaymentDialog";
 import { MarkAsPaidModal } from "@/components/calendar/MarkAsPaidModal";
+import { SpendingDetailDialog } from "@/components/calendar/SpendingDetailDialog";
 import { SubDetailDialog } from "@/components/calendar/SubDetailDialog";
 import {
   type DayEntry,
@@ -16,6 +19,7 @@ import {
   parseLocalDate,
   toDateStr,
 } from "@/components/calendar/types";
+import { UndatedStatementFees } from "@/components/calendar/UndatedStatementFees";
 import { useCalendarMonthData } from "@/components/calendar/useCalendarMonthData";
 import { ScopedTransferActions } from "@/components/ScopedTransferActions";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -27,7 +31,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { queryKeys } from "@/lib/queryKeys";
+import { EMPTY_SPENDING, spendingKey } from "@/lib/spending";
 import { toast } from "@/lib/toast";
 import { categoriesService } from "@/services/categories";
 import { currenciesService } from "@/services/currencies";
@@ -35,6 +41,7 @@ import { cyclesService } from "@/services/cycles";
 import { householdService } from "@/services/household";
 import { paymentMethodsService } from "@/services/paymentMethods";
 import { paymentRecordsService } from "@/services/paymentRecords";
+import { spendingService } from "@/services/spending";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { PaymentRecord } from "@/types";
 
@@ -47,6 +54,7 @@ export function CalendarPage() {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const selectedDay =
     selectedDate?.getFullYear() === year && selectedDate.getMonth() + 1 === month
@@ -89,28 +97,42 @@ export function CalendarPage() {
 
   const paymentTracking = !!user?.payment_tracking;
   const movePayment = useMutation({
-    mutationFn: ({ entry, date }: { entry: DayEntry; date: Date }) => {
+    mutationFn: ({ entry, date, mode }: { entry: DayEntry; date: Date; mode?: "ledger" }) => {
       const record = getPaymentRecord(paymentRecords, entry.sub.id, toDateStr(entry.date));
       return paymentRecordsService.move({
-        ...(record ? { payment_id: record.id } : { subscription_id: entry.sub.id }),
+        ...(entry.spending
+          ? { source: entry.spending.source, source_id: entry.spending.id }
+          : record
+            ? { payment_id: record.id }
+            : { subscription_id: entry.sub.id }),
         from_date: toDateStr(entry.date),
         to_date: toDateStr(date),
+        ...(mode === "ledger"
+          ? {
+              mode,
+              expected_source_date: entry.spending?.date,
+              expected_amount: entry.spending?.amount,
+            }
+          : {}),
       });
     },
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       setSelectedDate(null);
       setDetailEntry(null);
       setMoveEntry(null);
       await queryClient.invalidateQueries();
-      toast.success(t("calendar_payment_moved"));
+      toast.success(
+        t(result.ledger_updated ? "calendar_payment_ledger_moved" : "calendar_payment_moved"),
+      );
     },
     onError: (error: unknown) => {
-      const code = error instanceof Error ? error.message : "";
+      const code = error instanceof Error ? error.message : undefined;
       toast.error(
         t(
-          ["calendar_move_conflict", "calendar_move_changed", "calendar_move_invalid"].includes(
-            code,
-          )
+          code &&
+            ["calendar_move_conflict", "calendar_move_changed", "calendar_move_invalid"].includes(
+              code,
+            )
             ? code
             : "calendar_move_failed",
         ),
@@ -118,6 +140,13 @@ export function CalendarPage() {
       void queryClient.invalidateQueries();
     },
   });
+  const spending = useQuery({
+    queryKey: spendingKey(userId),
+    queryFn: spendingService.get,
+    enabled: !!userId,
+    staleTime: 0,
+  });
+  const spendingData = spending.data ?? EMPTY_SPENDING;
 
   const markUnpaid = useMutation({
     mutationFn: (record: PaymentRecord) => paymentRecordsService.markUnpaid(record.id),
@@ -128,6 +157,15 @@ export function CalendarPage() {
     onError: () => toast.error(t("mark_as_unpaid_failed")),
   });
 
+  const paymentMutationsBusy =
+    movePayment.isPending ||
+    clearCalendar.isPending ||
+    removePayment.isPending ||
+    markUnpaid.isPending;
+  const requestPaymentMove = (entry: DayEntry, date: Date | string, mode?: "ledger") => {
+    const parsed = typeof date === "string" ? parseLocalDate(date) : date;
+    if (parsed && !paymentMutationsBusy) movePayment.mutate({ entry, date: parsed, mode });
+  };
   const {
     data: subscriptions = [],
     isLoading: loadingSubscriptions,
@@ -135,6 +173,7 @@ export function CalendarPage() {
   } = useQuery({
     queryKey: queryKeys.subscriptions.all(userId),
     queryFn: () => subscriptionsService.list(userId),
+    refetchOnWindowFocus: "always",
     enabled: !!userId,
   });
 
@@ -180,6 +219,7 @@ export function CalendarPage() {
   } = useQuery({
     queryKey: queryKeys.paymentRecords.all(userId),
     queryFn: () => paymentRecordsService.listForUser(userId),
+    refetchOnWindowFocus: "always",
     enabled: !!userId,
   });
 
@@ -196,6 +236,10 @@ export function CalendarPage() {
       month,
       selectedDay,
       paymentRecords,
+      spendingEvents: spendingData.events,
+      calendarMoves: spendingData.calendar_moves,
+      includeAdjacentDays: true,
+      searchTerm,
     });
 
   const selectedMonth = useCalendarMonthData({
@@ -206,7 +250,17 @@ export function CalendarPage() {
     year: selectedDate?.getFullYear() ?? year,
     month: selectedDate ? selectedDate.getMonth() + 1 : month,
     selectedDay: selectedDate?.getDate() ?? null,
+    spendingEvents: spendingData.events,
+    calendarMoves: spendingData.calendar_moves,
+    searchTerm,
   });
+
+  const undatedFees = spendingData.events.filter(
+    (event) =>
+      event.undated &&
+      event.statement_period === `${year}-${String(month).padStart(2, "0")}` &&
+      matchesCalendarSearch(event.name, searchTerm),
+  );
 
   const budget = user?.budget ?? 0;
   const budgetOverrun = budget > 0 ? Math.max(0, stats.total - budget) : 0;
@@ -246,7 +300,9 @@ export function CalendarPage() {
   return (
     <div className="monline-calendar-page flex min-h-0 flex-col gap-4">
       <CalendarPageHeader
-        transferActions={<ScopedTransferActions scope="calendar" />}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        transferActions={<ScopedTransferActions scope="calendar" compact />}
         onAddHistorical={!loadingSubscriptions ? () => setHistoricalOpen(true) : undefined}
         onClearAll={() => setClearOpen(true)}
         clearDisabled={
@@ -283,11 +339,45 @@ export function CalendarPage() {
         total={stats.total}
         due={stats.due}
         awaitingConfirmation={stats.awaitingConfirmation}
-        loading={loadingSubscriptions || loadingCurrencies || loadingPayments}
-        hasError={subscriptionsError || currenciesError || paymentsError}
+        loading={loadingSubscriptions || loadingCurrencies || loadingPayments || spending.isLoading}
+        hasError={subscriptionsError || currenciesError || paymentsError || spending.isError}
         mainCurrency={mainCurrency}
         budgetOverrun={budgetOverrun}
       />
+      {spending.isError && (
+        <p role="alert" className="text-sm text-destructive">
+          {t("spending_load_failed")}
+        </p>
+      )}
+      {spendingData.issues.length > 0 && (
+        <p role="alert" className="text-sm text-amber-700 dark:text-amber-400">
+          {t("spending_source_issues", { count: spendingData.issues.length })}
+        </p>
+      )}
+      {Object.values(entriesByDay)
+        .flat()
+        .some(
+          (entry) =>
+            entry.spending &&
+            !entry.sub.expand?.currency?.is_main &&
+            !entry.sub.expand?.currency?.rate,
+        ) && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {t("spending_missing_rates")}
+        </p>
+      )}
+
+      {searchTerm.trim() &&
+        !loadingSubscriptions &&
+        !spending.isLoading &&
+        !subscriptionsError &&
+        !spending.isError &&
+        !Object.values(entriesByDate).some((entries) => entries.length > 0) &&
+        !undatedFees.length && (
+          <p role="status" className="text-sm text-muted-foreground">
+            {t("calendar_search_empty")}
+          </p>
+        )}
 
       <CalendarMonthCard
         month={month}
@@ -295,29 +385,14 @@ export function CalendarPage() {
         now={now}
         daysInMonth={daysInMonth}
         isCurrentMonth={isCurrentMonth}
-        loading={loadingSubscriptions}
+        loading={loadingSubscriptions || spending.isLoading}
         selectedDay={selectedDay}
         selectedDate={selectedDate}
         allCells={allCells}
         entriesByDay={entriesByDay}
         entriesByDate={entriesByDate}
-        movingPayment={
-          movePayment.isPending ||
-          markUnpaid.isPending ||
-          removePayment.isPending ||
-          clearCalendar.isPending
-        }
-        onMovePayment={(entry, date) => movePayment.mutate({ entry, date })}
         onMoveToMonth={(entry) => {
-          if (
-            movePayment.isPending ||
-            markUnpaid.isPending ||
-            removePayment.isPending ||
-            clearCalendar.isPending
-          )
-            return;
-          setSelectedDate(null);
-          setMoveEntry(entry);
+          if (!paymentMutationsBusy) setMoveEntry(entry);
         }}
         mainCurrency={mainCurrency}
         currencyById={currencyById}
@@ -341,15 +416,12 @@ export function CalendarPage() {
               }
             : undefined
         }
+        onMovePayment={requestPaymentMove}
+        movingPayment={paymentMutationsBusy}
       />
 
       {selectedDate !== null && !historicalOpen && !detailEntry && !markAsPaidEntry ? (
-        <Dialog
-          open
-          onOpenChange={(open) => {
-            if (!open) setSelectedDay(null);
-          }}
-        >
+        <Dialog open onOpenChange={dialogDismissHandler(() => setSelectedDay(null))}>
           <DialogContent className="monline-scroll max-h-[85dvh] w-[96vw] max-w-3xl gap-0 overflow-y-auto p-0 [&>button]:hidden">
             <DialogHeader className="sr-only">
               <DialogTitle>{t("calendar_day_payments")}</DialogTitle>
@@ -373,26 +445,25 @@ export function CalendarPage() {
           </DialogContent>
         </Dialog>
       ) : null}
+      <UndatedStatementFees events={undatedFees} />
 
       {moveEntry && (
         <CalendarMoveDialog
-          key={`${moveEntry.sub.id}-${toDateStr(moveEntry.date)}`}
           entry={moveEntry}
           moving={movePayment.isPending}
           onClose={() => setMoveEntry(null)}
-          onMove={(date) => {
-            if (
-              !movePayment.isPending &&
-              !markUnpaid.isPending &&
-              !removePayment.isPending &&
-              !clearCalendar.isPending
-            )
-              movePayment.mutate({ entry: moveEntry, date });
-          }}
+          onMove={(date, mode) => requestPaymentMove(moveEntry, date, mode)}
         />
       )}
-
-      {detailEntry ? (
+      {detailEntry?.spending ? (
+        <SpendingDetailDialog
+          event={detailEntry.spending}
+          calendarDate={toDateStr(detailEntry.date)}
+          onClose={() => setDetailEntry(null)}
+          movingPayment={movePayment.isPending}
+          onMoveDate={(date) => requestPaymentMove(detailEntry, date)}
+        />
+      ) : detailEntry ? (
         <SubDetailDialog
           sub={detailEntry.sub}
           date={detailEntry.date}
@@ -415,16 +486,6 @@ export function CalendarPage() {
             setMarkAsPaidEntry(detailEntry);
             setDetailEntry(null);
           }}
-          movingPayment={
-            movePayment.isPending ||
-            markUnpaid.isPending ||
-            removePayment.isPending ||
-            clearCalendar.isPending
-          }
-          onMoveDate={(value) => {
-            const date = parseLocalDate(value);
-            if (date) movePayment.mutate({ entry: detailEntry, date });
-          }}
           markingUnpaid={markUnpaid.isPending || movePayment.isPending}
           onMarkAsUnpaid={() => {
             if (
@@ -444,6 +505,8 @@ export function CalendarPage() {
           deletingPayment={
             removePayment.isPending || clearCalendar.isPending || movePayment.isPending
           }
+          movingPayment={movePayment.isPending}
+          onMoveDate={(date) => requestPaymentMove(detailEntry, date)}
           onDeletePayment={() => {
             const record = getPaymentRecord(
               paymentRecords,
@@ -476,22 +539,17 @@ export function CalendarPage() {
         />
       ) : null}
 
-      <ConfirmDialog
+      <CalendarClearPaymentsDialog
         open={clearOpen}
-        confirmOnEnter
         onOpenChange={setClearOpen}
-        title={t("calendar_clear_payments")}
-        description={t("calendar_clear_confirm", {
-          payments: calendarPaymentCount,
-        })}
+        payments={calendarPaymentCount}
+        busy={clearCalendar.isPending}
         onConfirm={() => clearCalendar.mutate()}
       />
 
       <ConfirmDialog
         open={!!deletePayment}
-        onOpenChange={(open) => {
-          if (!open) setDeletePayment(null);
-        }}
+        onOpenChange={dialogDismissHandler(() => setDeletePayment(null))}
         title={t("calendar_delete_payment")}
         description={t("calendar_delete_payment_confirm")}
         onConfirm={() => {

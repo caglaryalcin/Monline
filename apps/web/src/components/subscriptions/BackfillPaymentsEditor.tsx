@@ -7,7 +7,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { backfillDates, type BackfillSelection, localToday } from "@/lib/backfillPayments";
-import { cn } from "@/lib/utils";
+import { resolveLocale } from "@/lib/locale";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { Currency } from "@/types";
 
 interface Props {
@@ -142,7 +143,7 @@ export function BackfillPaymentsEditor({
 
   const updateDraft = (patch: Partial<Draft>) =>
     setDraft({ ...current, signature, confirmed: false, ...patch });
-  const locale = (i18n?.resolvedLanguage || i18n?.language || "en").replace("_", "-");
+  const locale = resolveLocale(i18n);
   const dateLabel = (date: string) =>
     new Intl.DateTimeFormat(locale, {
       day: "2-digit",
@@ -150,10 +151,7 @@ export function BackfillPaymentsEditor({
       year: "numeric",
     }).format(new Date(date + "T12:00:00"));
   const total = selected.reduce((sum, row) => sum + (row.amount ?? 0), 0);
-  const totalLabel = new Intl.NumberFormat(
-    locale,
-    currency?.code ? { style: "currency", currency: currency.code } : {},
-  ).format(total);
+  const totalLabel = currency?.code ? formatCurrency(total, currency.code, { locale }) : new Intl.NumberFormat(locale).format(total);
 
   return (
     <fieldset disabled={disabled} className="space-y-3 rounded-xl border bg-muted/20 p-4">

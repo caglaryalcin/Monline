@@ -5,6 +5,8 @@
 
 /** localStorage keys used across the application. */
 export const LS_KEYS = {
+  FINANCE_DECIMALS: "monline_finance_decimals",
+  financeYear: (userId: string) => `monline_finance_year_${userId}`,
   LANGUAGE: "monline_language",
   COLOR_THEME: "monline_color_theme",
   SIDEBAR_WIDTH: "monline_sidebar_width",

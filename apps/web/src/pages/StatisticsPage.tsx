@@ -2,12 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { FinancialStatistics } from "@/components/statistics/FinancialStatistics";
 import { StatisticsDistributionCard } from "@/components/statistics/StatisticsDistributionCard";
 import { StatisticsPaymentsCard } from "@/components/statistics/StatisticsPaymentsCard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { type CategoryCostMode, categoryPeriodCosts } from "@/lib/categoryPeriodCosts";
 import { historyMonth } from "@/lib/costHistory";
+import { resolveLocale } from "@/lib/locale";
 import { buildPaymentStatistics } from "@/lib/paymentStatistics";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatPrice } from "@/lib/utils";
@@ -17,7 +20,7 @@ import { subscriptionsService } from "@/services/subscriptions";
 
 export function StatisticsPage() {
   const { t, i18n } = useTranslation();
-  const language = i18n?.resolvedLanguage ?? i18n?.language ?? "en";
+  const language = resolveLocale(i18n);
   const [year, month, day] = useLocalToday().split("-").map(Number);
   const [categoryYear, setCategoryYear] = useState(year);
   const [paymentYear, setPaymentYear] = useState(year);
@@ -105,61 +108,74 @@ export function StatisticsPage() {
   const mainCurrency = currencies.find((currency) => currency.is_main);
   const mainCode = mainCurrency?.code,
     mainSymbol = mainCurrency?.symbol ?? "$";
-  const periodLabel =
-    categories.from === categories.to
-      ? historyMonth(categories.to, language, true)
-      : `${historyMonth(categories.from, language)} — ${historyMonth(categories.to, language)}`;
+  // Both category views cover the selected calendar year.
+  const periodLabel = `${historyMonth(categories.from, language)} — ${historyMonth(categories.to, language)}`;
 
   const loading = subscriptionsQuery.isPending || currenciesQuery.isPending;
   const error = subscriptionsQuery.isError || currenciesQuery.isError;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="space-y-6">
-        <div>
-          <StatisticsPaymentsCard
-            data={payments}
-            year={paymentYear}
-            years={years}
-            onYearChange={setPaymentYear}
-            formatValue={(value) => formatPrice(value, mainSymbol, { currencyCode: mainCode })}
-            isLoading={loading || recordsQuery.isPending}
-            hasError={error || recordsQuery.isError}
-          />
-        </div>
-        <div>
-          {error ? (
-            <p role="alert" className="text-sm text-destructive">
-              {t("payments_load_error")}
-            </p>
-          ) : loading ? (
-            <div
-              role="status"
-              aria-label={t("loading")}
-              className="h-96 animate-pulse rounded-3xl bg-muted"
-            />
-          ) : (
-            <StatisticsDistributionCard
-              data={categories.data}
-              mainCode={mainCode}
-              mainSymbol={mainSymbol}
-              title={t("cost_by_category")}
-              year={categoryYear}
-              years={years}
-              onYearChange={setCategoryYear}
-              periodLabel={periodLabel}
-              mode={categoryMode}
-              onModeChange={setCategoryMode}
-              paymentCount={categories.paymentCount}
-              unpricedCount={categories.unpricedCount}
-              categoryDetails={categories.categoryDetails}
-              uncategorizedCount={categories.uncategorizedCount}
-              isLoading={recordsQuery.isPending}
-              hasError={recordsQuery.isError}
-            />
-          )}
-        </div>
-      </div>
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="h-auto flex-wrap justify-start gap-1">
+          <TabsTrigger value="overview">{t("statistics_overview")}</TabsTrigger>
+          <TabsTrigger value="loans">{t("spending_section_loans")}</TabsTrigger>
+          <TabsTrigger value="installments">{t("spending_section_installments")}</TabsTrigger>
+          <TabsTrigger value="bills">{t("spending_section_bills")}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">
+          <div className="space-y-6">
+            <div>
+              <StatisticsPaymentsCard
+                data={payments}
+                year={paymentYear}
+                years={years}
+                onYearChange={setPaymentYear}
+                formatValue={(value) => formatPrice(value, mainSymbol, { currencyCode: mainCode })}
+                isLoading={loading || recordsQuery.isPending}
+                hasError={error || recordsQuery.isError}
+              />
+            </div>
+            <div>
+              {error ? (
+                <p role="alert" className="text-sm text-destructive">
+                  {t("payments_load_error")}
+                </p>
+              ) : loading ? (
+                <div
+                  role="status"
+                  aria-label={t("loading")}
+                  className="h-96 animate-pulse rounded-3xl bg-muted"
+                />
+              ) : (
+                <StatisticsDistributionCard
+                  data={categories.data}
+                  mainCode={mainCode}
+                  mainSymbol={mainSymbol}
+                  title={t("cost_by_category")}
+                  year={categoryYear}
+                  years={years}
+                  onYearChange={setCategoryYear}
+                  periodLabel={periodLabel}
+                  mode={categoryMode}
+                  onModeChange={setCategoryMode}
+                  paymentCount={categories.paymentCount}
+                  unpricedCount={categories.unpricedCount}
+                  categoryDetails={categories.categoryDetails}
+                  uncategorizedCount={categories.uncategorizedCount}
+                  isLoading={recordsQuery.isPending}
+                  hasError={recordsQuery.isError}
+                />
+              )}
+            </div>
+          </div>
+        </TabsContent>
+        {(["loans", "installments", "bills"] as const).map((section) => (
+          <TabsContent key={section} value={section}>
+            <FinancialStatistics section={section} />
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   );
 }

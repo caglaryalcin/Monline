@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import {
+  ArrowDownUp,
   Banknote,
   Bell,
   CreditCard,
@@ -23,6 +24,7 @@ import { ProfileTab } from "@/components/settings/profile/ProfileTab";
 import { SecurityTab } from "@/components/settings/security/SecurityTab";
 import { ThemeTab } from "@/components/settings/theme/ThemeTab";
 import type { SidebarTabsLayoutItem } from "@/components/ui/SidebarTabsLayout";
+import { DataTransferPage } from "@/pages/DataTransferPage";
 
 export type SettingsTabKey =
   | "profile"
@@ -36,6 +38,7 @@ export type SettingsTabKey =
   | "display"
   | "theme"
   | "notifications"
+  | "data_transfer"
   | "api_key"
   | "exchange_rates"
   | "registration"
@@ -56,8 +59,8 @@ export const SETTINGS_TAB_COMPONENTS: Record<SettingsTabKey, ComponentType> = {
   display: ThemeTab,
   theme: ThemeTab,
   notifications: NotificationsTab,
+  data_transfer: DataTransferPage,
   delete: DeleteAccountTab,
-  // Legacy links redirect in SettingsPage; these entries never expose server controls.
   api_key: ProfileTab,
   exchange_rates: ProfileTab,
   registration: SecurityTab,
@@ -89,7 +92,13 @@ export function getSettingsPageMenuItems(
     { value: "display", label: t("theme_and_display"), icon: Palette },
     { value: "payment_methods", label: t("payment_methods"), icon: CreditCard },
     { value: "currencies", label: t("currencies"), icon: Banknote },
-    { value: "delete", label: t("delete_account"), icon: Trash2, danger: true },
+    { value: "data_transfer", label: t("data_transfer"), icon: ArrowDownUp },
+    {
+      value: "delete",
+      label: t("delete_account"),
+      icon: Trash2,
+      danger: true,
+    },
   ];
   return canManageServer ? items.filter((item) => item.value !== "notifications") : items;
 }

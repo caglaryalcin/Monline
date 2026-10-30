@@ -17,7 +17,7 @@ export function categoryPeriodCosts(
   options: { mode?: CategoryCostMode; records?: PaymentRecord[]; year?: number } = {},
 ) {
   const totals = new Map<string, { value: number; count: number }>();
-  const details = new Map<string, Map<string, StatisticsSubscriptionDetail>>();
+  const details = new Map<string, Map<string, StatisticsSubscriptionDetail & { count: number }>>();
   const uncategorized = new Set<string>();
   const mode = options.mode ?? "paid";
   let paymentCount = 0;
@@ -34,7 +34,7 @@ export function categoryPeriodCosts(
     if (!subscription.expand?.category) uncategorized.add(subscription.id);
     const previous = totals.get(name) ?? { value: 0, count: 0 };
     totals.set(name, { value: previous.value + amount, count: previous.count + count });
-    const categoryDetails = details.get(name) ?? new Map<string, StatisticsSubscriptionDetail>();
+    const categoryDetails = details.get(name) ?? new Map<string, StatisticsSubscriptionDetail & { count: number }>();
     const detail = categoryDetails.get(subscription.id) ?? {
       id: subscription.id,
       name: subscription.name,
@@ -42,7 +42,7 @@ export function categoryPeriodCosts(
       count: 0,
     };
     detail.value += amount;
-    detail.count = (detail.count ?? 0) + count;
+    detail.count += count;
     categoryDetails.set(subscription.id, detail);
     details.set(name, categoryDetails);
     paymentCount += count;

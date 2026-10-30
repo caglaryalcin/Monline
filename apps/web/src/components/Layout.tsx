@@ -1,13 +1,14 @@
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import {
-  ArrowDownUp,
   BarChart2,
   Calendar,
   CreditCard,
   FileText,
+  Landmark,
   LayoutDashboard,
   Menu,
   ShieldCheck,
+  Wallet,
   X,
 } from "lucide-react";
 import { type CSSProperties, Suspense, useEffect, useRef, useState } from "react";
@@ -21,18 +22,21 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/AuthContext";
+import { useActiveLoanCount } from "@/hooks/useActiveLoanCount";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { useSidebarResize } from "@/hooks/useSidebarResize";
 import { useSummaryData } from "@/hooks/useSummaryData";
+import { resolveLocale } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 
 const baseNavItems = [
   { key: "dashboard", path: "/dashboard" as const, icon: LayoutDashboard },
+  { key: "finance", path: "/finance" as const, icon: Wallet },
   { key: "subscriptions", path: "/subscriptions" as const, icon: CreditCard },
+  { key: "debt", path: "/debt" as const, icon: Landmark },
   { key: "calendar", path: "/calendar" as const, icon: Calendar },
   { key: "statistics", path: "/statistics" as const, icon: BarChart2 },
   { key: "bank_statements", path: "/statements" as const, icon: FileText },
-  { key: "data_transfer", path: "/data-transfer" as const, icon: ArrowDownUp },
 ];
 
 export function Layout() {
@@ -40,11 +44,13 @@ export function Layout() {
   const today = useLocalToday();
   const [year, month, day] = today.split("-").map(Number);
   const todayLabel = new Intl.DateTimeFormat(
-    (i18n.resolvedLanguage || i18n.language || "en").replace(/_/g, "-"),
+    resolveLocale(i18n),
     { day: "numeric", month: "long", year: "numeric" },
   ).format(new Date(year, month - 1, day));
   const { user, isAdmin } = useAuth();
-  const summary = useSummaryData(user?.id ?? "");
+  const userId = user?.id ?? "";
+  const summary = useSummaryData(userId);
+  const activeLoanCount = useActiveLoanCount(userId);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -255,6 +261,17 @@ export function Layout() {
                 {summary.data?.count ?? "—"}
               </span>
             </Link>
+            <Link
+              to="/debt"
+              search={{ tab: "loans" }}
+              className="flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/50"
+              aria-label={`${t("spending_section_loans")}: ${activeLoanCount ?? "—"}`}
+              title={t("loans_active")}
+            >
+              <Landmark className="h-4 w-4 shrink-0 text-purple-500 dark:text-purple-400" aria-hidden="true" />
+              <span className="hidden sm:inline">{t("spending_section_loans")}</span>
+              <span className="font-semibold tabular-nums text-foreground">{activeLoanCount ?? "—"}</span>
+            </Link>
             <time
               dateTime={today}
               className="hidden h-11 items-center gap-2 whitespace-nowrap rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground md:flex"
@@ -273,6 +290,7 @@ export function Layout() {
             "monline-page min-h-0 min-w-0 flex-1 overflow-y-auto w-full max-w-[1600px] mx-auto p-4 md:p-8 lg:p-10",
             pathname.startsWith("/calendar") && "monline-calendar-content",
             pathname === "/dashboard" && "monline-dashboard-content",
+            pathname === "/finance" && "monline-finance-content",
           )}
         >
           <Suspense fallback={<PageLoading />}>

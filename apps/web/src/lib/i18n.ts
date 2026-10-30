@@ -4,6 +4,8 @@ import { initReactI18next } from "react-i18next";
 
 import { LS_KEYS } from "@/lib/constants";
 
+import { budgetTranslations } from "./budgetTranslations";
+import { financeTranslations } from "./financeTranslations";
 import bg from "./locales/bg.json";
 import cs from "./locales/cs.json";
 import da from "./locales/da.json";
@@ -21,6 +23,7 @@ import ru from "./locales/ru.json";
 import tr from "./locales/tr.json";
 import uk from "./locales/uk.json";
 import zh_cn from "./locales/zh_cn.json";
+import { spendingTranslations } from "./spendingTranslations";
 import { statementTranslations } from "./statementTranslations";
 
 i18n
@@ -28,9 +31,25 @@ i18n
   .use(initReactI18next)
   .init({
     resources: {
-      en: { translation: { ...en, ...statementTranslations.en } },
+      en: {
+        translation: {
+          ...en,
+          ...statementTranslations.en,
+          ...financeTranslations.en,
+          ...spendingTranslations.en,
+          ...budgetTranslations.en,
+        },
+      },
       pt_BR: { translation: pt_br },
-      de: { translation: { ...de, ...statementTranslations.de } },
+      de: {
+        translation: {
+          ...de,
+          ...statementTranslations.de,
+          ...financeTranslations.de,
+          ...spendingTranslations.de,
+          ...budgetTranslations.de,
+        },
+      },
       es: { translation: es },
       fr: { translation: fr },
       it: { translation: it },
@@ -40,11 +59,24 @@ i18n
       zh_CN: { translation: zh_cn },
       ja: { translation: ja },
       ko: { translation: ko },
-      tr: { translation: { ...tr, ...statementTranslations.tr } },
+      tr: {
+        translation: {
+          ...tr,
+          ...statementTranslations.tr,
+          ...financeTranslations.tr,
+          ...spendingTranslations.tr,
+          ...budgetTranslations.tr,
+        },
+      },
       uk: { translation: uk },
       cs: { translation: cs },
       da: { translation: da },
-      bg: { translation: bg },
+      // Keep Bulgarian core workflows native. The additional v2 finance
+      // sections retain the same English fallback used by other new locales.
+      bg: { translation: {
+        ...en, ...statementTranslations.en, ...financeTranslations.en,
+        ...spendingTranslations.en, ...budgetTranslations.en, ...bg,
+      } },
     },
     fallbackLng: "en",
     interpolation: { escapeValue: false },

@@ -46,7 +46,7 @@ export const CYCLE_NAME_KEYS: Record<string, string> = {
   "Half-Yearly": "half_yearly",
   Yearly: "yearly",
   [ONE_TIME_CYCLE]: "one_time",
-};
+} satisfies Record<Cycle["name"],string>;
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 

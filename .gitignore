@@ -37,3 +37,45 @@ monline.tar
 # Windows runtime and local logs
 pocketbase.exe
 .local/
+
+# Separate local beta data and temporary exports
+apps/backend/monline_data-beta/
+apps/backend/pb_data-beta/
+tmp/
+artifacts/
+
+# Local test sources, reports and generated caches
+**/*.test.*
+**/*.spec.*
+**/*.fixture.*
+**/__tests__/
+**/__mocks__/
+**/test/
+**/tests/
+**/fixtures/
+coverage-*/
+.nyc_output/
+lcov.info
+lcov-report/
+test-results/
+playwright-report/
+blob-report/
+.vite/
+.vite-temp/
+.vitest/
+*.tsbuildinfo
+*.log
+*.log.*
+
+# Local coding-assistant instructions and state
+.codex/
+.claude/
+.agents/
+AGENTS.md
+CLAUDE.md
+
+# Local project notes
+PROJE_GECMISI.md
+CALISMA_MANTIGI.md
+BRANCHES.md
+ARCHITECTURE.md

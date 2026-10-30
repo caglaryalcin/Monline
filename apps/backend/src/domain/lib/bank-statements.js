@@ -1,7 +1,21 @@
 function invalid() {
   throw new Error("statement_invalid_rows");
 }
-function validate(input) {
+function cancelledStatementCharges(rows, includeRefunds = false) {
+  const { pairs } =
+    require("./pure/statement-refunds.mjs").matchStatementRefunds(
+      rows,
+    );
+  return new Set(
+    pairs.flatMap((pair) =>
+      includeRefunds ? [pair.chargeId, pair.refundId] : [pair.chargeId],
+    ),
+  );
+}
+function refundedStatementCharges(rows) {
+  return require("./pure/statement-refunds.mjs").matchStatementRefunds(rows).refundedChargeIds;
+}
+function validate(input, { legacy = false } = {}) {
   if (
     !input ||
     !["enpara", "denizbank", "garanti"].includes(input.bank) ||
@@ -14,12 +28,20 @@ function validate(input) {
     input.page_count < 1 ||
     input.page_count > 80 ||
     !Array.isArray(input.transactions) ||
-    input.transactions.length < 1 ||
-    input.transactions.length > 3000
+    !Array.isArray(input.excluded_transactions ?? []) ||
+    input.transactions.length + (input.excluded_transactions ?? []).length <
+      1 ||
+    input.transactions.length + (input.excluded_transactions ?? []).length >
+      3000
   )
     invalid();
   const ids = new Set();
-  const transactions = input.transactions.map((row) => {
+  // Validate excluded source rows just as strictly as saved expenses. They are
+  // retained only for PDF reconciliation and must never become spending events.
+  const transactions = [
+    ...input.transactions,
+    ...(input.excluded_transactions ?? []),
+  ].map((row) => {
     if (
       !row ||
       typeof row.id !== "string" ||
@@ -79,17 +101,133 @@ function validate(input) {
       transaction.subscription_service = row.subscription_service.trim();
     if (row.subscription_match)
       transaction.subscription_match = row.subscription_match;
+    if (row.category !== undefined) {
+      if (
+        ![
+          "digital",
+          "online",
+          "bills",
+          "shopping",
+          "health",
+          "groceries",
+          "dining",
+          "coffee",
+          "travel",
+          "transport",
+          "toys",
+          "foreign",
+          "other",
+          "fees",
+        ].includes(row.category)
+      )
+        invalid();
+      transaction.category = row.category;
+    }
+    if (row.source !== undefined) {
+      if (typeof row.source !== "string" || row.source.length > 10000)
+        invalid();
+      transaction.source = row.source;
+    }
+    const checks = require("./statement-checks.js");
+    if (
+      !legacy &&
+      (!checks.validInstallment(row.installment) ||
+        !checks.sourceAmountSafe(row))
+    )
+      invalid();
+    if (row.amount_confirmed === true) transaction.amount_confirmed = true;
+    if (row.financing !== undefined) {
+      if (
+        !row.financing ||
+        row.currency !== "TRY" ||
+        !row.installment ||
+        !["charge", "cash"].includes(row.kind)
+      )
+        invalid();
+      const keys = ["principal", "interest", "kkdf", "bsmv"];
+      if (
+        !keys.every(
+          (key) =>
+            typeof row.financing[key] === "number" &&
+            Number.isFinite(row.financing[key]) &&
+            row.financing[key] >= 0 &&
+            row.financing[key] <= 100000000 &&
+            Math.abs(
+              row.financing[key] * 100 - Math.round(row.financing[key] * 100),
+            ) < 0.00001,
+        ) ||
+        Math.abs(
+          keys.reduce(
+            (sum, key) => sum + Math.round(row.financing[key] * 100),
+            0,
+          ) - Math.round(row.amount * 100),
+        ) > 5
+      )
+        invalid();
+      transaction.financing = Object.fromEntries(
+        keys.map((key) => [key, row.financing[key]]),
+      );
+    }
     return transaction;
   });
+  const summary = {};
+  if (input.summary != null) {
+    if (typeof input.summary !== "object" || Array.isArray(input.summary))
+      invalid();
+    for (const key of [
+      "previous_balance",
+      "payments",
+      "purchases",
+      "cash",
+      "fees",
+      "balance",
+      "minimum_payment",
+    ]) {
+      if (input.summary[key] === undefined) continue;
+      const value = input.summary[key];
+      if (
+        typeof value !== "number" ||
+        !Number.isFinite(value) ||
+        value < 0 ||
+        value > 100000000 ||
+        Math.abs(value * 100 - Math.round(value * 100)) > 0.00001
+      )
+        invalid();
+      summary[key] = value;
+    }
+  }
+  const unresolved = input.unresolved ?? [];
+  if (
+    !Array.isArray(unresolved) ||
+    unresolved.length > 25000 ||
+    unresolved.some(
+      (line) =>
+        !line ||
+        typeof line.text !== "string" ||
+        line.text.length > 10000 ||
+        !Number.isInteger(line.page) ||
+        line.page < 1 ||
+        line.page > input.page_count,
+    )
+  )
+    invalid();
   return {
     bank: input.bank,
     file_name: input.file_name.trim(),
     file_hash: input.file_hash,
     period: input.period,
     page_count: input.page_count,
-    transactions,
+    transactions: transactions.slice(0, input.transactions.length),
+    excluded_transactions: transactions.slice(input.transactions.length),
+    summary,
+    unresolved: unresolved.map((line) => ({
+      page: line.page,
+      text: line.text,
+    })),
   };
 }
 module.exports = {
   validate,
+  cancelledStatementCharges,
+  refundedStatementCharges,
 };

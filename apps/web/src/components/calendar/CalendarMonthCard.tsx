@@ -1,3 +1,5 @@
+import "./payment-colors.css";
+
 import {
   CalendarDays,
   CheckCircle2,
@@ -6,7 +8,7 @@ import {
   CircleDot,
   GripVertical,
 } from "lucide-react";
-import type { CSSProperties } from "react";
+import { type CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DOW_KEYS, MONTH_KEYS } from "@/components/calendar/constants";
@@ -19,12 +21,15 @@ import {
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { resolveLocale } from "@/lib/locale";
 import { isCredit } from "@/lib/recordTypes";
 import { cn, formatPrice } from "@/lib/utils";
 import type { Currency, PaymentRecord } from "@/types";
 
 import { CalendarDayMenu } from "./CalendarDayMenu";
 import { CalendarMonthPicker } from "./CalendarMonthPicker";
+import { CalendarPaymentLegend } from "./CalendarPaymentLegend";
+import { paymentAppearance } from "./paymentAppearance";
 import { useCalendarDrag } from "./useCalendarDrag";
 
 type CalendarCell = {
@@ -44,9 +49,6 @@ interface CalendarMonthCardProps {
   allCells: CalendarCell[];
   entriesByDay: Record<number, DayEntry[]>;
   entriesByDate?: Record<string, DayEntry[]>;
-  onMovePayment?: (entry: DayEntry, date: Date) => void;
-  movingPayment?: boolean;
-  onMoveToMonth?: (entry: DayEntry) => void;
   mainCurrency?: Currency;
   currencyById: Map<string, Currency>;
   paymentTracking: boolean;
@@ -58,6 +60,9 @@ interface CalendarMonthCardProps {
   onSelectDay: (day: number | null) => void;
   onSelectDate?: (date: Date | null) => void;
   onAddHistorical?: (date: Date) => void;
+  onMovePayment?: (entry: DayEntry, date: Date) => void;
+  movingPayment?: boolean;
+  onMoveToMonth?: (entry: DayEntry) => void;
 }
 
 export function CalendarMonthCard({
@@ -72,9 +77,6 @@ export function CalendarMonthCard({
   allCells,
   entriesByDay,
   entriesByDate,
-  onMovePayment,
-  movingPayment = false,
-  onMoveToMonth,
   mainCurrency,
   currencyById,
   paymentRecords,
@@ -85,14 +87,17 @@ export function CalendarMonthCard({
   onSelectDay,
   onSelectDate,
   onAddHistorical,
+  onMovePayment,
+  movingPayment = false,
+  onMoveToMonth,
 }: CalendarMonthCardProps) {
   const { t, i18n } = useTranslation();
-  const drag = useCalendarDrag(onMovePayment, movingPayment, onPrev, onNext);
+  const drag = useCalendarDrag(onMovePayment, movingPayment);
   const weeks = Math.max(1, Math.ceil(allCells.length / 7));
-  const weekdayFormatter = new Intl.DateTimeFormat(
-    (i18n?.resolvedLanguage || i18n?.language || "en").replace(/_/g, "-"),
-    { weekday: "short", timeZone: "UTC" },
-  );
+  const weekdayFormatter = new Intl.DateTimeFormat(resolveLocale(i18n), {
+    weekday: "short",
+    timeZone: "UTC",
+  });
 
   return (
     <Card data-calendar-drag-root className="monline-calendar-month overflow-hidden">
@@ -107,7 +112,6 @@ export function CalendarMonthCard({
               onClick={onPrev}
               className={cn(
                 "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                drag.direction === "prev" && "bg-primary/15 ring-2 ring-primary",
               )}
             >
               <ChevronLeft className="h-5 w-5" />
@@ -122,7 +126,6 @@ export function CalendarMonthCard({
               onClick={onNext}
               className={cn(
                 "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                drag.direction === "next" && "bg-primary/15 ring-2 ring-primary",
               )}
             >
               <ChevronRight className="h-5 w-5" />
@@ -226,8 +229,6 @@ export function CalendarMonthCard({
                     isToday && "z-10 border-primary ring-2 ring-inset ring-primary",
                     isSelected && !isToday && "bg-primary/5",
                     isSelected && !isToday && "ring-2 ring-inset ring-primary/40",
-                    drag.dropDate === toDateStr(cellDate) &&
-                      "bg-primary/15 ring-2 ring-inset ring-primary",
                   )}
                 >
                   <div className="mb-1.5 flex items-start justify-between">
@@ -248,23 +249,21 @@ export function CalendarMonthCard({
                   {!loading ? (
                     <div className="space-y-1">
                       {entries.map((entry) => {
-                        const { sub, date, amount } = entry;
-                        const canMove = !!onMovePayment && !movingPayment && !isCredit(sub);
+                        const { sub, date, amount, spending } = entry;
                         const credit = isCredit(sub);
+                        const canMove = !!onMovePayment && !movingPayment && !credit;
                         const dateStr = toDateStr(date);
                         const paymentRecord = !credit
                           ? getPaymentRecord(paymentRecords, sub.id, dateStr)
                           : undefined;
-                        const isPaid = !!paymentRecord?.paid_at;
+                        const appearance = paymentAppearance(entry, paymentRecord);
+                        const isPaid = appearance.paid;
                         const isAwaitingConfirmation =
+                          (!spending || spending.status === "planned") &&
                           !credit &&
                           !isPaid &&
                           date <= new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                        const colorClass = isPaid
-                          ? PAYMENT_COLORS.paid
-                          : isAwaitingConfirmation
-                            ? PAYMENT_COLORS.awaitingConfirmation
-                            : PAYMENT_COLORS.upcoming;
+                        const colorClass = credit ? PAYMENT_COLORS.upcoming : appearance.className;
 
                         return (
                           <div
@@ -272,7 +271,7 @@ export function CalendarMonthCard({
                             {...drag.paymentProps(entry, canMove)}
                             data-calendar-payment={sub.id}
                             aria-description={canMove ? t("calendar_drag_hint") : undefined}
-                            title={sub.name}
+                            title={`${sub.name} · ${formatPrice(amount ?? sub.price, (sub.expand?.currency ?? currencyById.get(sub.currency))?.symbol || "", { currencyCode: (sub.expand?.currency ?? currencyById.get(sub.currency))?.code })}${spending ? ` · ${t(`spending_kind_${spending.kind}`)}` : ""}${credit ? "" : ` · ${t(appearance.labelKey)}`}`}
                             className={cn(
                               "relative flex min-w-0 items-center justify-center gap-0.5 rounded-md border px-0.5 py-1 transition-all sm:justify-start sm:gap-1.5 sm:px-1.5 sm:py-0.5",
                               colorClass,
@@ -287,6 +286,8 @@ export function CalendarMonthCard({
                             )}
                             <SubscriptionLogo
                               sub={sub}
+                              month={spending ? spending.date.slice(0, 7) : dateStr.slice(0, 7)}
+                              rowId={spending?.provider_row_id}
                               className="h-4 w-4 shrink-0 rounded-sm object-contain text-[9px]"
                             />
 
@@ -340,6 +341,7 @@ export function CalendarMonthCard({
           </div>
         </CalendarDayMenu>
       </CardContent>
+      <CalendarPaymentLegend />
       {drag.preview}
     </Card>
   );

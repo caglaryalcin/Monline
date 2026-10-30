@@ -106,7 +106,7 @@ export function useSubscriptionForm({
       category: z
         .string()
         .trim()
-        .refine((id) => categories.some((category) => category.id === id), t("category_required")),
+        .refine((id) => id.length > 0 && categories.some((category) => category.id === id), t("category_required")),
       notes: z.string(),
       // Kept for old records/backups; the user no longer enters a URL.
       url: z.string(),

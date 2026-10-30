@@ -2,12 +2,12 @@ name: CodeQL Advanced
 
 on:
   push:
-    branches: [main]
+    branches: [main, beta]
     paths-ignore:
       - "screenshots/**"
       - "**/*.md"
   pull_request:
-    branches: [main]
+    branches: [main, beta]
     paths-ignore:
       - "screenshots/**"
       - "**/*.md"

@@ -14,6 +14,8 @@ export default {
         mono: ["Geist Mono", "ui-monospace", "monospace"],
       },
       colors: {
+        amber: { 400: "#de8400" },
+        zinc: { 400: "#bfbfbf" },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

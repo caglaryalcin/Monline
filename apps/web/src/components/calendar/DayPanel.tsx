@@ -1,3 +1,5 @@
+import "./payment-colors.css";
+
 import { CircleDot, Info, X } from "lucide-react";
 
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
@@ -7,18 +9,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { isCredit } from "@/lib/recordTypes";
-import { formatDate, formatPrice } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { cn, formatDate, formatPrice } from "@/lib/utils";
 import type { Currency, PaymentRecord } from "@/types";
 
-import {
-  type DayEntry,
-  getLogoUrl,
-  getPaymentRecord,
-  PAYMENT_COLORS,
-  toDateStr,
-  toMain,
-} from "./types";
+import { paymentAppearance } from "./paymentAppearance";
+import { type DayEntry, getPaymentRecord, PAYMENT_COLORS, toDateStr, toMain } from "./types";
 
 interface DayPanelProps {
   day: number;
@@ -71,7 +66,13 @@ export function DayPanel({
             </p>
             {entries.length > 0 && mainCurrency ? (
               <p className="text-xs text-muted-foreground mt-0.5">
-                {entries.length} {entries.length === 1 ? t("subscription") : t("subscriptions")} ·{" "}
+                {entries.length}{" "}
+                {entries.some((entry) => entry.spending)
+                  ? t("spending_entries")
+                  : entries.length === 1
+                    ? t("subscription")
+                    : t("subscriptions")}{" "}
+                ·{" "}
                 <span className="font-medium text-foreground">
                   {formatPrice(total, mainCurrency.symbol, {
                     currencyCode: mainCurrency.code,
@@ -91,27 +92,28 @@ export function DayPanel({
         {entries.length > 0 && (
           <div className="divide-y">
             {entries.map((entry) => {
-              const { sub, date, amount } = entry;
+              const { sub, date, amount, spending } = entry;
               const credit = isCredit(sub);
-              const logo = getLogoUrl(sub);
               const cur = sub.expand?.currency ?? currencies.find((c) => c.id === sub.currency);
               const cycle = sub.expand?.cycle;
               const category = sub.expand?.category;
               const diffDays = Math.ceil((thisDay.getTime() - today.getTime()) / 86400000);
               const dateStr = toDateStr(date);
               const rec = !credit ? getPaymentRecord(paymentRecords, sub.id, dateStr) : undefined;
-              const isPaid = !!rec?.paid_at;
-              const isAwaitingConfirmation = !credit && !isPaid && thisDay <= today;
-              const colorClass = isPaid
-                ? PAYMENT_COLORS.paid
-                : isAwaitingConfirmation
-                  ? PAYMENT_COLORS.awaitingConfirmation
-                  : PAYMENT_COLORS.upcoming;
+              const appearance = paymentAppearance(entry, rec);
+              const isPaid = appearance.paid;
+              const isAwaitingConfirmation =
+                (!spending || spending.status === "planned") &&
+                !credit &&
+                !isPaid &&
+                thisDay <= today;
+              const colorClass = credit ? PAYMENT_COLORS.upcoming : appearance.className;
 
               return (
                 <button
                   key={sub.id}
                   type="button"
+                  title={credit ? undefined : t(appearance.labelKey)}
                   onClick={() => onSelectEntry(entry)}
                   className={cn(
                     "group flex w-full min-w-0 items-center gap-2 px-4 py-3 text-left transition-colors sm:gap-4",
@@ -119,26 +121,11 @@ export function DayPanel({
                   )}
                 >
                   {/* Logo */}
-                  <div className="relative h-11 w-11 shrink-0">
-                    {logo ? (
-                      <div className="h-full w-full overflow-hidden rounded-xl border bg-background p-1.5">
-                        <SubscriptionLogo sub={sub} className="h-full w-full object-contain" />
-                      </div>
-                    ) : (
-                      <div
-                        className={cn(
-                          "flex h-full w-full items-center justify-center rounded-xl text-base font-bold",
-                          colorClass,
-                        )}
-                      >
-                        {sub.name[0]?.toUpperCase()}
-                      </div>
-                    )}
+                  <div className="h-11 w-11 shrink-0 rounded-xl overflow-hidden border bg-background p-1.5 relative">
+                    <SubscriptionLogo sub={sub} month={spending ? spending.date.slice(0, 7) : dateStr.slice(0, 7)}
+                      rowId={spending?.provider_row_id} className="h-full w-full object-contain" />
                     {isAwaitingConfirmation && (
-                      <span
-                        aria-hidden="true"
-                        className="absolute -bottom-1 -right-1 rounded-full bg-red-500 p-0.5 ring-2 ring-background"
-                      >
+                      <span className="absolute -bottom-1 -right-1 rounded-full bg-red-500 p-0.5 ring-2 ring-background">
                         <CircleDot className="h-3 w-3 text-white" />
                       </span>
                     )}
@@ -147,6 +134,14 @@ export function DayPanel({
                   {/* Main info */}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate">{sub.name}</p>
+                    {spending && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t(`spending_source_${spending.source}`)} ·{" "}
+                        {t(`spending_kind_${spending.kind}`)}
+                        {spending.card_name ? ` · ${spending.card_name}` : ""}
+                        {spending.installment ? ` · ${spending.installment}` : ""}
+                      </p>
+                    )}
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                       {category && (
                         <Badge variant="secondary" className="text-[10px] h-4 px-1.5 rounded-full">
@@ -187,7 +182,7 @@ export function DayPanel({
                         currencyCode: cur?.code,
                       })}
                     </p>
-                    {cur && mainCurrency && cur.id !== mainCurrency.id && (
+                    {cur && cur.rate > 0 && mainCurrency && cur.id !== mainCurrency.id && (
                       <p className="text-[11px] text-muted-foreground">
                         ≈{" "}
                         {formatPrice(toMain(amount ?? sub.price, cur), mainCurrency.symbol, {

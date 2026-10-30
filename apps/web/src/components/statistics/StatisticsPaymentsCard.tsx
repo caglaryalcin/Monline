@@ -9,6 +9,7 @@ import { ThemedSelect } from "@/components/ui/themed-select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { historyMonth } from "@/lib/costHistory";
+import { resolveLocale } from "@/lib/locale";
 import type { MonthlyPaymentTotal } from "@/lib/paymentStatistics";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -32,7 +33,7 @@ export function StatisticsPaymentsCard({
   onYearChange,
 }: StatisticsPaymentsCardProps) {
   const { t, i18n } = useTranslation();
-  const language = i18n?.resolvedLanguage ?? i18n?.language ?? "en";
+  const language = resolveLocale(i18n);
   const [mode, setMode] = useState<"paid" | "upcoming">("paid");
   const [selected, setSelected] = useState<{ paid: string | null; upcoming: string | null }>({
     paid: null,

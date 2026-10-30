@@ -178,6 +178,7 @@ export interface Category {
 }
 
 export interface PaymentMethod {
+  finance_card?: string;
   id: string;
   name: string;
   icon?: string;

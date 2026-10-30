@@ -108,7 +108,6 @@ export const SMTPTab = forwardRef<
     if (enabled) changeExpansion(true);
     const previous = form.enabled;
     set("enabled", enabled);
-    if (!embedded && !inline) return;
     setSaving(true);
     try {
       await serverSettingsService.updateSmtp({ enabled });
@@ -217,10 +216,7 @@ export const SMTPTab = forwardRef<
         {!embedded && !inline && (
           <SMTPStatusCard
             enabled={form.enabled}
-            onEnabledChange={(value) => {
-              if (inline) void toggleEnabled(value);
-              else set("enabled", value);
-            }}
+            onEnabledChange={(value) => set("enabled", value)}
             disabled={smtpQuery.isPending || smtpQuery.isError || saving || testing}
           />
         )}
@@ -253,13 +249,7 @@ export const SMTPTab = forwardRef<
           <div className="flex items-center gap-3 flex-wrap pt-2">
             <Button
               onClick={save}
-              disabled={
-                saving ||
-                testing ||
-                smtpQuery.isPending ||
-                smtpQuery.isError ||
-                (inline && !channelEnabled)
-              }
+              disabled={saving || testing || smtpQuery.isPending || smtpQuery.isError}
               className="rounded-xl"
             >
               {saving ? t("saving") : t("save")}

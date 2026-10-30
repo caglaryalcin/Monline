@@ -6,6 +6,7 @@ import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useLocalToday } from "@/hooks/useLocalToday";
+import { resolveLocale } from "@/lib/locale";
 import type { MonthlyBudgetEntry } from "@/lib/monthlyBudget";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ export function BudgetOverviewCard({
 }: BudgetOverviewCardProps) {
   const { t, i18n } = useTranslation();
   const today = useLocalToday();
-  const language = (i18n?.resolvedLanguage ?? i18n?.language ?? "en").replace("_", "-");
+  const language = resolveLocale(i18n);
   const month = new Intl.DateTimeFormat(language, { month: "long", year: "numeric" }).format(
     new Date(),
   );
@@ -52,7 +53,7 @@ export function BudgetOverviewCard({
     <Card className="monline-budget-card flex flex-col overflow-hidden rounded-3xl border shadow-sm">
       <CardHeader className="shrink-0 border-b bg-muted/30 pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-lg">{t("budget_overview")}</CardTitle>
+          <CardTitle className="text-lg capitalize">{t("dashboard_year_section_online")}</CardTitle>
           <span className="text-xs capitalize text-muted-foreground">{month}</span>
         </div>
       </CardHeader>

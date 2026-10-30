@@ -13,6 +13,45 @@ const { BadRequestError, ForbiddenError, HttpError } = require("./errors.cjs");
 const FORMAT = "monline-instance-backup";
 const UPLOAD_LIMIT = 500 * 1024 * 1024;
 const EXPANDED_LIMIT = 2 * 1024 * 1024 * 1024;
+// These collections were introduced in v2. A v1 instance backup legitimately
+// has none of them; existing v2 backups must still contain them.
+const V2_COLLECTIONS = new Set([
+  "finance_rows",
+  "finance_entries",
+  "salary_history",
+  "finance_benchmarks",
+  "finance_card_transactions",
+  "finance_statement_links",
+  "merchant_logos",
+  "manual_bills",
+]);
+// Match the additive migrations in Repository. All other columns remain required.
+const MIGRATED_COLUMNS = {
+  users: ["disabled", "show_currency_code"],
+  payment_records: [
+    "scheduled_date",
+    "statement_sources",
+    "name",
+    "currency",
+    "logo",
+    "category",
+    "payment_method",
+    "payer",
+  ],
+  subscriptions: [
+    "sharing",
+    "statement_imported",
+    "billing_anchor_day",
+    "calendar_history_recovery_passes",
+    "calendar_projection_hidden",
+  ],
+  payment_methods: ["is_main", "finance_card"],
+  household: ["is_main", "account", "account_approval"],
+  sharing_groups: ["pending_members"],
+  bank_statements: ["summary", "unresolved", "excluded_transactions", "tracking_hidden"],
+  finance_rows: ["expense_type", "payment_card", "year", "origin_row", "is_deleted", "loan_id"],
+  notifications_config: ["ntfy_username", "ntfy_password"],
+};
 
 function temporaryDirectory(repository) {
   const folder = path.join(repository.directory, "backups");
@@ -143,13 +182,14 @@ async function unpack(file, destination) {
       !fs.statSync(path.join(destination, "storage")).isDirectory()
     )
       throw new Error("Incompatible backup");
+    return manifest;
   } catch (error) {
     if (error instanceof BadRequestError) throw error;
     throw new BadRequestError("Select a valid Monline .tar.gz instance backup");
   }
 }
 
-function validateDatabase(file) {
+function validateDatabase(file, { allowV1Schema = false } = {}) {
   let input;
   try {
     const header = Buffer.alloc(16);
@@ -164,6 +204,10 @@ function validateDatabase(file) {
     input = new DatabaseSync(file, { readOnly: true });
     if (Object.values(input.prepare("PRAGMA quick_check").get())[0] !== "ok")
       throw new Error("Invalid database");
+    // Early full backups have no appVersion in their manifest. Treat them as
+    // v1 only if no v2 collection exists; never accept a partial v2 schema.
+    const tables = new Set(input.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((table) => table.name));
+    allowV1Schema = allowV1Schema && ![...V2_COLLECTIONS].some((name) => tables.has(name));
     for (const entry of schema) {
       if (
         entry.name === "sharing_groups" &&
@@ -181,37 +225,16 @@ function validateDatabase(file) {
           .map((row) => row.name),
       );
       if (
+        !columns.size &&
+        (["budget_matches", "calendar_moves", "sharing_groups"].includes(entry.name) ||
+          (allowV1Schema && V2_COLLECTIONS.has(entry.name)))
+      )
+        continue;
+      if (
         entry.fields.some(
           (field) =>
             !columns.has(field.name) &&
-            !(
-              (entry.name === "users" &&
-                ["disabled", "show_currency_code"].includes(field.name)) ||
-              (entry.name === "payment_records" &&
-                [
-                  "statement_sources",
-                  "scheduled_date",
-                  "name",
-                  "currency",
-                  "logo",
-                  "category",
-                  "payment_method",
-                  "payer",
-                ].includes(field.name)) ||
-              (entry.name === "subscriptions" &&
-                [
-                  "sharing",
-                  "statement_imported",
-                  "calendar_history_recovery_passes",
-                  "calendar_projection_hidden",
-                ].includes(field.name)) ||
-              (["payment_methods", "household"].includes(entry.name) &&
-                field.name === "is_main") ||
-              (entry.name === "household" &&
-                ["account", "account_approval"].includes(field.name)) ||
-              (entry.name === "sharing_groups" &&
-                field.name === "pending_members")
-            ),
+            !MIGRATED_COLUMNS[entry.name]?.includes(field.name),
         )
       )
         throw new Error("Incompatible database");
@@ -229,18 +252,19 @@ function validateDatabase(file) {
 
 function replaceDatabase(repository, input) {
   for (const entry of schema) {
-    const sourceColumns = new Set(
+    const columns = new Set(
       input
         .prepare(`PRAGMA table_info(${identifier(entry.name)})`)
         .all()
         .map((column) => column.name),
     );
-    // Let the current table supply defaults for fields added after the backup.
     const fields = entry.fields
       .map((field) => field.name)
-      .filter((name) => sourceColumns.has(name));
+      .filter((field) => columns.has(field));
     repository.connection.exec(`DELETE FROM ${identifier(entry.name)}`);
-    if (!sourceColumns.size && entry.name === "sharing_groups") continue;
+    if (!fields.length) continue;
+    // Omit newly added columns so SQLite applies the current schema defaults,
+    // including NOT NULL text/number fields, rather than inserting null.
     const insert = repository.connection.prepare(
       `INSERT INTO ${identifier(entry.name)} (${fields.map(identifier)}) VALUES (${fields.map(() => "?")})`,
     );
@@ -258,9 +282,11 @@ function replaceDatabase(repository, input) {
   for (const row of input.prepare("SELECT key,value FROM monline_meta").all())
     insertMeta.run(row.key, row.value);
   repository.repairStatementImportMarkers();
+  repository.repairBillingAnchorDays();
   repository.repairMainPaymentMethods();
-  repository.repairSelfHousehold();
   repository.repairMainHousehold();
+  repository.repairSelfHousehold();
+  repository.repairFinanceRowTypes();
   require("./domain/lib/calendar-history-recovery.js").recoverCalendarHistory(
     repository,
     require("./domain/lib/date-helpers.js").formatLocalDate(new Date()),
@@ -386,9 +412,16 @@ function registerBackupApi(app, repository, auth) {
             throw new BadRequestError("setup_restore_full_required");
           const extracted = path.join(work, "extracted");
           fs.mkdirSync(extracted, { mode: 0o700 });
-          if (!legacy) await unpack(uploadPath, extracted);
+          const manifest = legacy ? null : await unpack(uploadPath, extracted);
           input = validateDatabase(
             legacy ? uploadPath : path.join(extracted, "monline.db"),
+            {
+              allowV1Schema:
+                legacy || manifest.appVersion == null ||
+                /^1\.\d+\.\d+(?:-[\da-zA-Z.-]+)?(?:\+[\da-zA-Z.-]+)?$/.test(
+                  manifest.appVersion,
+                ),
+            },
           );
           if (setupOnly) {
             requireEmptySetup();

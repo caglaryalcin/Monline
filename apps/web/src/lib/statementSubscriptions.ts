@@ -198,11 +198,11 @@ export function filterSubscriptionTransactions(
   match: ReturnType<typeof createSubscriptionMatcher>,
 ) {
   const transactions: ReviewTransaction[] = [];
-  const { cancelledIds, unmatchedRefunds } = matchStatementRefunds(rows);
+  const { cancelledIds, refundedChargeIds, unmatchedRefunds } = matchStatementRefunds(rows);
   let excluded = 0;
   let refunded = 0;
   for (const row of rows) {
-    if (cancelledIds.has(row.id)) {
+    if (cancelledIds.has(row.id) || refundedChargeIds.has(row.id)) {
       excluded++;
       if (row.kind === "charge" && match(row.merchant)) refunded++;
       continue;

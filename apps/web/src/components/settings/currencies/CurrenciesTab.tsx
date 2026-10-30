@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
+import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { currenciesService } from "@/services/currencies";
@@ -20,6 +21,7 @@ import type { Currency } from "@/types";
 export function CurrenciesTab() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const userId = user?.id ?? "";
   const qc = useQueryClient();
 
   const [isAdding, setIsAdding] = useState(false);
@@ -38,7 +40,7 @@ export function CurrenciesTab() {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const { data: currencies = [], isLoading } = useQuery({
-    queryKey: queryKeys.currencies.all(user?.id ?? ""),
+    queryKey: queryKeys.currencies.all(userId),
     queryFn: () => currenciesService.list(user!.id),
     enabled: !!user?.id,
   });
@@ -54,7 +56,7 @@ export function CurrenciesTab() {
     mutationFn: (data: Partial<Currency>) => currenciesService.create(user!.id, data),
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: queryKeys.currencies.all(user?.id ?? ""),
+        queryKey: queryKeys.currencies.all(userId),
       });
       setNewCurrency({ name: "", code: "", symbol: "" });
       setIsAdding(false);
@@ -68,7 +70,7 @@ export function CurrenciesTab() {
       currenciesService.update(id, data),
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: queryKeys.currencies.all(user?.id ?? ""),
+        queryKey: queryKeys.currencies.all(userId),
       });
       setEditingId(null);
       toast.success(t("success_update"));
@@ -80,7 +82,7 @@ export function CurrenciesTab() {
     mutationFn: (id: string) => currenciesService.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({
-        queryKey: queryKeys.currencies.all(user?.id ?? ""),
+        queryKey: queryKeys.currencies.all(userId),
       });
       toast.success(t("success_delete"));
     },
@@ -107,7 +109,7 @@ export function CurrenciesTab() {
       // Keep user.main_currency in sync so backend rate normalization uses correct base
       await usersService.update(user!.id, { main_currency: id });
       qc.invalidateQueries({
-        queryKey: queryKeys.currencies.all(user?.id ?? ""),
+        queryKey: queryKeys.currencies.all(userId),
       });
       toast.success(t("success_update"));
 
@@ -117,7 +119,7 @@ export function CurrenciesTab() {
           .updateRates()
           .then(() =>
             qc.invalidateQueries({
-              queryKey: queryKeys.currencies.all(user?.id ?? ""),
+              queryKey: queryKeys.currencies.all(userId),
             }),
           )
           .catch(() => {});
@@ -243,9 +245,7 @@ export function CurrenciesTab() {
 
       <ConfirmDialog
         open={!!pendingDeleteId}
-        onOpenChange={(open) => {
-          if (!open) setPendingDeleteId(null);
-        }}
+        onOpenChange={dialogDismissHandler(() => setPendingDeleteId(null))}
         title={t("delete")}
         description={t("confirm_delete")}
         onConfirm={() => {

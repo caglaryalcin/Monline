@@ -4,6 +4,7 @@ import {
   ArrowUpFromLine,
   FileArchive,
   FileJson,
+  FileSpreadsheet,
   FolderOpen,
   Info,
   Loader2,
@@ -35,28 +36,35 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import client from "@/lib/client";
+import { dialogDismissHandler } from "@/lib/dialogDismiss";
+import { resolveLocale } from "@/lib/locale";
 import { toast } from "@/lib/toast";
+import {
+  type InstanceBackupFile,
+  restoreAccountSelection,
+  restoreInstanceSelection,
+} from "@/lib/transferRestoration";
 import {
   type AccountBackup,
   exportBackup,
   exportInstanceBackup,
-  importData,
   type ImportResult,
   readImportFile,
   TRANSFER_COLLECTIONS,
 } from "@/services/dataTransfer";
-import { serverSettingsService } from "@/services/serverSettings";
+import { exportSpreadsheet } from "@/services/spreadsheetExport";
 
-type InstanceFile = { file: File; legacy: boolean };
+type InstanceFile = InstanceBackupFile;
 
 export function DataTransferPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, refreshUser, isAdmin, isLoading } = useAuth();
   const queryClient = useQueryClient();
   const fileInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [progress, setProgress] = useState("");
   const [error, setError] = useState("");
+  const [errorAction, setErrorAction] = useState("");
   const [selected, setSelected] = useState<AccountBackup | null>(null);
   const [archive, setArchive] = useState<InstanceFile | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
@@ -71,12 +79,14 @@ export function DataTransferPage() {
     if (busy) return;
     setBusy(name);
     setError("");
+    setErrorAction(name);
     setProgress("");
     try {
       await action();
     } catch (err) {
       const key =
-        err instanceof Error && err.message.startsWith("transfer_")
+        err instanceof Error &&
+        (err.message.startsWith("transfer_") || err.message.startsWith("spreadsheet_"))
           ? err.message
           : name === "read"
             ? "transfer_invalid_backup"
@@ -133,28 +143,59 @@ export function DataTransferPage() {
     }
   }
 
-  async function restoreAccount() {
-    if (!selected || !user) return;
-    const imported = await importData(selected);
-    setResult(imported);
-    setSelected(null);
-    await queryClient.invalidateQueries();
-    await refreshUser();
-  }
+  const restoreAccount = () =>
+    restoreAccountSelection(selected, !!user, async (imported) => {
+      setResult(imported);
+      setSelected(null);
+      await queryClient.invalidateQueries();
+      await refreshUser();
+    });
 
-  async function restoreInstance() {
-    if (!archive || !isAdmin) return;
-    const form = new FormData();
-    form.set("file", archive.file);
-    await serverSettingsService.restore(form);
-    queryClient.clear();
-    client.authStore.clear();
-    toast.success(t("instance_restore_success"));
-    window.location.assign("/login");
-  }
+  const restoreInstance = () =>
+    restoreInstanceSelection(archive, isAdmin, () => {
+      queryClient.clear();
+      client.authStore.clear();
+      toast.success(t("instance_restore_success"));
+      window.location.assign("/login");
+    });
 
   return (
     <div className="space-y-6">
+      <Card className="overflow-hidden rounded-3xl">
+        <CardHeader className="border-b bg-muted/20">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <FileSpreadsheet className="h-5 w-5 text-primary" />
+            {t("spreadsheet_export_title")}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">{t("spreadsheet_export_description")}</p>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex-1 space-y-2 text-sm leading-relaxed text-muted-foreground">
+              <p>{t("spreadsheet_export_scope")}</p>
+              <p>{t("spreadsheet_export_formulas")}</p>
+            </div>
+            <Button
+              className="shrink-0 rounded-xl"
+              disabled={disabled}
+              onClick={() => void run("excel", () => exportSpreadsheet(resolveLocale(i18n, "tr")))}
+            >
+              {busy === "excel" ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowDownToLine className="mr-2 h-4 w-4" />
+              )}
+              {t(busy === "excel" ? "transfer_preparing" : "spreadsheet_export_action")}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">{t("spreadsheet_export_snapshot")}</p>
+          {error && errorAction === "excel" && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+        </CardContent>
+      </Card>
       <Card className="overflow-hidden rounded-3xl">
         <CardHeader className="border-b bg-muted/20">
           <CardTitle className="flex items-center gap-2 text-lg">
@@ -328,7 +369,7 @@ export function DataTransferPage() {
           {progress || t(["import", "restore"].includes(busy) ? "importing" : "transfer_preparing")}
         </p>
       )}
-      {error && (
+      {error && errorAction !== "excel" && (
         <p
           role="alert"
           className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
@@ -338,9 +379,7 @@ export function DataTransferPage() {
       )}
       <Dialog
         open={confirmExport && isAdmin}
-        onOpenChange={(open) => {
-          if (!open && !busy) closeExport();
-        }}
+        onOpenChange={dialogDismissHandler(() => closeExport(), Boolean(busy))}
       >
         <DialogContent>
           <DialogHeader>

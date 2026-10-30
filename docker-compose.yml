@@ -1,12 +1,12 @@
-name: monline
+name: monline-beta
 services:
   app:
     build: .
-    image: monline:1.5.0
-    container_name: monline
+    image: monline:2.0.0
+    container_name: monline-beta
     restart: unless-stopped
     ports:
-      - "${PORT:-3000}:3000"
+      - "${MONLINE_BETA_PORT:-3001}:3000"
     environment:
       PUID: ${PUID:-1000}
       PGID: ${PGID:-1000}
@@ -15,7 +15,7 @@ services:
       MONLINE_PUBLIC_URL: ${MONLINE_PUBLIC_URL:-}
       MONLINE_LEGACY_KEY: ${MONLINE_LEGACY_KEY:-}
     volumes:
-      - monline-volume:/data
+      - monline-beta-volume:/data
     healthcheck:
       test:
         ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
@@ -25,4 +25,4 @@ services:
       start_period: 30s
 
 volumes:
-  monline-volume:
+  monline-beta-volume:

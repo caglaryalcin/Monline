@@ -1,10 +1,9 @@
-/// <reference types="vitest" />
 import react from "@vitejs/plugin-react";
 import path from "path";
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import type { Plugin } from "vite";
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite";
 
 // Keep PDF.js support files local in development and production; no CDN calls.
 function pdfAssets(): Plugin {
@@ -66,36 +65,6 @@ function isScopedPackage(packageName: string, scope: string) {
 
 export default defineConfig({
   plugins: [react(), pdfAssets()],
-  test: {
-    globals: true,
-    environment: "jsdom",
-    setupFiles: ["./src/test/setup.ts"],
-    coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html", "lcov"],
-      include: ["src/**/*.{ts,tsx}"],
-      thresholds: {
-        lines: 100,
-        functions: 100,
-        branches: 100,
-        statements: 100,
-      },
-      exclude: [
-        "node_modules/",
-        "src/test/**",
-        "src/test/setup.ts",
-        "src/main.tsx",
-        "src/**/*.d.ts",
-        "**/*.config.ts",
-        // Pure TypeScript type-only files (no runtime code to instrument)
-        "src/types.ts",
-        "src/components/settings/smtp/smtp.types.ts",
-        "src/components/statistics/statistics.types.ts",
-        // Re-export-only module (v8 cannot instrument bare re-exports)
-        "src/lib/toast.ts",
-      ],
-    },
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

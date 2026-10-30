@@ -34,9 +34,55 @@ const PROFILE = [
   "avatar",
 ];
 const FIELDS = {
+  finance_rows: [
+    "name",
+    "kind",
+    "expense_type",
+    "notes",
+    "source_subscription",
+    "payment_card",
+    "bill_type",
+    "row_order",
+    "is_loan",
+    "is_rent",
+    "is_auto_carryover",
+    "loan_id",
+    "year",
+    "origin_row",
+    "is_deleted",
+  ],
+  finance_entries: [
+    "row_id",
+    "date",
+    "amount",
+    "status",
+    "settled_date",
+    "notes",
+    "source_payment",
+    "payment_tag",
+  ],
+  finance_card_transactions: [
+    "row_id",
+    "month",
+    "date",
+    "merchant",
+    "amount",
+    "notes",
+  ],
+  salary_history: ["effective_date", "amount", "notes"],
+  finance_benchmarks: [
+    "month",
+    "salary_tag",
+    "usd",
+    "eur",
+    "minimum_wage",
+    "rate_date",
+    "source",
+    "updated_at",
+  ],
   categories: ["name", "color", "order", "translation_key"],
   currencies: ["code", "name", "symbol", "rate", "is_main"],
-  payment_methods: ["name", "icon", "order", "is_main"],
+  payment_methods: ["name", "icon", "order", "is_main", "finance_card"],
   household: ["name", "is_main"],
   subscriptions: [
     "name",
@@ -115,6 +161,10 @@ const FIELDS = {
   ],
   notification_log: ["subscription_id", "sent_date", "reminder_key"],
   bank_statements: [
+    "tracking_hidden",
+    "excluded_transactions",
+    "summary",
+    "unresolved",
     "bank",
     "file_name",
     "file_hash",
@@ -123,6 +173,18 @@ const FIELDS = {
     "transactions",
     "created",
   ],
+  finance_statement_links: ["row_id", "month", "statement_id"],
+  merchant_logos: ["merchant_name", "provider_name", "domain", "row_id", "start_month", "scope", "updated_at"],
+  manual_bills: ["name", "date", "amount", "currency", "status", "notes"],
+  budget_matches: [
+    "target_type",
+    "target_id",
+    "statement_id",
+    "transaction_id",
+    "fingerprint",
+    "relation",
+  ],
+  calendar_moves: ["source", "source_id", "source_date", "date"],
 };
 const FILE_FIELDS = {
   users: ["avatar"],
@@ -131,6 +193,8 @@ const FILE_FIELDS = {
   payment_records: ["proof", "logo"],
 };
 const RELATIONS = {
+  statement_id: "bank_statements",
+  row_id: "finance_rows",
   currency: "currencies",
   category: "categories",
   payment_method: "payment_methods",
@@ -197,6 +261,18 @@ function exportAccount(app, userId) {
       backup.data[name] = rows.map((row) => values(row, FIELDS[name]));
       for (const row of rows) addFile(name, row);
     }
+    backup.data.calendar_moves = backup.data.calendar_moves.filter((row) => {
+      const ref = require("./calendar-placement.js").sourceReference(
+        row.source,
+        row.source_id,
+      );
+      return (
+        ref &&
+        backup.data[ref.collection]?.some(
+          (source) => source.id === ref.recordId,
+        )
+      );
+    });
   });
   return backup;
 }
@@ -237,8 +313,14 @@ function validateBackup(backup) {
   )
     throw new Error("transfer_invalid_backup");
   let count = 0;
+  for (const name of require("./pure/finance.js").COLLECTIONS)
+    if (backup.data[name] === undefined) backup.data[name] = [];
   if (backup.data.bank_statements === undefined)
     backup.data.bank_statements = [];
+  if (backup.data.merchant_logos === undefined) backup.data.merchant_logos = [];
+  if (backup.data.manual_bills === undefined) backup.data.manual_bills = [];
+  if (backup.data.budget_matches === undefined) backup.data.budget_matches = [];
+  if (backup.data.calendar_moves === undefined) backup.data.calendar_moves = [];
   for (const name of Object.keys(FIELDS)) {
     const rows = backup.data[name];
     if (!Array.isArray(rows)) throw new Error("transfer_invalid_backup");
@@ -247,6 +329,29 @@ function validateBackup(backup) {
       if (!row || !/^[a-z0-9]{15}$/.test(row.id) || ids.has(row.id))
         throw new Error("transfer_invalid_backup");
       ids.add(row.id);
+      if (name === "manual_bills") {
+        try {
+          require("./pure/manual-bills.js").validate(row);
+        } catch {
+          throw new Error("transfer_invalid_backup");
+        }
+      }
+      if (name === "merchant_logos") {
+        try {
+          require("./pure/merchant-logos.js").validate(row);
+        } catch (_) {
+          throw new Error("transfer_invalid_backup");
+        }
+      }
+      if (name === "finance_rows" && row.kind === "expense")
+        row.expense_type = require("./pure/finance.js").normalizeExpenseType(
+          row.expense_type,
+        );
+      if (
+        require("./pure/finance.js").COLLECTIONS.includes(name) &&
+        require("./pure/finance.js").validate(name, row)
+      )
+        throw new Error("transfer_invalid_backup");
       if (
         name === "subscriptions" &&
         row.billing_anchor_day != null &&
@@ -257,7 +362,10 @@ function validateBackup(backup) {
         throw new Error("transfer_invalid_backup");
       if (name === "bank_statements") {
         try {
-          Object.assign(row, require("./bank-statements.js").validate(row));
+          Object.assign(
+            row,
+            require("./bank-statements.js").validate(row, { legacy: true }),
+          );
         } catch (_) {
           throw new Error("transfer_invalid_backup");
         }
@@ -395,9 +503,26 @@ function importAccount(
               entry.get("year") === row.year &&
               entry.get("month") === row.month,
           );
+        if (!record && name === "salary_history")
+          record = existing.find(
+            (entry) => entry.getString("effective_date") === row.effective_date,
+          );
+        if (!record && name === "finance_benchmarks")
+          record = existing.find(
+            (entry) => entry.getString("month") === row.month,
+          );
         if (!record && name === "bank_statements")
           record = existing.find(
             (entry) => entry.getString("file_hash") === row.file_hash,
+          );
+        if (!record && name === "merchant_logos")
+          record = existing.find(
+            (entry) =>
+              entry.getString("merchant_key") ===
+              require("./pure/merchant-logos.js").key(row.merchant_name) &&
+              entry.getString("row_id") === (row.row_id ? maps.finance_rows[row.row_id] : "") &&
+              entry.getString("start_month") === (row.start_month || "") &&
+              entry.getString("scope") === (row.scope || ""),
           );
         const targetId = record
           ? record.id
@@ -435,6 +560,9 @@ function importAccount(
         if (
           field === "id" ||
           field === "replacement_subscription" ||
+          field === "payment_card" ||
+          field === "origin_row" ||
+          field === "finance_card" ||
           !Object.prototype.hasOwnProperty.call(row, field)
         )
           continue;
@@ -442,6 +570,30 @@ function importAccount(
           const file = files[fileKey(name, row.id, field)];
           if (file)
             record.set(field, fileHelpers.fileFromBytes(file.bytes, file.name));
+        } else if (name === "calendar_moves" && field === "source_id") {
+          const ref = require("./calendar-placement.js").sourceReference(
+            row.source,
+            row.source_id,
+          );
+          if (
+            !ref ||
+            !require("./pure/backfill-schedule.js").validDate(row.date) ||
+            !require("./pure/backfill-schedule.js").validDate(row.source_date)
+          )
+            throw new Error("transfer_invalid_backup");
+          record.set(
+            field,
+            `${ref.prefix}:${relation(ref.collection, ref.recordId)}${ref.suffix}`,
+          );
+        } else if (name === "budget_matches" && field === "target_id") {
+          if (
+            !Object.hasOwn(
+              require("./pure/budget-matching.js").PREFIX,
+              row.target_type,
+            )
+          )
+            throw new Error("transfer_invalid_backup");
+          record.set(field, relation(row.target_type, row[field]));
         } else if (field === "subscription_id")
           record.set(
             field,
@@ -451,6 +603,23 @@ function importAccount(
           );
         else if (field === "cycle")
           record.set(field, relation("cycles", row[field]));
+        else if (field === "source_subscription")
+          record.set(field, row[field] ? subscriptionId(row[field]) : "");
+        else if (field === "source_payment")
+          record.set(
+            field,
+            row[field]
+              ? maps.payment_records[row[field]] ||
+                  (backup.accountId === userId
+                    ? row[field]
+                    : security
+                        .sha256(userId + ":payment_records:" + row[field])
+                        .slice(0, 15))
+              : "",
+          );
+        // Manual invoices keep the original ISO code, not a currency-record relation.
+        else if (name === "manual_bills" && field === "currency")
+          record.set(field, row[field]);
         else if (RELATIONS[field])
           record.set(field, relation(RELATIONS[field], row[field]));
         else if (field === "main_currency")
@@ -528,7 +697,7 @@ function importAccount(
           own(tx, name, userId).some((entry) => entry.getBool("is_main"))
         )
           record.set("is_main", false);
-        if (name === "subscriptions") record.set("__monline_restore", true);
+        if (["subscriptions", "finance_rows"].includes(name)) record.set("__monline_restore", true);
         if (name === "fixer_settings" && !record.getString("api_key"))
           record.set("enabled", false);
         if (name === "notifications_config") {
@@ -575,6 +744,18 @@ function importAccount(
       record.set("__monline_restore", true);
       tx.save(record);
     }
+    for (const [name, field] of [
+      ["finance_rows", "origin_row"],
+      ["finance_rows", "payment_card"],
+      ["payment_methods", "finance_card"],
+    ])
+      for (const row of backup.data[name]) {
+        if (!created[name][row.id] || !row[field]) continue;
+        const record = records[name][row.id];
+        record.set(field, relation("finance_rows", row[field]));
+        if (name === "finance_rows") record.set("__monline_restore", true);
+        tx.save(record);
+      }
     tx.repairStatementImportMarkers();
     tx.repairMainPaymentMethods();
     tx.repairMainHousehold();

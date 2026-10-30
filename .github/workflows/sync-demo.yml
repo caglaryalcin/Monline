@@ -17,6 +17,7 @@ concurrency:
 
 jobs:
   dispatch:
+    if: github.repository == 'caglaryalcin/Monline' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Dispatch exact source revision

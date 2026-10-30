@@ -38,13 +38,21 @@ export const paymentRecordsService = {
   move: (data: {
     payment_id?: string;
     subscription_id?: string;
+    source?: string;
+    source_id?: string;
     from_date: string;
     to_date: string;
+    mode?: "ledger";
+    expected_source_date?: string;
+    expected_amount?: number;
   }) =>
-    client.send<{ updated: number; payment: PaymentRecord }>("/api/calendar/move-payment", {
-      method: "POST",
-      body: data,
-    }),
+    client.send<{ updated: number; payment?: PaymentRecord; ledger_updated?: boolean }>(
+      "/api/calendar/move-payment",
+      {
+        method: "POST",
+        body: data,
+      },
+    ),
   markUnpaid: (id: string) =>
     client.send<{ updated: number }>(`/api/payments/${encodeURIComponent(id)}/mark-unpaid`, {
       method: "POST",

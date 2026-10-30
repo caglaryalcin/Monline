@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/select";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { type CostHistoryPoint, historyMonth, yearMonths } from "@/lib/costHistory";
+import { resolveLocale } from "@/lib/locale";
+import { getCurrencySymbol } from "@/lib/utils";
 
 interface CostHistoryCardProps {
   data: CostHistoryPoint[];
@@ -50,7 +52,7 @@ export function CostHistoryCard({
   forecasts,
 }: CostHistoryCardProps) {
   const { t, i18n } = useTranslation();
-  const language = i18n?.resolvedLanguage ?? i18n?.language ?? "en";
+  const language = resolveLocale(i18n);
   const fillId = `history-${useId().replace(/:/g, "")}`;
   const currentYear = Number(useLocalToday().slice(0, 4));
   const [localYear, setLocalYear] = useState(currentYear);
@@ -84,7 +86,7 @@ export function CostHistoryCard({
     maximumFractionDigits: 0,
   });
   const formatAxisValue = (value: number) =>
-    `${(Math.abs(Math.round(value)) >= 10000 ? groupedAxisNumber : axisNumber).format(value)} ${currencySymbol}`;
+    `${(Math.abs(Math.round(value)) >= 10000 ? groupedAxisNumber : axisNumber).format(value)}${getCurrencySymbol(currencySymbol, language)}`;
   const maximum = Math.max(
     0,
     ...chartData.flatMap((point) => [point.cost ?? 0, point.forecast ?? 0]),

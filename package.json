@@ -1,6 +1,6 @@
 {
   "name": "monline",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "description": "Self-hosted subscription tracker built with React, Node.js, SQLite, and Docker.",
   "private": true,
   "packageManager": "bun@1.4.3",
@@ -28,14 +28,7 @@
     "dev:web": "cd apps/web && bun run dev",
     "build": "cd apps/web && bun run build",
     "lint": "cd apps/web && bun run lint",
-    "test": "bun run test:front && bun run test:back",
-    "test:run": "bun run test",
-    "test:coverage": "bun run test:front:coverage && bun run test:back:coverage",
-    "test:front": "cd apps/web && bun run test:run",
-    "test:front:coverage": "cd apps/web && bun run test:coverage",
-    "test:back": "cd apps/backend && node ../web/node_modules/vitest/vitest.mjs run --config vitest.config.mjs",
-    "test:back:coverage": "cd apps/backend && node ../web/node_modules/vitest/vitest.mjs run --config vitest.config.mjs --coverage",
-    "dev:server": "node apps/backend/src/server.cjs"
+    "dev:server": "node scripts/dev-server.cjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.5"

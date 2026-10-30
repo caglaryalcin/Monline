@@ -35,6 +35,9 @@ function importStatement(app, owner, statement, body, now = new Date()) {
     fail("statement_import_invalid");
   const source = statement.get("transactions");
   if (!Array.isArray(source)) fail("statement_import_invalid");
+  const cancelled = require("./bank-statements.js").refundedStatementCharges(
+    source,
+  );
   const byId = new Map(source.map((row) => [row.id, row]));
   const seen = new Set();
   const prepared = body.groups.map((group) => {
@@ -47,7 +50,15 @@ function importStatement(app, owner, statement, body, now = new Date()) {
     const rows = group.transaction_ids
       .map((id) => {
         const row = byId.get(id);
-        if (!row || seen.has(id) || row.kind !== "charge")
+        if (
+          !row ||
+          seen.has(id) ||
+          cancelled.has(id) ||
+          row.kind !== "charge" ||
+          (row.category
+            ? row.category !== "digital"
+            : !row.subscription_service)
+        )
           fail("statement_import_invalid");
         if (
           [row.merchant, row.subscription_service].some((value) =>
@@ -506,6 +517,10 @@ function importStatement(app, owner, statement, body, now = new Date()) {
         subscription.set("next_payment", next);
         tx.save(subscription);
       }
+    }
+    if (statement.getBool("tracking_hidden")) {
+      statement.set("tracking_hidden", false);
+      tx.save(statement);
     }
     return result;
   });

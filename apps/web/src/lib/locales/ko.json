@@ -1,4 +1,5 @@
 {
+  "finance_previous_month_deficit": "전월 부족액",
   "payment_status": "결제 상태",
   "payment_to_pay": "결제 예정",
   "payment_date_future": "결제일은 오늘 또는 이전 날짜여야 합니다.",

@@ -1,16 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, CalendarClock, DollarSign, TrendingUp } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { BudgetOverviewCard } from "@/components/dashboard/BudgetOverviewCard";
-import { CostHistoryCard } from "@/components/dashboard/CostHistoryCard";
-import { SummaryCard } from "@/components/dashboard/SummaryCard";
+import { DashboardYearOverview } from "@/components/dashboard/DashboardYearOverview";
 import { useDashboardDerivedData } from "@/components/dashboard/useDashboardDerivedData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { useMonthlyBudgetData } from "@/hooks/useMonthlyBudgetData";
-import { usePaidTotals } from "@/hooks/usePaidTotals";
 import { useSummaryData } from "@/hooks/useSummaryData";
 import { useYearlyCosts } from "@/hooks/useYearlyCosts";
 import { queryKeys } from "@/lib/queryKeys";
@@ -24,12 +21,9 @@ export function DashboardPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const userId = user?.id ?? "";
-  const currentYear = Number(useLocalToday().slice(0, 4));
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-  useEffect(() => setSelectedYear(currentYear), [currentYear]);
+  const today = useLocalToday();
 
   const summary = useSummaryData(userId);
-  const paid = usePaidTotals(userId, selectedYear);
   const monthlyBudget = useMonthlyBudgetData(userId, !!user?.payment_tracking);
   const yearlyCosts = useYearlyCosts(userId);
   const lastSnapshot = useRef("");
@@ -69,7 +63,7 @@ export function DashboardPage() {
       currencyCode: summaryData?.mainCode,
     });
 
-  const { budget, chartData, totalCredits } = useDashboardDerivedData({
+  const { budget, totalCredits } = useDashboardDerivedData({
     user,
     summary: summaryData,
     yearlyCosts: yearlyCosts.data,
@@ -78,58 +72,7 @@ export function DashboardPage() {
 
   return (
     <div className="animate-in slide-in-from-bottom-4 space-y-8 fade-in duration-500">
-      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
-        <div className="flex min-w-0 flex-col gap-6 xl:col-span-8">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-            <SummaryCard
-              title={t("total_weekly")}
-              year={selectedYear}
-              value={paid.data ? formatValue(paid.data.averageWeekly) : "—"}
-              icon={<TrendingUp className="h-6 w-6" />}
-              loading={paid.isLoading}
-              accent="var(--chart-2)"
-            />
-            <SummaryCard
-              title={t("total_monthly")}
-              year={selectedYear}
-              value={paid.data ? formatValue(paid.data.averageMonthly) : "—"}
-              icon={<DollarSign className="h-6 w-6" />}
-              loading={paid.isLoading}
-              accent="var(--chart-3)"
-            />
-            <SummaryCard
-              title={t("total_yearly")}
-              year={selectedYear}
-              value={paid.data ? formatValue(paid.data.totalYearly) : "—"}
-              icon={<Calendar className="h-6 w-6" />}
-              loading={paid.isLoading}
-              accent="var(--chart-4)"
-            />
-            <SummaryCard
-              title={t("next_month_cost")}
-              value={summaryData ? formatValue(summaryData.nextMonthTotal) : "—"}
-              icon={<CalendarClock className="h-6 w-6" />}
-              loading={summary.isLoading}
-              accent="var(--chart-1)"
-            />
-          </div>
-
-          <section aria-label={t("history")}>
-            <CostHistoryCard
-              selectedYear={selectedYear}
-              onYearChange={setSelectedYear}
-              variant="classic"
-              data={chartData}
-              forecasts={summaryData?.forecasts}
-              formatValue={formatValue}
-              currencySymbol={summaryData?.mainSymbol ?? "$"}
-              isLoading={summary.isLoading || yearlyCosts.isLoading || monthlyBudget.isLoading}
-              hasError={!!yearlyCosts.error || monthlyBudget.hasError || summary.isError}
-              className=""
-            />
-          </section>
-        </div>
-        <div className="min-w-0 xl:col-span-4">
+      <DashboardYearOverview key={userId} userId={userId} today={today} sidebar={
           <BudgetOverviewCard
             budget={budget}
             entries={monthlyBudget.entries}
@@ -138,8 +81,7 @@ export function DashboardPage() {
             hasError={monthlyBudget.hasError || summary.isError}
             formatValue={formatValue}
           />
-        </div>
-      </div>
+      } />
     </div>
   );
 }

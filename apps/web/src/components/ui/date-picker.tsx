@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ThemedSelect } from "@/components/ui/themed-select";
 import { displayDateInput, isValidISODate, parseDateInput } from "@/lib/dateInput";
+import { resolveLocale } from "@/lib/locale";
 
 const locales = {
   en: enUS,
@@ -113,7 +114,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
   ref,
 ) {
   const { t, i18n } = useTranslation();
-  const language = (i18n?.resolvedLanguage ?? i18n?.language ?? "en").split(/[-_]/)[0];
+  const language = (resolveLocale(i18n)).split(/[-_]/)[0];
   const locale = locales[language as keyof typeof locales] ?? enUS;
   const parsed = isValidISODate(value) ? parseISO(value) : undefined;
   const selected = parsed && isValid(parsed) ? parsed : undefined;
