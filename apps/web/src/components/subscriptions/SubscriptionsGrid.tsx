@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { SubscriptionCard } from "@/components/subscriptions/SubscriptionCard";
@@ -7,6 +7,7 @@ import type {
   SubscriptionAutomationSetting,
   SubscriptionPriceDisplay,
 } from "@/components/subscriptions/subscriptionsPage.types";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import type { Currency, Subscription } from "@/types";
 
@@ -128,42 +129,48 @@ export function SubscriptionsGrid({
   }
 
   const renderCards = (items: Subscription[]) =>
-    items.map((subscription) => (
-      <SubscriptionCard
-        onShare={onShare ? () => onShare(subscription) : undefined}
-        key={subscription.id}
-        sub={subscription}
-        layout={layout}
-        mainCurrency={mainCurrency}
-        currencies={currencies}
-        convertCurrency={convertCurrency}
-        showCurrencyCode={showCurrencyCode}
-        priceDisplay={priceDisplays[subscription.id] ?? "billing"}
-        onPriceDisplayChange={(mode) =>
-          setPriceDisplays((current) => ({ ...current, [subscription.id]: mode }))
-        }
-        showProgress={showProgress}
-        onEdit={() => onEdit(subscription)}
-        onClone={() => onClone(subscription.id)}
-        onRenew={() => onRenew(subscription.id)}
-        renewPending={renewPending && renewPendingId === subscription.id}
-        renewDisabled={renewPending}
-        onHistory={() => onHistory(subscription)}
-        onDelete={() => onDelete(subscription.id)}
-        onToggleActive={onToggleActive ? () => onToggleActive(subscription) : undefined}
-        statusPending={statusPendingId === subscription.id}
-        statusDisabled={!!statusPendingId || automationPending}
-        onToggleAutomation={
-          onToggleAutomation ? (setting) => onToggleAutomation(subscription, setting) : undefined
-        }
-        automationDisabled={automationPending || !!statusPendingId}
-        automationPendingSetting={
-          automationPending && automationPendingId === subscription.id
-            ? automationPendingSetting
-            : undefined
-        }
-        showAutoMarkPaid={showAutoMarkPaid}
-      />
+    items.map((subscription, index) => (
+      <Fragment key={subscription.id}>
+        {layout === "list" &&
+          index > 0 &&
+          !!items[index - 1].inactive !== !!subscription.inactive && (
+            <Separator className="!my-4 w-60 max-w-full" />
+          )}
+        <SubscriptionCard
+          onShare={onShare ? () => onShare(subscription) : undefined}
+          sub={subscription}
+          layout={layout}
+          mainCurrency={mainCurrency}
+          currencies={currencies}
+          convertCurrency={convertCurrency}
+          showCurrencyCode={showCurrencyCode}
+          priceDisplay={priceDisplays[subscription.id] ?? "billing"}
+          onPriceDisplayChange={(mode) =>
+            setPriceDisplays((current) => ({ ...current, [subscription.id]: mode }))
+          }
+          showProgress={showProgress}
+          onEdit={() => onEdit(subscription)}
+          onClone={() => onClone(subscription.id)}
+          onRenew={() => onRenew(subscription.id)}
+          renewPending={renewPending && renewPendingId === subscription.id}
+          renewDisabled={renewPending}
+          onHistory={() => onHistory(subscription)}
+          onDelete={() => onDelete(subscription.id)}
+          onToggleActive={onToggleActive ? () => onToggleActive(subscription) : undefined}
+          statusPending={statusPendingId === subscription.id}
+          statusDisabled={!!statusPendingId || automationPending}
+          onToggleAutomation={
+            onToggleAutomation ? (setting) => onToggleAutomation(subscription, setting) : undefined
+          }
+          automationDisabled={automationPending || !!statusPendingId}
+          automationPendingSetting={
+            automationPending && automationPendingId === subscription.id
+              ? automationPendingSetting
+              : undefined
+          }
+          showAutoMarkPaid={showAutoMarkPaid}
+        />
+      </Fragment>
     ));
 
   if (layout === "list") {
@@ -177,14 +184,14 @@ export function SubscriptionsGrid({
 
   return (
     <div className="space-y-4">
-      {groups.map((group) => (
-        <div
-          key={group[0].inactive ? "inactive" : "active"}
-          className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3"
-        >
-          {renderCards(group)}
-          {!group[0].inactive && <SubscriptionGridFillers count={group.length} />}
-        </div>
+      {groups.map((group, index) => (
+        <Fragment key={group[0].inactive ? "inactive" : "active"}>
+          {index > 0 && <Separator className="w-60 max-w-full" />}
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {renderCards(group)}
+            {!group[0].inactive && <SubscriptionGridFillers count={group.length} />}
+          </div>
+        </Fragment>
       ))}
     </div>
   );

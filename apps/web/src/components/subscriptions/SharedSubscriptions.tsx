@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { SharedSubscriptionEditDialog } from "@/components/subscriptions/SharedSubscriptionEditDialog";
 import { SubscriptionCard } from "@/components/subscriptions/SubscriptionCard";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { sharingErrorMessage } from "@/lib/sharingErrors";
 import type { SharedSubscription } from "@/services/sharing";
 import { sharingKeys, sharingService } from "@/services/sharing";
@@ -35,7 +36,10 @@ export function SharedSubscriptions({
     sub.name.toLocaleLowerCase().includes(searchTerm.toLocaleLowerCase()),
   );
   return (
-    <section className="space-y-4 border-t pt-6" aria-labelledby="shared-subscriptions-title">
+    <section className="space-y-4" aria-labelledby="shared-subscriptions-title">
+      <div className="pb-2">
+        <Separator className="w-60 max-w-full" />
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 id="shared-subscriptions-title" className="text-lg font-semibold">

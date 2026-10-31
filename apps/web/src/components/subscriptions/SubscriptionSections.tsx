@@ -303,6 +303,19 @@ export function SubscriptionSections({
       {section !== "loans" && (
         <SubscriptionsToolbar
           primaryAction={
+            sections && onSectionChange ? (
+              <Tabs value={section} onValueChange={onSectionChange} className="flex h-11 shrink-0">
+                <TabsList className="h-11 justify-start gap-1 p-0">
+                  {sections.map((name) => (
+                    <TabsTrigger key={name} value={name} className="h-11 py-0">
+                      {t(`spending_section_${name}`)}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            ) : undefined
+          }
+          createAction={
             <SubscriptionsPageHeader
               onCreate={handleCreate}
               createLabel={section === "bills" ? t("spending_add_bill") : undefined}
@@ -336,17 +349,6 @@ export function SubscriptionSections({
         />
       )}
 
-      {sections && onSectionChange && (
-        <Tabs value={section} onValueChange={onSectionChange}>
-          <TabsList className="h-auto flex-wrap justify-start gap-1">
-            {sections.map((name) => (
-              <TabsTrigger key={name} value={name}>
-                {t(`spending_section_${name}`)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      )}
       {section === "installments" &&
         spending.data?.installments.some((plan) => plan.period === month) && (
           <div className="space-y-1">

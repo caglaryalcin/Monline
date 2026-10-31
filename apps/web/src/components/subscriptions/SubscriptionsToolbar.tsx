@@ -39,6 +39,7 @@ interface SubscriptionsToolbarProps {
   deleteAllDisabled?: boolean;
   transferActions?: ReactNode;
   primaryAction?: ReactNode;
+  createAction?: ReactNode;
 }
 
 export function SubscriptionsToolbar({
@@ -57,6 +58,7 @@ export function SubscriptionsToolbar({
   deleteAllDisabled,
   transferActions,
   primaryAction,
+  createAction,
 }: SubscriptionsToolbarProps) {
   const { t } = useTranslation();
 
@@ -65,6 +67,7 @@ export function SubscriptionsToolbar({
       primaryAction={primaryAction}
       actions={
         <>
+          {createAction}
           {onDeleteAll && (
             <Button
               variant="outline"
