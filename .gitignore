@@ -4,6 +4,8 @@ pocketbase
 # Application data and preserved legacy data
 pb_data/
 monline_data/
+apps/backend/monline_data-beta/
+apps/backend/pb_data-beta/
 
 # Node
 node_modules/
