@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
+import { InfoButton } from "@/components/ui/info-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -53,7 +54,7 @@ export function RegistrationTab({
             {toggles.map(({ key, label, description }) => (
               <div
                 key={key as string}
-                className="flex items-center justify-between rounded-2xl border bg-card p-4 transition-colors"
+                className={`flex items-center justify-between rounded-2xl border border-border bg-card p-4 transition-colors ${settings?.[key] ? "settings-active-highlight" : ""}`}
               >
                 <div className="space-y-0.5">
                   <Label className="text-sm font-medium">{label}</Label>
@@ -86,7 +87,10 @@ export function RegistrationTab({
                 />
               </div>
               <div className="grid gap-2">
-                <Label className="text-sm font-medium">{t("server_url")}</Label>
+                <div className="flex items-center gap-1">
+                  <Label className="text-sm font-medium">{t("server_url")}</Label>
+                  <InfoButton title={t("server_url")}>{t("server_url_help")}</InfoButton>
+                </div>
                 <Input
                   defaultValue={settings?.server_url ?? ""}
                   onBlur={(e) => save.mutate({ server_url: e.target.value })}

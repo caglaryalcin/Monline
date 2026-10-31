@@ -206,6 +206,7 @@ function validateDatabase(file) {
                   "calendar_history_recovery_passes",
                   "calendar_projection_hidden",
                 ].includes(field.name)) ||
+              (entry.name === "notifications_config" && field.name === "delivery_settings") ||
               (["payment_methods", "household"].includes(entry.name) &&
                 field.name === "is_main") ||
               (entry.name === "household" &&

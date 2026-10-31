@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   useSearch: vi.fn(() => ({ tab: "theme" })),
+  isAdmin: false,
 }));
 
 vi.mock("react-i18next", () => ({
@@ -15,7 +16,7 @@ vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => mocks.navigate,
 }));
 
-vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ isAdmin: false }) }));
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ isAdmin: mocks.isAdmin }) }));
 
 vi.mock("@/routes", () => ({
   settingsRoute: {
@@ -74,6 +75,7 @@ import { SettingsPage } from "./SettingsPage";
 describe("SettingsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.isAdmin = false;
     mocks.useSearch.mockReturnValue({ tab: "theme" });
   });
 
@@ -91,6 +93,14 @@ describe("SettingsPage", () => {
       search: { tab: "profile" },
       replace: true,
     });
+  });
+
+  it("opens the administrator's personal notifications without redirecting to channels", () => {
+    mocks.isAdmin = true;
+    mocks.useSearch.mockReturnValue({ tab: "notifications" });
+    render(<SettingsPage />);
+    expect(screen.getByText("Notifications Tab")).toBeInTheDocument();
+    expect(mocks.navigate).not.toHaveBeenCalled();
   });
 
   it("defaults to profile tab when search.tab is undefined or invalid", () => {

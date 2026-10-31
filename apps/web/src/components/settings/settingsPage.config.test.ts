@@ -33,12 +33,13 @@ describe("settingsPage.config", () => {
     expect(Object.keys(SETTINGS_TAB_COMPONENTS)).toHaveLength(expectedKeys.length);
   });
 
-  it("omits the separate notifications page for administrators", () => {
+  it("keeps personal notification settings available to administrators", () => {
     const t = (k: string) => k;
     const items = getSettingsPageMenuItems(t as never, true);
     expect(items.map((item) => item.value)).toEqual([
       "profile",
       "security",
+      "notifications",
       "household",
       "groups",
       "categories",

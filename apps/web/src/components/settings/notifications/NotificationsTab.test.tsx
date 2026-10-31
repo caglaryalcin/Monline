@@ -4,105 +4,51 @@ import userEvent from "@testing-library/user-event";
 import { createQueryClientWrapper } from "@/test/query-client";
 
 import { NotificationsTab } from "./NotificationsTab";
-
-const { getConfig, createConfig, updateConfig, getSmtp } = vi.hoisted(() => ({
-  getConfig: vi.fn(),
-  createConfig: vi.fn(),
-  updateConfig: vi.fn(),
-  getSmtp: vi.fn(),
-}));
-vi.mock("@/services/notifications", () => ({
-  notificationsService: { getConfig, createConfig, updateConfig },
-}));
-vi.mock("@/services/serverSettings", () => ({ serverSettingsService: { getSmtp } }));
-vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => ({ user: { id: "user-1" }, isAdmin: false }),
-}));
+const mocks = vi.hoisted(() => ({ getPersonalConfig: vi.fn(), savePersonalConfig: vi.fn(),
+  user: { id: "first", language: "en" } }));
+vi.mock("@/services/notifications", () => ({ notificationsService: {
+  getPersonalConfig: mocks.getPersonalConfig, savePersonalConfig: mocks.savePersonalConfig,
+} }));
+vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: mocks.user, isAdmin: false }) }));
 vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
-function renderTab() {
-  const { Wrapper } = createQueryClientWrapper();
-  return render(<NotificationsTab />, { wrapper: Wrapper });
-}
+const config = (owner: string) => ({ id: "config-" + owner, user: owner,
+  telegram_enabled: false, reminders: [{ days: owner === "first" ? 3 : 5, hour: 8 }],
+  available_channels: { telegram: true, email: false },
+});
 beforeEach(() => {
-  vi.clearAllMocks();
-  getConfig.mockResolvedValue({
-    id: "",
-    user: "user-1",
-    email_enabled: false,
-    telegram_enabled: false,
-    available_channels: { email: true, telegram: true },
-  });
-  createConfig.mockImplementation(async (data) => ({
-    ...data,
-    id: "saved",
-    available_channels: { email: true, telegram: true },
-  }));
-  updateConfig.mockImplementation(async (id, data) => ({
-    ...data,
-    id,
-    available_channels: { email: true, telegram: true },
-  }));
+  vi.clearAllMocks(); mocks.user = { id: "first", language: "en" };
+  mocks.getPersonalConfig.mockImplementation(async () => config(mocks.user.id));
+  mocks.savePersonalConfig.mockImplementation(async body => ({ ...config(mocks.user.id), ...body }));
 });
-it("shows loading status and disables switches until availability is known", () => {
-  getConfig.mockImplementation(() => new Promise(() => {}));
-  renderTab();
-  expect(screen.getByRole("status")).toHaveTextContent("loading");
-  expect(screen.getByRole("switch", { name: "Telegram" })).toBeDisabled();
-});
-it("exposes personal switches without credentials, recipients or admin SMTP requests", async () => {
-  renderTab();
-  await waitFor(() => expect(screen.getByRole("switch", { name: "Telegram" })).toBeEnabled());
-  expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "save" })).not.toBeInTheDocument();
-  expect(getSmtp).not.toHaveBeenCalled();
-});
-it("creates only the current user's channel preference then reuses that record", async () => {
-  renderTab();
-  const telegram = screen.getByRole("switch", { name: "Telegram" });
-  await waitFor(() => expect(telegram).toBeEnabled());
-  await userEvent.click(telegram);
-  await waitFor(() =>
-    expect(createConfig).toHaveBeenCalledExactlyOnceWith({
-      user: "user-1",
-      telegram_enabled: true,
-    }),
-  );
-  await waitFor(() => expect(telegram).toBeEnabled());
-  await userEvent.click(telegram);
-  await waitFor(() =>
-    expect(updateConfig).toHaveBeenCalledWith("saved", { telegram_enabled: false }),
-  );
-});
-it("allows disabling a stale preference when the global channel is unavailable", async () => {
-  getConfig.mockResolvedValue({
-    id: "cfg-1",
-    telegram_enabled: true,
-    available_channels: { telegram: false },
-  });
-  renderTab();
-  const telegram = screen.getByRole("switch", { name: "Telegram" });
-  await waitFor(() => expect(telegram).toBeChecked());
-  expect(telegram).toBeEnabled();
-  await userEvent.click(telegram);
-  await waitFor(() =>
-    expect(updateConfig).toHaveBeenCalledWith("cfg-1", { telegram_enabled: false }),
-  );
-});
-it("prevents enabling a channel that the administrator has not configured", async () => {
-  getConfig.mockResolvedValue({
-    id: "cfg-1",
-    telegram_enabled: false,
-    available_channels: { telegram: false },
-  });
-  renderTab();
-  await waitFor(() => expect(screen.queryByRole("status")).not.toBeInTheDocument());
-  expect(screen.getByRole("switch", { name: "Telegram" })).toBeDisabled();
-});
-it("keeps switches disabled when configuration cannot be loaded", async () => {
-  getConfig.mockRejectedValue(new Error("offline"));
-  renderTab();
+function show() { const { Wrapper } = createQueryClientWrapper(); return render(<NotificationsTab />, { wrapper: Wrapper }); }
+it("shows loading and error states", async () => {
+  mocks.getPersonalConfig.mockImplementation(() => new Promise(() => {}));
+  const view = show(); expect(screen.getByRole("status")).toHaveTextContent("loading"); view.unmount();
+  mocks.getPersonalConfig.mockRejectedValue(new Error("offline")); show();
   expect(await screen.findByRole("alert")).toHaveTextContent("admin_config_load_error");
-  expect(screen.getByRole("switch", { name: "Telegram" })).toBeDisabled();
-  expect(createConfig).not.toHaveBeenCalled();
+});
+it("offers personal switches without credential, SMTP or template forms", async () => {
+  show(); const toggle = await screen.findByRole("switch", { name: "Telegram" });
+  expect(toggle).toBeEnabled(); expect(screen.getByRole("switch", { name: "Email" })).toBeDisabled();
+  expect(screen.queryByLabelText("bot_token")).not.toBeInTheDocument();
+  expect(screen.queryByLabelText("smtp_host")).not.toBeInTheDocument();
+  await userEvent.click(toggle);
+  await waitFor(() => expect(mocks.savePersonalConfig).toHaveBeenCalledWith({ telegram_enabled: true }, expect.anything()));
+});
+it("saves the account reminder schedule separately", async () => {
+  show(); await screen.findByRole("switch", { name: "Telegram" });
+  await userEvent.click(screen.getByRole("button", { name: "add_reminder" }));
+  await userEvent.click(screen.getByRole("button", { name: "save" }));
+  await waitFor(() => expect(mocks.savePersonalConfig).toHaveBeenCalledWith({
+    reminders: [{ days: 3, hour: 8 }, { days: 1, hour: 8 }],
+  }, expect.anything()));
+});
+it("loads the next account's reminder schedule instead of retaining a draft", async () => {
+  const view = show(); await screen.findByRole("switch", { name: "Telegram" });
+  await userEvent.click(screen.getByRole("button", { name: "add_reminder" })); view.unmount();
+  mocks.user = { id: "second", language: "en" }; show();
+  await screen.findByRole("switch", { name: "Telegram" });
+  expect(screen.getAllByRole("combobox")).toHaveLength(2);
+  expect(screen.getAllByRole("combobox")[0]).toHaveTextContent("5 days_before_n");
 });

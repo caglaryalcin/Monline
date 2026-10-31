@@ -71,7 +71,10 @@ describe("monthly budget overview", () => {
     );
     expect(screen.getByText("$2000.00")).toBeInTheDocument();
     expect(screen.getByText("$1050.00")).toBeInTheDocument();
-    expect(screen.getByText("$1490.00")).toBeInTheDocument();
+    expect(screen.queryByText("$1490.00")).not.toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "budget_month_total" })).toHaveAttribute(
+      "aria-valuenow", "74.5",
+    );
     expect(screen.getByText(/budget_month_remaining: \$510.00/)).toBeInTheDocument();
     const rows = within(
       screen.getByRole("list", { name: "budget_month_subscriptions" }),

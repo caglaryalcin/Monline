@@ -47,7 +47,12 @@ beforeEach(() => {
   send.mockReset().mockResolvedValue({});
   findRecordsByFilter
     .mockReset()
-    .mockReturnValue([{ getString: (key) => saved[key] || "" }]);
+    .mockReturnValue([{
+      getString: (key) => saved[key] || "",
+      getBool: () => false,
+      get: (key) => key === "delivery_settings" ? { reminders_personal: true } :
+        key === "reminders" ? [{ days: 3, hour: 8 }] : null,
+    }]);
 });
 async function testNotification(body, auth = { id: "owner-1" }) {
   const json = vi.fn();
@@ -88,9 +93,9 @@ it.each([
     expect(findRecordsByFilter).not.toHaveBeenCalled();
   },
 );
-it("uses the shared saved configuration when no draft is supplied", async () => {
+it("uses shared credentials and the current account when no draft is supplied", async () => {
   expect((await testNotification({ provider: "telegram" }))[0]).toBe(200);
-  expect(findRecordsByFilter).not.toHaveBeenCalled();
+  expect(findRecordsByFilter).toHaveBeenCalledWith("notifications_config", "user = {:owner}", "", 1, 0, { owner: "owner-1" });
   expect(send.mock.lastCall[0].url).toBe(
     "https://api.telegram.org/botsaved-token/sendMessage",
   );

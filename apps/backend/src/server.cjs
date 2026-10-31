@@ -100,6 +100,11 @@ async function main() {
     require(path.join(domain, entry));
   seed(repository);
   require("./server-config.cjs").channels(repository);
+  repository.runInTransaction(() => {
+    for (const user of repository.findRecordsByFilter("users"))
+      require("./personal-notifications.cjs").recordFor(repository, user.id);
+  });
+  require("./personal-notifications-api.cjs").registerPersonalNotificationsApi(app, repository, auth);
   require("./server-config.cjs").exchange(repository);
   require("./subscription-names.cjs").normalizeStoredSubscriptionNames(
     repository,

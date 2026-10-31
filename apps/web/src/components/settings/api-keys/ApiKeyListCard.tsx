@@ -8,8 +8,8 @@ import type { ApiKey } from "@/types";
 
 function KeyRowSkeleton() {
   return (
-    <div className="flex items-start justify-between gap-4 px-2 py-4 animate-pulse">
-      <div className="flex-1 space-y-2.5">
+    <div className="flex items-start justify-between gap-3 py-2 animate-pulse">
+      <div className="flex-1 space-y-1.5">
         <div className="flex items-center gap-2">
           <div className="h-7 w-7 rounded-lg bg-muted" />
           <div className="h-4 w-32 rounded-md bg-muted" />
@@ -53,8 +53,8 @@ function KeyRow({ apiKey, onEdit, onDelete }: KeyRowProps) {
     : t("api_key_never_used");
 
   return (
-    <div className="group flex w-full items-start justify-between gap-4 py-4 pl-2 transition-colors duration-150">
-      <div className="min-w-0 flex-1 space-y-2">
+    <div className="group flex w-full items-start justify-between gap-3 py-2 transition-colors duration-150">
+      <div className="min-w-0 flex-1 space-y-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
             <Key className="h-3.5 w-3.5 text-primary" />
@@ -126,7 +126,7 @@ export function ApiKeyListCard({
 
   return (
     <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-      <div className="flex items-center justify-between border-b bg-muted/30 px-6 py-4">
+      <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold">{t("api_keys")}</span>
           {!isLoading ? (
@@ -137,7 +137,7 @@ export function ApiKeyListCard({
         </div>
         <Button
           size="sm"
-          className="cursor-pointer gap-1.5 rounded-xl"
+          className="h-8 cursor-pointer gap-1.5 rounded-lg px-3"
           onClick={onCreate}
         >
           <Plus className="h-4 w-4" />
@@ -151,20 +151,19 @@ export function ApiKeyListCard({
           <KeyRowSkeleton />
         </div>
       ) : keys.length === 0 ? (
-        <div className="space-y-4 px-6 py-14 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-            <Key className="h-7 w-7 text-muted-foreground/50" />
+        <div className="flex flex-wrap items-center justify-center gap-3 px-4 py-4 text-center">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-muted">
+            <Key className="h-4 w-4 text-muted-foreground/60" />
           </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium">{t("api_key_no_keys")}</p>
-            <p className="mx-auto max-w-xs text-xs text-muted-foreground">
-              {t("api_key_tab_desc")}
+          <div className="min-w-0 max-w-xs">
+            <p className="whitespace-normal break-words text-sm font-medium">
+              {t("api_key_no_keys")}
             </p>
           </div>
           <Button
             variant="outline"
             size="sm"
-            className="cursor-pointer gap-1.5 rounded-xl"
+            className="h-8 cursor-pointer gap-1.5 rounded-lg px-3"
             onClick={onCreate}
           >
             <Plus className="h-4 w-4" />

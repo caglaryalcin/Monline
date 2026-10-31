@@ -135,6 +135,7 @@ export function SubscriptionsPage() {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.all(userId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.history(userId, id) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.paymentRecords.all(userId) }),
       ]),
   });
 

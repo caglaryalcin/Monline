@@ -1,7 +1,4 @@
-// Installation-wide integrations. User records contain delivery preferences only.
-const {
-  normalizeReminderSlots,
-} = require("./domain/lib/pure/reminder-slots.js");
+// Administrators manage shared connections; accounts own switches and reminder schedules.
 const channelFields = {
   email: [],
   discord: ["discord_webhook_url"],
@@ -82,42 +79,40 @@ const exchange = (repository) =>
     ["api_key", "provider", "enabled"],
     { api_key: "", provider: "fixer", enabled: false },
   );
-function availability(repository) {
+function enabledChannels(repository) {
   const config = channels(repository);
   return Object.fromEntries(
     Object.entries(channelFields).map(([id, fields]) => [
       id,
       id === "email"
         ? !!repository.settings().smtp.enabled
-        : fields.every((field) => !!String(config[field] || "").trim()),
+        : typeof config.enabled_channels?.[id] === "boolean"
+          ? config.enabled_channels[id]
+          : fields.every((field) => !!String(config[field] || "").trim()),
+    ]),
+  );
+}
+function availability(repository) {
+  const config = channels(repository);
+  const enabled = enabledChannels(repository);
+  return Object.fromEntries(
+    Object.entries(channelFields).map(([id, fields]) => [
+      id,
+      id === "email"
+        ? !!repository.settings().smtp.enabled
+        : enabled[id] && fields.every((field) => !!String(config[field] || "").trim()),
     ]),
   );
 }
 function effectiveNotificationConfig(repository, userId, preferences) {
-  const config = channels(repository);
-  const available = availability(repository);
-  const user = repository.findRecordById("users", userId);
-  const get = (key) => {
-    if (key === "email_to") return user.getString("email");
-    if (key === "user_name") return user.getString("name");
-    if (key === "user_email") return user.getString("email");
-    if (key === "language") return user.getString("language") || "en";
-    if (key === "reminders") return normalizeReminderSlots(config.reminders);
-    if (key.endsWith("_enabled"))
-      return !!available[key.slice(0, -8)] && !!preferences?.getBool(key);
-    return config[key];
-  };
-  return {
-    get,
-    getString: (key) => String(get(key) ?? ""),
-    getBool: (key) => !!get(key),
-  };
+  return require("./personal-notifications.cjs").effective(repository, userId, preferences);
 }
 module.exports = {
   channels,
   exchange,
   save,
   availability,
+  enabledChannels,
   effectiveNotificationConfig,
   channelFields,
   credentialFields,

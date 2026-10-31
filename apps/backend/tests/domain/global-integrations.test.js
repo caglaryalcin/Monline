@@ -56,6 +56,7 @@ beforeEach(async () => {
   const auth = {
     requireUser(req) {
       if (!req.user) throw new UnauthorizedError();
+      return req.user;
     },
     isAdmin: (user) => user?.id === admin,
   };
@@ -111,6 +112,7 @@ it("migrates the administrator's configuration once and serves it to existing an
   });
   record("notifications_config", {
     user: first,
+    reminders: [{ days: 2, hour: 9 }],
     telegram_bot_token: "obsolete-personal-token",
     telegram_chat_id: "old-chat",
     telegram_enabled: true,
@@ -147,7 +149,7 @@ it("migrates the administrator's configuration once and serves it to existing an
       repository.findRecordById("users", user).getString("email"),
     );
     expect(effective.getBool("telegram_enabled")).toBe(user === first);
-    expect(effective.get("reminders")).toEqual([{ days: 7, hour: 10 }]);
+    expect(effective.get("reminders")).toEqual(user === first ? [{ days: 2, hour: 9 }] : [{ days: 7, hour: 10 }]);
   }
 });
 
@@ -187,11 +189,12 @@ it("shares channel availability while isolating each user's switches and keeping
     });
     expect(JSON.stringify(preferences.data)).not.toContain("shared-token");
   }
-  const saved = await request("/api/data/notifications_config", first, "POST", {
+  const firstRecord = require("../../src/personal-notifications.cjs").recordFor(repository, first);
+  const saved = await request("/api/data/notifications_config/" + firstRecord.id, first, "PATCH", {
     user: second,
     email_enabled: true,
   });
-  expect(saved.status).toBe(201);
+  expect(saved.status, JSON.stringify(saved.data)).toBe(200);
   expect(saved.data.user).toBe(first);
   expect(
     (await request("/api/data/notifications_config/" + saved.data.id, second))
@@ -218,12 +221,12 @@ it("shares channel availability while isolating each user's switches and keeping
     ).status,
   ).toBe(403);
   const secondConfig = await request(
-    "/api/data/notifications_config",
+    "/api/data/notifications_config/" + require("../../src/personal-notifications.cjs").recordFor(repository, second).id,
     second,
-    "POST",
+    "PATCH",
     { telegram_enabled: true },
   );
-  expect(secondConfig.status).toBe(201);
+  expect(secondConfig.status).toBe(200);
   expect(
     (await request("/api/notifications/preferences", first)).data,
   ).toMatchObject({ email_enabled: true, telegram_enabled: false });

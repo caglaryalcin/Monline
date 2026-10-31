@@ -734,7 +734,7 @@
   "budget_paid": "Paid",
   "budget_pending": "Pending",
   "budget_month_total": "This month’s total",
-  "budget_month_remaining": "Left at month end",
+  "budget_month_remaining": "Remaining budget",
   "budget_exceeded_by": "Over budget by",
   "budget_month_subscriptions": "This month’s subscriptions",
   "budget_status_paid": "Paid",

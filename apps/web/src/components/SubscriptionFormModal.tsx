@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { InfoButton } from "@/components/ui/info-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -791,26 +792,24 @@ export function SubscriptionFormModal({
               {!!authUser?.payment_tracking && !isCredit && (
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="subscription-auto-mark-paid">{t("auto_mark_paid")}</Label>
+                    <div className="flex min-w-0 items-center gap-1">
+                      <Label htmlFor="subscription-auto-mark-paid">{t("auto_mark_paid")}</Label>
+                      <InfoButton title={t("auto_mark_paid")}>
+                        {t("auto_mark_paid_calendar_hint")}
+                      </InfoButton>
+                    </div>
                     <Controller
                       name="auto_mark_paid"
                       control={control}
                       render={({ field }) => (
                         <Switch
                           id="subscription-auto-mark-paid"
-                          aria-describedby="subscription-auto-mark-paid-hint"
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
                       )}
                     />
                   </div>
-                  <p
-                    id="subscription-auto-mark-paid-hint"
-                    className="pr-[calc(2.75rem+1rem)] text-xs text-muted-foreground"
-                  >
-                    {t("auto_mark_paid_calendar_hint")}
-                  </p>
                 </div>
               )}
             </div>

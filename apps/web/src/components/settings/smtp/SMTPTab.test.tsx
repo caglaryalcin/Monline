@@ -78,20 +78,27 @@ describe("SMTPTab", () => {
     );
   });
 
-  it("allows configuring SMTP before it is enabled without an inner activation switch", async () => {
+  it("locks inline SMTP fields and saving while the shared channel is disabled", async () => {
     vi.mocked(serverSettingsService.getSmtp).mockResolvedValue({
       enabled: false,
       host: "smtp.example.test",
     });
+    const smtpForm = createRef<SMTPTabHandle>();
     render(
       <QueryClientProvider client={queryClient}>
-        <SMTPTab inline channelEnabled={false} />
+        <SMTPTab ref={smtpForm} inline channelEnabled={false} />
       </QueryClientProvider>,
     );
     expect(await screen.findByDisplayValue("smtp.example.test")).toBeVisible();
     expect(screen.queryByRole("switch", { name: "disabled" })).not.toBeInTheDocument();
-    expect(screen.getByDisplayValue("smtp.example.test")).toBeEnabled();
+    expect(screen.getByDisplayValue("smtp.example.test")).toBeDisabled();
+    await userEvent.type(screen.getByDisplayValue("smtp.example.test"), "changed");
+    expect(screen.getByDisplayValue("smtp.example.test")).toHaveValue("smtp.example.test");
     expect(screen.queryByRole("button", { name: /save/ })).not.toBeInTheDocument();
+    await act(async () => {
+      await expect(smtpForm.current!.save()).rejects.toThrow("error_save");
+    });
+    expect(serverSettingsService.updateSmtp).not.toHaveBeenCalled();
   });
 
   it("preserves SMTP draft fields when the shared header changes activation", async () => {

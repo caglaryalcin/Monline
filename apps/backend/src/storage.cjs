@@ -280,6 +280,8 @@ class Repository {
         this.connection.exec(
           `ALTER TABLE notifications_config ADD COLUMN ${identifier(name)} TEXT NOT NULL DEFAULT ''`,
         );
+    if (!notificationColumns.has("delivery_settings"))
+      this.connection.exec("ALTER TABLE notifications_config ADD COLUMN delivery_settings JSON DEFAULT NULL");
     this.repairStatementImportMarkers();
     this.repairMainPaymentMethods();
     if (

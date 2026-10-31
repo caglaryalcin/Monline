@@ -12,6 +12,7 @@ import type { NotificationsConfig } from "@/types";
 
 interface ProviderCardProps {
   configurationOnly?: boolean;
+  configurationEnabled?: boolean;
   provider: ProviderConfig;
   formData: Partial<NotificationsConfig>;
   onChange: (key: keyof NotificationsConfig, value: unknown) => void;
@@ -29,6 +30,7 @@ interface ProviderCardProps {
 
 export function ProviderCard({
   configurationOnly = false,
+  configurationEnabled,
   provider,
   formData,
   onChange,
@@ -67,7 +69,7 @@ export function ProviderCard({
   };
   const contentId = useId();
   const isEnabled = configurationOnly
-    ? !!formData.available_channels?.[provider.id]
+    ? (configurationEnabled ?? !!formData.available_channels?.[provider.id])
     : !!formData[provider.enabledKey];
   const expanded = expansionChoice ?? isEnabled;
   const hasToggle = !configurationOnly || !!onConfigurationEnabledChange;
@@ -77,10 +79,10 @@ export function ProviderCard({
     <section
       aria-label={provider.label}
       data-configured={isEnabled}
-      className={`notification-provider-card rounded-2xl border transition-all duration-200 overflow-hidden ${
+      className={`notification-provider-card ${configurationOnly && isEnabled ? "settings-active-highlight" : ""} rounded-2xl border border-border transition-all duration-200 overflow-hidden ${
         isEnabled
-          ? `bg-card ${expanded ? "md:col-span-2" : ""} ${provider.borderClass}`
-          : `${expanded ? "md:col-span-2" : ""} bg-muted/20 border-border/50`
+          ? `bg-card ${expanded ? "md:col-span-2" : ""}`
+          : `${expanded ? "md:col-span-2" : ""} bg-muted/20`
       }`}
     >
       <div className="relative">
@@ -89,6 +91,7 @@ export function ProviderCard({
           aria-label={provider.label}
           aria-expanded={expanded}
           aria-controls={contentId}
+          disabled={!isEnabled || isSaving || isTesting || saveDisabled}
           onClick={() => changeExpansion(!expanded)}
           className={`flex w-full min-w-0 items-center gap-3 px-4 py-3 ${hasToggle ? "pr-28" : "pr-14"} text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:cursor-default`}
         >
@@ -96,24 +99,19 @@ export function ProviderCard({
             className={`notification-provider-icon p-2 rounded-xl shrink-0 transition-colors ${
               isEnabled
                 ? `${provider.bgClass} ${provider.colorClass}`
-                : "bg-muted text-muted-foreground"
+                : `${provider.bgClass} ${provider.colorClass}`
             }`}
           >
-            <Icon className="w-4 h-4" />
+            {provider.logo ? (
+              <img src={provider.logo} alt="" aria-hidden="true" className="h-5 w-5 object-contain" />
+            ) : <Icon className="h-5 w-5" />}
           </div>
           <div className="flex-1 min-w-0">
             <p
-              className={`font-medium text-sm leading-none ${
-                isEnabled ? "" : "text-muted-foreground"
-              }`}
+              className="font-medium text-sm leading-none text-foreground"
             >
               {provider.label}
             </p>
-            {isEnabled && (
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                {t(provider.descriptionKey, provider.label)}
-              </p>
-            )}
           </div>
         </button>
         <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center gap-3 [&>button]:pointer-events-auto">
@@ -123,7 +121,8 @@ export function ProviderCard({
               checked={isEnabled}
               disabled={toggleDisabled}
               onCheckedChange={(checked) => {
-                changeExpansion(true);
+                // Preserve the disclosure before activation changes its default.
+                changeExpansion(expanded);
                 if (configurationOnly) onConfigurationEnabledChange?.(checked);
                 else onChange(provider.enabledKey, checked);
               }}
@@ -133,13 +132,18 @@ export function ProviderCard({
             name={provider.label}
             expanded={expanded}
             controls={contentId}
+            disabled={!isEnabled || isSaving || isTesting || saveDisabled}
             onToggle={() => changeExpansion(!expanded)}
           />
         </div>
       </div>
 
       <div id={contentId} hidden={!expanded}>
-        <div className="px-4 pb-4 space-y-3 border-t border-inherit pt-3">
+        <fieldset
+          disabled={!isEnabled || isSaving || isTesting || saveDisabled}
+          ref={(element) => { if (element) element.inert = !isEnabled; }}
+          className="min-w-0 px-4 pb-4 space-y-3 border-t border-inherit pt-3"
+        >
           <div
             className={`grid gap-3 ${
               provider.fields.length > 1 ? "sm:grid-cols-2" : "grid-cols-1"
@@ -153,7 +157,7 @@ export function ProviderCard({
                 <Input
                   id={`${contentId}-${field.key}`}
                   type={field.type}
-                  disabled={isSaving || saveDisabled || (!configurationOnly && !isEnabled)}
+                  disabled={isSaving || saveDisabled || !isEnabled}
                   value={(formData[field.key] as string) || ""}
                   onChange={(e) => onChange(field.key, e.target.value)}
                   placeholder={field.placeholder}
@@ -167,7 +171,7 @@ export function ProviderCard({
             <p className="text-xs text-muted-foreground">{t(provider.hintKey)}</p>
           )}
 
-          {children && <div className="border-t border-inherit pt-4">{children}</div>}
+          {children && <div className={provider.fields.length || provider.hintKey ? "border-t border-inherit pt-3" : ""}>{children}</div>}
           <div className="flex flex-wrap justify-end gap-2">
             <Button
               variant="outline"
@@ -176,7 +180,7 @@ export function ProviderCard({
               disabled={
                 testDisabled ||
                 isTesting ||
-                (!configurationOnly && !isEnabled) ||
+                !isEnabled ||
                 isSaving ||
                 saveDisabled
               }
@@ -189,7 +193,7 @@ export function ProviderCard({
               <Button
                 size="sm"
                 onClick={onSave}
-                disabled={isSaving || isTesting || saveDisabled}
+                disabled={!isEnabled || isSaving || isTesting || saveDisabled}
                 className="h-8 rounded-xl gap-1.5 text-xs"
               >
                 <Save className="w-4 h-4" />
@@ -197,7 +201,7 @@ export function ProviderCard({
               </Button>
             )}
           </div>
-        </div>
+        </fieldset>
       </div>
     </section>
   );

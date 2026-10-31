@@ -147,7 +147,7 @@ export interface Subscription {
   url?: string;
   notify: boolean;
   notify_days_before: number;
-  /** Null/absent inherits the global schedule; an array overrides it. */
+  /** Null/absent inherits this account's default schedule; an array overrides it. */
   notification_reminders?: NotificationReminder[] | null;
   inactive: boolean;
   auto_mark_paid?: boolean;
@@ -244,6 +244,7 @@ export interface NotificationsConfig {
   templates?: NotificationTemplates;
   template_defaults?: Record<NotificationEvent, NotificationTemplate>;
   available_channels?: Record<string, boolean>;
+  enabled_channels?: Record<string, boolean>;
   id: string;
   user: string;
   reminders?: NotificationReminder[];

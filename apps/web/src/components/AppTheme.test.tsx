@@ -113,6 +113,28 @@ describe("AppTheme", () => {
     expect(el.textContent).toBe("body { background: red; }");
   });
 
+  it("applies real CSS to elements, updates it, and clears it on logout", () => {
+    const probe = document.createElement("div");
+    probe.className = "personal-css-probe";
+    document.body.appendChild(probe);
+    try {
+      mockUseAuth.mockReturnValue({ user: makeUser({
+        custom_css: ".personal-css-probe { color: rgb(18, 52, 86); font-weight: 700; }",
+      }) });
+      const view = render(<AppTheme />);
+      expect(getComputedStyle(probe).color).toBe("rgb(18, 52, 86)");
+      expect(getComputedStyle(probe).fontWeight).toBe("700");
+      mockUseAuth.mockReturnValue({ user: makeUser({
+        custom_css: ".personal-css-probe { color: rgb(170, 187, 204); }",
+      }) });
+      view.rerender(<AppTheme />);
+      expect(getComputedStyle(probe).color).toBe("rgb(170, 187, 204)");
+      mockUseAuth.mockReturnValue({ user: null });
+      view.rerender(<AppTheme />);
+      expect(getComputedStyle(probe).color).not.toBe("rgb(170, 187, 204)");
+    } finally { probe.remove(); }
+  });
+
   it("clears custom CSS element when custom_css is falsy and element exists", () => {
     // Pre-create the element
     const styleEl = document.createElement("style");

@@ -431,7 +431,7 @@ it("keeps each upgraded user's data private, preserves toggles and hides global 
       `/api/data/notifications_config/${id(800 + index)}`,
       user,
     );
-    expect(notification.status).toBe(200);
+    expect(notification.status, JSON.stringify(notification.data)).toBe(200);
     expect(notification.data.email_enabled).toBe(index !== 1);
     expect(notification.data.telegram_enabled).toBe(index === 1);
     if (index > 0) {

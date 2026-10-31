@@ -46,7 +46,7 @@ function guardWrite(repository, user, record, body) {
     throw new ForbiddenError("admin_config_required");
   if (Object.keys(body).some((key) => key !== "user" && !toggleFields.has(key)))
     throw new ForbiddenError("admin_channels_toggle_only");
-  const available = availability(repository);
+  const available = availability(repository, record);
   for (const [key, value] of Object.entries(body)) {
     if (
       toggleFields.has(key) &&

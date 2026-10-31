@@ -3,13 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { NotificationTemplateEditor } from "@/components/admin/NotificationTemplateEditor";
-import { DEFAULT_REMINDERS, PROVIDERS } from "@/components/settings/notifications/config";
+import { PROVIDERS } from "@/components/settings/notifications/config";
 import { ProviderCard } from "@/components/settings/notifications/ProviderCard";
-import { RemindersEditor } from "@/components/settings/notifications/RemindersEditor";
-import { useNotificationPreferences } from "@/components/settings/notifications/useNotificationPreferences";
 import { SMTPTab, type SMTPTabHandle } from "@/components/settings/smtp/SMTPTab";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { LS_KEYS } from "@/lib/constants";
 import { notificationLanguage } from "@/lib/languages";
@@ -17,19 +13,18 @@ import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { notificationsService } from "@/services/notifications";
 import { serverSettingsService } from "@/services/serverSettings";
-import type { NotificationEvent, NotificationReminder, NotificationsConfig } from "@/types";
+import type { NotificationEvent, NotificationsConfig } from "@/types";
 
 const channelsKey = ["admin-channels"] as const;
 const providers = PROVIDERS.map((provider) =>
   provider.id === "email"
-    ? { ...provider, fields: [], hintKey: "admin_email_recipient_hint" }
+    ? { ...provider, fields: [], hintKey: undefined }
     : provider,
 );
 
 export function NotificationChannelsTab() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const preferences = useNotificationPreferences();
   const templateLanguage = notificationLanguage(user?.language || i18n.resolvedLanguage);
   const qc = useQueryClient();
   const smtpRef = useRef<SMTPTabHandle>(null);
@@ -42,13 +37,14 @@ export function NotificationChannelsTab() {
     queryFn: () => notificationsService.getChannels(),
   });
   const [formData, setFormData] = useState<Partial<NotificationsConfig>>({});
+  const channelEnabled = (id: string) => id === "email"
+    ? !!smtp.data?.enabled : !!formData.enabled_channels?.[id];
   const templatesForProvider = (provider: string) => ({
     ...(notificationLanguage(formData.template_language) === templateLanguage
       ? formData.templates?.[provider]
       : undefined),
     ...formData.localized_templates?.[templateLanguage]?.[provider],
   });
-  const [reminders, setReminders] = useState<NotificationReminder[]>(DEFAULT_REMINDERS);
   const hydrated = useRef(false);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [templateEvents, setTemplateEvents] = useState<Record<string, NotificationEvent>>({});
@@ -56,7 +52,6 @@ export function NotificationChannelsTab() {
     if (query.isSuccess && !hydrated.current) {
       hydrated.current = true;
       setFormData(query.data ?? {});
-      setReminders(query.data?.reminders?.length ? query.data.reminders : DEFAULT_REMINDERS);
     }
   }, [query.data, query.isSuccess]);
   const toggleSmtp = useMutation({
@@ -89,17 +84,26 @@ export function NotificationChannelsTab() {
     onSuccess: (record) => {
       qc.setQueryData(channelsKey, record);
       qc.invalidateQueries({ queryKey: ["notifications_config"] });
-      setFormData((current) => ({ ...current, available_channels: record.available_channels }));
+      setFormData((current) => ({ ...current, available_channels: record.available_channels,
+        enabled_channels: record.enabled_channels }));
+      toast.success(t("saved"));
+    },
+    onError: (error: Error) => toast.error(t(error.message, { defaultValue: t("error") })),
+  });
+  const toggleChannel = useMutation({
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
+      notificationsService.saveChannels({ enabled_channels: { [id]: enabled } }),
+    onSuccess: (record) => {
+      qc.setQueryData(channelsKey, record);
+      qc.invalidateQueries({ queryKey: ["notifications_config"] });
+      setFormData((current) => ({ ...current, available_channels: record.available_channels,
+        enabled_channels: record.enabled_channels }));
       toast.success(t("saved"));
     },
     onError: (error: Error) => toast.error(t(error.message, { defaultValue: t("error") })),
   });
   const saveSection = (section: string) => {
     if (save.isPending || !query.isSuccess) return;
-    if (section === "reminders") {
-      save.mutate({ section, data: { reminders } });
-      return;
-    }
     const provider = providers.find((item) => item.id === section)!;
     const data = Object.fromEntries(provider.fields.map(({ key }) => [key, formData[key] ?? ""]));
     save.mutate({
@@ -145,21 +149,6 @@ export function NotificationChannelsTab() {
     );
   return (
     <div className="space-y-6">
-      <RemindersEditor
-        reminders={reminders}
-        onChange={setReminders}
-        onSave={() => saveSection("reminders")}
-        isSaving={save.isPending && save.variables?.section === "reminders"}
-        saveDisabled={save.isPending}
-      />
-      <p className="text-xs leading-relaxed text-muted-foreground">
-        {t("notification_template_scope_hint")}
-      </p>
-      {preferences.config.isError && (
-        <p role="alert" className="text-sm text-destructive">
-          {t("admin_config_load_error")}
-        </p>
-      )}
       <div className="space-y-3">
         {providers.map((provider) => (
           <ProviderCard
@@ -170,61 +159,35 @@ export function NotificationChannelsTab() {
               label: provider.id === "email" ? `${t("email")} (SMTP)` : provider.label,
             }}
             configurationOnly
-            formData={
-              provider.id === "email"
-                ? {
-                    ...formData,
-                    available_channels: {
-                      ...formData.available_channels,
-                      email: !!smtp.data?.enabled,
-                    },
-                  }
-                : formData
-            }
+            formData={formData}
+            configurationEnabled={channelEnabled(provider.id)}
             onConfigurationEnabledChange={
-              provider.id === "email" ? (enabled) => toggleSmtp.mutate(enabled) : undefined
+              provider.id === "email" ? (enabled) => toggleSmtp.mutate(enabled)
+                : (enabled) => toggleChannel.mutate({ id: provider.id, enabled })
             }
             toggleDisabled={
               smtp.isPending ||
               smtp.isError ||
               save.isPending ||
               toggleSmtp.isPending ||
-              testingProvider === "email"
+              toggleChannel.isPending ||
+              testingProvider !== null
             }
             onChange={(key, value) => setFormData((current) => ({ ...current, [key]: value }))}
             onSave={() => saveSection(provider.id)}
-            isSaving={save.isPending && save.variables?.section === provider.id}
+            isSaving={(save.isPending && save.variables?.section === provider.id) ||
+              (toggleChannel.isPending && toggleChannel.variables?.id === provider.id)}
             saveDisabled={
               save.isPending ||
               toggleSmtp.isPending ||
+              toggleChannel.isPending ||
               (provider.id === "email" && (smtp.isPending || smtp.isError))
             }
             onTest={() => test(provider.id)}
-            testDisabled={provider.id === "email" && !smtp.data?.enabled}
+            testDisabled={!channelEnabled(provider.id)}
             isTesting={testingProvider === provider.id}
           >
             <div className={provider.id === "email" ? "space-y-4" : ""}>
-              <div className="mb-4 flex items-center justify-between gap-4 rounded-xl border bg-muted/10 px-4 py-3">
-                <Label htmlFor={`admin-personal-${provider.id}`} className="text-sm">
-                  {t("admin_channel_receive_personally")}
-                </Label>
-                <Switch
-                  id={`admin-personal-${provider.id}`}
-                  aria-label={`${provider.label}: ${t("admin_channel_receive_personally")}`}
-                  checked={!!preferences.config.data?.[provider.enabledKey]}
-                  disabled={
-                    !preferences.config.isSuccess ||
-                    preferences.save.isPending ||
-                    (!(provider.id === "email"
-                      ? smtp.data?.enabled
-                      : formData.available_channels?.[provider.id]) &&
-                      !preferences.config.data?.[provider.enabledKey])
-                  }
-                  onCheckedChange={(enabled) =>
-                    preferences.save.mutate({ [provider.enabledKey]: enabled })
-                  }
-                />
-              </div>
               {provider.id === "email" && (
                 <section
                   aria-label={t("smtp_settings")}
@@ -272,7 +235,8 @@ export function NotificationChannelsTab() {
                     }))
                   }
                   disabled={
-                    save.isPending || toggleSmtp.isPending || testingProvider === provider.id
+                    !channelEnabled(provider.id) || save.isPending || toggleSmtp.isPending ||
+                    toggleChannel.isPending || testingProvider === provider.id
                   }
                 />
               </div>

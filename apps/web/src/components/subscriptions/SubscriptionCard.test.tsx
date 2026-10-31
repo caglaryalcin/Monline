@@ -109,7 +109,7 @@ function getSubscription(overrides: Partial<Subscription> = {}): Subscription {
 
 describe("SubscriptionCard", () => {
   it.each(["grid", "list"] as const)(
-    "disables every action on inactive cards while allowing reactivation in %s layout",
+    "allows editing inactive cards while preserving other action restrictions in %s layout",
     (layout) => {
       const actions = {
         onEdit: vi.fn(),
@@ -130,11 +130,15 @@ describe("SubscriptionCard", () => {
           onToggleActive={onToggleActive}
         />,
       );
+      const edit = screen.getByRole("button", { name: "edit" });
+      expect(edit).toBeEnabled();
       for (const button of screen.getAllByRole("button")) {
-        expect(button).toBeDisabled();
+        if (button !== edit) expect(button).toBeDisabled();
         fireEvent.click(button);
       }
-      for (const action of Object.values(actions)) expect(action).not.toHaveBeenCalled();
+      expect(actions.onEdit).toHaveBeenCalledOnce();
+      for (const [name, action] of Object.entries(actions))
+        if (name !== "onEdit") expect(action).not.toHaveBeenCalled();
       expect(mocks.windowOpen).not.toHaveBeenCalled();
       const toggle = screen.getByRole("switch");
       expect(toggle).toBeEnabled();

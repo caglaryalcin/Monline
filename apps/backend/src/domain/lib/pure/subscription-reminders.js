@@ -1,4 +1,4 @@
-// Null inherits the installation schedule; an array replaces it for this subscription.
+// Null inherits the account's default schedule; an array replaces it for this subscription.
 function validateSubscriptionReminders(raw) {
   let reminders = raw;
   if (typeof reminders === "string") {

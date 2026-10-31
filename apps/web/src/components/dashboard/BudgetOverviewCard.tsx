@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoButton } from "@/components/ui/info-button";
 import { Progress } from "@/components/ui/progress";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import type { MonthlyBudgetEntry } from "@/lib/monthlyBudget";
@@ -52,7 +53,10 @@ export function BudgetOverviewCard({
     <Card className="monline-budget-card flex flex-col overflow-hidden rounded-3xl border shadow-sm">
       <CardHeader className="shrink-0 border-b bg-muted/30 pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-lg">{t("budget_overview")}</CardTitle>
+          <CardTitle className="flex items-center gap-1 text-lg">
+            {t("budget_overview")}
+            {ready && <InfoButton title={t("budget_overview")}>{t("budget_month_note")}</InfoButton>}
+          </CardTitle>
           <span className="text-xs capitalize text-muted-foreground">{month}</span>
         </div>
       </CardHeader>
@@ -103,11 +107,7 @@ export function BudgetOverviewCard({
                   )}
                   style={{ "--billing-progress": `${progress}%` } as CSSProperties}
                 />
-                <div className="flex flex-wrap justify-between gap-2 text-xs">
-                  <span className="text-muted-foreground">
-                    {t("budget_month_total")}:{" "}
-                    <strong className="text-foreground">{formatValue(total)}</strong>
-                  </span>
+                <div className="flex flex-wrap justify-end gap-2 text-xs">
                   <span
                     className={cn(
                       "font-semibold",
@@ -195,11 +195,6 @@ export function BudgetOverviewCard({
               )}
             </div>
           </>
-        )}
-        {ready && (
-          <p className="mt-auto shrink-0 border-t pt-3 text-xs leading-relaxed text-muted-foreground">
-            {t("budget_month_note")}
-          </p>
         )}
       </CardContent>
     </Card>

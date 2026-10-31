@@ -42,6 +42,7 @@ export function OIDCTab() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="space-y-6">
         <FeatureToggleCard
+          directionalHighlight
           enabled={!!settings?.oidc_enabled}
           onEnabledChange={(c) => save.mutate({ oidc_enabled: c })}
           disabled={!settings || save.isPending}
