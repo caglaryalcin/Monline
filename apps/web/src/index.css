@@ -175,7 +175,7 @@
 
   .dark {
     color-scheme: dark;
-    /* #1C1C1E in HSL is approx 240 4% 11% */
+    /* Stable palette: page background, raised cards, then secondary surfaces. */
     --background: 200 6% 10%;
     --foreground: 0 0% 98%;
     /* slightly lighter for cards and popovers */
@@ -190,7 +190,7 @@
     --secondary: 90 5% 19%;
     --secondary-foreground: 0 0% 98%;
     --muted: 90 5% 19%;
-    --muted-foreground: 0 0% 74.901961%; /* #bfbfbf */
+    --muted-foreground: 240 5% 65%;
     --accent: 90 7% 21%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 50.6%;
@@ -843,4 +843,49 @@ html[data-theme-changing] *::after {
 :root:not(.dark) .notification-provider-card[data-configured="true"] .notification-provider-icon {
   background-color: hsl(var(--primary) / 0.1);
   color: hsl(var(--primary-text, var(--primary)));
+}
+
+
+/* Shared rightward emerald accent for enabled settings and notification channels. */
+.settings-active-highlight {
+  --channel-highlight-rgb: 5 150 105;
+  --channel-highlight-fill: 0.1;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  background-image: linear-gradient(
+    90deg,
+    transparent 45%,
+    rgb(var(--channel-highlight-rgb) / 0.025) 60%,
+    rgb(var(--channel-highlight-rgb) / var(--channel-highlight-fill)) 100%
+  );
+}
+
+.dark .settings-active-highlight {
+  --channel-highlight-rgb: 52 211 153;
+  --channel-highlight-fill: 0.15;
+}
+
+:root:not(.dark) .notification-provider-card.settings-active-highlight {
+  border-color: hsl(var(--border));
+}
+
+.settings-active-highlight::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 45%,
+    rgb(var(--channel-highlight-rgb) / 0.12) 65%,
+    rgb(var(--channel-highlight-rgb) / 0.65) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
 }

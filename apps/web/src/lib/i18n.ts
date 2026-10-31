@@ -24,6 +24,7 @@ import tr from "./locales/tr.json";
 import uk from "./locales/uk.json";
 import zh_cn from "./locales/zh_cn.json";
 import { spendingTranslations } from "./spendingTranslations";
+import { spreadsheetScheduleTranslations } from "./spreadsheetScheduleTranslations";
 import { statementTranslations } from "./statementTranslations";
 
 i18n
@@ -38,6 +39,7 @@ i18n
           ...financeTranslations.en,
           ...spendingTranslations.en,
           ...budgetTranslations.en,
+          ...spreadsheetScheduleTranslations.en,
         },
       },
       pt_BR: { translation: pt_br },
@@ -48,6 +50,7 @@ i18n
           ...financeTranslations.de,
           ...spendingTranslations.de,
           ...budgetTranslations.de,
+          ...spreadsheetScheduleTranslations.de,
         },
       },
       es: { translation: es },
@@ -66,6 +69,7 @@ i18n
           ...financeTranslations.tr,
           ...spendingTranslations.tr,
           ...budgetTranslations.tr,
+          ...spreadsheetScheduleTranslations.tr,
         },
       },
       uk: { translation: uk },
@@ -75,7 +79,7 @@ i18n
       // sections retain the same English fallback used by other new locales.
       bg: { translation: {
         ...en, ...statementTranslations.en, ...financeTranslations.en,
-        ...spendingTranslations.en, ...budgetTranslations.en, ...bg,
+        ...spendingTranslations.en, ...budgetTranslations.en, ...spreadsheetScheduleTranslations.en, ...bg,
       } },
     },
     fallbackLng: "en",

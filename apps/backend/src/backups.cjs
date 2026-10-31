@@ -51,7 +51,7 @@ const MIGRATED_COLUMNS = {
   sharing_groups: ["pending_members"],
   bank_statements: ["summary", "unresolved", "excluded_transactions", "tracking_hidden"],
   finance_rows: ["expense_type", "payment_card", "year", "origin_row", "is_deleted", "loan_id"],
-  notifications_config: ["ntfy_username", "ntfy_password"],
+  notifications_config: ["ntfy_username", "ntfy_password", "delivery_settings"],
 };
 
 function temporaryDirectory(repository) {
@@ -373,7 +373,7 @@ function registerBackupApi(app, repository, auth) {
       guard,
       backupLimiter,
       (req, res, next) => {
-        if (busy || repository.databaseOperation)
+        if (busy || repository.databaseOperation || repository.spreadsheetExportsActive?.size)
           return res.status(409).json({
             message: setupOnly
               ? "setup_restore_busy"

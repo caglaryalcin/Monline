@@ -80,7 +80,7 @@ export const SERVER_SETTINGS_TABS: readonly string[] = [
 
 export function getSettingsPageMenuItems(
   t: TFunction,
-  canManageServer = false,
+  _canManageServer = false,
 ): SidebarTabsLayoutItem<SettingsTabKey>[] {
   const items: SidebarTabsLayoutItem<SettingsTabKey>[] = [
     { value: "profile", label: t("profile"), icon: User },
@@ -100,5 +100,5 @@ export function getSettingsPageMenuItems(
       danger: true,
     },
   ];
-  return canManageServer ? items.filter((item) => item.value !== "notifications") : items;
+  return items;
 }

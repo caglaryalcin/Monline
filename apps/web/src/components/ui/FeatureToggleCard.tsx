@@ -11,9 +11,12 @@ interface Props {
   onEnabledChange: (enabled: boolean) => void;
   description?: string;
   disabled?: boolean;
+  directionalHighlight?: boolean;
 }
 
-export function FeatureToggleCard({ enabled, onEnabledChange, description, disabled }: Props) {
+export function FeatureToggleCard({
+  enabled, onEnabledChange, description, disabled, directionalHighlight = false,
+}: Props) {
   const { t } = useTranslation();
   const id = useId();
   return (
@@ -21,7 +24,9 @@ export function FeatureToggleCard({ enabled, onEnabledChange, description, disab
       className={cn(
         "flex items-center gap-3 rounded-2xl border p-4 transition-colors",
         enabled
-          ? "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-400/40 dark:bg-emerald-500/15 dark:text-emerald-100"
+          ? directionalHighlight
+            ? "settings-active-highlight border-border bg-card text-foreground"
+            : "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-400/40 dark:bg-emerald-500/15 dark:text-emerald-100"
           : "border-border bg-muted/30 text-muted-foreground",
       )}
     >
@@ -56,7 +61,6 @@ export function FeatureToggleCard({ enabled, onEnabledChange, description, disab
         onCheckedChange={onEnabledChange}
         disabled={disabled}
         aria-describedby={description ? `${id}-description` : undefined}
-        className="data-[state=checked]:bg-emerald-600 dark:data-[state=checked]:bg-emerald-500"
       />
     </div>
   );

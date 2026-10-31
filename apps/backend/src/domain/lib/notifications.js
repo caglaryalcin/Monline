@@ -114,10 +114,11 @@ async function sendServerChan(key, title, message) {
     }),
   });
 }
-async function sendEmail(app, toEmail, subject, body, text) {
+async function sendEmail(app, toEmail, subject, body, text, smtp) {
   const message = new MailerMessage({
     from: {
-      address: app.settings().meta.senderAddress || "noreply@monline.app",
+      address: smtp?.senderAddress || app.settings().meta.senderAddress || "noreply@monline.app",
+      name: smtp?.senderName || "Monline",
     },
     to: [
       {
@@ -128,7 +129,7 @@ async function sendEmail(app, toEmail, subject, body, text) {
     html: body,
     ...(typeof text === "string" ? { text } : {}),
   });
-  await app.newMailClient().send(message);
+  await app.newMailClient(smtp).send(message);
 }
 
 /**
@@ -183,7 +184,7 @@ async function dispatchToAllProviders(
     if (to)
       try {
         const email = content("email");
-        await sendEmail(app, to, email.title, email.html, email.message);
+        await sendEmail(app, to, email.title, email.html, email.message, notifConfig.get?.("smtp"));
       } catch (e) {
         console.log("[Monline] email err:", e);
       }

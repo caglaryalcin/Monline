@@ -2,7 +2,7 @@
   "name": "monline",
   "description": "Web application for the Monline self-hosted subscription tracker.",
   "private": true,
-  "version": "2.0.0-beta.5",
+  "version": "2.0.0-beta.6",
   "packageManager": "bun@1.4.3",
   "license": "GPL-3.0-only",
   "author": {
@@ -19,7 +19,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && bun -e \"if (!require('node:fs').existsSync('../backend/generated')) require('node:fs').mkdirSync('../backend/generated', { recursive: true })\" && bun build ./src/lib/spreadsheetServer.ts --target=node --format=cjs --outfile=../backend/generated/spreadsheet.cjs",
     "preview": "vite preview",
     "format": "prettier . --write",
     "format:check": "prettier . --check",

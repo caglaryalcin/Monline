@@ -90,6 +90,7 @@ async function main() {
     }
   });
   require("./runtime.cjs").configure(app, repository, auth);
+  require("./spreadsheet-schedules.cjs").registerSpreadsheetSchedules(app, repository, auth);
   // Each domain module registers Monline routes, lifecycle rules or scheduled jobs.
   // The pure money/date helpers remain shared with existing application behavior.
   const domain = path.join(__dirname, "domain");
@@ -100,6 +101,11 @@ async function main() {
     require(path.join(domain, entry));
   seed(repository);
   require("./server-config.cjs").channels(repository);
+  repository.runInTransaction(() => {
+    for (const user of repository.findRecordsByFilter("users"))
+      require("./personal-notifications.cjs").recordFor(repository, user.id);
+  });
+  require("./personal-notifications-api.cjs").registerPersonalNotificationsApi(app, repository, auth);
   require("./server-config.cjs").exchange(repository);
   require("./subscription-names.cjs").normalizeStoredSubscriptionNames(
     repository,

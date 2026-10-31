@@ -239,7 +239,6 @@ function SubscriptionActions({
         className="h-7 w-7 rounded-full text-muted-foreground"
         onClick={onEdit}
         title={t("edit")}
-        disabled={sub.inactive}
       >
         <Edit className="h-3.5 w-3.5" />
       </Button>

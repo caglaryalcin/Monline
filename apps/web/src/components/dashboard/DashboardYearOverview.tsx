@@ -374,7 +374,7 @@ export function DashboardYearOverview({
                 aria-label={t("history_select_year")}
                 value={historyYear}
                 onChange={(event) => setHistoryYear(Number(event.target.value))}
-                className="h-9 rounded-xl px-3 text-xs"
+                className="h-10 min-w-[6.5rem] rounded-xl px-3 text-base font-semibold"
               >
                 {historyYears.map((value) => (
                   <option key={value} value={value}>
@@ -388,7 +388,7 @@ export function DashboardYearOverview({
             hasError={sourceError}
             emptyText={t("dashboard_year_payments_empty")}
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-3 sm:ml-auto">
               <div
                 className="flex flex-wrap gap-1 rounded-xl bg-muted p-1"
                 role="group"

@@ -105,7 +105,6 @@ export const SMTPTab = forwardRef<
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const toggleEnabled = async (enabled: boolean) => {
-    if (enabled) changeExpansion(true);
     const previous = form.enabled;
     set("enabled", enabled);
     setSaving(true);
@@ -122,7 +121,8 @@ export const SMTPTab = forwardRef<
   };
 
   const persist = async () => {
-    if (smtpQuery.isPending || smtpQuery.isError) throw new Error(t("error_save"));
+    if (smtpQuery.isPending || smtpQuery.isError || (inline && !channelEnabled))
+      throw new Error(t("error_save"));
     const body: Record<string, unknown> = { ...form };
     if (inline) body.enabled = channelEnabled;
     if (!form.password) delete body.password;
@@ -223,7 +223,8 @@ export const SMTPTab = forwardRef<
 
         {(form.enabled || inline) && (
           <fieldset
-            disabled={saving || isSaving || testing || smtpQuery.isPending || smtpQuery.isError}
+            disabled={saving || isSaving || testing || smtpQuery.isPending || smtpQuery.isError ||
+              (inline && !channelEnabled)}
             className="space-y-8"
           >
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">

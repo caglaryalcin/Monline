@@ -12,11 +12,12 @@ COPY apps/backend/package.json apps/backend/bun.lock ./
 RUN bun install --frozen-lockfile --production --ignore-scripts
 
 FROM node:24-alpine
-RUN apk add --no-cache su-exec ca-certificates tzdata
+RUN apk add --no-cache su-exec ca-certificates tzdata samba-client
 WORKDIR /app/backend
 COPY --from=server-dependencies /app/backend/node_modules ./node_modules
 COPY apps/backend/package.json ./
 COPY apps/backend/src ./src
+COPY --from=frontend-builder /app/backend/generated ./generated
 COPY --from=frontend-builder /app/backend/public ./public
 COPY apps/backend/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh && mkdir -p /data/monline

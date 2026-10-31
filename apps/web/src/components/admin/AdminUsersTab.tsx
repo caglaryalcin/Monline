@@ -206,7 +206,9 @@ export function AdminUsersTab() {
                         {account.name || account.email}
                       </h3>
                       {account.is_admin && (
-                        <Badge variant="secondary">{t("admin_users_admin")}</Badge>
+                        <Badge variant="outline" className="border-primary/30 bg-primary/10 text-primary">
+                          {t("admin_users_admin")}
+                        </Badge>
                       )}
                       <Badge
                         variant="outline"
@@ -232,7 +234,7 @@ export function AdminUsersTab() {
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                      <span>
+                      <span className={account.verified ? "text-primary" : undefined}>
                         {t(
                           account.verified
                             ? "admin_users_email_verified"

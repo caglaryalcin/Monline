@@ -1,6 +1,5 @@
 const { BadRequestError, ForbiddenError } = require("./errors.cjs");
 const config = require("./server-config.cjs");
-const { toggleFields } = require("./managed-config.cjs");
 function registerServerConfigApi(app, repository, auth) {
   const admin = (req) => {
     auth.requireUser(req);
@@ -10,6 +9,7 @@ function registerServerConfigApi(app, repository, auth) {
   const channelOutput = () => ({
     id: "global",
     ...config.channels(repository),
+    enabled_channels: config.enabledChannels(repository),
     available_channels: config.availability(repository),
     template_defaults: require("./notification-templates.cjs").defaults(),
   });
@@ -53,7 +53,13 @@ function registerServerConfigApi(app, repository, auth) {
     admin(req);
     const data = { ...config.channels(repository) };
     for (const [key, value] of Object.entries(req.body || {})) {
-      if (key === "localized_templates") {
+      if (key === "enabled_channels") {
+        if (!value || typeof value !== "object" || Array.isArray(value) ||
+            Object.entries(value).some(([id, enabled]) => id === "email" ||
+              !Object.hasOwn(config.channelFields, id) || typeof enabled !== "boolean"))
+          throw new BadRequestError("Invalid channel configuration");
+        data.enabled_channels = { ...data.enabled_channels, ...value };
+      } else if (key === "localized_templates") {
         const localized =
           require("./notification-templates.cjs").validateLocalizedTemplates(
             value,
@@ -74,24 +80,6 @@ function registerServerConfigApi(app, repository, auth) {
           require("./notification-language.cjs").resolveLanguage(
             req.user.getString("language"),
           );
-      } else if (key === "reminders") {
-        if (
-          !Array.isArray(value) ||
-          !value.length ||
-          value.length > 50 ||
-          value.some(
-            (slot) =>
-              !slot ||
-              !Number.isInteger(slot.days) ||
-              slot.days < 0 ||
-              slot.days > 365 ||
-              !Number.isInteger(slot.hour) ||
-              slot.hour < 0 ||
-              slot.hour > 23,
-          )
-        )
-          throw new BadRequestError("Invalid reminder schedule");
-        data.reminders = value.map(({ days, hour }) => ({ days, hour }));
       } else {
         if (
           !config.credentialFields.includes(key) ||
@@ -155,22 +143,7 @@ function registerServerConfigApi(app, repository, auth) {
   });
   app.get("/api/notifications/preferences", (req, res) => {
     auth.requireUser(req);
-    const record = repository.findRecordsByFilter(
-      "notifications_config",
-      "user = {:user}",
-      "",
-      1,
-      0,
-      { user: req.user.id },
-    )[0];
-    res.json({
-      id: record?.id || "",
-      user: req.user.id,
-      ...Object.fromEntries(
-        [...toggleFields].map((key) => [key, !!record?.getBool(key)]),
-      ),
-      available_channels: config.availability(repository),
-    });
+    res.json(require("./personal-notifications.cjs").output(repository, req.user.id));
   });
 }
 module.exports = { registerServerConfigApi };

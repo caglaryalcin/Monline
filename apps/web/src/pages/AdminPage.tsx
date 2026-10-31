@@ -9,6 +9,7 @@ import { FixerTab } from "@/components/settings/exchange-rates/FixerTab";
 import { MaintenanceTab } from "@/components/settings/maintenance/MaintenanceTab";
 import { OIDCTab } from "@/components/settings/oidc/OIDCTab";
 import { RegistrationTab } from "@/components/settings/registration/RegistrationTab";
+import { InfoButton } from "@/components/ui/info-button";
 import { SidebarTabsLayout } from "@/components/ui/SidebarTabsLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { adminRoute } from "@/routes";
@@ -44,11 +45,11 @@ export function AdminPage() {
       )}
       {tab === "channels" && (
         <div className="space-y-7">
-          <div>
+          <div className="flex items-center gap-2">
             <h2 className="text-xl font-semibold">{t("notification_channels")}</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <InfoButton title={t("notification_channels")}>
               {t("admin_channels_management_hint")}
-            </p>
+            </InfoButton>
           </div>
           <NotificationChannelsTab />
         </div>

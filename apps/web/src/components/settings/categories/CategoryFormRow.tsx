@@ -15,20 +15,20 @@ export function CategoryFormRow({ name, onCancel, onNameChange, onSubmit }: Cate
   const { t } = useTranslation();
 
   return (
-    <div className="flex min-w-0 flex-col gap-3 p-4 rounded-2xl border border-border bg-card">
+    <div className="flex min-w-0 items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
       <Input
         autoFocus
         value={name}
         onChange={(e) => onNameChange(e.target.value)}
         placeholder={t("category_name_placeholder")}
-        className="rounded-xl border-input bg-background text-sm focus-visible:ring-ring"
+        className="h-8 min-w-0 flex-1 rounded-lg border-input bg-background text-sm focus-visible:ring-ring"
         onKeyDown={(e) => e.key === "Enter" && onSubmit()}
       />
-      <div className="flex justify-end gap-1">
+      <div className="flex shrink-0 justify-end gap-1">
         <Button
           size="icon"
           variant="ghost"
-          className="shrink-0 text-primary"
+          className="h-7 w-7 shrink-0 text-primary"
           onClick={onSubmit}
           aria-label={t("save")}
         >
@@ -37,7 +37,7 @@ export function CategoryFormRow({ name, onCancel, onNameChange, onSubmit }: Cate
         <Button
           size="icon"
           variant="ghost"
-          className="shrink-0 text-muted-foreground"
+          className="h-7 w-7 shrink-0 text-muted-foreground"
           onClick={onCancel}
           aria-label={t("cancel")}
         >

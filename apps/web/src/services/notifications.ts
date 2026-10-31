@@ -6,6 +6,10 @@ export const notificationsService = {
   getConfig: (_userId: string): Promise<NotificationsConfig> =>
     api.get<NotificationsConfig>("/api/notifications/preferences"),
 
+  getPersonalConfig: () => api.get<NotificationsConfig>("/api/notifications/channels"),
+  savePersonalConfig: (data: Partial<NotificationsConfig>) =>
+    api.patch<NotificationsConfig>("/api/notifications/channels", data),
+
   getChannels: () => api.get<NotificationsConfig>("/api/admin/channels"),
   saveChannels: (data: Partial<NotificationsConfig>) =>
     api.patch<NotificationsConfig>("/api/admin/channels", data),

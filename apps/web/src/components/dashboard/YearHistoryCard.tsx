@@ -118,17 +118,16 @@ export function YearHistoryCard({
   };
   return (
     <Card className="h-full overflow-hidden rounded-3xl border shadow-sm">
-      <CardHeader className="gap-3 border-b bg-muted/30 pb-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      <CardHeader className="gap-3 space-y-0 border-b bg-muted/30 pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <TrendingUp className="h-5 w-5 shrink-0" style={{ color }} />
-            {title}
+            {yearControl ?? (
+              <span className="text-sm font-semibold text-muted-foreground">{year}</span>
+            )}
           </CardTitle>
-          {yearControl ?? (
-            <span className="text-sm font-semibold text-muted-foreground">{year}</span>
-          )}
+          {children}
         </div>
-        {children}
         {chartSeries.length > 1 && (
           <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
             {chartSeries.map((item) => (

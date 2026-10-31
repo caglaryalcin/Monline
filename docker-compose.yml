@@ -2,7 +2,7 @@ name: monline-beta
 services:
   app:
     build: .
-    image: monline:2.0.0-beta.5
+    image: monline:2.0.0-beta.6
     container_name: monline-beta
     restart: unless-stopped
     ports:
@@ -13,6 +13,9 @@ services:
       TZ: ${TZ:-Europe/Istanbul}
       TRUST_PROXY: ${TRUST_PROXY:-0}
       MONLINE_PUBLIC_URL: ${MONLINE_PUBLIC_URL:-}
+      MONLINE_EXPORT_DIR: ${MONLINE_EXPORT_DIR:-}
+      MONLINE_GOOGLE_CLIENT_ID: ${MONLINE_GOOGLE_CLIENT_ID:-}
+      MONLINE_GOOGLE_CLIENT_SECRET: ${MONLINE_GOOGLE_CLIENT_SECRET:-}
       MONLINE_LEGACY_KEY: ${MONLINE_LEGACY_KEY:-}
     volumes:
       - monline-beta-volume:/data

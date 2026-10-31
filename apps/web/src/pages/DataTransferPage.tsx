@@ -12,6 +12,8 @@ import {
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { SpreadsheetInfo } from "@/components/settings/SpreadsheetInfo";
+import { SpreadsheetSchedules } from "@/components/settings/SpreadsheetSchedules";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -162,21 +164,19 @@ export function DataTransferPage() {
   return (
     <div className="space-y-6">
       <Card className="overflow-hidden rounded-3xl">
-        <CardHeader className="border-b bg-muted/20">
+        <CardHeader className="flex-row flex-wrap items-center justify-between gap-3 space-y-0 border-b bg-muted/20">
           <CardTitle className="flex items-center gap-2 text-lg">
             <FileSpreadsheet className="h-5 w-5 text-primary" />
             {t("spreadsheet_export_title")}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">{t("spreadsheet_export_description")}</p>
-        </CardHeader>
-        <CardContent className="space-y-4 pt-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="flex-1 space-y-2 text-sm leading-relaxed text-muted-foreground">
+            <SpreadsheetInfo title={t("spreadsheet_export_title")}>
+              <p>{t("spreadsheet_export_description")}</p>
               <p>{t("spreadsheet_export_scope")}</p>
               <p>{t("spreadsheet_export_formulas")}</p>
-            </div>
+              <p>{t("spreadsheet_export_snapshot")}</p>
+            </SpreadsheetInfo>
+          </CardTitle>
             <Button
-              className="shrink-0 rounded-xl"
+              className="ml-auto shrink-0 rounded-xl"
               disabled={disabled}
               onClick={() => void run("excel", () => exportSpreadsheet(resolveLocale(i18n, "tr")))}
             >
@@ -187,13 +187,14 @@ export function DataTransferPage() {
               )}
               {t(busy === "excel" ? "transfer_preparing" : "spreadsheet_export_action")}
             </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">{t("spreadsheet_export_snapshot")}</p>
+        </CardHeader>
+        <CardContent className="space-y-4 pt-6">
           {error && errorAction === "excel" && (
             <p role="alert" className="text-sm text-destructive">
               {error}
             </p>
           )}
+          <SpreadsheetSchedules />
         </CardContent>
       </Card>
       <Card className="overflow-hidden rounded-3xl">

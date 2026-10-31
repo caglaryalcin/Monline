@@ -1,0 +1,10 @@
+discord.svg: https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/discord.svg
+telegram.svg: https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/telegram.svg
+mattermost.svg: https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/mattermost.svg
+gotify.png: https://raw.githubusercontent.com/gotify/logo/master/gotify-logo-small.png
+ntfy.png: https://ntfy.sh/static/images/ntfy.png
+pushover.ico: https://pushover.net/favicon.ico
+pushplus.ico: https://www.pushplus.plus/favicon.ico
+serverchan.ico: https://sct.ftqq.com/favicon.ico
+Gotify logo: CC BY 4.0, Gotify organisation; original Go gopher by Renee French.
+Simple Icons: CC0; brand marks belong to their respective owners.

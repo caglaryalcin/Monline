@@ -621,9 +621,6 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
                 <FileText className="h-5 w-5 text-primary" />
                 {t("statement_upload")}
               </CardTitle>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {t("statement_intro")}
-              </p>
             </CardHeader>
             <CardContent className="space-y-5 pt-6">
               <div className="flex items-start gap-3 rounded-xl border border-orange-400/40 bg-orange-500/10 p-4 text-sm text-orange-800 dark:text-orange-200">

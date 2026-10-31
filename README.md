@@ -36,7 +36,7 @@ A self-hosted home for your subscriptions, recurring payments, and budget. React
 - **Private accounts** — optional 30-day sign-in, two-factor authentication, trusted devices, OIDC sign-in, and scoped API keys.
 - **Account administration** — the administrator’s Administration page lists registered users with search, account status, verification, security methods and active session counts. Create accounts, edit names and emails, set new passwords, manage verification, suspend or reactivate users, end sessions, or delete an account and its owned records. Suspended accounts cannot sign in or use existing sessions or API keys. The first registered administrator manages their own account through Profile and cannot be suspended or deleted through user management.
 - **Groups and selective sharing** — create groups in Settings and use a subscription card’s Share button to grant view or edit access to selected groups, or view access to existing users by email. Subscriptions remain private until shared. Editors can update the subscription’s name, amount, billing cycle, frequency, next payment, renewal setting, active status, notes and URL. Only the owner can delete it or manage access and private account relations. Existing group shares keep view access until the owner upgrades them. The Share button turns green while the subscription is shared. Group management opens in a new tab so the sharing draft stays open. Shared items appear under “Shared with me” and stay separate from the recipient’s personal budget, calendar and statistics. Notes, URL and logo are shared; payment methods, household details, payment proofs and history remain private. Removing a group member or changing sharing permissions takes effect on subsequent requests; the shared list refreshes every 30 seconds or manually. When several grants apply, edit access takes precedence. Instance backups preserve groups and sharing; account and subscription exports omit access grants, and newly imported subscriptions start private.
-- **Payment reminders** — the administrator configures global SMTP, delivery channels, destinations and reminder schedules under Administration → Channels. Each account chooses its own enabled channels independently in Settings → Notifications. Administrators can configure a channel while it is off, and saving delivery settings preserves each account’s existing preferences. The API prevents changing another account’s notification toggles; credentials and destinations stay hidden from regular users’ settings and API responses. Email templates follow the recipient account’s selected language.
+- **Payment reminders** — administrators configure shared SMTP, channel connections and notification templates in Administration → Channels. Users enable configured channels for their account and choose their own default reminder schedule in Settings → Notifications. Subscriptions can override that account’s schedule.
 
 ## Local development
 
@@ -66,7 +66,7 @@ Copy `.env.example` to `.env`. All variables are optional:
 
 Run `docker compose up -d --build`, then open `http://localhost:3000`. On first launch, restore a full `.tar.gz` instance backup or start guided setup for the first administrator account, currency, budget, appearance and optional SMTP reminders. Restoring skips setup and returns to sign-in with the restored accounts. Existing installations keep their accounts and settings. New accounts start with the **Monline** accent color.
 
-Data persists in `monline-volume`, mounted at `/data`. The database and uploaded assets live in `/data/monline`. Account JSON backups include attachments and personal notification toggles, while delivery configuration and exchange API settings remain managed by the administrator and are preserved in full instance backups. Import/Export provides the server administrator with single `.tar.gz` instance archives containing the SQLite database and all uploaded files for every user. Other users export their own accounts as JSON. Registration, limits and URLs, channels, API keys, exchange API settings, OIDC and maintenance controls live in Administration. Channel, exchange API and OIDC configuration are shared across the instance and managed only by administrators. Old settings links redirect to the corresponding Administration section. Restoring an instance replaces its data and signs everyone out; a complete safety backup is retained on the server before restoration. Legacy `.db` restores replace only the database. Instance restores accept archives up to 500 MiB (2 GiB expanded).
+Data persists in `monline-volume`, mounted at `/data`. The database and uploaded assets live in `/data/monline`. Account JSON backups include attachments and personal notification toggles and reminder schedules, while delivery configuration and exchange API settings remain managed by the administrator and are preserved in full instance backups. Import/Export provides the server administrator with single `.tar.gz` instance archives containing the SQLite database and all uploaded files for every user. Other users export their own accounts as JSON. Registration, limits and URLs, channels, API keys, exchange API settings, OIDC and maintenance controls live in Administration. Channel, exchange API and OIDC configuration are shared across the instance and managed only by administrators. Old settings links redirect to the corresponding Administration section. Restoring an instance replaces its data and signs everyone out; a complete safety backup is retained on the server before restoration. Legacy `.db` restores replace only the database. Instance restores accept archives up to 500 MiB (2 GiB expanded).
 
 ## Docker images
 
@@ -93,19 +93,145 @@ For prebuilt deployment, use `image: ghcr.io/caglaryalcin/monline:1.5.0` or `ima
 
 Export a full instance backup before upgrading, retain the existing `/data` volume and environment, then pull image `1.5.0` and recreate the container. Source installations can use `docker compose up -d --build`. Startup automatically adds the optional currency-code preference; existing accounts keep the previous price display until they enable **Settings → Theme and appearance → Display options → Show currency codes**. Both subscription layouts and shared subscriptions support it, including converted and original prices.
 
-Administration → Channels now combines SMTP configuration, editable payment/cancellation message templates and previews. Templates are saved separately for each language; reminders follow each recipient's saved profile language and use built-in translations when no custom template exists. Template previews do not send messages; the Test button sends the selected reminder type using the current draft.
+Settings → Notifications contains personal channel switches and reminder times. Administrators manage shared connections, SMTP, templates and previews in Administration → Channels. Templates are saved by language.
 
-Administrators manage their personal channel switches inside Administration → Channels. Their old Settings → Notifications links redirect there; regular users retain their personal Notifications page. Global channel configuration and each account's enabled channels remain separate. Existing notification preferences, subscriptions, sharing permissions and login sessions are preserved.
+All accounts, including administrators, manage their personal switches and reminder schedule in Settings → Notifications. Shared channel configuration is separate from each account’s preferences.
 
 ## Upgrading from v1.3.0 to v1.4.0
 
 Export a full instance `.tar.gz` backup from v1.3.0 before upgrading. Keep the existing `/data` volume and deployment environment; update the image to `1.4.0`, pull it and recreate the container. Source-based installations should rebuild with `docker compose up -d --build`. Do not remove the volume. Startup adds the new database fields and sharing tables automatically; subscriptions start private and existing payments, statements, passwords, API keys and login sessions remain in place. Restoring a full backup intentionally signs everyone out.
 
-The existing first administrator remains the administrator. Their saved notification channel credentials, destinations, reminder schedule and exchange API settings become the instance-wide configuration. Other accounts retain their own channel switches; their former personal delivery configuration does not replace the administrator's global settings. Review Administration → Channels and API after upgrading, especially if those integrations were previously configured only on another account. SMTP and OIDC settings retain their existing instance-wide configuration. Email reminders use each account's registered email address.
+The existing administrator continues managing shared SMTP and channel credentials. Each account retains its own channel switches and default reminder schedule. Notification emails go to the recipient account’s registered address.
 
 The generated `Me` person is linked to its own account and renamed to the account's display name while retaining its ID and historical payer references. Custom People names and existing default selections are preserved. Other old People records remain available in history, but require an email invitation and approval before becoming selectable as confirmed payers or active group members. Upgrading does not send invitations automatically.
 
 Verify the public server URL in Administration before sending invitations. Leave `MONLINE_PUBLIC_URL` empty unless intentionally overriding that URL for this deployment. Existing v1.3.0 full instance archives can be restored directly into v1.4.0. For a rollback, retain both the v1.3.0 image and its pre-upgrade backup.
+
+## Scheduled Excel exports (beta)
+
+Settings → Import/Export → Scheduled Excel exports has separate NAS and Google
+Drive destinations. Each has its own hourly, 6-hourly, 12-hourly, daily or weekly
+schedule, a Send now button, the last successful export and the next run.
+Schedules are stored on the server and run with the browser closed. An overdue
+export runs after the server comes back online. Failed exports retry after
+15 minutes; an expired Google authorization pauses that destination until it
+is reconnected and enabled again.
+
+Both destinations use the same workbook as the manual Excel download, including
+its formulas and charts. Saving a schedule selects the current interface
+language and theme for future exports. Each destination replaces one file
+instead of accumulating dated copies. These spreadsheets contain the current
+account's financial data; they are separate from full instance backups.
+
+### NAS
+
+Select **Configure → SMB / Windows share** to send directly to a NAS without
+mounting its share into the container. Enter the NAS IP address or hostname,
+share name, optional existing subfolder, username, password and optional
+domain/workgroup. The server must be able to reach the NAS on TCP port 445;
+enable SMB2/SMB3 and grant that user write access to the destination.
+Save the configuration, then use **Test connection** to check access without
+sending a file. **Send now** writes the workbook immediately.
+
+SMB exports write `Monline.xlsx` directly inside the selected share/folder.
+Exports using the same destination replace that same file. NAS exports are
+serialized so concurrent requests cannot overwrite an in-progress upload.
+A temporary upload is renamed over the existing file after transfer. The NAS
+password is encrypted in private server metadata and is never returned by the
+configuration API. Docker images include Samba's `smbclient`; Linux/macOS source
+installations must provide that executable in PATH. On Windows source
+installations, Monline uses the native SMB client through a temporary
+credentialed PowerShell drive, without saving a persistent drive mapping.
+The connection check confirms that the folder is reachable; an actual export
+also requires write and replacement permissions.
+
+To keep using a directory already mounted on the server, select
+**Mounted server folder** instead. For Docker:
+
+Mount a writable NAS directory on the Docker host first. Add a bind mount in
+`docker-compose.override.yml`, for example:
+
+```yaml
+services:
+  app:
+    volumes:
+      - type: bind
+        source: /mnt/nas/monline
+        target: /exports
+        bind:
+          create_host_path: false
+```
+
+In Settings → Import/Export → NAS → Configure, save `/exports` as the NAS
+folder. No restart is needed when saving through the interface.
+Alternatively set `MONLINE_EXPORT_DIR=/exports` in `.env` and recreate the
+container; an environment override makes that field read-only in the interface.
+The mount must exist and be writable by the configured `PUID`/`PGID`.
+Monline writes `Monline.xlsx` directly under that directory and replaces
+it atomically. A missing mount or failed write is reported in the account's
+export status. For a source installation, set `MONLINE_EXPORT_DIR` to an
+existing local or mounted directory visible to the server process.
+
+### Google Drive
+
+Google Drive is currently marked **Coming soon**. Its configuration, connection,
+schedule and export controls are disabled, and the server does not run Drive
+exports. The setup details below are retained for a future release.
+
+**Connect Google Drive** uses Google's account selection and consent screen.
+This is OAuth authorization, not an API key entered by each user. Uploading the
+file still uses Google Drive API. The administrator performs the OAuth client
+setup below once for the installation; ordinary users only connect their
+Google accounts. Monline currently has no centrally hosted OAuth broker or
+preconfigured shared Google OAuth client.
+
+1. Enable Google Drive API in a Google Cloud project and configure its OAuth
+   consent screen. Create an OAuth client of type **Web application**.
+2. In Settings → Import/Export → Google Drive → Configure, save the client ID
+   and client secret. The saved secret is not returned to the browser; leave its
+   field empty to keep the existing value when editing.
+3. Check the installation's public **Server URL** in that configuration window
+   or in Administration.
+   `MONLINE_PUBLIC_URL`, if set, overrides it. Stable and beta need their
+   respective public URLs.
+4. Register the exact Google OAuth redirect URI shown in Settings →
+   Import/Export. It ends in `/api/spreadsheet-schedules/drive/callback`.
+   Use HTTPS for a public installation; localhost is supported for development.
+5. Select **Connect Google Drive**, grant access, then save the desired schedule.
+
+Administrators configure shared destinations; each account connects its own
+Drive and manages its own schedule. The interface changes take effect
+immediately. Existing `MONLINE_GOOGLE_CLIENT_ID` and
+`MONLINE_GOOGLE_CLIENT_SECRET` environment overrides remain supported and make
+their fields read-only. Change overrides in deployment settings and restart the
+server. Changing a saved Google client ID or secret disconnects existing Drive
+connections and pauses their schedules until accounts reconnect and enable them.
+The small information buttons beside Excel, scheduling and destination headings
+contain the detailed explanations and setup instructions.
+
+Monline requests only Google's `drive.file` scope and offline access. It creates
+`Monline.xlsx` in the connected Drive, remembers its file ID and updates that
+same file on later exports. Moving the file into another Drive folder does not
+break the schedule. Disconnect revokes access and pauses Drive exports; it
+leaves the exported file in Drive. Google OAuth tokens and export settings are
+private server metadata, excluded from account JSON and Excel exports.
+
+See Google's [web-server OAuth guide](https://developers.google.com/identity/protocols/oauth2/web-server)
+and [Drive scopes guide](https://developers.google.com/workspace/drive/api/guides/api-specific-auth)
+for OAuth consent, publishing and access requirements. An external OAuth app
+left in Google's Testing mode can require reconnecting after its refresh token
+expires; use an appropriate production configuration for unattended schedules.
+
+### Statement privacy and public URL
+
+Statement PDFs and their passwords are processed in the browser. Saving a
+statement sends its extracted transactions, summary, filename, page count and
+file hash to the server. The original PDF and password are not uploaded.
+
+The public Server URL is used in generated account emails, invitations and
+redirects, including Google authorization. Ordinary browser navigation and API
+requests use the current installation's origin, so a wrong public URL may only
+become noticeable when opening one of those generated links.
 
 ## Contributors
 

@@ -149,6 +149,7 @@ const FIELDS = {
   ],
   yearly_costs: ["year", "month", "total"],
   notifications_config: [
+    "reminders",
     "email_enabled",
     "discord_enabled",
     "telegram_enabled",
@@ -711,11 +712,6 @@ function importAccount(
         if (["subscriptions", "finance_rows"].includes(name)) record.set("__monline_restore", true);
         if (name === "fixer_settings" && !record.getString("api_key"))
           record.set("enabled", false);
-        if (name === "notifications_config") {
-          const available = require("../../server-config.cjs").availability(tx);
-          for (const [channel, configured] of Object.entries(available))
-            if (!configured) record.set(channel + "_enabled", false);
-        }
         tx.save(record);
         if (
           ["subscription_history", "bank_statements"].includes(name) &&

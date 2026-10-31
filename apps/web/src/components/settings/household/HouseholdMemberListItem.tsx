@@ -38,7 +38,7 @@ export function HouseholdMemberListItem({
         <div className="flex flex-wrap items-center gap-2">
           <span className="break-words font-medium text-lg">{memberName}</span>
           {accountConfirmed && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs text-foreground">
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 text-xs text-primary">
               <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
               {t("household_account_confirmed")}
             </span>

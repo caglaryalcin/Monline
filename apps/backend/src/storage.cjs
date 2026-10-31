@@ -363,6 +363,8 @@ class Repository {
         this.connection.exec(
           `ALTER TABLE notifications_config ADD COLUMN ${identifier(name)} TEXT NOT NULL DEFAULT ''`,
         );
+    if (!notificationColumns.has("delivery_settings"))
+      this.connection.exec("ALTER TABLE notifications_config ADD COLUMN delivery_settings JSON DEFAULT NULL");
     if (!this.connection.prepare('PRAGMA table_info("finance_benchmarks")').all().some((column) => column.name === "salary_tag"))
       this.connection.exec("ALTER TABLE finance_benchmarks ADD COLUMN salary_tag TEXT NOT NULL DEFAULT ''");
     for (const field of ["row_id", "start_month", "scope", "updated_at"])

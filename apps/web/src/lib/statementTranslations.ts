@@ -235,7 +235,7 @@ export const statementTranslations = {
     statement_intro:
       "Enpara, DenizBank veya Garanti BBVA ekstreni yükle. Tüm işlemleri kategori özetiyle inceleyip kaydet; Dijital / Abonelik bölümündeki uygun ödemeleri mevcut aboneliklerine ve takvime aktar.",
     statement_privacy:
-      "PDF ve şifresi cihazındaki tarayıcıda işlenir; sunucuya gönderilmez. AI kullanılmaz.",
+      "PDF ve şifresi cihazındaki tarayıcıda işlenir; sunucuya gönderilmez. PDF içe aktarıldıktan sonra çıkarılan işlemler, özet ve dosya bilgileri sunucuda tutulur.",
     statement_file: "PDF dosyası · en fazla 20 MB",
     statement_choose: "PDF seç",
     statement_no_file: "Dosya seçilmedi",
@@ -561,7 +561,7 @@ export const statementTranslations = {
     statement_intro:
       "Upload an Enpara, DenizBank or Garanti BBVA statement. Review and save all transactions with a category summary, then import eligible Digital / Subscriptions payments into your subscriptions and calendar.",
     statement_privacy:
-      "The PDF and its password are processed in your browser and are not sent to the server. No AI is used.",
+      "The PDF and its password are processed in your device’s browser and are not sent to the server. After the PDF is imported, the extracted transactions, summary and file details are stored on the server.",
     statement_file: "PDF file · up to 20 MB",
     statement_choose: "Choose PDF",
     statement_no_file: "No file selected",
@@ -894,7 +894,7 @@ export const statementTranslations = {
     statement_intro:
       "Lade eine Abrechnung von Enpara, DenizBank oder Garanti BBVA hoch. Prüfe und speichere alle Umsätze mit Kategorieübersicht. Geeignete Zahlungen unter Digital / Abonnements können in Abonnements und Kalender übernommen werden.",
     statement_privacy:
-      "PDF und Passwort werden im Browser verarbeitet und nicht an den Server gesendet. Es wird keine KI verwendet.",
+      "PDF und Passwort werden im Browser deines Geräts verarbeitet und nicht an den Server gesendet. Nach dem PDF-Import werden ausgelesene Umsätze, Zusammenfassung und Dateiinformationen auf dem Server gespeichert.",
     statement_file: "PDF-Datei · bis zu 20 MB",
     statement_choose: "PDF auswählen",
     statement_no_file: "Keine Datei ausgewählt",
