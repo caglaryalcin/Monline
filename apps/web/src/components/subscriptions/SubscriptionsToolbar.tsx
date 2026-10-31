@@ -29,6 +29,7 @@ interface SubscriptionsToolbarProps {
   view: "grid" | "list";
   sort: SubscriptionSortKey;
   sortDir: "asc" | "desc";
+  sortSaving?: boolean;
   onSortChange: (value: SubscriptionSortKey) => void;
   onSearchChange: (value: string) => void;
   onToggleFilters: () => void;
@@ -46,6 +47,7 @@ export function SubscriptionsToolbar({
   view,
   sort,
   sortDir,
+  sortSaving = false,
   onSortChange,
   onSearchChange,
   onToggleFilters,
@@ -128,11 +130,13 @@ export function SubscriptionsToolbar({
             variant="outline"
             className="h-[42px] gap-2 border-transparent bg-background/50 px-4"
             aria-label={t("sort")}
+            aria-busy={sortSaving}
+            disabled={sortSaving}
             title={`${t(SORT_LABELS[sort])} · ${t(sortDir === "asc" ? "sort_ascending" : "sort_descending")}`}
           >
             <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
             <span className="hidden sm:inline">
-              {t(sort === "name" ? "sort" : SORT_LABELS[sort])}
+              {t(sortSaving ? "saving" : sort === "name" ? "sort" : SORT_LABELS[sort])}
             </span>
           </Button>
         </DropdownMenuTrigger>

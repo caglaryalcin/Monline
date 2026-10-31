@@ -25,6 +25,16 @@ export interface User {
   convert_currency?: boolean;
   budget?: number;
   payment_tracking?: boolean;
+  sort_order?:
+    | "name"
+    | "price"
+    | "next_payment"
+    | "status"
+    | "date_added"
+    | "category"
+    | "payment_method"
+    | "payer";
+  sort_direction?: "asc" | "desc";
 }
 
 export interface PaymentRecord {

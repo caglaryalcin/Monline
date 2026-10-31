@@ -181,6 +181,7 @@
           "name",
           "price",
           "next_payment",
+          "status",
           "date_added",
           "category",
           "payment_method",

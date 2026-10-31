@@ -18,7 +18,6 @@ import {
   INITIAL_SUBSCRIPTION_FILTERS,
   type SubscriptionAutomationSetting,
   type SubscriptionFiltersState,
-  type SubscriptionSortKey,
 } from "@/components/subscriptions/subscriptionsPage.types";
 import { SubscriptionsPageHeader } from "@/components/subscriptions/SubscriptionsPageHeader";
 import { SubscriptionsToolbar } from "@/components/subscriptions/SubscriptionsToolbar";
@@ -27,6 +26,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFilteredSubscriptions } from "@/hooks/useFilteredSubscriptions";
 import { useLocalToday } from "@/hooks/useLocalToday";
+import { useSubscriptionSort } from "@/hooks/useSubscriptionSort";
 import { queryKeys } from "@/lib/queryKeys";
 import {
   currentSpendingMonth,
@@ -63,8 +63,7 @@ export function SubscriptionSections({
   const today = useLocalToday();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [sort, setSort] = useState<SubscriptionSortKey>("name");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const { sort, sortDir, setSort, toggleSortDir, isSaving: sortSaving } = useSubscriptionSort();
   const [filters, setFilters] = useState<SubscriptionFiltersState>(INITIAL_SUBSCRIPTION_FILTERS);
   const [showForm, setShowForm] = useState(false);
   const [showBillForm, setShowBillForm] = useState(false);
@@ -284,10 +283,6 @@ export function SubscriptionSections({
     hideDisabled: user?.hide_disabled,
   });
 
-  const handleCycleSort = () => {
-    setSortDir((current) => (current === "asc" ? "desc" : "asc"));
-  };
-
   const handleCreate = () => {
     if (section === "bills") {
       setShowBillForm(true);
@@ -317,10 +312,11 @@ export function SubscriptionSections({
           view={view}
           sort={sort}
           sortDir={sortDir}
+          sortSaving={sortSaving}
           onSortChange={setSort}
           onSearchChange={setSearchTerm}
           onToggleFilters={() => setShowFilters((current) => !current)}
-          onCycleSort={handleCycleSort}
+          onCycleSort={toggleSortDir}
           onViewChange={setView}
           onDeleteAll={() => setDeleteAllOpen(true)}
           deleteAllDisabled={
