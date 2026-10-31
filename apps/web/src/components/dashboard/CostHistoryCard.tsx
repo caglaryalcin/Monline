@@ -84,7 +84,7 @@ export function CostHistoryCard({
     maximumFractionDigits: 0,
   });
   const formatAxisValue = (value: number) =>
-    `${(Math.abs(Math.round(value)) >= 10000 ? groupedAxisNumber : axisNumber).format(value)} ${currencySymbol}`;
+    `${(Math.abs(Math.round(value)) >= 10000 ? groupedAxisNumber : axisNumber).format(value)}\u00a0${currencySymbol}`;
   const maximum = Math.max(
     0,
     ...chartData.flatMap((point) => [point.cost ?? 0, point.forecast ?? 0]),
