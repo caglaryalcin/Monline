@@ -1,3 +1,8 @@
+export {
+  compareReleaseVersions,
+  parseReleaseVersion,
+} from "../../../backend/src/domain/lib/pure/release-version.mjs";
+
 export function parseStableVersion(value: unknown): readonly number[] | null {
   if (typeof value !== "string") return null;
   const match = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value);

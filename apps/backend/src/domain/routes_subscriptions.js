@@ -343,6 +343,10 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
       rec.set("inactive", inactive);
       rec.set("notify", notify);
       rec.set("notify_days_before", notifyDaysBefore);
+      rec.set(
+        "notification_reminders",
+        isWallos ? null : (sub.notification_reminders ?? null),
+      );
       rec.set("payment_limit", paymentLimit);
       rec.set("payments_completed", paymentsCompleted);
       rec.set("notes", notes);
@@ -418,6 +422,7 @@ routerAdd("POST", "/api/subscription/clone", (e) => {
     "url",
     "notify",
     "notify_days_before",
+    "notification_reminders",
     "cancellation_date",
     "currency",
     "cycle",
@@ -590,6 +595,7 @@ routerAdd("GET", "/api/subscriptions/export", (e) => {
       inactive: sub.get("inactive"),
       notify: sub.get("notify"),
       notify_days_before: sub.get("notify_days_before"),
+      notification_reminders: sub.get("notification_reminders"),
       notes: sub.get("notes"),
       url: sub.get("url"),
       cancellation_date: sub.get("cancellation_date"),

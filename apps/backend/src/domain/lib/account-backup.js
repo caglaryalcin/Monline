@@ -109,6 +109,7 @@ const FIELDS = {
     "auto_mark_paid",
     "notify",
     "notify_days_before",
+    "notification_reminders",
     "notes",
     "url",
     "record_type",
@@ -329,6 +330,16 @@ function validateBackup(backup) {
       if (!row || !/^[a-z0-9]{15}$/.test(row.id) || ids.has(row.id))
         throw new Error("transfer_invalid_backup");
       ids.add(row.id);
+      if (name === "subscriptions") {
+        try {
+          row.notification_reminders =
+            require("./pure/subscription-reminders.js").validateSubscriptionReminders(
+              row.notification_reminders,
+            );
+        } catch {
+          throw new Error("transfer_invalid_backup");
+        }
+      }
       if (name === "manual_bills") {
         try {
           require("./pure/manual-bills.js").validate(row);

@@ -1,16 +1,16 @@
 const { httpClient } = require("../../runtime.cjs");
+const { version: currentVersion } = require("../../../package.json");
+const {
+  parseReleaseVersion,
+  compareReleaseVersions,
+} = require("./pure/release-version.mjs");
 function repository() {
   return "caglaryalcin/Monline";
 }
-function stableVersion(value) {
-  if (typeof value !== "string") return null;
-  var match = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value);
-  if (!match) return null;
-  var parts = [Number(match[1]), Number(match[2]), Number(match[3])];
-  return parts.every(Number.isSafeInteger) ? parts.join(".") : null;
-}
 async function checkUpdates(app) {
-  var key = "monline.official-release-check";
+  const betaChannel = parseReleaseVersion(currentVersion)?.beta != null;
+  var key =
+    "monline.official-release-check." + (betaChannel ? "beta" : "stable");
   var now = Date.now();
   var cached = null;
   // Cache the verified release response for every request.
@@ -20,22 +20,38 @@ async function checkUpdates(app) {
   if (cached && cached.expiresAt > now) return cached.value;
   try {
     var response = await httpClient.send({
-      url: "https://api.github.com/repos/" + repository() + "/releases/latest",
+      url:
+        "https://api.github.com/repos/" +
+        repository() +
+        (betaChannel ? "/releases?per_page=100" : "/releases/latest"),
       headers: {
         Accept: "application/vnd.github+json",
         "User-Agent": "Monline-update-check",
       },
       timeout: 4,
+      maxBytes: 1024 * 1024,
     });
     if (
       response.statusCode !== 200 ||
       (response.raw && response.raw.length > 1024 * 1024)
     )
       throw new Error("Release service unavailable");
-    var release = response.json;
-    var version = release && stableVersion(release.tag_name);
-    if (!version || release.draft || release.prerelease)
-      throw new Error("No stable release");
+    const releases = betaChannel ? response.json : [response.json];
+    if (!Array.isArray(releases)) throw new Error("Invalid release response");
+    var release = releases
+      .filter((candidate) => {
+        const parsed = parseReleaseVersion(candidate?.tag_name);
+        return (
+          parsed &&
+          !candidate.draft &&
+          (parsed.beta === null
+            ? !candidate.prerelease
+            : betaChannel && candidate.prerelease)
+        );
+      })
+      .sort((a, b) => compareReleaseVersions(b.tag_name, a.tag_name))[0];
+    var version = parseReleaseVersion(release?.tag_name)?.version;
+    if (!version) throw new Error("No release for this channel");
     var completedAt = Date.now();
     var value = {
       latestVersion: version,

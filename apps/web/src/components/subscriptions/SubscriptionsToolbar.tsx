@@ -2,14 +2,34 @@ import { ArrowUpDown, Filter, LayoutGrid, List, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
+import type { SubscriptionSortKey } from "@/components/subscriptions/subscriptionsPage.types";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PageToolbar, ToolbarSearch } from "@/components/ui/PageToolbar";
 import { cn } from "@/lib/utils";
+
+const SORT_LABELS: Record<SubscriptionSortKey, string> = {
+  name: "sort_by_name",
+  date: "next_payment",
+  price: "sort_by_price",
+  status: "sort_by_status",
+};
 
 interface SubscriptionsToolbarProps {
   searchTerm: string;
   showFilters: boolean;
   view: "grid" | "list";
+  sort: SubscriptionSortKey;
+  sortDir: "asc" | "desc";
+  onSortChange: (value: SubscriptionSortKey) => void;
   onSearchChange: (value: string) => void;
   onToggleFilters: () => void;
   onCycleSort: () => void;
@@ -24,6 +44,9 @@ export function SubscriptionsToolbar({
   searchTerm,
   showFilters,
   view,
+  sort,
+  sortDir,
+  onSortChange,
   onSearchChange,
   onToggleFilters,
   onCycleSort,
@@ -99,14 +122,47 @@ export function SubscriptionsToolbar({
         <span className="hidden sm:inline">{t("filter")}</span>
       </Button>
 
-      <Button
-        variant="outline"
-        className="h-[42px] gap-2 border-transparent bg-background/50 px-4"
-        onClick={onCycleSort}
-      >
-        <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-        <span className="hidden sm:inline">{t("sort")}</span>
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            className="h-[42px] gap-2 border-transparent bg-background/50 px-4"
+            aria-label={t("sort")}
+            title={`${t(SORT_LABELS[sort])} · ${t(sortDir === "asc" ? "sort_ascending" : "sort_descending")}`}
+          >
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+            <span className="hidden sm:inline">
+              {t(sort === "name" ? "sort" : SORT_LABELS[sort])}
+            </span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>{t("sort")}</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={sort}
+            aria-label={t("sort")}
+            onValueChange={(value) => onSortChange(value as SubscriptionSortKey)}
+          >
+            {(Object.keys(SORT_LABELS) as SubscriptionSortKey[]).map((key) => (
+              <DropdownMenuRadioItem key={key} value={key}>
+                {t(SORT_LABELS[key])}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>{t("sort_order")}</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={sortDir}
+            aria-label={t("sort_order")}
+            onValueChange={(value) => {
+              if (value !== sortDir) onCycleSort();
+            }}
+          >
+            <DropdownMenuRadioItem value="asc">{t("sort_ascending")}</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="desc">{t("sort_descending")}</DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </PageToolbar>
   );
 }

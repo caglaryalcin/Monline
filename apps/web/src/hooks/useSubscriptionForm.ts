@@ -36,6 +36,8 @@ const _schemaShape = z.object({
   auto_renew: z.boolean(),
   notify: z.boolean(),
   notify_days_before: z.string(),
+  notification_mode: z.enum(["default", "custom"]),
+  notification_reminders: z.array(z.object({ days: z.number(), hour: z.number() })),
   inactive: z.boolean(),
   auto_mark_paid: z.boolean(),
   cancellation_date: z.string(),
@@ -113,6 +115,13 @@ export function useSubscriptionForm({
       auto_renew: z.boolean(),
       notify: z.boolean(),
       notify_days_before: z.string(),
+      notification_mode: z.enum(["default", "custom"]),
+      notification_reminders: z.array(
+        z.object({
+          days: z.number().int().min(0).max(365),
+          hour: z.number().int().min(0).max(23),
+        }),
+      ),
       inactive: z.boolean(),
       auto_mark_paid: z.boolean(),
       cancellation_date: z
@@ -133,15 +142,15 @@ export function useSubscriptionForm({
         });
       }
 
-      if (values.notify) {
-        const days = Number(values.notify_days_before);
-        if (!values.notify_days_before.trim() || !Number.isInteger(days) || days < 0) {
-          context.addIssue({
-            code: "custom",
-            path: ["notify_days_before"],
-            message: t("validation_nonnegative_integer"),
-          });
-        }
+      if (
+        values.notification_mode === "custom" &&
+        (values.notification_reminders.length < 1 || values.notification_reminders.length > 12)
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["notification_reminders"],
+          message: t("subscription_reminders_invalid"),
+        });
       }
 
       const frequency = Number(values.frequency);
@@ -222,6 +231,8 @@ export function useSubscriptionForm({
       auto_renew: true,
       notify: false,
       notify_days_before: "3",
+      notification_mode: "default",
+      notification_reminders: [{ days: 3, hour: 8 }],
       inactive: false,
       auto_mark_paid: false,
       cancellation_date: "",
@@ -261,7 +272,9 @@ export function useSubscriptionForm({
         url: sub.url || "",
         auto_renew: !sub.inactive && sub.auto_renew,
         notify: sub.notify,
-        notify_days_before: String(sub.notify_days_before || 3),
+        notify_days_before: String(sub.notify_days_before ?? 3),
+        notification_mode: sub.notification_reminders ? "custom" : "default",
+        notification_reminders: sub.notification_reminders ?? [{ days: 3, hour: 8 }],
         inactive: sub.inactive,
         auto_mark_paid: !!sub.auto_mark_paid,
         cancellation_date: toDateOnly(sub.cancellation_date),
@@ -292,6 +305,8 @@ export function useSubscriptionForm({
         auto_renew: true,
         notify: false,
         notify_days_before: "3",
+        notification_mode: "default",
+        notification_reminders: [{ days: 3, hour: 8 }],
         inactive: false,
         auto_mark_paid: false,
         cancellation_date: "",

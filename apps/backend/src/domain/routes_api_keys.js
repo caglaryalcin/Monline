@@ -680,6 +680,7 @@ routerAdd("POST", "/api/external/subscriptions", function (e) {
     record.set("payments_completed", paymentsCompleted);
     record.set("notify", body.notify === true);
     record.set("notify_days_before", parseInt(body.notify_days_before) || 3);
+    record.set("notification_reminders", body.notification_reminders ?? null);
     record.set("inactive", body.inactive === true);
     if (body.notes) record.set("notes", String(body.notes));
     if (body.url) record.set("url", String(body.url));
@@ -1616,6 +1617,8 @@ routerAdd("PUT", "/api/external/subscriptions/{id}", function (e) {
     if (body.notify !== undefined) record.set("notify", body.notify === true);
     if (body.notify_days_before !== undefined)
       record.set("notify_days_before", parseInt(body.notify_days_before) || 3);
+    if (body.notification_reminders !== undefined)
+      record.set("notification_reminders", body.notification_reminders);
     if (body.inactive !== undefined)
       record.set("inactive", body.inactive === true);
     record.set("end_date", proposedEndDate);

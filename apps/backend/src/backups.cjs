@@ -40,6 +40,7 @@ const MIGRATED_COLUMNS = {
   ],
   subscriptions: [
     "sharing",
+    "notification_reminders",
     "statement_imported",
     "billing_anchor_day",
     "calendar_history_recovery_passes",

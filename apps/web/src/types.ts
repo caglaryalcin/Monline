@@ -137,6 +137,8 @@ export interface Subscription {
   url?: string;
   notify: boolean;
   notify_days_before: number;
+  /** Null/absent inherits the global schedule; an array overrides it. */
+  notification_reminders?: NotificationReminder[] | null;
   inactive: boolean;
   auto_mark_paid?: boolean;
   cancellation_date?: string;
