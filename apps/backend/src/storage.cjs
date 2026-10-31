@@ -6,6 +6,7 @@ const schema = require("./schema.json");
 const { compileFilter, compileSort } = require("./filter.cjs");
 const { BadRequestError, NotFoundError } = require("./errors.cjs");
 const bcrypt = require("bcryptjs");
+const { formatLocalDate } = require("./domain/lib/date-helpers.js");
 const { normalizeSubscriptionName } = require("./subscription-names.cjs");
 
 const identifier = (value) => '"' + String(value).replace(/"/g, '""') + '"';
@@ -260,6 +261,10 @@ class Repository {
       this.connection.exec(
         "ALTER TABLE subscriptions ADD COLUMN calendar_projection_hidden INTEGER NOT NULL DEFAULT 0",
       );
+    if (!this.connection.prepare('PRAGMA table_info("subscriptions")').all()
+      .some((column) => column.name === "calendar_projection_from"))
+      this.connection.exec("ALTER TABLE subscriptions ADD COLUMN calendar_projection_from TEXT NOT NULL DEFAULT ''");
+    this.repairCalendarProjections();
     if (
       !this.connection
         .prepare('PRAGMA table_info("payment_records")')
@@ -349,6 +354,13 @@ class Repository {
         SELECT 1 FROM payment_records p WHERE p.subscription_id=subscriptions.id
         AND p.user=subscriptions.user AND instr(p.statement_sources, '[monline-statement:')>0
       )`);
+  }
+  repairCalendarProjections() {
+    // Legacy clearing hid every future payment. Restore only the schedule from
+    // today onward and keep the history-recovery marker completed.
+    this.connection.prepare(
+      "UPDATE subscriptions SET calendar_projection_from = MAX(calendar_projection_from, ?), calendar_projection_hidden = 0, calendar_history_recovery_passes = 2 WHERE calendar_projection_hidden = 1",
+    ).run(formatLocalDate(new Date()));
   }
   repairMainPaymentMethods() {
     const seen = new Set();
@@ -519,8 +531,17 @@ class Repository {
     return this.runInTransaction(() => {
       const collection = record.collection(),
         isNew = !record._original;
-      if (collection.name === "subscriptions")
+      if (collection.name === "subscriptions") {
         record.set("name", normalizeSubscriptionName(record.get("name")));
+        // Older account backups can carry the retired permanent-hiding flag.
+        if (record.getBool("calendar_projection_hidden")) {
+          const today = formatLocalDate(new Date());
+          const previous = record.getString("calendar_projection_from");
+          record.set("calendar_projection_from", previous > today ? previous : today);
+          record.set("calendar_projection_hidden", false);
+          record.set("calendar_history_recovery_passes", 2);
+        }
+      }
       if (!record.id) record.id = newId();
       if (!/^[a-z0-9]{15}$/.test(record.id))
         throw new BadRequestError("Invalid record ID");

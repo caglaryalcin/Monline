@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { Cell, Label, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
@@ -11,10 +11,12 @@ import type {
 } from "@/components/statistics/statistics.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemedSelect } from "@/components/ui/themed-select";
+import { usePersistentExpandedItems } from "@/hooks/usePersistentDisclosure";
 import type { CategoryCostMode } from "@/lib/categoryPeriodCosts";
 import { cn, formatPrice } from "@/lib/utils";
 
 interface StatisticsDistributionCardProps {
+  userId?: string;
   data: StatisticsPieDatum[];
   mainCode?: string;
   mainSymbol: string;
@@ -34,6 +36,7 @@ interface StatisticsDistributionCardProps {
 }
 
 export function StatisticsDistributionCard({
+  userId,
   data,
   mainCode,
   mainSymbol,
@@ -52,7 +55,10 @@ export function StatisticsDistributionCard({
   hasError,
 }: StatisticsDistributionCardProps) {
   const { t, i18n } = useTranslation();
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(() => new Set());
+  const [expandedCategories, toggleCategory] = usePersistentExpandedItems(
+    userId,
+    "statistics.categories",
+  );
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const language = (i18n?.resolvedLanguage ?? i18n?.language ?? "en").replace("_", "-");
   const percent = (value: number) =>
@@ -278,14 +284,7 @@ export function StatisticsDistributionCard({
                               disabled={!categoryDetails?.[item.name]?.length}
                               aria-expanded={expandedCategories.has(item.name)}
                               aria-label={t("statistics_category_details", { category: item.name })}
-                              onClick={() =>
-                                setExpandedCategories((previous) => {
-                                  const next = new Set(previous);
-                                  if (next.has(item.name)) next.delete(item.name);
-                                  else next.add(item.name);
-                                  return next;
-                                })
-                              }
+                              onClick={() => toggleCategory(item.name)}
                               className="inline-flex items-center gap-2 rounded-md text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring disabled:cursor-default"
                             >
                               <span

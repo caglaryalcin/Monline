@@ -8,6 +8,7 @@ const {
 } = require("../runtime.cjs");
 const domainPath = __dirname;
 const { calendarNextPayment } = require("./lib/calendar-move.js");
+const { formatLocalDate } = require("./lib/date-helpers.js");
 // ================================================================
 // ROUTE: Calendar iCal Feed
 // GET /api/calendar/ical?key=wk_xxx  (requires calendar:read permission)
@@ -185,6 +186,12 @@ routerAdd(
     const body = e.requestInfo().body || {};
     if (body.confirmed !== true || body.scope !== "payments")
       return e.json(400, { error: "calendar_clear_invalid" });
+    const offset = body.utc_offset_minutes;
+    if (offset != null && (!Number.isInteger(offset) || offset < -840 || offset > 840))
+      return e.json(400, { error: "calendar_clear_invalid" });
+    const clearedOn = offset == null
+      ? formatLocalDate(new Date())
+      : new Date(Date.now() - offset * 60000).toISOString().slice(0, 10);
     const result = repository.runInTransaction((tx) => {
       const payments = tx.findRecordsByFilter(
         "payment_records",
@@ -196,9 +203,9 @@ routerAdd(
       );
       tx.connection
         .prepare(
-          "UPDATE subscriptions SET calendar_projection_hidden = 1, calendar_history_recovery_passes = 2 WHERE user = ?",
+          "UPDATE subscriptions SET calendar_projection_hidden = 0, calendar_projection_from = MAX(calendar_projection_from, ?), calendar_history_recovery_passes = 2 WHERE user = ?",
         )
-        .run(e.auth.id);
+        .run(clearedOn, e.auth.id);
       for (const record of payments) tx.delete(record);
       return { subscriptions_deleted: 0, payments_deleted: payments.length };
     });

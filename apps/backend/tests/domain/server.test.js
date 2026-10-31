@@ -2232,11 +2232,13 @@ it.each(["payments"])(
       remainingSubs.map((sub) => ({
         ...sub,
         calendar_projection_hidden: false,
+        calendar_projection_from: "",
       })),
     ).toEqual(subscriptionsBefore);
     expect(remainingSubs.every((sub) => sub.calendar_projection_hidden)).toBe(
-      true,
+      false,
     );
+    expect(remainingSubs.every((sub) => sub.calendar_projection_from === dateAt(0))).toBe(true);
     expect(remainingSubs.some((item) => item.id === credit.id)).toBe(true);
     expect(
       (await request("/api/data/payment_records", { token: other.token })).data

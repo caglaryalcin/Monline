@@ -18,6 +18,7 @@ import { useTranslation } from "react-i18next";
 import { PermissionBadge } from "@/components/settings/api-keys/PermissionBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { usePersistentDisclosure, usePersistentExpandedItems } from "@/hooks/usePersistentDisclosure";
 import type { ApiKeyPermission } from "@/types";
 
 const SUBSCRIPTION_CREATE_BODY = `{
@@ -406,12 +407,12 @@ function buildEndpointGroups(t: (key: string) => string, baseUrl: string): Endpo
   ];
 }
 
-export function ApiKeyEndpointsReference() {
+export function ApiKeyEndpointsReference({ userId }: { userId?: string }) {
   const { t } = useTranslation();
   const baseUrl = window.location.origin;
-  const [open, setOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [expandedBodies, setExpandedBodies] = useState<Set<string>>(new Set());
+  const [open, setOpen] = usePersistentDisclosure(userId, "api.reference");
+  const [expandedGroups, toggleGroup] = usePersistentExpandedItems(userId, "api.groups");
+  const [expandedBodies, toggleBody] = usePersistentExpandedItems(userId, "api.schemas");
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
   const endpointGroups = buildEndpointGroups(t, baseUrl);
@@ -422,39 +423,12 @@ export function ApiKeyEndpointsReference() {
     setTimeout(() => setCopiedUrl(null), 1500);
   };
 
-  const toggleGroup = (groupId: string) => {
-    setExpandedGroups((current) => {
-      const next = new Set(current);
-
-      if (next.has(groupId)) {
-        next.delete(groupId);
-      } else {
-        next.add(groupId);
-      }
-
-      return next;
-    });
-  };
-
-  const toggleBody = (bodyId: string) => {
-    setExpandedBodies((current) => {
-      const next = new Set(current);
-
-      if (next.has(bodyId)) {
-        next.delete(bodyId);
-      } else {
-        next.add(bodyId);
-      }
-
-      return next;
-    });
-  };
-
   return (
     <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
         className="flex w-full cursor-pointer items-center gap-2.5 bg-muted/30 px-6 py-4 transition-colors duration-150 "
       >
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -500,6 +474,7 @@ export function ApiKeyEndpointsReference() {
                 <button
                   type="button"
                   onClick={() => toggleGroup(group.id)}
+                  aria-expanded={isGroupOpen}
                   className="flex w-full cursor-pointer items-center gap-2.5 px-6 py-3.5 transition-colors duration-150 "
                 >
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground transition-colors ">
@@ -521,7 +496,7 @@ export function ApiKeyEndpointsReference() {
                 {isGroupOpen ? (
                   <div className="divide-y border-t bg-background">
                     {group.endpoints.map((endpoint) => {
-                      const bodyId = `${group.id}-${endpoint.method}-${endpoint.label}`;
+                      const bodyId = `${group.id}-${endpoint.method}-${endpoint.url}`;
                       const isBodyOpen = expandedBodies.has(bodyId);
 
                       return (
@@ -565,6 +540,7 @@ export function ApiKeyEndpointsReference() {
                               <button
                                 className="flex cursor-pointer items-center gap-1.5 text-[11px] font-medium text-muted-foreground transition-colors "
                                 onClick={() => toggleBody(bodyId)}
+                                aria-expanded={isBodyOpen}
                               >
                                 <div
                                   className={`rounded bg-muted/80 p-0.5 transition-transform duration-200 ${

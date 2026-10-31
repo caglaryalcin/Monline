@@ -47,6 +47,7 @@ const FIELDS = {
     "billing_anchor_day",
     "calendar_history_recovery_passes",
     "calendar_projection_hidden",
+    "calendar_projection_from",
     "category",
     "payment_method",
     "payer",

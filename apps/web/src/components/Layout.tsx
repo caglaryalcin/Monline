@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalToday } from "@/hooks/useLocalToday";
+import { usePersistentDisclosure } from "@/hooks/usePersistentDisclosure";
 import { useSidebarResize } from "@/hooks/useSidebarResize";
 import { useSummaryData } from "@/hooks/useSummaryData";
 import { cn } from "@/lib/utils";
@@ -47,7 +48,7 @@ export function Layout() {
   const summary = useSummaryData(user?.id ?? "");
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = usePersistentDisclosure(user?.id, "layout.sidebar-collapsed");
   const sidebar = useSidebarResize();
   const menuButton = useRef<HTMLButtonElement>(null);
 

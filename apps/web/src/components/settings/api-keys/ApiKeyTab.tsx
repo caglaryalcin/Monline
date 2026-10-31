@@ -15,7 +15,7 @@ import { toast } from "@/lib/toast";
 import { apiKeysService } from "@/services/apiKeys";
 import type { ApiKey, ApiKeyCreated, ApiKeyPermission } from "@/types";
 
-export function ApiKeyTab() {
+export function ApiKeyTab({ preferenceOwnerId }: { preferenceOwnerId?: string }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -93,7 +93,7 @@ export function ApiKeyTab() {
         onDelete={handleDelete}
       />
 
-      <ApiKeyEndpointsReference />
+      <ApiKeyEndpointsReference userId={preferenceOwnerId} />
 
       <CreateApiKeyDialog
         open={showCreate}

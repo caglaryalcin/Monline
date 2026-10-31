@@ -20,7 +20,8 @@ function projectedOccurrence(app, sub, date) {
   const end = [sub.getString("end_date"), sub.getString("cancellation_date")]
     .filter(Boolean)
     .sort()[0];
-  if (!validDate(cursor) || date < cursor || (start && date < start))
+  const projectionFrom = sub.getString("calendar_projection_from").slice(0, 10);
+  if (!validDate(cursor) || date < cursor || (start && date < start) || (projectionFrom && date < projectionFrom))
     return false;
   const cycle = app
     .findRecordById("cycles", sub.getString("cycle"))
@@ -146,7 +147,22 @@ function moveCalendarPayment(app, userId, input) {
   });
 }
 function calendarNextPayment(app, sub) {
-  const date = sub.getString("next_payment").slice(0, 10);
+  let date = sub.getString("next_payment").slice(0, 10);
+  if (!validDate(date)) return "";
+  const projectionFrom = sub.getString("calendar_projection_from").slice(0, 10);
+  if (projectionFrom && date < projectionFrom) {
+    const cycle = app.findRecordById("cycles", sub.getString("cycle")).getString("name");
+    const frequency = sub.getFloat("frequency");
+    if (sub.getString("record_type") === "credit" || cycle === "One-Time" ||
+        !Number.isInteger(frequency) || frequency < 1) return "";
+    const anchor = sub.getFloat("billing_anchor_day") || Number(date.slice(8, 10));
+    for (let guard = 0; date < projectionFrom && guard < 5000; guard++) {
+      const next = advanceDate(new Date(date + "T12:00:00Z"), cycle, frequency, anchor).toISOString().slice(0, 10);
+      if (next <= date) return "";
+      date = next;
+    }
+    if (date < projectionFrom || !projectedOccurrence(app, sub, date)) return "";
+  }
   const moved = app.findRecordsByFilter(
     "payment_records",
     "user = {:owner} && subscription_id = {:sub} && scheduled_date = {:date}",

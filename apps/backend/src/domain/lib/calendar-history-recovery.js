@@ -104,7 +104,8 @@ function recoverCalendarHistory(app, today, userId = "") {
                 continue;
               if (limit && elapsed >= limit) break;
               elapsed++;
-              if (existing.has(date)) continue;
+              const projectionFrom = sub.getString("calendar_projection_from").slice(0, 10);
+              if ((projectionFrom && date < projectionFrom) || existing.has(date)) continue;
               if (saveScheduledPayment(tx, sub, date, false, { notes }))
                 created++;
             }

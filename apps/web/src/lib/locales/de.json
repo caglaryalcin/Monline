@@ -1025,7 +1025,7 @@
   "calendar_payment_deleted": "Zahlungseintrag gelöscht.",
   "calendar_delete_failed": "Löschen fehlgeschlagen. Bitte erneut versuchen.",
   "calendar_clear_payments": "Alle Zahlungseinträge löschen",
-  "calendar_clear_confirm": "Alle {{payments}} Zahlungen aus sämtlichen Zeiträumen löschen und alle derzeit geplanten Zahlungen aus dem Kalender entfernen, auch im aktuellen Monat? Abonnements und Kontoauszugsarchiv bleiben erhalten. Dies kann nicht rückgängig gemacht werden.",
+  "calendar_clear_confirm": "Alle {{payments}} Zahlungsdatensätze aus sämtlichen Zeiträumen löschen? Anstehende Zahlungspläne aktiver Abonnements, Abonnementdaten und das Kontoauszugsarchiv bleiben erhalten. Gelöschte Zahlungen können nicht wiederhergestellt werden.",
   "calendar_cleared": "Zahlungseinträge gelöscht.",
   "historical_standalone": "Zahlung ohne Abonnement",
   "historical_standalone_hint": "Erfassen Sie eine Zahlung ohne gespeichertes Abonnement. Es wird kein Abonnement erstellt.",

@@ -1025,7 +1025,7 @@
   "calendar_payment_deleted": "Payment record deleted.",
   "calendar_delete_failed": "Could not complete deletion. Please try again.",
   "calendar_clear_payments": "Clear all payment records",
-  "calendar_clear_confirm": "Delete all {{payments}} payment records across all dates and remove all currently projected payments from the calendar, including this month? Subscriptions and the statement archive will be kept. This cannot be undone.",
+  "calendar_clear_confirm": "Delete all {{payments}} payment records across all dates? Upcoming payment schedules for active subscriptions, subscription definitions and the statement archive will be kept. Deleted payment history cannot be recovered.",
   "calendar_cleared": "Payment records cleared.",
   "historical_standalone": "Payment without a subscription",
   "historical_standalone_hint": "Record a payment without selecting a saved subscription. This does not create a subscription.",

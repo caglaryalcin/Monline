@@ -37,8 +37,8 @@ function getSubscription(overrides: Partial<Subscription> = {}): Subscription {
 }
 
 describe("useCalendarMonthData", () => {
-  it("leaves the current and future calendar empty after clearing projections without deleting subscriptions", () => {
-    const subscription = getSubscription({ calendar_projection_hidden: true });
+  it("keeps upcoming payments visible after clearing history without deleting subscriptions", () => {
+    const subscription = getSubscription({ calendar_projection_from: "2026-04-01" });
     const { result } = renderHook(() =>
       useCalendarMonthData({
         subscriptions: [subscription],
@@ -50,8 +50,8 @@ describe("useCalendarMonthData", () => {
         paymentRecords: [],
       }),
     );
-    expect(result.current.stats.count).toBe(0);
-    expect(result.current.selectedEntries).toEqual([]);
+    expect(result.current.stats.count).toBe(1);
+    expect(result.current.selectedEntries).toHaveLength(1);
     expect(subscription.inactive).toBe(false);
   });
   it("keeps a standalone payment visible after its paid status is reversed", () => {

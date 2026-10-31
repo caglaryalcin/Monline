@@ -205,6 +205,7 @@ function validateDatabase(file) {
                   "statement_imported",
                   "calendar_history_recovery_passes",
                   "calendar_projection_hidden",
+                  "calendar_projection_from",
                 ].includes(field.name)) ||
               (entry.name === "notifications_config" && field.name === "delivery_settings") ||
               (["payment_methods", "household"].includes(entry.name) &&
@@ -259,6 +260,7 @@ function replaceDatabase(repository, input) {
   );
   for (const row of input.prepare("SELECT key,value FROM monline_meta").all())
     insertMeta.run(row.key, row.value);
+  repository.repairCalendarProjections();
   repository.repairStatementImportMarkers();
   repository.repairMainPaymentMethods();
   repository.repairSelfHousehold();

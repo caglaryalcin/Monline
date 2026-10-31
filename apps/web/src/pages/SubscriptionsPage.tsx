@@ -19,6 +19,7 @@ import { SubscriptionsToolbar } from "@/components/subscriptions/SubscriptionsTo
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFilteredSubscriptions } from "@/hooks/useFilteredSubscriptions";
+import { usePersistentDisclosure } from "@/hooks/usePersistentDisclosure";
 import { useSubscriptionSort } from "@/hooks/useSubscriptionSort";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
@@ -54,7 +55,10 @@ export function SubscriptionsPage() {
     },
     onError: () => toast.error(t("error_deleting_subscription")),
   });
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = usePersistentDisclosure(
+    userId,
+    "subscriptions.filters.online",
+  );
   const [view, setView] = useState<"grid" | "list">("grid");
 
   const { data: subscriptions = [], isLoading } = useQuery({

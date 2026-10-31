@@ -140,6 +140,7 @@ export function StatisticsPage() {
             />
           ) : (
             <StatisticsDistributionCard
+              userId={userId}
               data={categories.data}
               mainCode={mainCode}
               mainSymbol={mainSymbol}

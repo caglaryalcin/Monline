@@ -124,6 +124,8 @@ export interface SubscriptionHistory {
 export interface Subscription {
   is_shared?: boolean;
   calendar_projection_hidden?: boolean;
+  /** Only project scheduled dates on or after this history-clearing boundary. */
+  calendar_projection_from?: string;
   /** Original billing day, preserved when shorter months clamp the due date. */
   billing_anchor_day?: number;
   id: string;
