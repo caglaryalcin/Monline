@@ -45,6 +45,7 @@ const MIGRATED_COLUMNS = {
     "billing_anchor_day",
     "calendar_history_recovery_passes",
     "calendar_projection_hidden",
+    "calendar_projection_from",
   ],
   payment_methods: ["is_main", "finance_card"],
   household: ["is_main", "account", "account_approval"],
@@ -282,6 +283,7 @@ function replaceDatabase(repository, input) {
   );
   for (const row of input.prepare("SELECT key,value FROM monline_meta").all())
     insertMeta.run(row.key, row.value);
+  repository.repairCalendarProjections();
   repository.repairStatementImportMarkers();
   repository.repairBillingAnchorDays();
   repository.repairMainPaymentMethods();

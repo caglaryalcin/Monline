@@ -109,6 +109,7 @@ function budgetData(data, month, today) {
           break;
         if (
           date.startsWith(month) &&
+          (!sub.calendar_projection_from || date >= sub.calendar_projection_from.slice(0, 10)) &&
           !records.some(
             (record) =>
               record.subscription_id === sub.id &&

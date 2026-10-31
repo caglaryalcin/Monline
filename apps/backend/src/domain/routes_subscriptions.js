@@ -1,6 +1,7 @@
 const {
   ForbiddenError,
   Record,
+  files,
   repository,
   routerAdd,
 } = require("../runtime.cjs");
@@ -451,7 +452,36 @@ routerAdd("POST", "/api/subscription/clone", (e) => {
       error: policyError,
     });
 
-  // Logo needs special handling (file copy)
+  // Uploaded logos live under the source record's ID. Copy the bytes into the
+  // clone's own storage so editing or deleting the source cannot break its logo.
+  const logo = original.getString("logo");
+  if (logo) {
+    const path = require("node:path");
+    if (logo === path.basename(logo) && !/[\\\x00]/.test(logo)) {
+      try {
+        const bytes = require("node:fs").readFileSync(
+          path.join(
+            repository.dataDir(),
+            "storage",
+            "subscriptions",
+            original.id,
+            logo,
+          ),
+        );
+        if (bytes.length)
+          clone.set(
+            "logo",
+            files.fileFromBytes(
+              bytes,
+              logo.replace(/^(?:[a-f0-9]{16}_)+/i, "") || "logo",
+            ),
+          );
+      } catch (error) {
+        // A legacy missing attachment must not prevent copying the subscription.
+        if (error.code !== "ENOENT") throw error;
+      }
+    }
+  }
   repository.save(clone);
   return e.json(200, {
     id: clone.id,

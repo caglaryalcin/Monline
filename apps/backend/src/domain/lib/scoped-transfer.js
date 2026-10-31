@@ -32,6 +32,7 @@ function exportScope(app, userId, scope) {
     for (const sub of backup.data.subscriptions) {
       sub.calendar_history_recovery_passes = 2;
       sub.calendar_projection_hidden = false;
+      sub.calendar_projection_from = "";
     }
   const source =
     scope === "calendar"
@@ -101,8 +102,11 @@ function importScope(app, userId, scope, input) {
       }
     }
     if (scope === "subscriptions")
-      for (const sub of backup.data.subscriptions || [])
+      for (const sub of backup.data.subscriptions || []) {
         sub.calendar_history_recovery_passes = 2;
+        sub.calendar_projection_hidden = false;
+        sub.calendar_projection_from = "";
+      }
     return account.importAccount(tx, userId, backup, false, {
       recoverHistory: false,
     });

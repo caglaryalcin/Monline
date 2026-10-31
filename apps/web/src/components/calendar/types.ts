@@ -146,12 +146,16 @@ function projectedDatesInMonth(
 
   const anchor = parseLocalDate(sub.next_payment);
   if (!anchor) return [];
+  const projectionFrom = parseLocalDate(sub.calendar_projection_from);
+  // Clearing completed history must not recreate a finished schedule.
+  if (projectionFrom && sub.inactive) return [];
 
   // Credits are single dated payouts. Ignore any stale finite-schedule fields
   // from older clients: the backend clears them, and they must never turn a
   // one-time income record into a recurring calendar series.
   if (isCredit(sub) || cycleName === "One-Time") {
-    if (sub.inactive || anchor < monthStart || anchor > monthEnd) return [];
+    if (sub.inactive || anchor < monthStart || anchor > monthEnd ||
+        (projectionFrom && anchor < projectionFrom)) return [];
     return [anchor];
   }
 
@@ -175,7 +179,7 @@ function projectedDatesInMonth(
   // The current schedule starts at next_payment. Earlier dates must come from
   // saved payment records, so deleting history cannot recreate unpaid charges.
   const rangeStart = new Date(
-    Math.max(monthStart.getTime(), startDate?.getTime() ?? 0, anchor.getTime()),
+    Math.max(monthStart.getTime(), startDate?.getTime() ?? 0, anchor.getTime(), projectionFrom?.getTime() ?? 0),
   );
   const effectiveEndDate = [endDate, scheduleEndDate]
     .filter((date): date is Date => !!date)

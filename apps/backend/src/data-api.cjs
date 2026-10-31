@@ -200,6 +200,8 @@ function registerDataApi(app, repository, auth) {
           "updated",
           "user",
           "calendar_history_recovery_passes",
+          "calendar_projection_hidden",
+          "calendar_projection_from",
           "sharing",
         ].includes(field.name) ||
         (name === "household" &&

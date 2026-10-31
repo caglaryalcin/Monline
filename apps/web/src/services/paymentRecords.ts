@@ -88,7 +88,7 @@ export const paymentRecordsService = {
       "/api/calendar/clear",
       {
         method: "POST",
-        body: { confirmed: true, scope },
+        body: { confirmed: true, scope, utc_offset_minutes: new Date().getTimezoneOffset() },
       },
     ),
 
