@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
 import { YearHistoryCard } from "@/components/dashboard/YearHistoryCard";
+import { PageLoading } from "@/components/PageLoading";
 import { Button } from "@/components/ui/button";
 import { ThemedSelect } from "@/components/ui/themed-select";
 import client from "@/lib/client";
@@ -260,6 +261,20 @@ export function DashboardYearOverview({
       ? `${monthName(previousDecember)} ${money(previousWage)} → ${monthName(currentMonth)} ${money(currentWage)}`
       : t("dashboard_year_minimum_wage_missing");
   const missingAmounts = Object.values(payments).reduce((sum, group) => sum + group.unpriced, 0);
+
+  // Keep the dashboard together on a cold load instead of revealing empty
+  // cards and a chart skeleton as each source arrives. Background refreshes
+  // retain their existing data and do not replace the dashboard with a loader.
+  if (
+    finance.isLoading ||
+    spending.isLoading ||
+    subscriptions.isLoading ||
+    currencies.isLoading ||
+    records.isLoading ||
+    statements.isLoading
+  ) {
+    return <PageLoading />;
+  }
 
   return (
     <section className="space-y-6" aria-label={t("dashboard_year_overview", { year })}>
