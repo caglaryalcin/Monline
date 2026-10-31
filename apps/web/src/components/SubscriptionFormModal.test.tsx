@@ -235,6 +235,38 @@ describe("SubscriptionFormModal", () => {
     vi.unstubAllGlobals();
   });
 
+  it.each([false, true])("preserves custom reminders and clears overrides on default (logo: %s)", async (withLogo) => {
+    const reminders = [{ days: 14, hour: 17 }];
+    const { container } = render(
+      <SubscriptionFormModal
+        sub={getSubscription({ notification_reminders: reminders })}
+        userId="user-1"
+        currencies={[getCurrency()]}
+        categories={[getCategory()]}
+        household={[getHousehold()]}
+        paymentMethods={[getPaymentMethod()]}
+        onClose={vi.fn()}
+        onSaved={vi.fn()}
+      />,
+    );
+    if (withLogo)
+      fireEvent.change(container.querySelector('input[type="file"]')!, {
+        target: { files: [new File(["image"], "logo.png", { type: "image/png" })] },
+      });
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    await waitFor(() => expect(mocks.updateSubscription).toHaveBeenCalledTimes(1));
+    const first = mocks.updateSubscription.mock.calls[0][1];
+    expect(first instanceof FormData ? JSON.parse(first.get("notification_reminders") as string) : first.notification_reminders)
+      .toEqual(reminders);
+    await waitFor(() => expect(screen.getByRole("button", { name: "save" })).not.toBeDisabled());
+    fireEvent.click(screen.getByText("subscription_notifications_default"));
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    await waitFor(() => expect(mocks.updateSubscription).toHaveBeenCalledTimes(2));
+    const second = mocks.updateSubscription.mock.calls[1][1];
+    expect(second instanceof FormData ? JSON.parse(second.get("notification_reminders") as string) : second.notification_reminders)
+      .toBeNull();
+  });
+
   it.each([false, true])("creates one explicit paid charge (logo: %s)", async (withLogo) => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-10-19T12:00:00Z"));
@@ -634,7 +666,7 @@ describe("SubscriptionFormModal", () => {
     );
     expect(mocks.toastSuccess).toHaveBeenCalledWith("success");
     expect(onSaved).toHaveBeenCalledTimes(1);
-    expect(screen.getByText("notify_days_before")).toBeInTheDocument();
+    expect(screen.getByText("subscription_notification_schedule")).toBeInTheDocument();
     expect(screen.getByText("cancellation_date")).toBeInTheDocument();
     expect(screen.getByText("auto_mark_paid")).toBeInTheDocument();
   });
@@ -1277,7 +1309,7 @@ describe("SubscriptionFormModal", () => {
     await waitFor(() => expect(screen.queryByText("logo.png")).not.toBeInTheDocument());
   });
 
-  it("notify_days_before field is hidden when notify is false (default state)", () => {
+  it("notification schedule is hidden when notify is false (default state)", () => {
     render(
       <SubscriptionFormModal
         sub={null}
@@ -1290,11 +1322,10 @@ describe("SubscriptionFormModal", () => {
         onSaved={vi.fn()}
       />,
     );
-    // Default watchedNotify=false -> notify_days_before field should NOT be rendered
-    expect(screen.queryByText("notify_days_before")).not.toBeInTheDocument();
+    expect(screen.queryByText("subscription_notification_schedule")).not.toBeInTheDocument();
   });
 
-  it("notify_days_before field is shown when notify is toggled on", () => {
+  it("notification schedule is shown when notify is toggled on", () => {
     render(
       <SubscriptionFormModal
         sub={null}
@@ -1310,7 +1341,7 @@ describe("SubscriptionFormModal", () => {
     // Checkboxes: [auto_renew(0), notify(1), inactive(2)]
     // Toggle notify on
     fireEvent.click(screen.getAllByRole("checkbox")[1]);
-    expect(screen.getByText("notify_days_before")).toBeInTheDocument();
+    expect(screen.getByText("subscription_notification_schedule")).toBeInTheDocument();
   });
 
   it("cancellation_date field is hidden when inactive is false (default state)", () => {

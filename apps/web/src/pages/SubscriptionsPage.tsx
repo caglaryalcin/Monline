@@ -37,7 +37,7 @@ export function SubscriptionsPage() {
   const userId = user?.id ?? "";
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [sort] = useState<SubscriptionSortKey>("name");
+  const [sort, setSort] = useState<SubscriptionSortKey>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [filters, setFilters] = useState<SubscriptionFiltersState>(INITIAL_SUBSCRIPTION_FILTERS);
   const [showForm, setShowForm] = useState(false);
@@ -269,6 +269,9 @@ export function SubscriptionsPage() {
             searchTerm={searchTerm}
             showFilters={showFilters}
             view={view}
+            sort={sort}
+            sortDir={sortDir}
+            onSortChange={setSort}
             onSearchChange={setSearchTerm}
             onToggleFilters={() => setShowFilters((current) => !current)}
             onCycleSort={handleCycleSort}

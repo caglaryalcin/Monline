@@ -152,6 +152,15 @@ class Repository {
       !this.connection
         .prepare('PRAGMA table_info("subscriptions")')
         .all()
+        .some((column) => column.name === "notification_reminders")
+    )
+      this.connection.exec(
+        "ALTER TABLE subscriptions ADD COLUMN notification_reminders JSON DEFAULT NULL",
+      );
+    if (
+      !this.connection
+        .prepare('PRAGMA table_info("subscriptions")')
+        .all()
         .some((column) => column.name === "sharing")
     )
       this.connection.exec(
@@ -685,6 +694,16 @@ class Repository {
         throw new BadRequestError("Invalid date: " + field.name);
     }
     if (collection.name === "subscriptions") {
+      try {
+        record.set(
+          "notification_reminders",
+          require("./domain/lib/pure/subscription-reminders.js").validateSubscriptionReminders(
+            record._values.notification_reminders,
+          ),
+        );
+      } catch {
+        throw new BadRequestError("subscription_reminders_invalid");
+      }
       if (
         record.getFloat("price") < 0 ||
         record.getFloat("frequency") < 1 ||

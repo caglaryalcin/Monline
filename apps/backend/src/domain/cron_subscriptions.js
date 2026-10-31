@@ -84,11 +84,6 @@ cronAdd("sendNotifications", "0 * * * *", async () => {
       reminders = normalizeReminderSlots(notifConfig.get("reminders"));
     } catch (_) {}
 
-    // Only process slots that fire at the current hour
-    const dueReminders = reminders.filter(
-      (r) => Number(r.hour) === currentHour,
-    );
-    if (dueReminders.length === 0) continue;
     const subs = repository.findRecordsByFilter(
       "subscriptions",
       "user = {:userId} && notify = true && inactive = false",
@@ -100,6 +95,12 @@ cronAdd("sendNotifications", "0 * * * *", async () => {
       },
     );
     if (subs.length === 0) continue;
+    const dueReminders =
+      require("./lib/pure/subscription-reminders.js").groupSubscriptionReminderSlots(
+        subs,
+        reminders,
+        currentHour,
+      );
     for (const reminder of dueReminders) {
       const days = Number(reminder.days);
       if (!isFinite(days)) continue;
@@ -109,7 +110,7 @@ cronAdd("sendNotifications", "0 * * * *", async () => {
       const targetDateStr = dateHelpers.formatLocalDate(targetDate);
       const reminderKey = days + "d_" + currentHour + "h";
       const grouped = {};
-      for (const sub of subs) {
+      for (const sub of reminder.subscriptions) {
         if (!recordTypes.isExpense(sub.get("record_type"))) continue;
         const nextPayment = sub.getString("next_payment").slice(0, 10);
         if (nextPayment !== targetDateStr) continue;
@@ -256,9 +257,12 @@ cronAdd("sendCancellationNotifications", "0 * * * *", async () => {
     try {
       reminders = normalizeReminderSlots(notifConfig.get("reminders"));
     } catch (_) {}
-    const dueReminders = reminders.filter(
-      (r) => Number(r.hour) === currentHour,
-    );
+    const dueReminders =
+      require("./lib/pure/subscription-reminders.js").groupSubscriptionReminderSlots(
+        byUser[userId],
+        reminders,
+        currentHour,
+      );
     if (dueReminders.length === 0) continue;
     for (const reminder of dueReminders) {
       const days = Number(reminder.days);
@@ -268,7 +272,7 @@ cronAdd("sendCancellationNotifications", "0 * * * *", async () => {
       const targetDateStr = dateHelpers.formatLocalDate(targetDate);
       const reminderKey = "cancel_" + days + "d_" + currentHour + "h";
       const dueSubs = [];
-      for (const sub of byUser[userId]) {
+      for (const sub of reminder.subscriptions) {
         const cancelDate = sub.getString("cancellation_date").slice(0, 10);
         if (cancelDate !== targetDateStr) continue;
         try {

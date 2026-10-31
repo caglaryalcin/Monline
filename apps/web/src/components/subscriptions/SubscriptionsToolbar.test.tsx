@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -9,10 +10,12 @@ vi.mock("react-i18next", () => ({
 import { SubscriptionsToolbar } from "./SubscriptionsToolbar";
 
 describe("SubscriptionsToolbar", () => {
-  it("renders the controls and delegates interactions", () => {
+  it("renders the controls and delegates interactions", async () => {
+    const user = userEvent.setup();
     const onSearchChange = vi.fn();
     const onToggleFilters = vi.fn();
     const onCycleSort = vi.fn();
+    const onSortChange = vi.fn();
     const onViewChange = vi.fn();
 
     render(
@@ -20,6 +23,9 @@ describe("SubscriptionsToolbar", () => {
         searchTerm="net"
         showFilters={false}
         view="grid"
+        sort="name"
+        sortDir="asc"
+        onSortChange={onSortChange}
         onSearchChange={onSearchChange}
         onToggleFilters={onToggleFilters}
         onCycleSort={onCycleSort}
@@ -31,13 +37,17 @@ describe("SubscriptionsToolbar", () => {
       target: { value: "spotify" },
     });
     fireEvent.click(screen.getByRole("button", { name: "filter" }));
-    fireEvent.click(screen.getByRole("button", { name: "sort" }));
+    await user.click(screen.getByRole("button", { name: "sort" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "next_payment" }));
+    await user.click(screen.getByRole("button", { name: "sort" }));
+    await user.click(screen.getByRole("menuitemradio", { name: "sort_descending" }));
     fireEvent.click(screen.getByRole("button", { name: "list_view" }));
     fireEvent.click(screen.getByRole("button", { name: "grid_view" }));
 
     expect(onSearchChange).toHaveBeenCalledWith("spotify");
     expect(onToggleFilters).toHaveBeenCalledTimes(1);
     expect(onCycleSort).toHaveBeenCalledTimes(1);
+    expect(onSortChange).toHaveBeenCalledWith("date");
     expect(onViewChange).toHaveBeenCalledWith("list");
     expect(onViewChange).toHaveBeenCalledWith("grid");
     expect(screen.getByRole("button", { name: "grid_view" })).toHaveAttribute(
@@ -52,6 +62,9 @@ describe("SubscriptionsToolbar", () => {
         searchTerm=""
         showFilters={true}
         view="list"
+        sort="name"
+        sortDir="asc"
+        onSortChange={vi.fn()}
         onSearchChange={vi.fn()}
         onToggleFilters={vi.fn()}
         onCycleSort={vi.fn()}

@@ -18,12 +18,14 @@ export function RemindersEditor({
   onSave,
   isSaving = false,
   saveDisabled = false,
+  maxReminders,
 }: {
   reminders: NotificationReminder[];
   onChange: (reminders: NotificationReminder[]) => void;
   onSave?: () => void;
   isSaving?: boolean;
   saveDisabled?: boolean;
+  maxReminders?: number;
 }) {
   const { t } = useTranslation();
 
@@ -60,9 +62,11 @@ export function RemindersEditor({
           </p>
         </div>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={add}
+          disabled={maxReminders !== undefined && reminders.length >= maxReminders}
           className="rounded-xl gap-1.5 h-8 text-xs shrink-0"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -92,11 +96,13 @@ export function RemindersEditor({
                   <SelectValue>{daysLabel(reminder.days)}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {DAY_OPTIONS.map((days) => (
-                    <SelectItem key={days} value={String(days)} className="text-xs">
-                      {daysLabel(days)}
-                    </SelectItem>
-                  ))}
+                  {[...new Set([...DAY_OPTIONS, reminder.days])]
+                    .sort((a, b) => a - b)
+                    .map((days) => (
+                      <SelectItem key={days} value={String(days)} className="text-xs">
+                        {daysLabel(days)}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
 
@@ -136,6 +142,7 @@ export function RemindersEditor({
       {onSave && (
         <div className="flex justify-end">
           <Button
+            type="button"
             size="sm"
             onClick={onSave}
             disabled={isSaving || saveDisabled}

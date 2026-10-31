@@ -201,6 +201,7 @@ function validateDatabase(file) {
               (entry.name === "subscriptions" &&
                 [
                   "sharing",
+                  "notification_reminders",
                   "statement_imported",
                   "calendar_history_recovery_passes",
                   "calendar_projection_hidden",
