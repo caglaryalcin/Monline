@@ -14,6 +14,8 @@ const mocks = vi.hoisted(() => ({
   cloneSubscription: vi.fn(),
   renewSubscription: vi.fn(),
   updateSubscription: vi.fn(),
+  updateUser: vi.fn(),
+  refreshUser: vi.fn(),
   updateRates: vi.fn(),
   toastWarning: vi.fn(),
   exportSubscriptions: vi.fn(),
@@ -62,6 +64,8 @@ vi.mock("@/services/subscriptions", () => ({
     import: mocks.importSubscriptions,
   },
 }));
+
+vi.mock("@/services/users", () => ({ usersService: { update: mocks.updateUser } }));
 
 vi.mock("@/services/fixer", () => ({
   fixerService: { updateRates: mocks.updateRates },
@@ -113,12 +117,18 @@ vi.mock("@/components/subscriptions/SubscriptionsPageHeader", () => ({
 
 vi.mock("@/components/subscriptions/SubscriptionsToolbar", () => ({
   SubscriptionsToolbar: ({
+    sort,
+    sortDir,
+    onSortChange,
     onSearchChange,
     onToggleFilters,
     onCycleSort,
     onViewChange,
     onDeleteAll,
   }: {
+    sort: string;
+    sortDir: string;
+    onSortChange: (value: "date") => void;
     onSearchChange: (value: string) => void;
     onToggleFilters: () => void;
     onCycleSort: () => void;
@@ -126,6 +136,10 @@ vi.mock("@/components/subscriptions/SubscriptionsToolbar", () => ({
     onDeleteAll?: () => void;
   }) => (
     <div>
+      <output data-testid="sort-preference">{sort}:{sortDir}</output>
+      <button type="button" onClick={() => onSortChange("date")}>
+        sort-payment-date
+      </button>
       <button type="button" onClick={onDeleteAll}>
         delete-all
       </button>
@@ -288,6 +302,7 @@ describe("SubscriptionsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.useAuth.mockReturnValue({
+      refreshUser: mocks.refreshUser,
       user: {
         id: "user-1",
         convert_currency: true,
@@ -295,6 +310,8 @@ describe("SubscriptionsPage", () => {
         subscription_progress: true,
       },
     });
+    mocks.updateUser.mockReset().mockResolvedValue({});
+    mocks.refreshUser.mockReset().mockResolvedValue(undefined);
     mocks.listSubscriptions.mockResolvedValue([
       { id: "sub-1", name: "Netflix", currency: "cur-usd" },
     ]);
@@ -556,6 +573,27 @@ describe("SubscriptionsPage", () => {
       expect(mocks.toastError).toHaveBeenCalledWith("error_deleting_subscription");
       expect(mocks.toastError).toHaveBeenCalledWith("unknown_error"); // maybe twice
     });
+  });
+
+  it("keeps the saved payment-date sort and direction after a page reload", async () => {
+    const account = { id: "user-1", sort_order: "name", sort_direction: "asc" };
+    mocks.useAuth.mockReturnValue({ user: account, refreshUser: mocks.refreshUser });
+    mocks.updateUser.mockImplementation(async (_id: string, fields: Record<string, unknown>) => {
+      Object.assign(account, fields);
+      return { ...account };
+    });
+    const first = render(<SubscriptionsPage />, { wrapper: createQueryClientWrapper().Wrapper });
+    fireEvent.click(screen.getByRole("button", { name: "sort-payment-date" }));
+    await waitFor(() => expect(screen.getByTestId("sort-preference")).toHaveTextContent("date:asc"));
+    fireEvent.click(screen.getByRole("button", { name: "cycle-sort" }));
+    await waitFor(() => expect(screen.getByTestId("sort-preference")).toHaveTextContent("date:desc"));
+    expect(mocks.updateUser).toHaveBeenLastCalledWith("user-1", {
+      sort_order: "next_payment", sort_direction: "desc",
+    });
+    first.unmount();
+    mocks.useAuth.mockReturnValue({ user: { ...account }, refreshUser: mocks.refreshUser });
+    render(<SubscriptionsPage />, { wrapper: createQueryClientWrapper().Wrapper });
+    expect(screen.getByTestId("sort-preference")).toHaveTextContent("date:desc");
   });
 
   it("handles cycle sort toggle logic", () => {
