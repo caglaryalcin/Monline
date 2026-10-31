@@ -83,7 +83,7 @@ export function YearHistoryCard({
     maximumFractionDigits: 0,
   });
   const formatAxisValue = (value: number) =>
-    `${(Math.abs(Math.round(value)) >= 10000 ? groupedAxisNumber : axisNumber).format(value)} ${currencySymbol}`;
+    `${(Math.abs(Math.round(value)) >= 10000 ? groupedAxisNumber : axisNumber).format(value)}\u00a0${currencySymbol}`;
   const maximum = Math.max(
     0,
     ...data.flatMap((point) => chartSeries.map((item) => point[item.key] ?? 0)),
