@@ -24,6 +24,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useAuth } from "@/contexts/AuthContext";
 import { useActiveLoanCount } from "@/hooks/useActiveLoanCount";
 import { useLocalToday } from "@/hooks/useLocalToday";
+import { usePersistentDisclosure } from "@/hooks/usePersistentDisclosure";
 import { useSidebarResize } from "@/hooks/useSidebarResize";
 import { useSummaryData } from "@/hooks/useSummaryData";
 import { resolveLocale } from "@/lib/locale";
@@ -53,7 +54,7 @@ export function Layout() {
   const activeLoanCount = useActiveLoanCount(userId);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = usePersistentDisclosure(userId, "layout.sidebar-collapsed");
   const sidebar = useSidebarResize();
   const menuButton = useRef<HTMLButtonElement>(null);
 

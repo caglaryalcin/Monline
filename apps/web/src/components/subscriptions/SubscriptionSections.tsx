@@ -26,6 +26,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFilteredSubscriptions } from "@/hooks/useFilteredSubscriptions";
 import { useLocalToday } from "@/hooks/useLocalToday";
+import { usePersistentDisclosure } from "@/hooks/usePersistentDisclosure";
 import { useSubscriptionSort } from "@/hooks/useSubscriptionSort";
 import { queryKeys } from "@/lib/queryKeys";
 import {
@@ -81,7 +82,7 @@ export function SubscriptionSections({
     },
     onError: () => toast.error(t("error_deleting_subscription")),
   });
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = usePersistentDisclosure(userId, `subscriptions.filters.${section}`);
   const [view, setView] = useState<"grid" | "list">("grid");
   const [month, setMonth] = useState(currentSpendingMonth);
   const spending = useQuery({
@@ -461,7 +462,7 @@ export function SubscriptionSections({
       )}
 
       {section === "loans" && !spending.isPending && !spending.isError && (
-        <LoansSection loans={spending.data?.loans ?? []} month={today.slice(0, 7)} search="" />
+        <LoansSection userId={userId} loans={spending.data?.loans ?? []} month={today.slice(0, 7)} search="" />
       )}
 
       {section === "online" && (

@@ -213,6 +213,7 @@ export function NotificationChannelsTab() {
                 }
               >
                 <NotificationTemplateEditor
+                  userId={user?.id}
                   key={`${provider.id}-${templateLanguage}`}
                   providerId={provider.id}
                   language={templateLanguage}

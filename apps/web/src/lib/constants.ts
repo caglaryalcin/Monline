@@ -10,6 +10,8 @@ export const LS_KEYS = {
   LANGUAGE: "monline_language",
   COLOR_THEME: "monline_color_theme",
   SIDEBAR_WIDTH: "monline_sidebar_width",
+  disclosure: (userId: string, section: string) =>
+    `monline_disclosure_${userId}_${section}`,
   notificationDisclosure: (userId: string, providerId: string) =>
     `monline_notification_disclosure_${userId}_${providerId}`,
   /** Returns the trusted-device key for a given user (TOTP remember-device). */

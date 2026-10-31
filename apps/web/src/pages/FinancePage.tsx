@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PersistentDetails } from "@/components/ui/persistent-details";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { type FinanceGrid, useFinanceGrid } from "@/hooks/useFinanceGrid";
@@ -767,7 +768,12 @@ export function FinancePage() {
                 <div className="finance-sheet__pending">{label("expense_pending")}</div>
               </div>
             </div>
-            <details open className="group border-t text-xs text-muted-foreground">
+            <PersistentDetails
+              userId={yearOwner}
+              preference="finance.tag-guide"
+              defaultOpen
+              className="group border-t text-xs text-muted-foreground"
+            >
               <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 font-medium transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
                 <Lightbulb
                   aria-hidden="true"
@@ -836,7 +842,7 @@ export function FinancePage() {
                   </section>
                 ))}
               </div>
-            </details>
+            </PersistentDetails>
           </div>
         </TabsContent>
         <TabsContent value="analysis" className="space-y-4">

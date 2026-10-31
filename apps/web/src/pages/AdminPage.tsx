@@ -16,7 +16,7 @@ import { adminRoute } from "@/routes";
 
 export function AdminPage() {
   const { t } = useTranslation();
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const search = adminRoute.useSearch();
   const items = [
@@ -60,7 +60,7 @@ export function AdminPage() {
           <div className="space-y-8">
             <section className="space-y-4">
               <h3 className="text-lg font-semibold">{t("api_key")}</h3>
-              <ApiKeyTab />
+              <ApiKeyTab preferenceOwnerId={user?.id} />
             </section>
             <section className="space-y-4 border-t pt-6">
               <h3 className="text-lg font-semibold">{t("fixer_api")}</h3>

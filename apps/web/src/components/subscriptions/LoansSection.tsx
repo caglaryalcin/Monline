@@ -1,7 +1,7 @@
 import { Check, ChevronRight, Landmark, Lightbulb } from "lucide-react";
-import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
+import { usePersistentExpandedItems } from "@/hooks/usePersistentDisclosure";
 import type { LoanSummary } from "@/lib/spending";
 import { cn, formatCurrency } from "@/lib/utils";
 
@@ -13,16 +13,18 @@ function isCompleted(loan: LoanSummary) {
 }
 
 export function LoansSection({
+  userId,
   loans,
   month,
   search,
 }: {
+  userId?: string;
   loans: LoanSummary[];
   month: string;
   search: string;
 }) {
   const { t, i18n } = useTranslation();
-  const [expandedCompleted, setExpandedCompleted] = useState<Record<string, boolean>>({});
+  const [expandedCompleted, toggleCompleted] = usePersistentExpandedItems(userId, "loans.completed");
   const locale = i18n.language.replace("_", "-");
   const money = (amount: number) =>
     formatCurrency(amount, "TRY" , { locale: locale });
@@ -75,7 +77,7 @@ export function LoansSection({
         : "text-rose-700 dark:text-rose-400";
 
   const renderLoan = (loan: LoanSummary, finished: boolean) => {
-    const monthsExpanded = !finished || !!expandedCompleted[loan.row_id];
+    const monthsExpanded = !finished || expandedCompleted.has(loan.row_id);
     const start = loan.start_month ?? loan.months[0]?.month;
     const end = loan.end_month ?? loan.months.at(-1)?.month;
     return (
@@ -138,7 +140,7 @@ export function LoansSection({
             className="flex w-full items-center justify-between gap-3 border-t px-4 py-3 text-left text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5"
             aria-expanded={monthsExpanded}
             aria-controls={`loan-months-${loan.row_id}`}
-            onClick={() => setExpandedCompleted((current) => ({ ...current, [loan.row_id]: !current[loan.row_id] }))}
+            onClick={() => toggleCompleted(loan.row_id)}
           >
             {t("loans_month_details")}
             <ChevronRight className={cn("h-4 w-4 shrink-0 transition-transform", monthsExpanded && "rotate-90")} aria-hidden="true" />

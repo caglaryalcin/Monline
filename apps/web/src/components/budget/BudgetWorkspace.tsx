@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PersistentDetails } from "@/components/ui/persistent-details";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
@@ -156,7 +157,7 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
             </a>
           ) : (
             <>
-              <details className="rounded-xl border p-4">
+              <PersistentDetails userId={userId} preference="budget.getting-started" className="rounded-xl border p-4">
                 <summary className="cursor-pointer font-medium">{t("budget_start")}</summary>
                 <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
                   {[1, 2, 3, 4].map((step) => (
@@ -171,7 +172,7 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
                 >
                   {t("budget_create_template")}
                 </Button>
-              </details>
+              </PersistentDetails>
               <nav className="flex flex-wrap gap-2" aria-label={t("budget_views")}>
                 {["expenses", "matching", "debts", "settings"].map((value) => (
                   <Button

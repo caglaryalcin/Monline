@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PersistentDetails } from "@/components/ui/persistent-details";
 import { Textarea } from "@/components/ui/textarea";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 import { notificationTemplateInsertion } from "@/lib/notificationTemplateInsertion";
@@ -33,6 +34,7 @@ type TemplateInput = HTMLInputElement | HTMLTextAreaElement;
 type TemplateField = keyof NotificationTemplate;
 
 export function NotificationTemplateEditor({
+  userId,
   providerId,
   language,
   event,
@@ -42,6 +44,7 @@ export function NotificationTemplateEditor({
   onChange,
   disabled,
 }: {
+  userId?: string;
   providerId: string;
   language: string;
   event: NotificationEvent;
@@ -221,7 +224,7 @@ export function NotificationTemplateEditor({
           </p>
         </div>
       )}
-      <details className="rounded-lg border bg-muted/20 px-3 py-2 text-xs">
+      <PersistentDetails userId={userId} preference={`notifications.variables.${providerId}`} className="rounded-lg border bg-muted/20 px-3 py-2 text-xs">
         <summary className="cursor-pointer font-medium">
           {t("notification_template_variables")}
         </summary>
@@ -255,7 +258,7 @@ export function NotificationTemplateEditor({
             </button>
           ))}
         </div>
-      </details>
+      </PersistentDetails>
       <div
         className={
           providerId === "email" ? "flex flex-col gap-2" : "flex flex-wrap justify-end gap-2"
