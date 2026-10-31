@@ -55,6 +55,23 @@ interface CurrencyFormatOptions {
   useGrouping?: boolean;
 }
 
+// Reuse formatters across table cells and page visits without retaining an
+// unbounded set of locale/currency combinations.
+const numberFormatters = new Map<string, Intl.NumberFormat>();
+
+function numberFormatter(locale: string, options: Intl.NumberFormatOptions): Intl.NumberFormat {
+  const key = JSON.stringify([locale, options]);
+  const cached = numberFormatters.get(key);
+  if (cached) return cached;
+  const formatter = new Intl.NumberFormat(locale, options);
+  if (numberFormatters.size >= 100) {
+    const oldest = numberFormatters.keys().next().value;
+    if (oldest !== undefined) numberFormatters.delete(oldest);
+  }
+  numberFormatters.set(key, formatter);
+  return formatter;
+}
+
 /** Multipliers always use a leading lowercase x and a decimal point. */
 export function formatMultiplier(value: number): string {
   if (!Number.isFinite(value)) return "—";
@@ -70,7 +87,7 @@ export function getCurrencySymbol(currency: string, locale = i18n.resolvedLangua
   if (code === "EUR") return "€";
   if (!/^[A-Z]{3}$/.test(code)) return currency.trim();
   try {
-    return new Intl.NumberFormat(locale.replace(/_/g, "-"), { style: "currency", currency: code })
+    return numberFormatter(locale.replace(/_/g, "-"), { style: "currency", currency: code })
       .formatToParts(0).find((part) => part.type === "currency")?.value || code;
   } catch {
     return code;
@@ -80,12 +97,11 @@ export function getCurrencySymbol(currency: string, locale = i18n.resolvedLangua
 /** All displayed money uses amount + currency, with no intervening space. */
 export function formatCurrency(amount: number, currency: string, options: CurrencyFormatOptions = {}): string {
   const { locale = i18n.resolvedLanguage || "en-US", ...numberOptions } = options;
-  const digits = getCurrencyFractionDigits(currency);
-  const maximumFractionDigits = numberOptions.maximumFractionDigits ?? digits;
+  const maximumFractionDigits = numberOptions.maximumFractionDigits ?? getCurrencyFractionDigits(currency);
   const minimumFractionDigits = numberOptions.minimumFractionDigits ?? maximumFractionDigits;
   let value: string;
   try {
-    value = new Intl.NumberFormat(locale.replace(/_/g, "-"), {
+    value = numberFormatter(locale.replace(/_/g, "-"), {
       ...numberOptions, minimumFractionDigits, maximumFractionDigits,
     }).format(amount);
   } catch {
@@ -100,7 +116,7 @@ export function getCurrencyFractionDigits(currencyCode?: string): number {
 
   try {
     return (
-      new Intl.NumberFormat("en-US", {
+      numberFormatter("en-US", {
         style: "currency",
         currency: currencyCode.toUpperCase(),
       }).resolvedOptions().maximumFractionDigits ?? 2

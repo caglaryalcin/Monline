@@ -40,11 +40,11 @@ export function SummaryCard({
           </div>
           <div className="min-w-0 flex-1">
             {year !== undefined && (
-              <p className="summary-card__year mb-0.5 text-sm font-semibold leading-4 text-muted-foreground">
+              <p className="summary-card__year mb-0.5 text-xs font-semibold leading-tight text-muted-foreground dark:text-[hsl(240_5%_65%)]">
                 {year}
               </p>
             )}
-            <p className="summary-card__title text-base font-medium leading-5 text-muted-foreground" title={title}>
+            <p className="summary-card__title text-xs font-medium leading-snug text-muted-foreground dark:text-[hsl(240_5%_65%)] sm:text-sm" title={title}>
               {title}
             </p>
           </div>

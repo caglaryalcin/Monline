@@ -32,6 +32,7 @@ interface UseCalendarMonthDataParams {
   calendarMoves?: SpendingData["calendar_moves"];
   includeAdjacentDays?: boolean;
   searchTerm?: string;
+  enabled?: boolean;
 }
 
 export function useCalendarMonthData({
@@ -46,6 +47,7 @@ export function useCalendarMonthData({
   calendarMoves = NO_MOVES,
   includeAdjacentDays = false,
   searchTerm = "",
+  enabled = true,
 }: UseCalendarMonthDataParams) {
   const localToday = useLocalToday();
   const mainCurrency = useMemo(
@@ -58,8 +60,21 @@ export function useCalendarMonthData({
     [currencies],
   );
 
+  const recordsByOwner = useMemo(() => {
+    const grouped = new Map<string, PaymentRecord[]>();
+    if (!enabled) return grouped;
+    for (const record of paymentRecords) {
+      const owner = paymentOwnerId(record);
+      const records = grouped.get(owner) ?? [];
+      records.push(record);
+      grouped.set(owner, records);
+    }
+    return grouped;
+  }, [paymentRecords, enabled]);
+
   const allEntriesByDate = useMemo<Record<string, DayEntry[]>>(() => {
     const entries: Record<string, DayEntry[]> = {};
+    if (!enabled) return entries;
     const first = new Date(year, month - 1, 1);
     const last = new Date(year, month, 0);
     if (includeAdjacentDays) {
@@ -71,15 +86,17 @@ export function useCalendarMonthData({
       (offset) => new Date(year, month - 1 + offset, 1),
     );
     const recordsBySubscription = new Map<string, PaymentRecord[]>();
+    const visibleRecords: PaymentRecord[] = [];
     for (const record of paymentRecords) {
       const date = parseLocalDate(record.due_date);
       if (!date || !visible(date)) continue;
+      visibleRecords.push(record);
       const group = recordsBySubscription.get(paymentOwnerId(record)) ?? [];
       group.push(record);
       recordsBySubscription.set(paymentOwnerId(record), group);
     }
 
-    for (const subscription of withStandalonePayments(subscriptions, paymentRecords, currencies)) {
+    for (const subscription of withStandalonePayments(subscriptions, visibleRecords, currencies)) {
       const subscriptionRecords = recordsBySubscription.get(subscription.id) ?? [];
       const dates = new Set(
         months
@@ -89,7 +106,7 @@ export function useCalendarMonthData({
               date.getFullYear(),
               date.getMonth() + 1,
               cycles,
-              paymentRecords,
+              recordsByOwner.get(subscription.id) ?? NO_RECORDS,
             ),
           )
           .map(toDateStr),
@@ -157,6 +174,8 @@ export function useCalendarMonthData({
     currencies,
     calendarMoves,
     includeAdjacentDays,
+    enabled,
+    recordsByOwner,
   ]);
 
   const entriesByDate = useMemo<Record<string, DayEntry[]>>(() => {
@@ -185,6 +204,7 @@ export function useCalendarMonthData({
   );
 
   const stats = useMemo(() => {
+    if (!enabled) return { count: 0, total: 0, due: 0, awaitingConfirmation: 0 };
     const today = new Date(localToday + "T00:00:00");
 
     let count = 0;
@@ -203,7 +223,7 @@ export function useCalendarMonthData({
 
         const paid = spending
           ? spending.status !== "planned"
-          : !!getPaymentRecord(paymentRecords, sub.id, toDateStr(date))?.paid_at;
+          : !!getPaymentRecord(recordsByOwner.get(sub.id) ?? NO_RECORDS, sub.id, toDateStr(date))?.paid_at;
         if (!paid) {
           if (date > today) due += amount;
           else awaitingConfirmation += amount;
@@ -229,9 +249,10 @@ export function useCalendarMonthData({
     currencies,
     year,
     month,
-    paymentRecords,
+    recordsByOwner,
     localToday,
     searchTerm,
+    enabled,
   ]);
 
   const daysInMonth = useMemo(() => new Date(year, month, 0).getDate(), [year, month]);

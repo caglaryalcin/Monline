@@ -115,7 +115,7 @@ export function StatisticsPage() {
   const error = subscriptionsQuery.isError || currenciesQuery.isError;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8">
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="h-auto flex-wrap justify-start gap-1">
           <TabsTrigger value="overview">{t("statistics_overview")}</TabsTrigger>

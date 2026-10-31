@@ -144,7 +144,7 @@ export function CalendarPage() {
     queryKey: spendingKey(userId),
     queryFn: spendingService.get,
     enabled: !!userId,
-    staleTime: 0,
+    staleTime: 30_000,
   });
   const spendingData = spending.data ?? EMPTY_SPENDING;
 
@@ -192,24 +192,24 @@ export function CalendarPage() {
     enabled: !!userId,
   });
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isPending: categoriesPending } = useQuery({
     queryKey: queryKeys.categories.all(userId),
     queryFn: () => categoriesService.list(userId),
-    enabled: !!userId,
+    enabled: !!userId && historicalOpen,
   });
 
-  const { data: paymentMethods = [] } = useQuery({
+  const { data: paymentMethods = [], isPending: paymentMethodsPending } = useQuery({
     queryKey: queryKeys.paymentMethods.all(userId),
     queryFn: () => paymentMethodsService.list(userId),
-    enabled: !!userId,
+    enabled: !!userId && historicalOpen,
   });
 
-  const { data: household = [] } = useQuery({
+  const { data: household = [], isPending: householdPending } = useQuery({
     queryKey: queryKeys.household.all(userId),
     queryFn: () => householdService.list(userId),
-    staleTime: 0,
+    staleTime: 30_000,
     refetchOnWindowFocus: "always",
-    enabled: !!userId,
+    enabled: !!userId && historicalOpen,
   });
 
   const {
@@ -224,10 +224,11 @@ export function CalendarPage() {
   });
 
   const calendarPaymentCount = paymentRecords.length;
+  const historicalDataPending = categoriesPending || paymentMethodsPending || householdPending;
   const hasCalendarEntries =
     calendarPaymentCount > 0 || subscriptions.some((sub) => !sub.calendar_projection_hidden);
 
-  const { allCells, currencyById, daysInMonth, entriesByDay, entriesByDate, mainCurrency, stats } =
+  const { allCells, currencyById, daysInMonth, entriesByDay, entriesByDate, mainCurrency, stats, selectedEntries, selectedDayTotal } =
     useCalendarMonthData({
       subscriptions,
       cycles,
@@ -242,7 +243,10 @@ export function CalendarPage() {
       searchTerm,
     });
 
+  const selectionOutsideMonth = selectedDate !== null &&
+    (selectedDate.getFullYear() !== year || selectedDate.getMonth() + 1 !== month);
   const selectedMonth = useCalendarMonthData({
+    enabled: selectionOutsideMonth,
     subscriptions,
     cycles,
     currencies,
@@ -316,7 +320,17 @@ export function CalendarPage() {
         }
       />
 
-      {historicalOpen && (
+      {historicalOpen && historicalDataPending && (
+        <Dialog open onOpenChange={dialogDismissHandler(() => setHistoricalOpen(false))}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("historical_add")}</DialogTitle>
+              <DialogDescription>{t("loading")}</DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+      )}
+      {historicalOpen && !historicalDataPending && (
         <HistoricalPaymentDialog
           subscriptions={subscriptions}
           currencies={currencies}
@@ -431,8 +445,8 @@ export function CalendarPage() {
               day={selectedDate.getDate()}
               month={selectedDate.getMonth() + 1}
               year={selectedDate.getFullYear()}
-              entries={selectedMonth.selectedEntries}
-              total={selectedMonth.selectedDayTotal}
+              entries={selectionOutsideMonth ? selectedMonth.selectedEntries : selectedEntries}
+              total={selectionOutsideMonth ? selectedMonth.selectedDayTotal : selectedDayTotal}
               mainCurrency={mainCurrency}
               currencies={currencies}
               now={now}

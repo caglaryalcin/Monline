@@ -71,7 +71,7 @@ export function DashboardPage() {
   });
 
   return (
-    <div className="animate-in slide-in-from-bottom-4 space-y-8 fade-in duration-500">
+    <div className="space-y-8">
       <DashboardYearOverview key={userId} userId={userId} today={today} sidebar={
           <BudgetOverviewCard
             budget={budget}

@@ -270,6 +270,7 @@ export function createAppRouter(context: RouterContext) {
     routeTree,
     context,
     defaultPreload: "intent",
+    defaultPreloadDelay: 0,
     defaultPendingComponent: PageLoading,
     defaultPendingMs: 200,
     defaultPendingMinMs: 0,

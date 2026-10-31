@@ -8,7 +8,7 @@ import {
   CircleDot,
   GripVertical,
 } from "lucide-react";
-import { type CSSProperties } from "react";
+import { type CSSProperties, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DOW_KEYS, MONTH_KEYS } from "@/components/calendar/constants";
@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveLocale } from "@/lib/locale";
 import { isCredit } from "@/lib/recordTypes";
+import { paymentOwnerId } from "@/lib/standalonePayments";
 import { cn, formatPrice } from "@/lib/utils";
 import type { Currency, PaymentRecord } from "@/types";
 
@@ -93,6 +94,16 @@ export function CalendarMonthCard({
 }: CalendarMonthCardProps) {
   const { t, i18n } = useTranslation();
   const drag = useCalendarDrag(onMovePayment, movingPayment);
+  const recordsByOwner = useMemo(() => {
+    const grouped = new Map<string, PaymentRecord[]>();
+    for (const record of paymentRecords) {
+      const owner = paymentOwnerId(record);
+      const records = grouped.get(owner) ?? [];
+      records.push(record);
+      grouped.set(owner, records);
+    }
+    return grouped;
+  }, [paymentRecords]);
   const weeks = Math.max(1, Math.ceil(allCells.length / 7));
   const weekdayFormatter = new Intl.DateTimeFormat(resolveLocale(i18n), {
     weekday: "short",
@@ -254,7 +265,7 @@ export function CalendarMonthCard({
                         const canMove = !!onMovePayment && !movingPayment && !credit;
                         const dateStr = toDateStr(date);
                         const paymentRecord = !credit
-                          ? getPaymentRecord(paymentRecords, sub.id, dateStr)
+                          ? getPaymentRecord(recordsByOwner.get(sub.id) ?? [], sub.id, dateStr)
                           : undefined;
                         const appearance = paymentAppearance(entry, paymentRecord);
                         const isPaid = appearance.paid;

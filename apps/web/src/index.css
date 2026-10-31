@@ -483,15 +483,6 @@ html[data-theme-changing] *::after {
   .summary-card-icon {
     padding: 6px;
   }
-  .summary-card__year {
-    margin-bottom: 0;
-    font-size: 12px;
-    line-height: 12px;
-  }
-  .summary-card__title {
-    font-size: 14px;
-    line-height: 16px;
-  }
 }
 .monline-distribution .recharts-pie-label-text {
   fill: hsl(var(--foreground));

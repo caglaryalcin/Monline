@@ -100,10 +100,20 @@ const providerAliases = BILL_PROVIDER_CATALOG.flatMap((entry) => [entry.name, ..
   provider: entry, alias: providerSearchText(alias),
 }))).sort((a, b) => b.alias.length - a.alias.length);
 
+// Build the exact-name index once. Calendar logos otherwise normalize the
+// entire provider catalogue several times for every displayed payment.
+const providersByExactName = new Map<string, BillProvider>();
+for (const entry of BILL_PROVIDER_CATALOG) {
+  for (const value of [entry.domain, entry.name, ...entry.aliases]) {
+    const key = providerKey(value);
+    // Preserve the catalogue's first-match precedence for shared aliases.
+    if (!providersByExactName.has(key)) providersByExactName.set(key, entry);
+  }
+}
+
 export function findBillProvider(value: string) {
   const exact = providerKey(value.replace(/^www\./i, ""));
-  const provider = BILL_PROVIDER_CATALOG.find((entry) => providerKey(entry.domain) === exact ||
-    [entry.name, ...entry.aliases].some((alias) => providerKey(alias) === exact));
+  const provider = providersByExactName.get(exact);
   if (provider) return provider;
   const words = ` ${providerSearchText(value)} `;
   // City names and generic labels such as "Elektrik" or "Su" are never logo matches.
