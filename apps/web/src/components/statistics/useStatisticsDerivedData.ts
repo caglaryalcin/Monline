@@ -9,6 +9,7 @@ import type {
 import { categoryLabel } from "@/lib/categoryLabel";
 import { buildCostHistory } from "@/lib/costHistory";
 import { isExpense } from "@/lib/recordTypes";
+import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import { toMonthly } from "@/lib/utils";
 import type { Currency, Subscription, YearlyCost } from "@/types";
 
@@ -37,7 +38,7 @@ export function useStatisticsDerivedData({
     const recurringSubscriptions = subscriptions.filter(isExpense).map((subscription) => {
       const currency = subscription.expand?.currency;
       const cycleName = subscription.expand?.cycle?.name ?? "Monthly";
-      const monthly = toMonthly(subscription.price, cycleName, subscription.frequency || 1);
+      const monthly = toMonthly(subscriptionAmount(subscription), cycleName, subscription.frequency || 1);
       const rate = currency?.rate ?? 1;
       const value = (monthly / rate) * mainRate;
 

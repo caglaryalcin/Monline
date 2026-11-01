@@ -26,6 +26,7 @@ import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { editablePaymentNotes, isRecoveredPaymentNote } from "@/lib/paymentNotes";
 import { isCredit } from "@/lib/recordTypes";
+import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import { daysUntil, formatDate, formatPrice, sanitizeHref } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { paymentRecordsService } from "@/services/paymentRecords";
@@ -91,7 +92,7 @@ export function SubDetailDialog({
 
   const dLeft = daysUntil(sub.next_payment);
   const isPaid = !!paymentRecord?.paid_at;
-  const amount = paymentRecord?.amount ?? sub.price;
+  const amount = paymentRecord?.amount ?? subscriptionAmount(sub, toDateStr(date));
   const notes = editablePaymentNotes(paymentRecord ? paymentRecord.notes : sub.notes);
   const today = new Date();
   today.setHours(0, 0, 0, 0);

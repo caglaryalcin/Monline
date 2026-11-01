@@ -134,6 +134,8 @@ export interface Subscription {
   name: string;
   logo?: string;
   price: number;
+  trial_months?: number;
+  trial_start_date?: string;
   currency: string;
   frequency: number;
   cycle: string;

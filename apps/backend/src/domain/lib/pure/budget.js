@@ -1,3 +1,4 @@
+const { subscriptionAmount, nextTrialPaymentDate } = require("./subscription-trial.mjs");
 const { spendingData, isBill } = require("./spending.js");
 const { rowsForYear } = require("./finance-years.js");
 const {
@@ -122,7 +123,7 @@ function budgetData(data, month, today) {
             id: `forecast:${sub.id}:${date}`,
             name: sub.name,
             date,
-            amount: sub.price,
+            amount: subscriptionAmount(sub, date),
             currency: currencies.get(sub.currency),
             source: "subscription",
             kind: "expense",
@@ -135,7 +136,7 @@ function budgetData(data, month, today) {
             budget_category: subscriptionCategory(sub),
           });
         }
-        const next = advanceDate(
+        const next = nextTrialPaymentDate(sub, date, anchor) || advanceDate(
           new Date(`${date}T12:00:00Z`),
           cycle,
           frequency,

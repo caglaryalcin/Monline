@@ -83,5 +83,10 @@
     "subject": "Monline — SMTP-test",
     "body": "Din SMTP-konfiguration til Monline fungerer korrekt.",
     "logoAlt": "Monline-logo"
+  },
+  "hu": {
+    "subject": "Monline — SMTP-teszt",
+    "body": "A Monline SMTP-beállításai megfelelően működnek.",
+    "logoAlt": "Monline logó"
   }
 }

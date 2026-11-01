@@ -1,3 +1,4 @@
+const { subscriptionAmount, nextTrialPaymentDate } = require("./pure/subscription-trial.mjs");
 const { DataRecord } = require("../../storage.cjs");
 const { BadRequestError } = require("../../errors.cjs");
 const {
@@ -149,7 +150,7 @@ function prepareInitialPayment(app, subscription, input, now = new Date()) {
   const cycle = app
     .findRecordById("cycles", subscription.getString("cycle"))
     .getString("name");
-  const next = require("./pure/subscription-start.js").nextPaymentDate(
+  const next = nextTrialPaymentDate(subscription, date) || require("./pure/subscription-start.js").nextPaymentDate(
     date,
     cycle,
     Number(subscription.get("frequency")),
@@ -172,7 +173,7 @@ function prepareInitialPayment(app, subscription, input, now = new Date()) {
       payments: [
         {
           due_date: date,
-          amount: Number(subscription.get("price")),
+          amount: subscriptionAmount(subscription, date),
           paid_utc_offset_minutes: data.paid_utc_offset_minutes,
         },
       ],

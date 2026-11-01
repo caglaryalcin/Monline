@@ -1,3 +1,4 @@
+const { nextTrialPaymentDate } = require("./pure/subscription-trial.mjs");
 const { DataRecord } = require("../../storage.cjs");
 const {
   BadRequestError,
@@ -48,7 +49,8 @@ function projectedOccurrence(app, sub, date) {
     if (!occurrenceIsAllowed(cursor, end, index, sub.getFloat("payment_limit")))
       return false;
     if (cursor === date) return true;
-    const next = advanceDate(
+    const trial = nextTrialPaymentDate(sub, cursor, anchor);
+    const next = trial || advanceDate(
       new Date(cursor + "T12:00:00Z"),
       cycle,
       frequency,
@@ -122,7 +124,7 @@ function moveCalendarPayment(app, userId, input) {
         record.set(key, sub.get(key));
       record.set("subscription_id", sub.id);
       record.set("user", userId);
-      record.set("amount", sub.get("price"));
+      record.set("amount", require("./pure/subscription-trial.mjs").subscriptionAmount(sub, from));
       record.set("paid_at", "");
       record.set("auto_paid", false);
       moving = [record];
@@ -157,7 +159,7 @@ function calendarNextPayment(app, sub) {
         !Number.isInteger(frequency) || frequency < 1) return "";
     const anchor = sub.getFloat("billing_anchor_day") || Number(date.slice(8, 10));
     for (let guard = 0; date < projectionFrom && guard < 5000; guard++) {
-      const next = advanceDate(new Date(date + "T12:00:00Z"), cycle, frequency, anchor).toISOString().slice(0, 10);
+      const next = nextTrialPaymentDate(sub, date, anchor) || advanceDate(new Date(date + "T12:00:00Z"), cycle, frequency, anchor).toISOString().slice(0, 10);
       if (next <= date) return "";
       date = next;
     }

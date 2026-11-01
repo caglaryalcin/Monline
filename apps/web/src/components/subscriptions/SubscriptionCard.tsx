@@ -33,6 +33,7 @@ import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { isCredit } from "@/lib/recordTypes";
 import { automaticStartDate } from "@/lib/subscriptionStartDate";
+import { isTrialDate, subscriptionAmount } from "@/lib/subscriptionTrial";
 import {
   cn,
   daysUntil,
@@ -381,9 +382,10 @@ export function SubscriptionCard({
   );
   const recurring = !credit && cycleName !== "One-Time";
   const normalizePeriod = recurring && priceDisplay !== "billing";
+  const currentPrice = subscriptionAmount(sub);
   const rawPrice = normalizePeriod
-    ? toMonthly(sub.price, cycleName, sub.frequency || 1) * (priceDisplay === "yearly" ? 12 : 1)
-    : sub.price;
+    ? toMonthly(currentPrice, cycleName, sub.frequency || 1) * (priceDisplay === "yearly" ? 12 : 1)
+    : currentPrice;
   const displayPeriod = !recurring
     ? t("one_time")
     : normalizePeriod
@@ -399,7 +401,7 @@ export function SubscriptionCard({
         (sub.frequency || 1) !== 1));
   const originalPriceDetails = showOriginalPrice ? (
     <p className="mt-1 truncate text-xs tabular-nums text-muted-foreground">
-      {formatPrice(sub.price, currency?.symbol ?? symbol, {
+      {formatPrice(currentPrice, currency?.symbol ?? symbol, {
         currencyCode: currency?.code,
         showCurrencyCode,
       })}
@@ -496,6 +498,7 @@ export function SubscriptionCard({
                 {displayPeriod}
               </p>
               {originalPriceDetails}
+              {isTrialDate(sub) && <Badge variant="secondary" className="mt-1 text-[10px]">{t("trial_period")}</Badge>}
             </div>
             {statusToggle && <div className="shrink-0 pt-0.5">{statusToggle}</div>}
           </div>
@@ -690,6 +693,7 @@ export function SubscriptionCard({
               </span>
             )}
             {originalPriceDetails}
+              {isTrialDate(sub) && <Badge variant="secondary" className="mt-1 text-[10px]">{t("trial_period")}</Badge>}
           </div>
         </div>
 

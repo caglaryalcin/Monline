@@ -338,6 +338,10 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
       rec.set("user", userId);
       rec.set("name", name);
       rec.set("price", price);
+      if (!isWallos) {
+        rec.set("trial_months", sub.trial_months || 0);
+        rec.set("trial_start_date", sub.trial_start_date || "");
+      }
       rec.set("frequency", frequency);
       rec.set("next_payment", nextPayment);
       rec.set("auto_renew", autoRenew);
@@ -414,6 +418,8 @@ routerAdd("POST", "/api/subscription/clone", (e) => {
   const fieldsToCopy = [
     "name",
     "price",
+    "trial_months",
+    "trial_start_date",
     "record_type",
     "frequency",
     "next_payment",
@@ -612,6 +618,8 @@ routerAdd("GET", "/api/subscriptions/export", (e) => {
       name: sub.get("name"),
       record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
       price: sub.get("price"),
+      trial_months: sub.get("trial_months"),
+      trial_start_date: sub.get("trial_start_date"),
       currency: currencyCode,
       currency_symbol: currencySymbol,
       cycle: cycleName,

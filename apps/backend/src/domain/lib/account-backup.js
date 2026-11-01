@@ -87,6 +87,8 @@ const FIELDS = {
   subscriptions: [
     "name",
     "price",
+    "trial_months",
+    "trial_start_date",
     "currency",
     "cycle",
     "frequency",

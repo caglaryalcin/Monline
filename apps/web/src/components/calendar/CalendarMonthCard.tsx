@@ -270,7 +270,6 @@ export function CalendarMonthCard({
                         const appearance = paymentAppearance(entry, paymentRecord);
                         const isPaid = appearance.paid;
                         const isAwaitingConfirmation =
-                          (!spending || spending.status === "planned") &&
                           !credit &&
                           !isPaid &&
                           date <= new Date(now.getFullYear(), now.getMonth(), now.getDate());

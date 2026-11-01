@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 
 import { matchesCalendarSearch } from "@/components/calendar/calendarSearch";
+import { calendarAmounts } from "@/components/calendar/calendarTotals";
+import { paymentAppearance } from "@/components/calendar/paymentAppearance";
 import {
   type DayEntry,
   getOccurrencesInMonth,
@@ -8,12 +10,11 @@ import {
   parseLocalDate,
   toDateOnly,
   toDateStr,
-  toMain,
 } from "@/components/calendar/types";
 import { useLocalToday } from "@/hooks/useLocalToday";
-import { isExpense } from "@/lib/recordTypes";
 import { type SpendingData, type SpendingEvent, uncoveredSpending } from "@/lib/spending";
 import { paymentOwnerId, withStandalonePayments } from "@/lib/standalonePayments";
+import { isTrialDate } from "@/lib/subscriptionTrial";
 import type { Currency, Cycle, PaymentRecord, Subscription } from "@/types";
 
 const NO_RECORDS: PaymentRecord[] = [];
@@ -119,9 +120,23 @@ export function useCalendarMonthData({
         if (!visible(date)) continue;
         const record = getPaymentRecord(subscriptionRecords, subscription.id, key);
         (entries[key] ??= []).push({
-          sub: subscription,
+          sub:
+            record?.currency && record.currency !== subscription.currency
+              ? {
+                  ...subscription,
+                  currency: record.currency,
+                  expand: {
+                    ...subscription.expand,
+                    currency: currencyById.get(record.currency) ?? record.expand?.currency,
+                  },
+                }
+              : subscription,
           date,
-          ...(record?.amount != null ? { amount: record.amount } : {}),
+          ...(record?.amount != null
+            ? { amount: record.amount }
+            : isTrialDate(subscription, key)
+              ? { amount: 0 }
+              : {}),
         });
       }
     }
@@ -176,6 +191,7 @@ export function useCalendarMonthData({
     includeAdjacentDays,
     enabled,
     recordsByOwner,
+    currencyById,
   ]);
 
   const entriesByDate = useMemo<Record<string, DayEntry[]>>(() => {
@@ -203,8 +219,21 @@ export function useCalendarMonthData({
     [entriesByDate, year, month],
   );
 
+  const amounts = useMemo(
+    () => calendarAmounts(spendingEvents, currencies),
+    [spendingEvents, currencies],
+  );
+  const undatedEvents = useMemo(
+    () =>
+      uncoveredSpending(spendingEvents, paymentRecords, subscriptions).filter(
+        (item) =>
+          item.undated && item.statement_period === `${year}-${String(month).padStart(2, "0")}`,
+      ),
+    [spendingEvents, paymentRecords, subscriptions, year, month],
+  );
+
   const stats = useMemo(() => {
-    if (!enabled) return { count: 0, total: 0, due: 0, awaitingConfirmation: 0 };
+    if (!enabled) return { count: 0, total: 0, due: 0, awaitingConfirmation: 0, unpaidTotal: 0 };
     const today = new Date(localToday + "T00:00:00");
 
     let count = 0;
@@ -213,47 +242,50 @@ export function useCalendarMonthData({
     let awaitingConfirmation = 0;
 
     for (const entries of Object.values(entriesByDay)) {
-      for (const { sub, date, amount: recordedAmount, spending } of entries) {
-        const currency = sub.expand?.currency ?? currencyById.get(sub.currency);
-        const amount = toMain(recordedAmount ?? sub.price, currency);
+      for (const entry of entries) {
+        const { sub, date } = entry;
         count += 1;
-        if (!isExpense(sub) || spending?.counts_as_expense === false) continue;
-        if (spending && !currency?.is_main && !(currency && currency.rate > 0)) continue;
+        const amount = amounts.entryCents(entry);
+        if (amount === null) continue;
         total += amount;
 
-        const paid = spending
-          ? spending.status !== "planned"
-          : !!getPaymentRecord(recordsByOwner.get(sub.id) ?? NO_RECORDS, sub.id, toDateStr(date))?.paid_at;
+        const record = getPaymentRecord(
+          recordsByOwner.get(sub.id) ?? NO_RECORDS,
+          sub.id,
+          toDateStr(date),
+        );
+        const { paid } = paymentAppearance(entry, record);
         if (!paid) {
           if (date > today) due += amount;
           else awaitingConfirmation += amount;
         }
       }
     }
-    for (const event of spendingEvents.filter(
-      (item) =>
-        item.undated &&
-        item.statement_period === `${year}-${String(month).padStart(2, "0")}` &&
-        matchesCalendarSearch(item.name, searchTerm),
-    )) {
-      const currency = currencies.find((item) => item.code === event.currency);
-      if (currency?.is_main || (currency && currency.rate > 0))
-        total += toMain(event.amount, currency);
+    for (const event of undatedEvents) {
+      if (matchesCalendarSearch(event.name, searchTerm)) total += amounts.spendingCents(event) ?? 0;
     }
 
-    return { count, total, due, awaitingConfirmation };
-  }, [
-    entriesByDay,
-    currencyById,
-    spendingEvents,
-    currencies,
-    year,
-    month,
-    recordsByOwner,
-    localToday,
-    searchTerm,
-    enabled,
-  ]);
+    return {
+      count,
+      total: total / 100,
+      due: due / 100,
+      awaitingConfirmation: awaitingConfirmation / 100,
+      unpaidTotal: (due + awaitingConfirmation) / 100,
+    };
+  }, [entriesByDay, amounts, undatedEvents, recordsByOwner, localToday, searchTerm, enabled]);
+
+  const monthTotal = useMemo(() => {
+    if (!enabled) return 0;
+    const prefix = `${year}-${String(month).padStart(2, "0")}-`;
+    const dated = Object.entries(allEntriesByDate)
+      .filter(([date]) => date.startsWith(prefix))
+      .flatMap(([, entries]) => entries)
+      .reduce((sum, entry) => sum + (amounts.entryCents(entry) ?? 0), 0);
+    return (
+      (dated + undatedEvents.reduce((sum, event) => sum + (amounts.spendingCents(event) ?? 0), 0)) /
+      100
+    );
+  }, [allEntriesByDate, amounts, undatedEvents, year, month, enabled]);
 
   const daysInMonth = useMemo(() => new Date(year, month, 0).getDate(), [year, month]);
 
@@ -289,14 +321,8 @@ export function useCalendarMonthData({
   );
 
   const selectedDayTotal = useMemo(
-    () =>
-      selectedEntries.reduce((sum, { sub, amount, spending }) => {
-        if (!isExpense(sub) || spending?.counts_as_expense === false) return sum;
-        const currency = sub.expand?.currency ?? currencyById.get(sub.currency);
-        if (spending && !currency?.is_main && !(currency && currency.rate > 0)) return sum;
-        return sum + toMain(amount ?? sub.price, currency);
-      }, 0),
-    [selectedEntries, currencyById],
+    () => selectedEntries.reduce((sum, entry) => sum + (amounts.entryCents(entry) ?? 0), 0) / 100,
+    [selectedEntries, amounts],
   );
 
   return {
@@ -306,6 +332,7 @@ export function useCalendarMonthData({
     entriesByDay,
     entriesByDate,
     mainCurrency,
+    monthTotal,
     selectedDayTotal,
     selectedEntries,
     stats,

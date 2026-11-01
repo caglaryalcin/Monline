@@ -8,6 +8,7 @@ import { CalendarMoveDialog } from "@/components/calendar/CalendarMoveDialog";
 import { CalendarOverview } from "@/components/calendar/CalendarOverview";
 import { CalendarPageHeader } from "@/components/calendar/CalendarPageHeader";
 import { matchesCalendarSearch } from "@/components/calendar/calendarSearch";
+import { calendarSalary } from "@/components/calendar/calendarTotals";
 import { DayPanel } from "@/components/calendar/DayPanel";
 import { HistoricalPaymentDialog } from "@/components/calendar/HistoricalPaymentDialog";
 import { MarkAsPaidModal } from "@/components/calendar/MarkAsPaidModal";
@@ -38,6 +39,7 @@ import { toast } from "@/lib/toast";
 import { categoriesService } from "@/services/categories";
 import { currenciesService } from "@/services/currencies";
 import { cyclesService } from "@/services/cycles";
+import { financeService } from "@/services/finance";
 import { householdService } from "@/services/household";
 import { paymentMethodsService } from "@/services/paymentMethods";
 import { paymentRecordsService } from "@/services/paymentRecords";
@@ -147,6 +149,13 @@ export function CalendarPage() {
     staleTime: 30_000,
   });
   const spendingData = spending.data ?? EMPTY_SPENDING;
+  const finance = useQuery({
+    queryKey: ["finance", userId],
+    queryFn: financeService.get,
+    enabled: !!userId,
+    staleTime: 30_000,
+    refetchOnWindowFocus: "always",
+  });
 
   const markUnpaid = useMutation({
     mutationFn: (record: PaymentRecord) => paymentRecordsService.markUnpaid(record.id),
@@ -228,22 +237,33 @@ export function CalendarPage() {
   const hasCalendarEntries =
     calendarPaymentCount > 0 || subscriptions.some((sub) => !sub.calendar_projection_hidden);
 
-  const { allCells, currencyById, daysInMonth, entriesByDay, entriesByDate, mainCurrency, stats, selectedEntries, selectedDayTotal } =
-    useCalendarMonthData({
-      subscriptions,
-      cycles,
-      currencies,
-      year,
-      month,
-      selectedDay,
-      paymentRecords,
-      spendingEvents: spendingData.events,
-      calendarMoves: spendingData.calendar_moves,
-      includeAdjacentDays: true,
-      searchTerm,
-    });
+  const {
+    allCells,
+    currencyById,
+    daysInMonth,
+    entriesByDay,
+    entriesByDate,
+    mainCurrency,
+    stats,
+    monthTotal,
+    selectedEntries,
+    selectedDayTotal,
+  } = useCalendarMonthData({
+    subscriptions,
+    cycles,
+    currencies,
+    year,
+    month,
+    selectedDay,
+    paymentRecords,
+    spendingEvents: spendingData.events,
+    calendarMoves: spendingData.calendar_moves,
+    includeAdjacentDays: true,
+    searchTerm,
+  });
 
-  const selectionOutsideMonth = selectedDate !== null &&
+  const selectionOutsideMonth =
+    selectedDate !== null &&
     (selectedDate.getFullYear() !== year || selectedDate.getMonth() + 1 !== month);
   const selectedMonth = useCalendarMonthData({
     enabled: selectionOutsideMonth,
@@ -266,8 +286,8 @@ export function CalendarPage() {
       matchesCalendarSearch(event.name, searchTerm),
   );
 
-  const budget = user?.budget ?? 0;
-  const budgetOverrun = budget > 0 ? Math.max(0, stats.total - budget) : 0;
+  const salary = calendarSalary(finance.data, currencies, year, month);
+  const remainingBudget = salary === null ? null : Math.round((salary - monthTotal) * 100) / 100;
 
   const isCurrentMonth = month === now.getMonth() + 1 && year === now.getFullYear();
 
@@ -351,12 +371,14 @@ export function CalendarPage() {
       <CalendarOverview
         count={stats.count}
         total={stats.total}
-        due={stats.due}
+        unpaidTotal={stats.unpaidTotal}
         awaitingConfirmation={stats.awaitingConfirmation}
         loading={loadingSubscriptions || loadingCurrencies || loadingPayments || spending.isLoading}
         hasError={subscriptionsError || currenciesError || paymentsError || spending.isError}
         mainCurrency={mainCurrency}
-        budgetOverrun={budgetOverrun}
+        remainingBudget={remainingBudget}
+        budgetLoading={finance.isLoading}
+        budgetError={finance.isError}
       />
       {spending.isError && (
         <p role="alert" className="text-sm text-destructive">

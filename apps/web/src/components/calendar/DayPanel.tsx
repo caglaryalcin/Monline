@@ -103,7 +103,6 @@ export function DayPanel({
               const appearance = paymentAppearance(entry, rec);
               const isPaid = appearance.paid;
               const isAwaitingConfirmation =
-                (!spending || spending.status === "planned") &&
                 !credit &&
                 !isPaid &&
                 thisDay <= today;
@@ -121,11 +120,21 @@ export function DayPanel({
                   )}
                 >
                   {/* Logo */}
-                  <div className="h-11 w-11 shrink-0 rounded-xl overflow-hidden border bg-background p-1.5 relative">
-                    <SubscriptionLogo sub={sub} month={spending ? spending.date.slice(0, 7) : dateStr.slice(0, 7)}
-                      rowId={spending?.provider_row_id} className="h-full w-full object-contain" />
+                  <div className="relative h-11 w-11 shrink-0 overflow-visible">
+                    <div className="h-full w-full overflow-hidden rounded-xl border bg-background p-1.5">
+                      <SubscriptionLogo
+                        sub={sub}
+                        month={spending ? spending.date.slice(0, 7) : dateStr.slice(0, 7)}
+                        rowId={spending?.provider_row_id}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                    {/* Keep the status badge outside the clipped logo frame. */}
                     {isAwaitingConfirmation && (
-                      <span className="absolute -bottom-1 -right-1 rounded-full bg-red-500 p-0.5 ring-2 ring-background">
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -bottom-1 -right-1 z-10 rounded-full bg-red-500 p-0.5 ring-2 ring-background"
+                      >
                         <CircleDot className="h-3 w-3 text-white" />
                       </span>
                     )}

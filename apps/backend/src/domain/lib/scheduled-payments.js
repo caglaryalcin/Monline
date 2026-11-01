@@ -30,7 +30,7 @@ function saveScheduledPayment(
   record.set("subscription_id", subscription.id);
   record.set("user", subscription.get("user"));
   record.set("due_date", dueDate);
-  record.set("amount", subscription.get("price"));
+  record.set("amount", require("./pure/subscription-trial.mjs").subscriptionAmount(subscription, dueDate));
   record.set("paid_at", markPaid ? new Date().toISOString() : "");
   record.set("auto_paid", markPaid);
   if (details.notes) record.set("notes", details.notes);

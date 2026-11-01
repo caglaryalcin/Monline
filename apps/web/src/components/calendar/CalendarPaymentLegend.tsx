@@ -9,7 +9,7 @@ export function CalendarPaymentLegend() {
       <div
         role="group"
         aria-label={t("calendar_color_legend")}
-        className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-6"
+        className="grid grid-cols-2 gap-1.5 lg:grid-cols-4"
       >
         {CALENDAR_PAYMENT_TONES.map((tone) => {
           const appearance = paymentTone(tone);

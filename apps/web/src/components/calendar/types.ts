@@ -2,6 +2,7 @@ import { isCredit } from "@/lib/recordTypes";
 import type { SpendingEvent } from "@/lib/spending";
 import { paymentOwnerId } from "@/lib/standalonePayments";
 import { automaticLogoUrls } from "@/lib/subscriptionLogo";
+import { nextTrialPaymentDate } from "@/lib/subscriptionTrial";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Currency, Cycle, PaymentRecord, Subscription } from "@/types";
 
@@ -201,7 +202,7 @@ function projectedDatesInMonth(
   // Preserve the intended day-of-month so month arithmetic never overflows.
   // e.g. a subscription on the 30th must land on the 30th (or last day of
   // shorter months), not silently drift when setMonth() wraps around.
-  const originalDay = cursor.getDate();
+  const originalDay = sub.billing_anchor_day || cursor.getDate();
 
   const addMonths = (d: Date, n: number): Date => {
     const targetMonth = d.getMonth() + n;
@@ -212,6 +213,8 @@ function projectedDatesInMonth(
   };
 
   const add = (d: Date): Date => {
+    const trial = nextTrialPaymentDate(sub, toDateStr(d), sub.billing_anchor_day || originalDay);
+    if (trial) return parseLocalDate(trial)!;
     if (cycleName === "Daily") {
       const r = new Date(d);
       r.setDate(r.getDate() + freq);

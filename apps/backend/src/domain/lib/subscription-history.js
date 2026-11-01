@@ -221,6 +221,7 @@ function buildHistoryResponse(app, subscription) {
       ? cancellationDate
       : todayStr;
   var estimated = historyMath.computeSpendTotal({
+    trial: { trial_months: subscription.get("trial_months"), trial_start_date: subscription.get("trial_start_date") },
     segments: segments,
     until: until,
     endDate: endDate,
@@ -233,6 +234,7 @@ function buildHistoryResponse(app, subscription) {
   var paid = historyMath.summarizePaidRecords(
     paidRecordsFor(app, subscription.id, subscription.get("user")),
     segments,
+    { trial_months: subscription.get("trial_months"), trial_start_date: subscription.get("trial_start_date") },
   );
   return {
     subscription: {

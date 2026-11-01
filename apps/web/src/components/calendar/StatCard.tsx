@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 interface StatCardProps {
   icon: React.ReactNode;
   iconClass: string;
-  label: string;
+  label: React.ReactNode;
   value: string;
   loading: boolean;
 }
@@ -17,7 +17,7 @@ export function StatCard({ icon, iconClass, label, value, loading }: StatCardPro
           {icon}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium text-muted-foreground sm:text-sm">{label}</p>
+          <div className="text-xs font-medium text-muted-foreground sm:text-sm">{label}</div>
           {loading ? (
             <div className="mt-1 h-6 w-24 animate-pulse rounded-md bg-muted" />
           ) : (

@@ -1,30 +1,35 @@
-import { AlertTriangle, CircleAlert, Clock, RefreshCw, TrendingUp } from "lucide-react";
+import { CircleAlert, Clock, RefreshCw, TrendingUp, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { StatCard } from "@/components/calendar/StatCard";
+import { InfoButton } from "@/components/ui/info-button";
 import { formatPrice } from "@/lib/utils";
 import type { Currency } from "@/types";
 
 interface CalendarOverviewProps {
   count: number;
   total: number;
-  due: number;
+  unpaidTotal: number;
   awaitingConfirmation: number;
   loading: boolean;
   hasError?: boolean;
   mainCurrency?: Currency;
-  budgetOverrun?: number;
+  remainingBudget?: number | null;
+  budgetLoading?: boolean;
+  budgetError?: boolean;
 }
 
 export function CalendarOverview({
   count,
   total,
-  due,
+  unpaidTotal,
   awaitingConfirmation,
   loading,
   hasError = false,
   mainCurrency,
-  budgetOverrun = 0,
+  remainingBudget = null,
+  budgetLoading = false,
+  budgetError = false,
 }: CalendarOverviewProps) {
   const { t } = useTranslation();
   const currencySymbol = mainCurrency?.symbol ?? "$";
@@ -43,30 +48,69 @@ export function CalendarOverview({
         <StatCard
           icon={<TrendingUp className="h-5 w-5" />}
           iconClass="bg-blue-500/20 text-blue-500"
-          label={t("total")}
+          label={
+            <span className="inline-flex items-center gap-1">
+              {t("total")}
+              <InfoButton title={t("total")}>
+                {t("calendar_payment_totals_help")}
+              </InfoButton>
+            </span>
+          }
           value={hasError ? "—" : formatPrice(total, currencySymbol, priceOptions)}
           loading={loading}
         />
         <StatCard
           icon={<Clock className="h-5 w-5" />}
           iconClass="bg-amber-500/20 text-amber-500"
-          label={t("due")}
-          value={hasError ? "—" : formatPrice(due, currencySymbol, priceOptions)}
+          label={
+            <span className="inline-flex items-center gap-1">
+              {t("calendar_unpaid_total")}
+              <InfoButton title={t("calendar_unpaid_total")}>
+                {t("calendar_unpaid_total_help")}
+              </InfoButton>
+            </span>
+          }
+          value={hasError ? "—" : formatPrice(unpaidTotal, currencySymbol, priceOptions)}
           loading={loading}
         />
         <StatCard
-          icon={<AlertTriangle className="h-5 w-5" />}
-          iconClass="bg-destructive/20 text-destructive"
-          label={t("budget_overrun")}
-          value={
-            hasError ? "—" : formatPrice(Math.max(0, budgetOverrun), currencySymbol, priceOptions)
+          icon={<Wallet className="h-5 w-5" />}
+          iconClass={
+            remainingBudget !== null && remainingBudget < 0
+              ? "bg-destructive/20 text-destructive"
+              : "bg-primary/20 text-primary"
           }
-          loading={loading}
+          label={
+            <span className="inline-flex items-center gap-1">
+              {t("calendar_remaining_budget")}
+              <InfoButton title={t("calendar_remaining_budget")}>
+                {t("calendar_salary_budget_help")}
+                {budgetError ? (
+                  <p className="mt-2">{t("calendar_salary_budget_error")}</p>
+                ) : remainingBudget === null && !budgetLoading ? (
+                  <p className="mt-2">{t("calendar_salary_budget_missing")}</p>
+                ) : null}
+              </InfoButton>
+            </span>
+          }
+          value={
+            hasError || budgetError || remainingBudget === null
+              ? "—"
+              : formatPrice(remainingBudget, currencySymbol, priceOptions)
+          }
+          loading={loading || budgetLoading}
         />
         <StatCard
           icon={<CircleAlert className="h-5 w-5" />}
           iconClass="bg-red-500/20 text-red-600 dark:text-red-400"
-          label={t("subscription_payments_awaiting")}
+          label={
+            <span className="inline-flex items-center gap-1">
+              {t("subscription_payments_awaiting")}
+              <InfoButton title={t("subscription_payments_awaiting")}>
+                {t("calendar_pending_confirmation_help")}
+              </InfoButton>
+            </span>
+          }
           value={hasError ? "—" : formatPrice(awaitingConfirmation, currencySymbol, priceOptions)}
           loading={loading}
         />

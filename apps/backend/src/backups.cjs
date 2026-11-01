@@ -45,7 +45,7 @@ const MIGRATED_COLUMNS = {
     "billing_anchor_day",
     "calendar_history_recovery_passes",
     "calendar_projection_hidden",
-    "calendar_projection_from",
+    "calendar_projection_from", "trial_months", "trial_start_date",
   ],
   payment_methods: ["is_main", "finance_card"],
   household: ["is_main", "account", "account_approval"],

@@ -14,6 +14,7 @@ import {
   subscriptionSection,
 } from "@/lib/spending";
 import type { SavedStatement } from "@/lib/statements";
+import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
 export type DashboardPaymentSection = "cards" | "online" | "bills" | "loans";
@@ -301,7 +302,7 @@ export function dashboardYearPayments({
         "online",
         {
           date,
-          amount: record?.amount ?? subscription.price,
+          amount: record?.amount ?? subscriptionAmount(subscription, date),
           currency: currencyCode(
             currencyId,
             record?.currency ? record.expand?.currency : subscription.expand?.currency,

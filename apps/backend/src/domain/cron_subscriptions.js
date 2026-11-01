@@ -147,7 +147,7 @@ cronAdd("sendNotifications", "0 * * * *", async () => {
         grouped[payerId].push({
           id: sub.id,
           name: sub.getString("name"),
-          price: sub.get("price"),
+          price: require("./lib/pure/subscription-trial.mjs").subscriptionAmount(sub, nextPayment),
           currency: currencySymbol,
           currency_code: currencyCode,
           next_payment: nextPayment,
@@ -435,7 +435,7 @@ cronAdd("overduePaymentReminders", "0 9 * * *", async () => {
         continue;
       }
       const subName = sub.get("name");
-      const price = sub.get("price");
+      const price = require("./lib/pure/subscription-trial.mjs").subscriptionAmount(sub, dueDate);
       const title = "⚠️ Overdue Payment: " + subName;
       const message =
         "Payment of " +

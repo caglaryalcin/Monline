@@ -10,6 +10,7 @@ import {
   enUS,
   es,
   fr,
+  hu,
   it,
   ja,
   ko,
@@ -32,6 +33,7 @@ import { resolveLocale } from "@/lib/locale";
 
 const locales = {
   en: enUS,
+  hu,
   bg,
   tr,
   de,
@@ -51,6 +53,7 @@ const locales = {
 };
 const clearLabels: Record<string, string> = {
   en: "Clear",
+  hu: "Törlés",
   tr: "Temizle",
   de: "Leeren",
   pt: "Limpar",

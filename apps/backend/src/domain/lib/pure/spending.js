@@ -223,6 +223,8 @@ function spendingData(data, { trackingOnly = false } = {}) {
       amount: item.amount,
       currency: "TRY",
       source: "manual_card",
+      card_row_id: card.id,
+      statement_period: item.month,
       status: "recorded",
       kind: "expense",
       card_name: card.name,
