@@ -27,7 +27,9 @@ export function BillCard({
   const { t, i18n } = useTranslation();
   const locale = resolveLocale(i18n);
   const settled = bill.status === "settled";
-  const amount = formatCurrency(bill.amount, bill.currency, {});
+  const amount = bill.amount_pending
+    ? t("spending_bill_amount_pending")
+    : formatCurrency(bill.amount, bill.currency, {});
   const date = new Intl.DateTimeFormat(locale, {
     day: "numeric",
     month: "short",
@@ -83,7 +85,8 @@ export function BillCard({
         <div className="ml-auto shrink-0 text-right">
           <p
             className={cn(
-              "whitespace-nowrap font-mono text-xl font-extrabold tracking-tight",
+              "whitespace-nowrap font-semibold tracking-tight",
+              bill.amount_pending ? "text-sm" : "font-mono text-xl font-extrabold",
               settled
                 ? "text-emerald-700 dark:text-emerald-400"
                 : "text-rose-700 dark:text-rose-400",
@@ -126,7 +129,9 @@ export function BillCard({
             ) : (
               <Clock className="h-3 w-3" aria-hidden="true" />
             )}
-            {t(`spending_status_${bill.status}`)}
+            {t(
+              bill.status === "planned" ? "spending_bill_unpaid" : `spending_status_${bill.status}`,
+            )}
           </span>
           {bill.verification === "verified" && (
             <span

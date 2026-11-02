@@ -80,6 +80,7 @@ import {
   sumEntries,
 } from "@/lib/finance";
 import { resolveLocale } from "@/lib/locale";
+import { financeProviderTarget, type MerchantProviderTarget } from "@/lib/merchantLogo";
 import { resolveNumberLocale } from "@/lib/numberFormat";
 import { spendingKey } from "@/lib/spending";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -172,12 +173,7 @@ export function FinancePage() {
   const [deletingRows, setDeletingRows] = useState<{ year: number; rows: FinanceRow[] } | null>(
     null,
   );
-  const [providerFor, setProviderFor] = useState<{
-    name: string;
-    month?: string;
-    year?: number;
-    rowId: string;
-  } | null>(null);
+  const [providerFor, setProviderFor] = useState<MerchantProviderTarget | null>(null);
   const [decimalPlaces, setDecimalPlaces] = useState(savedDecimalPlaces);
   useEffect(() => {
     try {
@@ -266,16 +262,11 @@ export function FinancePage() {
   const context = grid.context;
   const contextCell =
     context?.row && context.month ? { row: context.row, month: context.month } : null;
-  const providerContext =
-    context?.row?.kind === "expense" && context.row.bill_type
-      ? {
-          name: context.row.name,
-          rowId: context.row.origin_row || context.row.id,
-          ...(context.scope === "row"
-            ? { year }
-            : { month: year + "-" + String(context.month).padStart(2, "0") }),
-        }
-      : null;
+  const providerContext = financeProviderTarget(
+    context?.row,
+    year,
+    context?.scope === "row" ? undefined : context?.month,
+  );
   const contextRows = data.finance_rows.filter(
     (row) => (row.kind === "expense") === (context?.row?.kind === "expense"),
   );

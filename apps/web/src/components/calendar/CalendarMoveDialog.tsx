@@ -25,7 +25,9 @@ import { isValidISODate } from "@/lib/dateInput";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { resolveLocale } from "@/lib/locale";
 import { cn, formatCurrency } from "@/lib/utils";
+import type { CalendarMoveScope } from "@/services/paymentRecords";
 
+import { CalendarMoveRange } from "./CalendarMoveRange";
 import { type DayEntry, parseLocalDate, toDateStr } from "./types";
 
 export function CalendarMoveDialog({
@@ -37,11 +39,12 @@ export function CalendarMoveDialog({
   entry: DayEntry;
   moving: boolean;
   onClose: () => void;
-  onMove: (date: Date, mode?: "ledger") => void;
+  onMove: (date: Date, mode?: "ledger", scope?: CalendarMoveScope) => void;
 }) {
   const { t, i18n } = useTranslation();
   const [value, setValue] = useState("");
   const [mode, setMode] = useState<"calendar" | "ledger">("calendar");
+  const [scope, setScope] = useState<CalendarMoveScope>("single");
   const [pendingDate, setPendingDate] = useState<Date | null>(null);
   const source = entry.spending;
   const canUpdateLedger = source?.source === "ledger";
@@ -114,15 +117,25 @@ export function CalendarMoveDialog({
                 </p>
               </fieldset>
             )}
-            <p className="text-xs text-muted-foreground">
-              {t(
-                updateLedger
-                  ? "calendar_ledger_move_help"
-                  : entry.spending
-                    ? "calendar_source_move_help"
-                    : "calendar_move_help",
-              )}
-            </p>
+            {canUpdateLedger && !updateLedger && (
+              <CalendarMoveRange
+                value={scope}
+                onChange={setScope}
+                sourceDate={source.date}
+                disabled={moving}
+              />
+            )}
+            {(updateLedger || !canUpdateLedger || scope === "single") && (
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  updateLedger
+                    ? "calendar_ledger_move_help"
+                    : entry.spending
+                      ? "calendar_source_move_help"
+                      : "calendar_move_help",
+                )}
+              </p>
+            )}
             {date && canMove && (
               <div
                 role="status"
@@ -177,6 +190,9 @@ export function CalendarMoveDialog({
                   to: formatDate(pendingDate),
                   sourceDate: formatDate(parseLocalDate(source.date)!),
                 })}
+              {scope !== "single" && (
+                <span className="mt-2 block">{t("calendar_move_periods_help")}</span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -187,7 +203,8 @@ export function CalendarMoveDialog({
                 if (!pendingDate || moving) return;
                 const confirmedDate = pendingDate;
                 setPendingDate(null);
-                onMove(confirmedDate);
+                if (scope === "single") onMove(confirmedDate);
+                else onMove(confirmedDate, undefined, scope);
               }}
             >
               {t("calendar_only_confirm_action")}

@@ -1,4 +1,5 @@
 import type { DashboardPaymentGroup } from "@/lib/dashboardYear";
+import type { FinanceRow } from "@/lib/finance";
 import type { MonthlyBudgetEntry } from "@/lib/monthlyBudget";
 import type { LoanSummary } from "@/lib/spending";
 import type { Currency } from "@/types";
@@ -11,6 +12,7 @@ export type DashboardMonthlyEntry = Omit<MonthlyBudgetEntry, "subscription" | "s
   name?: string;
   labelKey?: string;
   monthOnly?: boolean;
+  providerRowId?: string;
 };
 
 /** Use the same bill plans as the year graph, converted to the user's main currency. */
@@ -42,6 +44,7 @@ export function monthlyBillPayments(
       entries.push({
         id: `bill:${paid}:${index}`,
         name: item.name,
+        providerRowId: item.providerRowId,
         date: item.date,
         labelKey: item.labelKey,
         monthOnly: !!item.labelKey,
@@ -54,12 +57,18 @@ export function monthlyBillPayments(
 }
 
 /** Loan summaries preserve partial payments and combine a loan's rows across years. */
-export function monthlyLoanPayments(loans: LoanSummary[], today: string, currencies: Currency[]) {
+export function monthlyLoanPayments(
+  loans: LoanSummary[],
+  today: string,
+  currencies: Currency[],
+  rows: FinanceRow[] = [],
+) {
   const entries: DashboardMonthlyEntry[] = [];
   let unpriced = 0;
   for (const loan of loans) {
     const month = loan.months.find((payment) => payment.month === today.slice(0, 7));
     if (!month) continue;
+    const row = rows.find((row) => row.id === loan.row_id);
     const item = { name: loan.name, date: `${month.month}-01`, currency: loan.currency };
     const result = monthlyBillPayments(
       {
@@ -81,6 +90,7 @@ export function monthlyLoanPayments(loans: LoanSummary[], today: string, currenc
     entries.push({
       id: `loan:${loan.row_id}:${month.month}`,
       name: loan.name,
+      providerRowId: loan.provider_row_id || row?.origin_row || loan.row_id,
       date: item.date,
       amount: (Math.round(paidAmount * 100) + Math.round(pendingAmount * 100)) / 100,
       paidAmount,

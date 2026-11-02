@@ -7,6 +7,7 @@ export interface SpendingEvent {
   date: string;
   name: string;
   amount: number;
+  amount_pending?: boolean;
   currency: string;
   source: "statement" | "ledger" | "manual_card" | "manual_bill";
   kind: "expense" | "refund" | "card_payment" | "carryover" | "loan_payment";
@@ -66,6 +67,7 @@ export interface LoanMonth {
 }
 export interface LoanSummary {
   row_id: string;
+  provider_row_id?: string;
   name: string;
   start_month?: string | null;
   end_month?: string | null;
@@ -90,6 +92,7 @@ export interface SpendingData {
     date: string;
   }[];
   events: SpendingEvent[];
+  pending_bills?: SpendingEvent[];
   installments: InstallmentPlan[];
   issues: { statement_id: string; row_id: string }[];
   unmatched_installments: string[];

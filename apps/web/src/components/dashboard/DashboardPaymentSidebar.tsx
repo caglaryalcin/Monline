@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { BudgetOverviewCard } from "@/components/dashboard/BudgetOverviewCard";
 import { monthlyBillPayments, monthlyLoanPayments } from "@/lib/dashboardMonthlyPayments";
 import type { DashboardPaymentGroup } from "@/lib/dashboardYear";
+import type { FinanceRow } from "@/lib/finance";
 import type { MonthlyBudgetEntry } from "@/lib/monthlyBudget";
 import { type LoanSummary, subscriptionSection } from "@/lib/spending";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,7 @@ import type { Currency } from "@/types";
 export interface DashboardSidebarData {
   bills: DashboardPaymentGroup;
   loans: LoanSummary[];
+  financeRows?: FinanceRow[];
   currencies: Currency[];
   billsLoading: boolean;
   billsError: boolean;
@@ -48,7 +50,7 @@ export function DashboardPaymentSidebar({
     ...bills.entries,
     ...entries.filter((entry) => subscriptionSection(entry.subscription) === "bills"),
   ].sort((a, b) => a.date.localeCompare(b.date));
-  const loans = monthlyLoanPayments(data.loans, today, data.currencies);
+  const loans = monthlyLoanPayments(data.loans, today, data.currencies, data.financeRows);
   return (
     <BudgetOverviewCard
       section={section}

@@ -8,6 +8,10 @@ const { validDate } = require("./pure/backfill-schedule.js");
 const { spendingData } = require("./pure/spending.js");
 const { loadSpendingData } = require("./spending-data.js");
 const { rowForYear, rootId } = require("./pure/finance-years.js");
+const {
+  CALENDAR_MOVE_SCOPES,
+  ledgerCalendarTargets,
+} = require("./pure/calendar-move-scope.js");
 const SOURCES = {
   ledger: ["ledger", "finance_entries"],
   statement: ["statement", "bank_statements"],
@@ -34,18 +38,22 @@ function sourceReference(source, id) {
 function moveSourceCalendar(app, owner, input) {
   const { source, source_id: id, from_date: from, to_date: to } = input;
   const mode = input.mode === undefined ? "calendar" : input.mode;
+  const scope = input.scope === undefined ? "single" : input.scope;
   if (
     !["calendar", "ledger"].includes(mode) ||
+    !CALENDAR_MOVE_SCOPES.includes(scope) ||
+    (scope !== "single" && (source !== "ledger" || mode !== "calendar")) ||
     (mode === "ledger" && source !== "ledger") ||
     !sourceReference(source, id) ||
     !validDate(from) ||
     !validDate(to) ||
-    from === to
+    (from === to && scope === "single")
   )
     throw new BadRequestError("calendar_move_invalid");
   return app.runInTransaction((tx) => {
     const data = loadSpendingData(tx, owner);
-    const event = spendingData(data).events.find(
+    const spending = spendingData(data);
+    const event = spending.events.find(
       (event) => event.id === id && event.source === source,
     );
     if (!event || !validDate(event.date) || event.undated)
@@ -63,6 +71,12 @@ function moveSourceCalendar(app, owner, input) {
         ? previous.getString("date")
         : event.date;
     if (currentDate !== from) throw new HttpError(409, "calendar_move_changed");
+    if (
+      scope !== "single" &&
+      (input.expected_source_date !== event.date ||
+        input.expected_row_id !== event.row_id)
+    )
+      throw new HttpError(409, "calendar_move_changed");
     if (mode === "ledger") {
       if (
         input.expected_source_date !== event.date ||
@@ -74,13 +88,41 @@ function moveSourceCalendar(app, owner, input) {
       const entry = tx.findRecordById("finance_entries", ref.recordId);
       if (entry.getString("user") !== owner) throw new NotFoundError();
       const year = Number(to.slice(0, 4));
-      let row = rowForYear(data.finance_rows, entry.getString("row_id"), year, data);
+      let row = rowForYear(
+        data.finance_rows,
+        entry.getString("row_id"),
+        year,
+        data,
+      );
       if (!row) {
-        const original = data.finance_rows.find((item) => item.id === entry.getString("row_id"));
-        if (!original || data.finance_rows.some((item) => item.year === year && item.origin_row === rootId(original)))
+        const original = data.finance_rows.find(
+          (item) => item.id === entry.getString("row_id"),
+        );
+        if (
+          !original ||
+          data.finance_rows.some(
+            (item) =>
+              item.year === year && item.origin_row === rootId(original),
+          )
+        )
           throw new BadRequestError("finance_invalid_year");
-        const created = new DataRecord(tx.findCollectionByNameOrId("finance_rows"));
-        for (const field of ["name", "kind", "expense_type", "notes", "source_subscription", "payment_card", "bill_type", "row_order", "is_loan", "is_rent", "is_auto_carryover", "loan_id"])
+        const created = new DataRecord(
+          tx.findCollectionByNameOrId("finance_rows"),
+        );
+        for (const field of [
+          "name",
+          "kind",
+          "expense_type",
+          "notes",
+          "source_subscription",
+          "payment_card",
+          "bill_type",
+          "row_order",
+          "is_loan",
+          "is_rent",
+          "is_auto_carryover",
+          "loan_id",
+        ])
           created.set(field, original[field]);
         created.set("user", owner);
         created.set("year", year);
@@ -99,22 +141,67 @@ function moveSourceCalendar(app, owner, input) {
       if (previous) tx.delete(previous);
       return { updated: 1, ledger_updated: true };
     }
-    if (to === event.date) {
-      if (previous) tx.delete(previous);
-      return { updated: 1 };
+    if (scope !== "single") {
+      let targets;
+      try {
+        targets = ledgerCalendarTargets(
+          [...spending.events, ...(spending.pending_bills || [])],
+          data.finance_rows,
+          event,
+          to,
+          scope,
+        );
+      } catch (error) {
+        if (error.message === "calendar_move_invalid")
+          throw new BadRequestError(error.message);
+        throw error;
+      }
+      const previousMoves = new Map(
+        (data.calendar_moves || [])
+          .filter((move) => move.source === "ledger")
+          .map((move) => [move.source_id, move.id]),
+      );
+      let updated = 0;
+      for (const target of targets) {
+        const previousId = previousMoves.get(target.event.id);
+        const prior = previousId
+          ? tx.findRecordById("calendar_moves", previousId)
+          : null;
+        updated += placeCalendarDate(
+          tx,
+          owner,
+          target.event,
+          target.date,
+          prior,
+        ).updated;
+      }
+      return { updated, scope };
     }
-    const record =
-      previous || new DataRecord(tx.findCollectionByNameOrId("calendar_moves"));
-    for (const [key, value] of Object.entries({
-      user: owner,
-      source,
-      source_id: id,
-      source_date: event.date,
-      date: to,
-    }))
-      record.set(key, value);
-    tx.save(record);
-    return { updated: 1, calendar_move: record.publicExport() };
+    return placeCalendarDate(tx, owner, event, to, previous);
   });
+}
+
+function placeCalendarDate(tx, owner, event, to, previous) {
+  if (to === event.date) {
+    if (previous) tx.delete(previous);
+    return { updated: previous ? 1 : 0 };
+  }
+  if (
+    previous?.getString("source_date") === event.date &&
+    previous.getString("date") === to
+  )
+    return { updated: 0 };
+  const record =
+    previous || new DataRecord(tx.findCollectionByNameOrId("calendar_moves"));
+  for (const [key, value] of Object.entries({
+    user: owner,
+    source: event.source,
+    source_id: event.id,
+    source_date: event.date,
+    date: to,
+  }))
+    record.set(key, value);
+  tx.save(record);
+  return { updated: 1, calendar_move: record.publicExport() };
 }
 module.exports = { sourceReference, moveSourceCalendar };

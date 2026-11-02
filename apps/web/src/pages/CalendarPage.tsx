@@ -42,7 +42,7 @@ import { cyclesService } from "@/services/cycles";
 import { financeService } from "@/services/finance";
 import { householdService } from "@/services/household";
 import { paymentMethodsService } from "@/services/paymentMethods";
-import { paymentRecordsService } from "@/services/paymentRecords";
+import { type CalendarMoveScope, paymentRecordsService } from "@/services/paymentRecords";
 import { spendingService } from "@/services/spending";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { PaymentRecord } from "@/types";
@@ -99,7 +99,17 @@ export function CalendarPage() {
 
   const paymentTracking = !!user?.payment_tracking;
   const movePayment = useMutation({
-    mutationFn: ({ entry, date, mode }: { entry: DayEntry; date: Date; mode?: "ledger" }) => {
+    mutationFn: ({
+      entry,
+      date,
+      mode,
+      scope,
+    }: {
+      entry: DayEntry;
+      date: Date;
+      mode?: "ledger";
+      scope?: CalendarMoveScope;
+    }) => {
       const record = getPaymentRecord(paymentRecords, entry.sub.id, toDateStr(entry.date));
       return paymentRecordsService.move({
         ...(entry.spending
@@ -109,6 +119,13 @@ export function CalendarPage() {
             : { subscription_id: entry.sub.id }),
         from_date: toDateStr(entry.date),
         to_date: toDateStr(date),
+        ...(entry.spending?.source === "ledger" && mode !== "ledger" && scope && scope !== "single"
+          ? {
+              scope,
+              expected_source_date: entry.spending.date,
+              expected_row_id: entry.spending.row_id,
+            }
+          : {}),
         ...(mode === "ledger"
           ? {
               mode,
@@ -124,7 +141,14 @@ export function CalendarPage() {
       setMoveEntry(null);
       await queryClient.invalidateQueries();
       toast.success(
-        t(result.ledger_updated ? "calendar_payment_ledger_moved" : "calendar_payment_moved"),
+        t(
+          result.scope && result.scope !== "single"
+            ? "calendar_payments_moved_count"
+            : result.ledger_updated
+              ? "calendar_payment_ledger_moved"
+              : "calendar_payment_moved",
+          { count: result.updated },
+        ),
       );
     },
     onError: (error: unknown) => {
@@ -171,9 +195,14 @@ export function CalendarPage() {
     clearCalendar.isPending ||
     removePayment.isPending ||
     markUnpaid.isPending;
-  const requestPaymentMove = (entry: DayEntry, date: Date | string, mode?: "ledger") => {
+  const requestPaymentMove = (
+    entry: DayEntry,
+    date: Date | string,
+    mode?: "ledger",
+    scope?: CalendarMoveScope,
+  ) => {
     const parsed = typeof date === "string" ? parseLocalDate(date) : date;
-    if (parsed && !paymentMutationsBusy) movePayment.mutate({ entry, date: parsed, mode });
+    if (parsed && !paymentMutationsBusy) movePayment.mutate({ entry, date: parsed, mode, scope });
   };
   const {
     data: subscriptions = [],
@@ -488,7 +517,7 @@ export function CalendarPage() {
           entry={moveEntry}
           moving={movePayment.isPending}
           onClose={() => setMoveEntry(null)}
-          onMove={(date, mode) => requestPaymentMove(moveEntry, date, mode)}
+          onMove={(date, mode, scope) => requestPaymentMove(moveEntry, date, mode, scope)}
         />
       )}
       {detailEntry?.spending ? (
@@ -497,7 +526,7 @@ export function CalendarPage() {
           calendarDate={toDateStr(detailEntry.date)}
           onClose={() => setDetailEntry(null)}
           movingPayment={movePayment.isPending}
-          onMoveDate={(date) => requestPaymentMove(detailEntry, date)}
+          onMoveDate={(date, scope) => requestPaymentMove(detailEntry, date, undefined, scope)}
         />
       ) : detailEntry ? (
         <SubDetailDialog

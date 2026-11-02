@@ -440,6 +440,7 @@ export function DashboardYearOverview({
               ? sidebar({
                   bills: payments.bills,
                   loans: spending.data?.loans ?? [],
+                  financeRows: finance.data?.finance_rows ?? [],
                   currencies: currencies.data ?? [],
                   billsLoading: finance.isPending || spending.isPending || currencies.isPending,
                   billsError: finance.isError || spending.isError || currencies.isError,

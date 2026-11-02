@@ -26,6 +26,7 @@ type PaymentItem = {
   currency: string;
   name?: string;
   labelKey?: string;
+  providerRowId?: string;
 };
 export interface DashboardPaymentGroup {
   items: PaymentItem[];
@@ -218,7 +219,13 @@ export function dashboardYearPayments({
             : null;
     if (!section) continue;
     const date = entry.date.slice(0, 10),
-      item = { date, amount: entry.amount, currency: "TRY", name: row.name };
+      item = {
+        date,
+        amount: entry.amount,
+        currency: "TRY",
+        name: row.name,
+        providerRowId: row.origin_row || row.id,
+      };
     if (entry.status === "settled" && inPeriod(date)) add(section, item);
     else if (entry.status === "planned" && inFuture(date)) add(section, item, true);
   }
@@ -229,7 +236,13 @@ export function dashboardYearPayments({
   for (const event of billCandidates) {
     if (event.duplicate_of && billIds.has(event.duplicate_of)) continue;
     const date = event.date.slice(0, 10),
-      item = { date, amount: event.amount, currency: event.currency, name: event.name };
+      item = {
+        date,
+        amount: event.amount,
+        currency: event.currency,
+        name: event.name,
+        providerRowId: event.provider_row_id,
+      };
     if (event.status === "settled" && inPeriod(date)) add("bills", item);
     else if (event.status === "planned" && inFuture(date)) add("bills", item, true);
   }
@@ -250,9 +263,10 @@ export function dashboardYearPayments({
     entries: { date: string; amount: number; status?: string }[],
     currency: string,
     name: string,
+    providerRowId?: string,
   ) => {
     for (const item of forecastFixedBill(entries, currency, futureMonths, currentMonth))
-      add("bills", { ...item, name, labelKey: "dashboard_month_estimated" }, true);
+      add("bills", { ...item, name, providerRowId, labelKey: "dashboard_month_estimated" }, true);
   };
   for (const row of rows.values()) {
     if (
@@ -264,7 +278,7 @@ export function dashboardYearPayments({
     const entries = finance.finance_entries.filter((entry) => entry.row_id === row.id);
     if (row.year !== Number(year) && !entries.some((entry) => entry.date.startsWith(`${year}-`)))
       continue;
-    projectFixedBill(entries, "TRY", row.name);
+    projectFixedBill(entries, "TRY", row.name, row.origin_row || row.id);
   }
   const manualSeries = new Map<string, typeof billCandidates>();
   for (const event of billCandidates) {
@@ -284,7 +298,7 @@ export function dashboardYearPayments({
   }
   for (const entries of manualSeries.values())
     if (entries.some((entry) => entry.date.startsWith(`${year}-`)))
-      projectFixedBill(entries, entries[0].currency, entries[0].name);
+      projectFixedBill(entries, entries[0].currency, entries[0].name, entries[0].provider_row_id);
   // Match the subscriptions page, including paused subscriptions' paid history.
   const now = parseLocalDate(today)!;
   now.setHours(23, 59, 59, 999);

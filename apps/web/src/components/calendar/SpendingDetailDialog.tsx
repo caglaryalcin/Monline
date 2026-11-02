@@ -20,6 +20,9 @@ import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { findLogoService } from "@/lib/logoServices";
 import { isBillRecord, type SpendingEvent } from "@/lib/spending";
 import { formatCurrency } from "@/lib/utils";
+import type { CalendarMoveScope } from "@/services/paymentRecords";
+
+import { CalendarMoveRange } from "./CalendarMoveRange";
 
 export function SpendingDetailDialog({
   event,
@@ -31,18 +34,22 @@ export function SpendingDetailDialog({
   event: SpendingEvent;
   onClose: () => void;
   calendarDate?: string;
-  onMoveDate?: (date: string) => void;
+  onMoveDate?: (date: string, scope?: CalendarMoveScope) => void;
   movingPayment?: boolean;
 }) {
   const { t } = useTranslation();
   const [providerOpen, setProviderOpen] = useState(false);
   const [moveDate, setMoveDate] = useState(calendarDate || event.date);
+  const [moveScope, setMoveScope] = useState<CalendarMoveScope>("single");
+  const canMove =
+    !!moveDate &&
+    (moveDate !== calendarDate || (event.source === "ledger" && moveScope !== "single"));
   const choice = useMerchantLogo(event.name, {
     month: event.date.slice(0, 7),
     rowId: event.provider_row_id,
   });
   return (
-    <Dialog open onOpenChange={dialogDismissHandler(onClose)}>
+    <Dialog open onOpenChange={dialogDismissHandler(onClose, movingPayment)}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
@@ -97,7 +104,11 @@ export function SpendingDetailDialog({
             className="space-y-2 rounded-xl border p-3"
             onSubmit={(e) => {
               e.preventDefault();
-              if (!movingPayment && moveDate && moveDate !== calendarDate) onMoveDate(moveDate);
+              if (!movingPayment && canMove) {
+                if (event.source === "ledger" && moveScope !== "single")
+                  onMoveDate(moveDate, moveScope);
+                else onMoveDate(moveDate);
+              }
             }}
           >
             <Label htmlFor="calendar-source-move-date">{t("calendar_move_date")}</Label>
@@ -109,12 +120,18 @@ export function SpendingDetailDialog({
               required
               disabled={movingPayment}
             />
-            <p className="text-xs text-muted-foreground">{t("calendar_source_move_help")}</p>
-            <Button
-              type="submit"
-              variant="outline"
-              disabled={movingPayment || !moveDate || moveDate === calendarDate}
-            >
+            {event.source === "ledger" && (
+              <CalendarMoveRange
+                value={moveScope}
+                onChange={setMoveScope}
+                sourceDate={event.date}
+                disabled={movingPayment}
+              />
+            )}
+            {moveScope === "single" && (
+              <p className="text-xs text-muted-foreground">{t("calendar_source_move_help")}</p>
+            )}
+            <Button type="submit" variant="outline" disabled={movingPayment || !canMove}>
               {t(movingPayment ? "saving" : "calendar_move_payment")}
             </Button>
           </form>

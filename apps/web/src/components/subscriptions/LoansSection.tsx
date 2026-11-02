@@ -1,10 +1,17 @@
-import { Check, ChevronRight, Landmark, Lightbulb } from "lucide-react";
+import { Building2, Check, ChevronRight, Landmark, Lightbulb } from "lucide-react";
+import { useContext, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
+import { SubscriptionLogo } from "@/components/SubscriptionLogo";
+import { Button } from "@/components/ui/button";
+import { MerchantLogosContext } from "@/contexts/MerchantLogosContext";
 import { usePersistentExpandedItems } from "@/hooks/usePersistentDisclosure";
+import { findBillProvider } from "@/lib/billProviders";
+import { type MerchantProviderTarget, resolveMerchantLogo } from "@/lib/merchantLogo";
 import type { LoanSummary } from "@/lib/spending";
 import { cn, formatCurrency } from "@/lib/utils";
 
+import { MerchantProviderDialog } from "./MerchantProviderDialog";
 import { SubscriptionSourceBadge } from "./SubscriptionSourceBadge";
 
 function isCompleted(loan: LoanSummary) {
@@ -27,6 +34,8 @@ export function LoansSection({
   search: string;
 }) {
   const { t, i18n } = useTranslation();
+  const { choices } = useContext(MerchantLogosContext);
+  const [providerFor, setProviderFor] = useState<MerchantProviderTarget | null>(null);
   const [expandedCompleted, toggleCompleted] = usePersistentExpandedItems(
     userId,
     "loans.completed",
@@ -92,6 +101,13 @@ export function LoansSection({
     const monthsExpanded = !finished || expandedCompleted.has(loan.row_id);
     const start = loan.start_month ?? loan.months[0]?.month;
     const end = loan.end_month ?? loan.months.at(-1)?.month;
+    const providerMonth = finished && end && end < month ? end : month;
+    const providerRowId = loan.provider_row_id || loan.row_id;
+    const providerChoice = resolveMerchantLogo(choices, loan.name, {
+      month: providerMonth,
+      rowId: providerRowId,
+    });
+    const showLogo = !!providerChoice || findBillProvider(loan.name)?.group === "banks";
     return (
       <article
         key={loan.row_id}
@@ -104,7 +120,15 @@ export function LoansSection({
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-muted/40 text-muted-foreground">
-                <Landmark className="h-4 w-4" aria-hidden="true" />
+                {showLogo ? (
+                  <SubscriptionLogo
+                    sub={{ name: loan.name, url: "" }}
+                    month={providerMonth}
+                    rowId={providerRowId}
+                  />
+                ) : (
+                  <Landmark className="h-4 w-4" aria-hidden="true" />
+                )}
               </span>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -132,6 +156,26 @@ export function LoansSection({
                 <div className="mt-1">
                   <SubscriptionSourceBadge source="ledger" label={t("loans_source")} />
                 </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-1 h-7 max-w-full gap-1.5 px-1 text-xs text-muted-foreground"
+                  aria-label={`${t(providerChoice ? "spending_provider_change" : "spending_provider_choose")} · ${loan.name}`}
+                  onClick={() =>
+                    setProviderFor({
+                      name: loan.name,
+                      rowId: providerRowId,
+                      month: providerMonth,
+                      providerKind: "loan",
+                    })
+                  }
+                >
+                  <Building2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate">
+                    {providerChoice?.provider_name || t("spending_provider_choose")}
+                  </span>
+                </Button>
               </div>
             </div>
             <span
@@ -402,6 +446,9 @@ export function LoansSection({
             </section>
           )}
         </>
+      )}
+      {providerFor && (
+        <MerchantProviderDialog {...providerFor} onClose={() => setProviderFor(null)} />
       )}
     </section>
   );

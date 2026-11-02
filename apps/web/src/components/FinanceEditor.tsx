@@ -296,7 +296,7 @@ export function FinanceEditor({
         <DialogTitle>{title}</DialogTitle>
         <DialogDescription>{label(help)}</DialogDescription>
       </DialogHeader>
-      {editor.type === "cell" && editor.row.kind === "expense" && editor.row.bill_type && (
+      {editor.type === "cell" && editor.row.kind === "expense" && (editor.row.bill_type || editor.row.is_loan) && (
         <FinanceRowProvider
           row={editor.row}
           year={year}

@@ -55,7 +55,11 @@ export function StatementCommitments({
           (plan) => plan.period === month && matches(`${plan.name} ${plan.card_name}`),
         )
       : [];
-  const billCandidates = data.events
+  const recordedIds = new Set(data.events.map((event) => event.id));
+  const billCandidates = [
+    ...data.events,
+    ...(data.pending_bills ?? []).filter((bill) => !recordedIds.has(bill.id)),
+  ]
     .filter((event) => isBillRecord(event) && event.date.startsWith(month) && matches(event.name))
     .sort((a, b) => b.date.localeCompare(a.date));
   const billIds = new Set(billCandidates.map((event) => event.id));
@@ -69,7 +73,10 @@ export function StatementCommitments({
       year: "numeric",
       timeZone: "UTC",
     }).format(new Date(`${period}-01T12:00:00Z`));
-  const totals = spendingTotals(section === "installments" ? plans : bills);
+  const totals = spendingTotals(
+    section === "installments" ? plans : bills.filter((bill) => !bill.amount_pending),
+  );
+  const amountsPending = bills.filter((bill) => bill.amount_pending).length;
   const remainingTotals = spendingTotals(
     plans.map((plan) => ({ currency: plan.currency, amount: plan.remaining_amount })),
   );
@@ -109,6 +116,11 @@ export function StatementCommitments({
             </div>
           )}
         </dl>
+      )}
+      {section === "bills" && amountsPending > 0 && (
+        <p className="rounded-xl border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+          {t("spending_bills_amounts_pending", { count: amountsPending })}
+        </p>
       )}
       {section === "installments" ? (
         <>

@@ -1,7 +1,7 @@
 import { BILL_PROVIDER_LOGOS } from "./billProviderLogos";
 import { NATIONAL_BILL_PROVIDERS } from "./billProvidersNational";
 
-export const BILL_PROVIDER_GROUPS = ["electricity_retail", "electricity_distribution", "water", "gas", "communication"] as const;
+export const BILL_PROVIDER_GROUPS = ["electricity_retail", "electricity_distribution", "water", "gas", "communication", "banks"] as const;
 export type BillProviderGroup = typeof BILL_PROVIDER_GROUPS[number];
 export interface BillProvider {
   id: string;
@@ -18,6 +18,16 @@ const provider = (id: string, name: string, domain: string, group: BillProviderG
 // Regional electricity coverage: ELDER's member directory. Retail and
 // distribution are separate choices; these describe logos, not payment rules.
 const BASE_BILL_PROVIDERS: BillProvider[] = [
+  provider("enpara", "Enpara", "enpara.com", "banks", []),
+  provider("garantibbva", "Garanti BBVA", "garantibbva.com.tr", "banks", [], ["Garanti", "Garanti Bankası"]),
+  provider("denizbank", "DenizBank", "denizbank.com", "banks", [], ["Deniz Bank"]),
+  provider("akbank", "Akbank", "akbank.com", "banks", []),
+  provider("isbank", "Türkiye İş Bankası", "isbank.com.tr", "banks", [], ["İş Bankası", "İşbank", "İş Cep"]),
+  provider("yapikredi", "Yapı Kredi", "yapikredi.com.tr", "banks", [], ["Yapıkredi"]),
+  provider("ziraatbank", "Ziraat Bankası", "ziraatbank.com.tr", "banks", [], ["Ziraat"]),
+  provider("vakifbank", "VakıfBank", "vakifbank.com.tr", "banks", [], ["Vakıf Bank"]),
+  provider("halkbank", "Halkbank", "halkbank.com.tr", "banks", [], ["Halk Bank"]),
+  provider("teb", "TEB", "teb.com.tr", "banks", [], ["Türk Ekonomi Bankası", "CEPTETEB"]),
   provider("trepas", "TREPAŞ", "trepas.com.tr", "electricity_retail", ["Edirne", "Kırklareli", "Tekirdağ"], ["Trakya Elektrik Perakende", "Trakya EPSAŞ"]),
   provider("ckbogazici", "CK Boğaziçi Elektrik", "ckbogazici.com.tr", "electricity_retail", ["İstanbul Avrupa Yakası"], ["CK Boğaziçi", "CK Enerji Boğaziçi"]),
   provider("ckakdeniz", "CK Akdeniz Elektrik", "ckakdeniz.com.tr", "electricity_retail", ["Antalya", "Burdur", "Isparta"], ["CK Akdeniz", "CK Enerji Akdeniz"]),

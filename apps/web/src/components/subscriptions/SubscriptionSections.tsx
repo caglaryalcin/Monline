@@ -376,9 +376,9 @@ export function SubscriptionSections({
                   .reverse()
               : [
                   ...new Set([
-                    ...(spending.data?.events
+                    ...[...(spending.data?.events ?? []), ...(spending.data?.pending_bills ?? [])]
                       .filter(isBillRecord)
-                      .map((event) => event.date.slice(0, 7)) || []),
+                      .map((event) => event.date.slice(0, 7)),
                   ]),
                 ]
                   .filter(Boolean)

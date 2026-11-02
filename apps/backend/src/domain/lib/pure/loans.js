@@ -67,6 +67,7 @@ function loanSummaries(data) {
       ).length;
       return {
         row_id: row.id,
+        provider_row_id: row.origin_row || row.id,
         name: row.name,
         currency: "TRY",
         start_month: months[0]?.month || null,

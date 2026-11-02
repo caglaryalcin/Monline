@@ -156,6 +156,12 @@ export function BudgetOverviewCard({
                       <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border bg-background">
                         {entry.subscription ? (
                           <SubscriptionLogo sub={entry.subscription} />
+                        ) : entry.name ? (
+                          <SubscriptionLogo
+                            sub={{ name: entry.name, url: "" }}
+                            month={entry.date.slice(0, 7)}
+                            rowId={entry.providerRowId}
+                          />
                         ) : (
                           <span className="flex h-full items-center justify-center text-muted-foreground">
                             {section === "loans" ? (

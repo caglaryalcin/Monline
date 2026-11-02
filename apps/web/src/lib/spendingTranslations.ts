@@ -1,5 +1,23 @@
 export const spendingTranslations = {
   tr: {
+    calendar_move_periods: "Hangi aylara uygulansın?",
+    calendar_move_periods_single: "Yalnızca bu ödeme",
+    calendar_move_periods_future: "{{month}} ve sonraki aylar",
+    calendar_move_periods_past: "{{month}} ve önceki aylar",
+    calendar_move_periods_all: "Bu harcamanın tüm ayları",
+    calendar_move_periods_help:
+      "Aynı Gelir/Gider satırının kayıtlı ödemelerine seçtiğin gün uygulanır; kısa aylarda ayın son günü kullanılır. Başka aya taşırsan aynı ay farkı diğer ödemelere de uygulanır. Gelir/Gider kaydı ve ödendi bilgisi değişmez.",
+    calendar_payments_moved_count: "{{count}} ödemenin takvim tarihi güncellendi.",
+    spending_provider_group_banks: "Bankalar",
+    loans_provider_search: "Banka ara",
+    loans_provider_search_placeholder: "Örn. Enpara, Garanti BBVA",
+    loans_provider_custom: "Başka banka",
+    loans_provider_help:
+      "Kredinin bankasını seç. Listede yoksa Başka banka seçeneğiyle adını ve internet adresini girebilirsin.",
+    spending_bill_amount_pending: "Tutar bekleniyor",
+    spending_bill_unpaid: "Ödenecek",
+    spending_bills_amounts_pending:
+      "{{count}} faturanın tutarı henüz girilmedi; bu faturalar toplama dahil edilmedi.",
     spending_installment_months: "Taksit ayları",
     spending_installment_month_empty: "Bu ay için taksit ödemesi bulunmuyor.",
     dashboard_month_payment_sections: "Bu ayın ödeme bölümleri",
@@ -215,6 +233,24 @@ export const spendingTranslations = {
     spending_show_more: "Daha fazla göster",
   },
   en: {
+    calendar_move_periods: "Which months should this apply to?",
+    calendar_move_periods_single: "Only this payment",
+    calendar_move_periods_future: "{{month}} and later months",
+    calendar_move_periods_past: "{{month}} and earlier months",
+    calendar_move_periods_all: "All months for this expense",
+    calendar_move_periods_help:
+      "Applies the selected day to recorded payments for the same Income/Expense row, using the last day in shorter months. Moving to another month applies the same month offset to other payments. Ledger dates and paid status stay unchanged.",
+    calendar_payments_moved_count: "Updated the calendar dates of {{count}} payments.",
+    spending_provider_group_banks: "Banks",
+    loans_provider_search: "Search banks",
+    loans_provider_search_placeholder: "e.g. Enpara, Garanti BBVA",
+    loans_provider_custom: "Another bank",
+    loans_provider_help:
+      "Choose the bank for this loan. If it is not listed, use Another bank to enter its name and website.",
+    spending_bill_amount_pending: "Amount pending",
+    spending_bill_unpaid: "To be paid",
+    spending_bills_amounts_pending:
+      "Amounts have not been entered for {{count}} bills; these bills are excluded from the total.",
     spending_installment_months: "Installment months",
     spending_installment_month_empty: "No installment payments for this month.",
     dashboard_month_payment_sections: "This month's payment sections",
@@ -429,6 +465,24 @@ export const spendingTranslations = {
     spending_show_more: "Show more",
   },
   de: {
+    calendar_move_periods: "Für welche Monate anwenden?",
+    calendar_move_periods_single: "Nur diese Zahlung",
+    calendar_move_periods_future: "{{month}} und spätere Monate",
+    calendar_move_periods_past: "{{month}} und frühere Monate",
+    calendar_move_periods_all: "Alle Monate dieser Ausgabe",
+    calendar_move_periods_help:
+      "Wendet den gewählten Tag auf erfasste Zahlungen derselben Einnahmen-/Ausgabenzeile an, bei kürzeren Monaten auf den letzten Tag. Beim Verschieben in einen anderen Monat gilt derselbe Monatsabstand. Tabellendaten und Zahlungsstatus bleiben unverändert.",
+    calendar_payments_moved_count: "Kalenderdaten von {{count}} Zahlungen aktualisiert.",
+    spending_provider_group_banks: "Banken",
+    loans_provider_search: "Bank suchen",
+    loans_provider_search_placeholder: "z. B. Enpara, Garanti BBVA",
+    loans_provider_custom: "Andere Bank",
+    loans_provider_help:
+      "Wähle die Bank für diesen Kredit. Fehlt sie in der Liste, kannst du unter Andere Bank ihren Namen und ihre Website eingeben.",
+    spending_bill_amount_pending: "Betrag ausstehend",
+    spending_bill_unpaid: "Zu bezahlen",
+    spending_bills_amounts_pending:
+      "Für {{count}} Rechnungen fehlt noch der Betrag; diese Rechnungen sind nicht in der Summe enthalten.",
     spending_installment_months: "Ratenmonate",
     spending_installment_month_empty: "Keine Ratenzahlungen für diesen Monat.",
     dashboard_month_payment_sections: "Zahlungsbereiche dieses Monats",

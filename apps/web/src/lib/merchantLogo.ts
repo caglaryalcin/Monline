@@ -1,6 +1,7 @@
 // Match only known brand words in statement descriptors. Never guess a domain
 // from a private person's name, an account number or an arbitrary merchant.
 import { BILL_PROVIDER_CATALOG, findBillProvider } from "./billProviders";
+import type { FinanceRow } from "./finance";
 const MERCHANTS: [RegExp, string, string][] = [
   [/\bboyner\b/, "boyner.com.tr", "boyner"],
   [/\b(?:bedas|bogazici elektrik dagitim)\b/, "bedas.com.tr", "bedas"],
@@ -52,6 +53,26 @@ export interface MerchantLogoChoice {
 export interface MerchantLogoTarget {
   month?: string;
   rowId?: string;
+}
+export interface MerchantProviderTarget {
+  name: string;
+  rowId: string;
+  month?: string;
+  year?: number;
+  providerKind?: "loan";
+}
+export function financeProviderTarget(
+  row: FinanceRow | undefined,
+  year: number,
+  month?: number,
+): MerchantProviderTarget | null {
+  if (row?.kind !== "expense" || (!row.bill_type && !row.is_loan)) return null;
+  return {
+    name: row.name,
+    rowId: row.origin_row || row.id,
+    ...(month == null ? { year } : { month: `${year}-${String(month).padStart(2, "0")}` }),
+    ...(row.is_loan ? { providerKind: "loan" as const } : {}),
+  };
 }
 export function resolveMerchantLogo(choices: MerchantLogoChoice[], name: string, target: MerchantLogoTarget = {}) {
   const key = merchantLogoKey(name);

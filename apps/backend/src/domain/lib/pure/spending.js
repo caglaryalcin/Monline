@@ -71,6 +71,7 @@ function spendingData(data, { trackingOnly = false } = {}) {
     .sort()
     .reverse();
   const events = [],
+    pendingBills = [],
     installments = [],
     issues = [],
     unmatchedInstallments = [];
@@ -235,11 +236,18 @@ function spendingData(data, { trackingOnly = false } = {}) {
   }
   for (const entry of data.finance_entries) {
     const row = rows.get(entry.row_id);
+    const amountPending =
+      entry.amount === 0 &&
+      entry.status === "planned" &&
+      !!row?.bill_type &&
+      !row.is_deleted &&
+      row.expense_type !== "credit_card" &&
+      !row.is_auto_carryover;
     if (
       row?.kind !== "expense" ||
       !validDate(entry.date) ||
       !validAmount(entry.amount) ||
-      entry.amount === 0
+      (entry.amount === 0 && !amountPending)
     )
       continue;
     const cardPayment = row.expense_type === "credit_card";
@@ -254,11 +262,14 @@ function spendingData(data, { trackingOnly = false } = {}) {
       ? linksByMonth.get(`${row.id}:${entry.date.slice(0, 7)}`)
       : undefined;
     const statement = link ? statementsById.get(link.statement_id) : undefined;
-    events.push({
+    // Keep bills with an unknown amount available to the bills page without
+    // treating them as zero-cost expenses in charts, calendars or statistics.
+    (amountPending ? pendingBills : events).push({
       id: `ledger:${entry.id}`,
       name: row.name,
       date: entry.date,
       amount: entry.amount,
+      ...(amountPending ? { amount_pending: true } : {}),
       currency: "TRY",
       source: "ledger",
       row_id: row.id,
@@ -327,6 +338,7 @@ function spendingData(data, { trackingOnly = false } = {}) {
     }
     return {
       statement_months: statementMonths,
+      ...(pendingBills.length ? { pending_bills: pendingBills } : {}),
       events: events.filter((event) => !hiddenEvents.has(event.id)),
       installments: installments.filter(
         (plan) => !hiddenStatements.has(plan.statement_id),
@@ -348,6 +360,7 @@ function spendingData(data, { trackingOnly = false } = {}) {
   }
   return {
     statement_months: statementMonths,
+    ...(pendingBills.length ? { pending_bills: pendingBills } : {}),
     events,
     installments,
     issues,

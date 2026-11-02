@@ -30,12 +30,14 @@ export function MerchantProviderDialog({
   month: initialMonth,
   year,
   rowId,
+  providerKind,
   onClose,
 }: {
   name: string;
   month?: string;
   year?: number;
   rowId?: string;
+  providerKind?: "loan";
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -86,6 +88,7 @@ export function MerchantProviderDialog({
   const selectedProvider = BILL_PROVIDER_CATALOG.find((provider) => provider.id === selected);
   const terms = providerSearchText(search).split(" ").filter(Boolean);
   const matches = BILL_PROVIDER_CATALOG.filter((provider) => {
+    if (providerKind === "loan" && provider.group !== "banks") return false;
     const text = providerSearchText(
       [
         provider.name,
@@ -197,7 +200,9 @@ export function MerchantProviderDialog({
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="bill-provider-search">{t("spending_provider_search")}</Label>
+            <Label htmlFor="bill-provider-search">
+              {t(providerKind === "loan" ? "loans_provider_search" : "spending_provider_search")}
+            </Label>
             <Input
               ref={searchInput}
               id="bill-provider-search"
@@ -205,7 +210,11 @@ export function MerchantProviderDialog({
               value={search}
               autoComplete="off"
               aria-controls={terms.length ? "bill-provider-results" : undefined}
-              placeholder={t("spending_provider_search_placeholder")}
+              placeholder={t(
+                providerKind === "loan"
+                  ? "loans_provider_search_placeholder"
+                  : "spending_provider_search_placeholder",
+              )}
               disabled={mutation.isPending}
               onChange={(event) => setSearch(event.target.value)}
               onKeyDown={(event) => {
@@ -288,7 +297,9 @@ export function MerchantProviderDialog({
                   onClick={() => selectProvider("custom")}
                   className="mt-1 w-full rounded-lg border-t px-3 py-2 text-left text-sm text-primary hover:bg-muted focus-visible:bg-muted focus-visible:outline-none disabled:opacity-50"
                 >
-                  {t("spending_provider_custom")}
+                  {t(
+                    providerKind === "loan" ? "loans_provider_custom" : "spending_provider_custom",
+                  )}
                 </button>
               </div>
             )}
@@ -324,10 +335,12 @@ export function MerchantProviderDialog({
                   )
                 );
               })}
-              <option value="custom">{t("spending_provider_custom")}</option>
+              <option value="custom">
+                {t(providerKind === "loan" ? "loans_provider_custom" : "spending_provider_custom")}
+              </option>
             </select>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              {t("spending_provider_area_help")}
+              {t(providerKind === "loan" ? "loans_provider_help" : "spending_provider_area_help")}
             </p>
             {matches.length === 0 && (
               <p className="text-xs text-muted-foreground">{t("spending_provider_no_results")}</p>

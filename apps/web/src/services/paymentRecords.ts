@@ -1,6 +1,8 @@
 import client from "@/lib/client";
 import type { PaymentRecord } from "@/types";
 
+export type CalendarMoveScope = "single" | "future" | "past" | "all";
+
 function paymentBody(data: FormData | Partial<PaymentRecord>) {
   if (data instanceof FormData || !Object.values(data).some((value) => value instanceof Blob))
     return data;
@@ -43,16 +45,20 @@ export const paymentRecordsService = {
     from_date: string;
     to_date: string;
     mode?: "ledger";
+    scope?: CalendarMoveScope;
     expected_source_date?: string;
+    expected_row_id?: string;
     expected_amount?: number;
   }) =>
-    client.send<{ updated: number; payment?: PaymentRecord; ledger_updated?: boolean }>(
-      "/api/calendar/move-payment",
-      {
-        method: "POST",
-        body: data,
-      },
-    ),
+    client.send<{
+      updated: number;
+      payment?: PaymentRecord;
+      ledger_updated?: boolean;
+      scope?: CalendarMoveScope;
+    }>("/api/calendar/move-payment", {
+      method: "POST",
+      body: data,
+    }),
   markUnpaid: (id: string) =>
     client.send<{ updated: number }>(`/api/payments/${encodeURIComponent(id)}/mark-unpaid`, {
       method: "POST",

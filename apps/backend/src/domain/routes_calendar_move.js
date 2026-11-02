@@ -7,6 +7,7 @@ const {
 } = require("../runtime.cjs");
 const { moveCalendarPayment } = require("./lib/calendar-move.js");
 const { moveSourceCalendar } = require("./lib/calendar-placement.js");
+const { CALENDAR_MOVE_SCOPES } = require("./lib/pure/calendar-move-scope.js");
 routerAdd(
   "POST",
   "/api/calendar/move-payment",
@@ -17,7 +18,12 @@ routerAdd(
     if (
       (body.mode !== undefined &&
         !["calendar", "ledger"].includes(body.mode)) ||
-      (body.mode === "ledger" && body.source !== "ledger")
+      (body.mode === "ledger" && body.source !== "ledger") ||
+      (body.scope !== undefined &&
+        !CALENDAR_MOVE_SCOPES.includes(body.scope)) ||
+      (body.scope !== undefined &&
+        body.scope !== "single" &&
+        (body.source !== "ledger" || body.mode === "ledger"))
     )
       throw new BadRequestError("calendar_move_invalid");
     return e.json(
