@@ -10,6 +10,7 @@ import {
   enUS,
   es,
   fr,
+  hu,
   it,
   ja,
   ko,
@@ -31,6 +32,7 @@ import { displayDateInput, isValidISODate, parseDateInput } from "@/lib/dateInpu
 
 const locales = {
   en: enUS,
+  hu,
   bg,
   tr,
   de,
@@ -50,6 +52,7 @@ const locales = {
 };
 const clearLabels: Record<string, string> = {
   en: "Clear",
+  hu: "Törlés",
   tr: "Temizle",
   de: "Leeren",
   pt: "Limpar",

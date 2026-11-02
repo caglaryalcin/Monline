@@ -113,7 +113,7 @@ routerAdd("GET", "/api/calendar/ical", function (e) {
       id: sub.id,
       name: sub.get("name"),
       record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
-      price: sub.get("price"),
+      price: require("./lib/pure/subscription-trial.mjs").subscriptionAmount(sub, nextPayment),
       currencySymbol: currencySymbol,
       nextPayment: nextPayment,
     });
@@ -164,7 +164,7 @@ routerAdd("GET", "/api/calendar/data", (e) => {
     events.push({
       id: sub.id,
       name: sub.get("name"),
-      price: sub.get("price"),
+      price: require("./lib/pure/subscription-trial.mjs").subscriptionAmount(sub, date),
       currency: currencySymbol,
       date,
       logo: sub.get("logo"),

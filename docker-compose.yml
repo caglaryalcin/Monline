@@ -2,7 +2,8 @@ name: monline
 services:
   app:
     build: .
-    image: monline:1.7.1
+    # Public prebuilt Stable image. Use --build to build the checked-out source instead.
+    image: caglaryalcin/monline:latest
     container_name: monline
     restart: unless-stopped
     ports:

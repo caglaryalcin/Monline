@@ -30,6 +30,7 @@ import { ThemedSelect } from "@/components/ui/themed-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import client from "@/lib/client";
+import { numberFormatter } from "@/lib/numberFormat";
 import { queryKeys } from "@/lib/queryKeys";
 import {
   detectStatement,
@@ -152,9 +153,7 @@ function StatementWorkspace({ userId }: { userId: string }) {
         Math.abs(row.amount * 100 - Math.round(row.amount * 100)) < 0.00001,
     );
   const money = (amount: number, currency: string) =>
-    new Intl.NumberFormat(i18n.language.replace("_", "-"), { style: "currency", currency }).format(
-      amount,
-    );
+    numberFormatter({ style: "currency", currency }).format(amount);
   const monthLabel = (value: string) =>
     new Intl.DateTimeFormat(i18n.language.replace("_", "-"), {
       month: "long",

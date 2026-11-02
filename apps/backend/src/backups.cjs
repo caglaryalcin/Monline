@@ -166,12 +166,12 @@ function validateDatabase(file) {
       throw new Error("Invalid database");
     for (const entry of schema) {
       if (
-        entry.name === "sharing_groups" &&
+        ["sharing_groups", "payment_accounts"].includes(entry.name) &&
         !input
           .prepare(
-            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='sharing_groups'",
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
           )
-          .get()
+          .get(entry.name)
       )
         continue;
       const columns = new Set(
@@ -186,9 +186,10 @@ function validateDatabase(file) {
             !columns.has(field.name) &&
             !(
               (entry.name === "users" &&
-                ["disabled", "show_currency_code"].includes(field.name)) ||
+                ["disabled", "show_currency_code", "number_locale"].includes(field.name)) ||
               (entry.name === "payment_records" &&
                 [
+                  "payment_account",
                   "statement_sources",
                   "scheduled_date",
                   "name",
@@ -200,12 +201,13 @@ function validateDatabase(file) {
                 ].includes(field.name)) ||
               (entry.name === "subscriptions" &&
                 [
+                  "payment_account",
                   "sharing",
                   "notification_reminders",
                   "statement_imported",
                   "calendar_history_recovery_passes",
                   "calendar_projection_hidden",
-                  "calendar_projection_from",
+                  "calendar_projection_from", "trial_months", "trial_start_date",
                 ].includes(field.name)) ||
               (entry.name === "notifications_config" && field.name === "delivery_settings") ||
               (["payment_methods", "household"].includes(entry.name) &&
@@ -243,7 +245,7 @@ function replaceDatabase(repository, input) {
       .map((field) => field.name)
       .filter((name) => sourceColumns.has(name));
     repository.connection.exec(`DELETE FROM ${identifier(entry.name)}`);
-    if (!sourceColumns.size && entry.name === "sharing_groups") continue;
+    if (!sourceColumns.size && ["sharing_groups", "payment_accounts"].includes(entry.name)) continue;
     const insert = repository.connection.prepare(
       `INSERT INTO ${identifier(entry.name)} (${fields.map(identifier)}) VALUES (${fields.map(() => "?")})`,
     );

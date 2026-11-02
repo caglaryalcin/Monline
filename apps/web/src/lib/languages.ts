@@ -16,6 +16,7 @@ export const SUPPORTED_LANGUAGES = [
   { code: "cs", name: "Čeština" },
   { code: "da", name: "Dansk" },
   { code: "bg", name: "Български" },
+  { code: "hu", name: "Magyar" },
 ];
 
 export function notificationLanguage(language?: string): string {

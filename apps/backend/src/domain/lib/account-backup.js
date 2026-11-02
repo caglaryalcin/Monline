@@ -3,6 +3,7 @@ const { Record, security, files: fileHelpers } = require("../../runtime.cjs");
 const PROFILE = [
   "name",
   "language",
+  "number_locale",
   "main_currency",
   "dark_theme_mode",
   "color_theme",
@@ -36,11 +37,14 @@ const PROFILE = [
 const FIELDS = {
   categories: ["name", "color", "order", "translation_key"],
   currencies: ["code", "name", "symbol", "rate", "is_main"],
+  payment_accounts: ["name"],
   payment_methods: ["name", "icon", "order", "is_main"],
   household: ["name", "is_main"],
   subscriptions: [
     "name",
     "price",
+    "trial_months",
+    "trial_start_date",
     "currency",
     "cycle",
     "frequency",
@@ -50,6 +54,7 @@ const FIELDS = {
     "calendar_projection_from",
     "category",
     "payment_method",
+    "payment_account",
     "payer",
     "replacement_subscription",
     "next_payment",
@@ -76,6 +81,7 @@ const FIELDS = {
     "logo",
     "category",
     "payment_method",
+    "payment_account",
     "payer",
     "statement_sources",
     "subscription_id",
@@ -137,6 +143,7 @@ const RELATIONS = {
   currency: "currencies",
   category: "categories",
   payment_method: "payment_methods",
+  payment_account: "payment_accounts",
   payer: "household",
   subscription_id: "subscriptions",
   replacement_subscription: "subscriptions",
@@ -239,6 +246,7 @@ function validateBackup(backup) {
     !Array.isArray(backup.files)
   )
     throw new Error("transfer_invalid_backup");
+  if (backup.data.payment_accounts === undefined) backup.data.payment_accounts = [];
   let count = 0;
   if (backup.data.bank_statements === undefined)
     backup.data.bank_statements = [];
@@ -386,7 +394,7 @@ function importAccount(
         if (!sameOwner(name, record)) record = null;
         if (
           !record &&
-          ["categories", "household", "payment_methods", "currencies"].includes(
+          ["categories", "household", "payment_methods", "payment_accounts", "currencies"].includes(
             name,
           )
         ) {

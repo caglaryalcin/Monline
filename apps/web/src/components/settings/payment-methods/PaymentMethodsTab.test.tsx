@@ -3,6 +3,8 @@ import { flushSync } from "react-dom";
 
 import { PaymentMethodsTab } from "./PaymentMethodsTab";
 
+vi.mock("@/components/settings/payment-methods/PaymentAccountsSection", () => ({ PaymentAccountsSection: () => null }));
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (k: string) => k }),
 }));

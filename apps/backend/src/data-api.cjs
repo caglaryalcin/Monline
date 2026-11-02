@@ -17,6 +17,7 @@ const writable = new Set([
   "currencies",
   "household",
   "payment_methods",
+  "payment_accounts",
   "subscriptions",
   "notifications_config",
   "payment_records",

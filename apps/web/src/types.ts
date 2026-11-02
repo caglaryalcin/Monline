@@ -7,6 +7,7 @@ export interface User {
   name: string;
   avatar?: string;
   language?: string;
+  number_locale?: string;
   main_currency?: string;
   totp_enabled?: boolean;
   totp_configured?: boolean;
@@ -46,11 +47,13 @@ export interface PaymentRecord {
   logo?: string;
   category?: string;
   payment_method?: string;
+  payment_account?: string;
   payer?: string;
   expand?: {
     currency?: Currency;
     category?: Category;
     payment_method?: PaymentMethod;
+    payment_account?: PaymentAccount;
     payer?: Household;
   };
   user: string;
@@ -134,6 +137,8 @@ export interface Subscription {
   name: string;
   logo?: string;
   price: number;
+  trial_months?: number;
+  trial_start_date?: string;
   currency: string;
   frequency: number;
   cycle: string;
@@ -143,6 +148,7 @@ export interface Subscription {
   /** Has been linked to an imported bank statement. */
   statement_imported?: boolean;
   payment_method?: string;
+  payment_account?: string;
   payer?: string;
   category?: string;
   notes?: string;
@@ -170,6 +176,7 @@ export interface Subscription {
     cycle?: Cycle;
     category?: Category;
     payment_method?: PaymentMethod;
+    payment_account?: PaymentAccount;
     payer?: Household;
   };
 }
@@ -374,3 +381,5 @@ export type FilterState = {
 };
 
 export type SettingsSearch = { tab?: string };
+
+export interface PaymentAccount { id: string; name: string; user: string; }

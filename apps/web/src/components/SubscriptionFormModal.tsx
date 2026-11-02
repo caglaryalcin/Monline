@@ -45,6 +45,7 @@ import { compressImage } from "@/lib/image";
 import { ONE_TIME_CYCLE } from "@/lib/recordTypes";
 import { automaticStartDate, nextPaymentDate } from "@/lib/subscriptionStartDate";
 import { toast } from "@/lib/toast";
+import { paymentAccountsService } from "@/services/paymentAccounts";
 import { sharingKeys, sharingService } from "@/services/sharing";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Category, Currency, Household, PaymentMethod, Subscription } from "@/types";
@@ -82,6 +83,11 @@ export function SubscriptionFormModal({
     staleTime: 0,
     refetchOnWindowFocus: "always",
   });
+  const accountsQuery = useQuery({
+    queryKey: ["payment_accounts", userId],
+    queryFn: () => paymentAccountsService.list(userId),
+    enabled: !sub?.is_shared,
+  });
   const confirmedPayers = household.filter((person) => person.account_confirmed);
   const additionalPayers = (sharedPayers.data ?? []).filter(
     (payer) => !confirmedPayers.some((person) => person.id === payer.value),
@@ -106,6 +112,7 @@ export function SubscriptionFormModal({
   const watchedNotify = watch("notify");
   const notificationMode = watch("notification_mode");
   const watchedInactive = watch("inactive");
+  const watchedTrial = watch("trial_enabled");
   const watchedName = watch("name");
   const logo = useLogoSearch(watchedName || "", !!sub?.logo);
   const watchedEndMode = watch("end_mode");
@@ -113,7 +120,7 @@ export function SubscriptionFormModal({
   // records when editing so an unrelated change never converts their history.
   const isCredit = sub?.record_type === "credit";
   const isPaid = !sub && !isCredit && watch("payment_status") === "paid";
-  const dateLabel = t(isCredit ? "received_on" : isPaid ? "historical_paid_date" : "next_payment");
+  const dateLabel = t(isCredit ? "received_on" : isPaid ? "historical_paid_date" : watchedTrial && !sub ? "trial_start_date" : "next_payment");
   const isFiniteSchedule = !isCredit && watchedEndMode !== "never";
   const oneTimeCycle = cycles.find((cycle) => cycle.name === ONE_TIME_CYCLE);
   const recurringCycles = cycles.filter((cycle) => cycle.name !== ONE_TIME_CYCLE);
@@ -160,6 +167,8 @@ export function SubscriptionFormModal({
         record_type: isCredit ? "credit" : "expense",
         name: data.name,
         price: data.price,
+        trial_months: !isCredit && data.trial_enabled ? Number(data.trial_months) : 0,
+        trial_start_date: !isCredit && data.trial_enabled ? (!sub ? data.next_payment : data.trial_start_date) : "",
         currency: data.currency,
         frequency: isCredit ? 1 : parseInt(data.frequency),
         cycle: isCredit && oneTimeCycle ? oneTimeCycle.id : data.cycle,
@@ -167,7 +176,7 @@ export function SubscriptionFormModal({
         ...(!sub
           ? {
               start_date:
-                backfill.input && backfill.startDate
+                data.trial_enabled ? data.next_payment : backfill.input && backfill.startDate
                   ? backfill.startDate
                   : automaticStartDate(
                       data.next_payment,
@@ -177,6 +186,7 @@ export function SubscriptionFormModal({
             }
           : {}),
         payment_method: data.payment_method || null,
+        ...(!sub?.is_shared ? { payment_account: data.payment_account || "" } : {}),
         payer: data.payer || null,
         category: data.category || null,
         notes: data.notes,
@@ -344,7 +354,7 @@ export function SubscriptionFormModal({
             {/* Price + Currency */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="subscription-price">{t("price")} *</Label>
+                <Label htmlFor="subscription-price">{t(watchedTrial ? "trial_regular_price" : "price")} *</Label>
                 <Controller
                   name="price"
                   control={control}
@@ -392,6 +402,58 @@ export function SubscriptionFormModal({
                 {renderError("currency")}
               </div>
             </div>
+
+            {!isCredit && (
+              <div className="space-y-3 rounded-xl border bg-muted/20 p-3">
+                <div className="flex items-center gap-2">
+                  <Controller
+                    name="trial_enabled"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        id="subscription-trial-enabled"
+                        type="checkbox"
+                        className="h-4 w-4 shrink-0 accent-primary"
+                        name={field.name}
+                        ref={field.ref}
+                        onBlur={field.onBlur}
+                        checked={field.value}
+                        onChange={(event) => {
+                          const checked = event.target.checked;
+                          field.onChange(checked);
+                          if (checked === true && !sub) {
+                            setValue("next_payment", localToday(), { shouldValidate: true });
+                            setValue("trial_start_date", localToday());
+                            setValue("payment_status", "unpaid");
+                          }
+                        }}
+                      />
+                    )}
+                  />
+                  <Label htmlFor="subscription-trial-enabled">{t("trial_period")}</Label>
+                  <InfoButton title={t("trial_period")}>{t("trial_period_help")}</InfoButton>
+                </div>
+                {watchedTrial && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Label htmlFor="subscription-trial-months">{t("trial_months")}</Label>
+                    <Input
+                      id="subscription-trial-months"
+                      type="number"
+                      min="1"
+                      max="120"
+                      step="1"
+                      className="w-24"
+                      {...register("trial_months")}
+                      {...invalidProps("trial_months")}
+                    />
+                    <p className="basis-full text-xs text-muted-foreground">
+                      {t("trial_amount_hint", { count: Number(watch("trial_months")) || 1, currency: selectedCurrency?.code || selectedCurrency?.symbol || "" })}
+                    </p>
+                    {renderError("trial_months")}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Billing period: preset or custom frequency + cycle */}
             {!isCredit ? (
@@ -720,6 +782,25 @@ export function SubscriptionFormModal({
               />
             </div>
 
+            {!sub?.is_shared && (
+              <div className="space-y-2">
+                <Label htmlFor="subscription-payment-account">{t("payment_account")}</Label>
+                <Controller name="payment_account" control={control} render={({ field }) => (
+                  <Select value={field.value || "none"} onValueChange={value => field.onChange(value === "none" ? "" : value)} disabled={accountsQuery.isPending || accountsQuery.isError}>
+                    <SelectTrigger id="subscription-payment-account"><SelectValue placeholder={t("optional")} /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{t("optional")}</SelectItem>
+                      {(accountsQuery.data ?? []).map(account => <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )} />
+                <p className="text-xs text-muted-foreground">{t("payment_accounts_manage_hint")}</p>
+                {accountsQuery.isError && <p role="alert" className="text-xs text-destructive">{t("error")}</p>}
+              </div>
+            )}
+            {isPaid && watch("auto_mark_paid") && watch("auto_renew") && (
+              <p className="text-xs text-muted-foreground">{t("historical_auto_fill_help")}</p>
+            )}
             {/* Notes */}
             <div className="space-y-2">
               <Label>{t("notes")}</Label>
@@ -884,6 +965,8 @@ export function SubscriptionFormModal({
                 cycle={watchedCycleName || ""}
                 frequency={watchedFrequency}
                 price={watch("price")}
+                trialMonths={watchedTrial ? Number(watch("trial_months")) : 0}
+                trialStartDate={!sub ? watch("next_payment") : watch("trial_start_date")}
                 currency={selectedCurrency}
                 end={
                   [

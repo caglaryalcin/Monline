@@ -4,6 +4,7 @@ import type { Category, Currency, Household, PaymentMethod, Subscription } from 
 
 const mocks = vi.hoisted(() => ({
   useQuery: vi.fn(),
+  accounts: [] as Array<{id: string; name: string}>,
   compressImage: vi.fn(),
   createSubscription: vi.fn(),
   updateSubscription: vi.fn(),
@@ -22,7 +23,7 @@ vi.mock("react-i18next", () => ({
 }));
 
 vi.mock("@tanstack/react-query", () => ({
-  useQuery: mocks.useQuery,
+  useQuery: (options: {queryKey: unknown[]}) => options.queryKey[0] === "payment_accounts" ? {data:mocks.accounts} : mocks.useQuery(options),
 }));
 
 vi.mock("@/contexts/AuthContext", () => ({
@@ -214,6 +215,7 @@ function getSubscription(overrides: Partial<Subscription> = {}): Subscription {
 describe("SubscriptionFormModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.accounts = [];
     mocks.useQuery.mockReturnValue({
       data: [
         { id: "monthly", name: "Monthly" },
@@ -233,6 +235,18 @@ describe("SubscriptionFormModal", () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it.each([false, true])("persists a selected payment account separately from the payer (logo: %s)", async withLogo => {
+    mocks.accounts = [{id:"joint",name:"Joint bank account"}];
+    const {container} = render(<SubscriptionFormModal sub={getSubscription()} userId="user-1" currencies={[getCurrency()]} categories={[getCategory()]} household={[getHousehold()]} paymentMethods={[getPaymentMethod()]} onClose={vi.fn()} onSaved={vi.fn()} />);
+    fireEvent.click(screen.getByTestId("select-item-joint"));
+    if (withLogo) fireEvent.change(container.querySelector('input[type="file"]')!,{target:{files:[new File(["image"],"logo.png",{type:"image/png"})]}});
+    fireEvent.click(screen.getByRole("button",{name:"save"}));
+    await waitFor(()=>expect(mocks.updateSubscription).toHaveBeenCalled());
+    const body = mocks.updateSubscription.mock.calls[0][1];
+    expect(body instanceof FormData ? body.get("payment_account") : body.payment_account).toBe("joint");
+    expect(body instanceof FormData ? body.get("payer") : body.payer).toBe("hh-1");
   });
 
   it.each([false, true])("preserves custom reminders and clears overrides on default (logo: %s)", async (withLogo) => {
@@ -507,7 +521,7 @@ describe("SubscriptionFormModal", () => {
         });
         fireEvent.change(screen.getByLabelText("currency-input"), { target: { value: "25" } });
       }
-      const switches = screen.getAllByRole("checkbox");
+      const switches = [screen.getByRole("checkbox", { name: "auto_renew" }), screen.getByRole("checkbox", { name: "notify" }), screen.getByRole("checkbox", { name: "inactive" })];
       expect(switches[0]).toBeChecked();
       fireEvent.click(screen.getByText("inactive", { selector: "label" }));
       expect(switches[2]).toBeChecked();
@@ -642,8 +656,8 @@ describe("SubscriptionFormModal", () => {
     fireEvent.change(screen.getByLabelText("currency-input"), {
       target: { value: "20" },
     });
-    fireEvent.click(screen.getAllByRole("checkbox")[1]);
-    fireEvent.click(screen.getAllByRole("checkbox")[2]);
+    fireEvent.click(screen.getByRole("checkbox", { name: "notify" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "inactive" }));
     if (screen.queryByTestId("select-item-cat-1"))
       fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
@@ -1338,9 +1352,9 @@ describe("SubscriptionFormModal", () => {
         onSaved={vi.fn()}
       />,
     );
-    // Checkboxes: [auto_renew(0), notify(1), inactive(2)]
+    // Select the notification control by its accessible name.
     // Toggle notify on
-    fireEvent.click(screen.getAllByRole("checkbox")[1]);
+    fireEvent.click(screen.getByRole("checkbox", { name: "notify" }));
     expect(screen.getByText("subscription_notification_schedule")).toBeInTheDocument();
   });
 

@@ -8,6 +8,7 @@ import type {
   StatisticsPieDatum,
 } from "@/components/statistics/statistics.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { numberFormatter } from "@/lib/numberFormat";
 import { cn, formatPrice } from "@/lib/utils";
 
 interface StatisticsBreakdownCardProps {
@@ -58,7 +59,10 @@ export function StatisticsBreakdownCard({
                   {formatPrice(item.value, mainSymbol, { currencyCode: mainCode })}
                 </span>
                 <span className="rounded-lg bg-muted/50 px-2 py-0.5 text-sm font-medium text-muted-foreground">
-                  {totalMonthly > 0 ? ((item.value / totalMonthly) * 100).toFixed(1) : 0}%
+                  {numberFormatter({ minimumFractionDigits: totalMonthly > 0 ? 1 : 0, maximumFractionDigits: 1 }).format(
+                    totalMonthly > 0 ? (item.value / totalMonthly) * 100 : 0,
+                  )}
+                  %
                 </span>
                 {isExpandable ? (
                   <ChevronDown

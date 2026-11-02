@@ -338,6 +338,10 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
       rec.set("user", userId);
       rec.set("name", name);
       rec.set("price", price);
+      if (!isWallos) {
+        rec.set("trial_months", sub.trial_months || 0);
+        rec.set("trial_start_date", sub.trial_start_date || "");
+      }
       rec.set("frequency", frequency);
       rec.set("next_payment", nextPayment);
       rec.set("auto_renew", autoRenew);
@@ -359,6 +363,8 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
       if (categoryId) rec.set("category", categoryId);
       if (paymentMethodId) rec.set("payment_method", paymentMethodId);
       if (payerId) rec.set("payer", payerId);
+      if (!isWallos && typeof sub.payment_account === "string" && sub.payment_account.trim())
+        rec.set("payment_account", findOrCreate("payment_accounts", "user = {:u} && name = {:n}", {u:userId,n:sub.payment_account.trim()}, {user:userId,name:sub.payment_account.trim()}));
       const policyError = recordTypeHelpers.applyRecordTypeToRecord(
         repository,
         rec,
@@ -414,6 +420,8 @@ routerAdd("POST", "/api/subscription/clone", (e) => {
   const fieldsToCopy = [
     "name",
     "price",
+    "trial_months",
+    "trial_start_date",
     "record_type",
     "frequency",
     "next_payment",
@@ -431,6 +439,7 @@ routerAdd("POST", "/api/subscription/clone", (e) => {
     "payment_limit",
     "auto_mark_paid",
     "payment_method",
+    "payment_account",
     "payer",
     "category",
     "user",
@@ -612,6 +621,8 @@ routerAdd("GET", "/api/subscriptions/export", (e) => {
       name: sub.get("name"),
       record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
       price: sub.get("price"),
+      trial_months: sub.get("trial_months"),
+      trial_start_date: sub.get("trial_start_date"),
       currency: currencyCode,
       currency_symbol: currencySymbol,
       cycle: cycleName,
@@ -620,6 +631,7 @@ routerAdd("GET", "/api/subscriptions/export", (e) => {
       start_date: sub.get("start_date"),
       category: categoryName,
       payment_method: paymentName,
+      payment_account: (() => { try { return repository.findRecordById("payment_accounts", sub.getString("payment_account")).getString("name"); } catch { return ""; } })(),
       payer: payerName,
       auto_renew: sub.get("auto_renew"),
       inactive: sub.get("inactive"),

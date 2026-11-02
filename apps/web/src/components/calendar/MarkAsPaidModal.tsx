@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { editablePaymentNotes } from "@/lib/paymentNotes";
+import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import { toast } from "@/lib/toast";
 import { formatDate, formatPrice } from "@/lib/utils";
 import { paymentRecordsService } from "@/services/paymentRecords";
@@ -43,7 +44,7 @@ export function MarkAsPaidModal({
   const editing = mode === "edit" || alreadyPaid;
 
   const [amount, setAmount] = useState(
-    existingRecord?.amount != null ? String(existingRecord.amount) : String(sub.price),
+    existingRecord?.amount != null ? String(existingRecord.amount) : String(subscriptionAmount(sub, dueDate)),
   );
   const [notes, setNotes] = useState(editablePaymentNotes(existingRecord?.notes));
   const [proofFile, setProofFile] = useState<File | null>(null);
@@ -58,7 +59,7 @@ export function MarkAsPaidModal({
         due_date: dueDate,
         paid_at: editing ? (existingRecord?.paid_at ?? "") : new Date().toISOString(),
         auto_paid: editing ? (existingRecord?.auto_paid ?? false) : false,
-        amount: Number.isFinite(parseFloat(amount)) ? parseFloat(amount) : sub.price,
+        amount: Number.isFinite(parseFloat(amount)) ? parseFloat(amount) : subscriptionAmount(sub, dueDate),
         notes,
         name: existingRecord?.name || sub.name,
         currency: existingRecord?.currency || sub.currency,
@@ -125,7 +126,7 @@ export function MarkAsPaidModal({
             </div>
 
             <Badge variant="outline" className="shrink-0">
-              {formatPrice(existingRecord?.amount ?? sub.price, cur?.symbol ?? "$", {
+              {formatPrice(existingRecord?.amount ?? subscriptionAmount(sub, dueDate), cur?.symbol ?? "$", {
                 currencyCode: cur?.code,
               })}
             </Badge>

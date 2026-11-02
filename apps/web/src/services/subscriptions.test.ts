@@ -54,7 +54,7 @@ describe("subscriptionsService", () => {
 
     expect(getFullList).toHaveBeenNthCalledWith(1, {
       filter: "filter:all:user-1",
-      expand: "currency,cycle,category,payment_method,payer",
+      expand: "currency,cycle,category,payment_method,payer,payment_account",
     });
     expect(getFullList).toHaveBeenNthCalledWith(2, {
       filter: "filter:active:user-1",
@@ -62,7 +62,7 @@ describe("subscriptionsService", () => {
     });
     expect(getFullList).toHaveBeenNthCalledWith(3, {
       filter: "filter:active-expanded:user-1",
-      expand: "currency,cycle,category,payment_method,payer",
+      expand: "currency,cycle,category,payment_method,payer,payment_account",
     });
   });
 

@@ -37,7 +37,10 @@ function advanceSubscription(app, subscriptionId, today, advance = true) {
       paymentLimit: sub.get("payment_limit"),
       paymentsCompleted: sub.get("payments_completed"),
       inactive: sub.get("inactive"),
-      advanceDate,
+      advanceDate: (date, cycle, frequency, day) => {
+        const trial = require("./pure/subscription-trial.mjs").nextTrialPaymentDate(sub, date.toISOString().slice(0, 10), day);
+        return trial ? new Date(trial + "T00:00:00Z") : advanceDate(date, cycle, frequency, day);
+      },
       onOccurrence: (date) => {
         if (!start || date >= start)
           saveScheduledPayment(tx, sub, date, markPaid);

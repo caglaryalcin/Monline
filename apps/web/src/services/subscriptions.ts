@@ -2,7 +2,7 @@ import { api } from "@/lib/api";
 import client from "@/lib/client";
 import type { Subscription } from "@/types";
 
-const FULL_EXPAND = "currency,cycle,category,payment_method,payer";
+const FULL_EXPAND = "currency,cycle,category,payment_method,payer,payment_account";
 
 export const subscriptionsService = {
   deleteAll: () =>

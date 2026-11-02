@@ -32,6 +32,7 @@ import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { isCredit } from "@/lib/recordTypes";
 import { automaticStartDate } from "@/lib/subscriptionStartDate";
+import { isTrialDate, subscriptionAmount } from "@/lib/subscriptionTrial";
 import {
   cn,
   daysUntil,
@@ -368,6 +369,7 @@ export function SubscriptionCard({
   const periodLabel = formatBillingPeriod(t, cycleName, sub.frequency || 1);
   const category = sub.expand?.category;
   const payer = sub.expand?.payer;
+  const paymentAccount = sub.expand?.payment_account;
   const payerLabel = payer?.name.trim().replace(/\s+(\S)\S*$/u, " $1.");
   const paymentMethod = sub.inactive ? undefined : sub.expand?.payment_method;
   const credit = isCredit(sub);
@@ -382,9 +384,10 @@ export function SubscriptionCard({
   );
   const recurring = !credit && cycleName !== "One-Time";
   const normalizePeriod = recurring && priceDisplay !== "billing";
+  const currentPrice = subscriptionAmount(sub);
   const rawPrice = normalizePeriod
-    ? toMonthly(sub.price, cycleName, sub.frequency || 1) * (priceDisplay === "yearly" ? 12 : 1)
-    : sub.price;
+    ? toMonthly(currentPrice, cycleName, sub.frequency || 1) * (priceDisplay === "yearly" ? 12 : 1)
+    : currentPrice;
   const displayPeriod = !recurring
     ? t("one_time")
     : normalizePeriod
@@ -400,7 +403,7 @@ export function SubscriptionCard({
         (sub.frequency || 1) !== 1));
   const originalPriceDetails = showOriginalPrice ? (
     <p className="mt-1 truncate text-xs tabular-nums text-muted-foreground">
-      {formatPrice(sub.price, currency?.symbol ?? symbol, {
+      {formatPrice(currentPrice, currency?.symbol ?? symbol, {
         currencyCode: currency?.code,
         showCurrencyCode,
       })}
@@ -491,7 +494,9 @@ export function SubscriptionCard({
               <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 {displayPeriod}
               </p>
+              {paymentAccount && <span className="block truncate text-xs text-muted-foreground" title={paymentAccount.name}>{paymentAccount.name}</span>}
               {originalPriceDetails}
+              {isTrialDate(sub) && <Badge variant="secondary" className="mt-1 text-[10px]">{t("trial_period")}</Badge>}
             </div>
             {statusToggle && <div className="shrink-0 pt-0.5">{statusToggle}</div>}
           </div>
@@ -681,6 +686,7 @@ export function SubscriptionCard({
               </span>
             )}
             {originalPriceDetails}
+              {isTrialDate(sub) && <Badge variant="secondary" className="mt-1 text-[10px]">{t("trial_period")}</Badge>}
           </div>
         </div>
 

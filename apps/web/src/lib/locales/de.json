@@ -1,4 +1,11 @@
 {
+  "payment_account": "Zahlungskonto",
+  "payment_accounts": "Zahlungskonten",
+  "payment_account_name": "Kontoname",
+  "payment_accounts_help": "Persönliche oder gemeinsame Bankkonten hinzufügen und pro Abonnement auswählen.",
+  "payment_accounts_manage_hint": "Konten unter Einstellungen → Zahlungsmethoden → Zahlungskonten verwalten.",
+  "payment_account_delete_help": "Zahlungskonto löschen? Verknüpfte Abonnements und Zahlungen bleiben ohne Kontozuordnung erhalten.",
+  "historical_auto_fill_help": "Bezahlt mit automatischer Zahlung und Verlängerung erfasst alle vergangenen Fälligkeiten als bezahlt und setzt die nächste Zahlung in die Zukunft.",
   "subscription_payments_awaiting": "Bestätigung ausstehend",
   "payment_confirmation_pending": "Zahlungsbestätigung ausstehend",
   "calendar_existing_periods_hint": "Vorhandene Periodeneinträge werden übersprungen und ihre Beträge bleiben unverändert. Hinzugefügte Perioden werden nicht automatisch als bezahlt markiert.",
@@ -1236,5 +1243,17 @@
   "sharing_payer_hint": "Zahler für die nächsten Zahlungen dieses Abonnements auswählen.",
   "sharing_payers_load_error": "Zahler konnten nicht geladen werden. Bearbeitungsdialog erneut öffnen.",
   "sharing_invalid_payer": "Gültigen Zahler auswählen. Bei geänderten Zugriffsrechten die Liste aktualisieren.",
-  "system_smtp_title": "System-Konto-E-Mails (SMTP)"
+  "system_smtp_title": "System-Konto-E-Mails (SMTP)",
+  "trial_period": "Kostenlose Testphase",
+  "trial_months": "Testdauer (Monate)",
+  "trial_regular_price": "Preis nach der Testphase",
+  "trial_start_date": "Beginn der Testphase",
+  "trial_period_help": "Der Startmonat zählt zur Testphase. In jedem Testmonat wird eine Zahlung von 0 in der gewählten Währung angezeigt. Danach gelten der reguläre Zahlungszyklus und Preis.",
+  "trial_amount_hint": "{{count}} Testmonate mit 0 {{currency}}, einschließlich des Startmonats. Danach gilt der reguläre Preis.",
+  "trial_months_invalid": "Wählen Sie eine ganze Monatszahl zwischen 1 und 120.",
+  "trial_start_invalid": "Wählen Sie ein gültiges Startdatum der Testphase.",
+  "number_format": "Zahlenformat",
+  "number_format_browser": "Browsereinstellung",
+  "number_format_help": "Wählen Sie Dezimal- und Tausendertrennzeichen unabhängig von der Sprache der Oberfläche. Diese Einstellung wird für Ihr Konto gespeichert.",
+  "number_format_invalid": "Wählen Sie ein gültiges Zahlenformat."
 }

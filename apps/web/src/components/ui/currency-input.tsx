@@ -1,12 +1,15 @@
 import {
   type AriaAttributes,
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useRef,
   useState,
 } from "react";
 
+import { useNumberLocale } from "@/hooks/useNumberLocale";
+import { formatNumber, parseNumberInput } from "@/lib/numberFormat";
 import { cn, getCurrencyFractionDigits } from "@/lib/utils";
 
 interface CurrencyInputProps {
@@ -23,26 +26,6 @@ interface CurrencyInputProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
-}
-
-function formatNumber(val: number, code?: string): string {
-  if (!Number.isFinite(val)) return "";
-  const fractionDigits = getCurrencyFractionDigits(code);
-  return new Intl.NumberFormat(undefined, {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
-  }).format(val);
-}
-
-function parseRaw(raw: string): number {
-  // Allow both . and , as decimal separator; strip thousands separators
-  const cleaned = raw
-    .replace(/[^\d.,]/g, "")
-    // If both . and , exist, the last one is the decimal separator
-    .replace(/[.,](?=.*[.,])/g, ""); // remove all but last separator
-  const normalized = cleaned.replace(",", ".");
-  const num = parseFloat(normalized);
-  return isNaN(num) ? 0 : num;
 }
 
 export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
@@ -64,56 +47,83 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
     },
     ref,
   ) {
+    const locale = useNumberLocale();
+    const formatRaw = useCallback(
+      (value: number) =>
+        formatNumber(value, { useGrouping: false, maximumFractionDigits: 20 }, locale),
+      [locale],
+    );
     const numeric = typeof value === "string" ? parseFloat(value) || 0 : (value ?? 0);
     // Forms can distinguish a missing amount from an explicitly entered zero.
-    const hasValue = numeric > 0 || (!!onEmpty && value !== null && value !== "");
+    const hasValue =
+      Number.isFinite(numeric) && (numeric !== 0 || (!!onEmpty && value !== null && value !== ""));
     const [focused, setFocused] = useState(false);
-    const [raw, setRaw] = useState(hasValue ? String(numeric) : "");
+    const [raw, setRaw] = useState(hasValue ? formatRaw(numeric) : "");
+    const editingLocale = useRef(locale);
     const inputRef = useRef<HTMLInputElement>(null);
     useImperativeHandle(ref, () => inputRef.current!);
 
     // Sync raw when value changes externally (e.g. form reset)
     useEffect(() => {
       if (!focused) {
-        setRaw(hasValue ? String(numeric) : "");
+        setRaw(hasValue ? formatRaw(numeric) : "");
       }
-    }, [numeric, focused, hasValue]);
+    }, [numeric, focused, hasValue, formatRaw]);
 
     const handleFocus = () => {
+      editingLocale.current = locale;
       setFocused(true);
-      setRaw(hasValue ? String(numeric) : "");
+      setRaw(hasValue ? formatRaw(numeric) : "");
       // Select all on focus for easy replacement
       setTimeout(() => inputRef.current?.select(), 0);
     };
 
     const handleBlur = () => {
       setFocused(false);
-      if (onEmpty && !/\d/.test(raw)) {
+      if (onEmpty && !/\p{Nd}/u.test(raw)) {
         onEmpty();
         setRaw("");
         onBlur?.();
         return;
       }
-      const parsed = parseRaw(raw);
+      const parsed = parseNumberInput(raw, editingLocale.current);
       onChange(parsed);
-      setRaw(parsed > 0 || onEmpty ? String(parsed) : "");
+      setRaw(parsed > 0 || onEmpty ? formatRaw(parsed) : "");
       onBlur?.();
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const str = e.target.value;
       setRaw(str);
-      if (onEmpty && !/\d/.test(str)) {
+      if (onEmpty && !/\p{Nd}/u.test(str)) {
         onEmpty();
         return;
       }
-      const parsed = parseRaw(str);
+      const parsed = parseNumberInput(str, focused ? editingLocale.current : locale);
       onChange(parsed);
     };
 
     const fractionDigits = getCurrencyFractionDigits(code);
-    const displayValue = focused ? raw : hasValue ? formatNumber(numeric, code) : "";
-    const resolvedPlaceholder = placeholder ?? (fractionDigits === 0 ? "0" : "0,00");
+    const displayValue = focused
+      ? raw
+      : hasValue
+        ? formatNumber(
+            numeric,
+            { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits },
+            locale,
+          )
+        : "";
+    const resolvedPlaceholder =
+      placeholder ??
+      formatNumber(
+        0,
+        {
+          useGrouping: false,
+          minimumFractionDigits: fractionDigits,
+          maximumFractionDigits: fractionDigits,
+        },
+        locale,
+      );
 
     return (
       <div

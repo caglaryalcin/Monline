@@ -7,6 +7,8 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { backfillDates, type BackfillSelection, localToday } from "@/lib/backfillPayments";
+import { numberFormatter } from "@/lib/numberFormat";
+import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import { cn } from "@/lib/utils";
 import type { Currency } from "@/types";
 
@@ -17,6 +19,8 @@ interface Props {
   cycle: string;
   frequency: number;
   price: number | null;
+  trialMonths?: number;
+  trialStartDate?: string;
   currency?: Currency;
   end?: string;
   limit?: number;
@@ -45,6 +49,8 @@ export function BackfillPaymentsEditor({
   cycle,
   frequency,
   price,
+  trialMonths = 0,
+  trialStartDate = "",
   currency,
   end = "",
   limit = 0,
@@ -105,10 +111,15 @@ export function BackfillPaymentsEditor({
         date,
         amount: Object.prototype.hasOwnProperty.call(current.amounts, date)
           ? current.amounts[date]
-          : price,
+          : price === null
+            ? null
+            : subscriptionAmount(
+                { price, trial_months: trialMonths, trial_start_date: trialStartDate },
+                date,
+              ),
         included: !current.excluded.includes(date),
       })),
-    [schedule.dates, current.amounts, current.excluded, price],
+    [schedule.dates, current.amounts, current.excluded, price, trialMonths, trialStartDate],
   );
   const selected = useMemo(() => rows.filter((row) => row.included), [rows]);
   const validAmounts =
@@ -150,8 +161,7 @@ export function BackfillPaymentsEditor({
       year: "numeric",
     }).format(new Date(date + "T12:00:00"));
   const total = selected.reduce((sum, row) => sum + (row.amount ?? 0), 0);
-  const totalLabel = new Intl.NumberFormat(
-    locale,
+  const totalLabel = numberFormatter(
     currency?.code ? { style: "currency", currency: currency.code } : {},
   ).format(total);
 

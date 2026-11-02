@@ -1,4 +1,4 @@
-import { toDateOnly } from "@/components/calendar/types";
+import { parseLocalDate, toDateOnly } from "@/components/calendar/types";
 import { isCredit } from "@/lib/recordTypes";
 import { paymentOwnerId, withStandalonePayments } from "@/lib/standalonePayments";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
@@ -33,7 +33,9 @@ export function recordedPayments(
       typeof record.amount === "number" && Number.isFinite(record.amount) && record.amount >= 0;
     return {
       subscription,
-      paidAt,
+      // Also correct legacy automatic catch-up records stamped on the renewal
+      // day. Manually confirmed payments retain their actual payment date.
+      paidAt: record.auto_paid ? (parseLocalDate(record.due_date) ?? paidAt) : paidAt,
       amount: validAmount
         ? Number(((record.amount! / (currency?.rate || 1)) * mainRate).toFixed(2))
         : null,

@@ -1,3 +1,7 @@
+const {
+  subscriptionAmount,
+  nextTrialPaymentDate,
+} = require("./pure/subscription-trial.mjs");
 const { DataRecord } = require("../../storage.cjs");
 const { BadRequestError } = require("../../errors.cjs");
 const {
@@ -127,6 +131,16 @@ function saveBackfill(app, subscription, payments) {
     const record =
       matches[0] ||
       new DataRecord(app.findCollectionByNameOrId("payment_records"));
+    if (!matches.length)
+      for (const key of [
+        "name",
+        "currency",
+        "category",
+        "payment_method",
+        "payment_account",
+        "payer",
+      ])
+        record.set(key, subscription.get(key));
     record.set("user", subscription.getString("user"));
     record.set("subscription_id", subscription.id);
     record.set("auto_paid", false);
@@ -149,11 +163,13 @@ function prepareInitialPayment(app, subscription, input, now = new Date()) {
   const cycle = app
     .findRecordById("cycles", subscription.getString("cycle"))
     .getString("name");
-  const next = require("./pure/subscription-start.js").nextPaymentDate(
-    date,
-    cycle,
-    Number(subscription.get("frequency")),
-  );
+  const next =
+    nextTrialPaymentDate(subscription, date) ||
+    require("./pure/subscription-start.js").nextPaymentDate(
+      date,
+      cycle,
+      Number(subscription.get("frequency")),
+    );
   if (!next || next <= date)
     throw new BadRequestError("historical_invalid_date");
   const payments = prepareBackfill(
@@ -172,7 +188,7 @@ function prepareInitialPayment(app, subscription, input, now = new Date()) {
       payments: [
         {
           due_date: date,
-          amount: Number(subscription.get("price")),
+          amount: subscriptionAmount(subscription, date),
           paid_utc_offset_minutes: data.paid_utc_offset_minutes,
         },
       ],
@@ -181,6 +197,64 @@ function prepareInitialPayment(app, subscription, input, now = new Date()) {
   );
   subscription.set("start_date", date);
   subscription.set("__monline_initial_billing_day", Number(date.slice(8, 10)));
+  // Choosing paid + automatic renewal/payment confirms the elapsed schedule,
+  // not just its first occurrence. Save every charge in this transaction.
+  if (
+    subscription.getBool("auto_mark_paid") &&
+    subscription.getBool("auto_renew") &&
+    !subscription.getBool("inactive")
+  ) {
+    const { advanceFiniteSchedule } = require("./pure/subscription-limits.js");
+    const { advanceDate } = require("./date-helpers.js");
+    const today = new Date(now.getTime() - data.utc_offset_minutes * 60000)
+      .toISOString()
+      .slice(0, 10);
+    const end =
+      [
+        subscription.getString("end_date"),
+        subscription.getString("cancellation_date"),
+      ]
+        .map((value) => value.slice(0, 10))
+        .filter(Boolean)
+        .sort()[0] || "";
+    const result = advanceFiniteSchedule({
+      nextPayment: date,
+      today,
+      cycleName: cycle,
+      frequency: Number(subscription.get("frequency")),
+      billingAnchorDay: Number(date.slice(8, 10)),
+      endDate: end,
+      paymentLimit: subscription.get("payment_limit"),
+      paymentsCompleted: subscription.get("payments_completed"),
+      advanceDate: (current, name, frequency, day) => {
+        const trial = nextTrialPaymentDate(
+          subscription,
+          current.toISOString().slice(0, 10),
+          day,
+        );
+        return trial
+          ? new Date(trial + "T00:00:00Z")
+          : advanceDate(current, name, frequency, day);
+      },
+      onOccurrence: (due) => {
+        if (due === date) return;
+        if (payments.length >= MAX_BACKFILL_PAYMENTS)
+          throw new BadRequestError("backfill_too_many");
+        payments.push({
+          due_date: due,
+          amount: subscriptionAmount(subscription, due),
+          paid_at: new Date(
+            Date.parse(due + "T00:00:00Z") + data.utc_offset_minutes * 60000,
+          ).toISOString(),
+        });
+      },
+    });
+    subscription.set("next_payment", result.nextPayment);
+    subscription.set("payments_completed", result.paymentsCompleted);
+    subscription.set("inactive", result.inactive);
+    if (result.inactive) subscription.set("auto_renew", false);
+    return payments;
+  }
   subscription.set("next_payment", next);
   if (Number(subscription.get("payment_limit")) > 0) {
     const completed = Math.max(

@@ -176,6 +176,13 @@ class Repository {
       this.connection.exec(
         "ALTER TABLE sharing_groups ADD COLUMN pending_members JSON DEFAULT NULL",
       );
+    for (const name of ["subscriptions", "payment_records"]) {
+      if (!this.connection
+        .prepare(`PRAGMA table_info(${identifier(name)})`)
+        .all()
+        .some((column) => column.name === "payment_account"))
+        this.connection.exec(`ALTER TABLE ${identifier(name)} ADD COLUMN payment_account TEXT NOT NULL DEFAULT ''`);
+    }
     const paymentColumns = new Set(
       this.connection
         .prepare('PRAGMA table_info("payment_records")')
@@ -200,6 +207,8 @@ class Repository {
       this.connection.exec(
         "ALTER TABLE users ADD COLUMN disabled INTEGER NOT NULL DEFAULT 0",
       );
+    if (!this.connection.prepare('PRAGMA table_info("users")').all().some(column => column.name === "number_locale"))
+      this.connection.exec("ALTER TABLE users ADD COLUMN number_locale TEXT NOT NULL DEFAULT ''");
     for (const name of [
       "name",
       "currency",
@@ -264,6 +273,13 @@ class Repository {
     if (!this.connection.prepare('PRAGMA table_info("subscriptions")').all()
       .some((column) => column.name === "calendar_projection_from"))
       this.connection.exec("ALTER TABLE subscriptions ADD COLUMN calendar_projection_from TEXT NOT NULL DEFAULT ''");
+    for (const [field, definition] of [
+      ["trial_months", "INTEGER NOT NULL DEFAULT 0"],
+      ["trial_start_date", "TEXT NOT NULL DEFAULT ''"],
+    ]) {
+      if (!this.connection.prepare('PRAGMA table_info("subscriptions")').all().some(column => column.name === field))
+        this.connection.exec(`ALTER TABLE subscriptions ADD COLUMN ${identifier(field)} ${definition}`);
+    }
     this.repairCalendarProjections();
     if (
       !this.connection
@@ -531,8 +547,25 @@ class Repository {
     return this.runInTransaction(() => {
       const collection = record.collection(),
         isNew = !record._original;
+      if (collection.name === "users" && record.getString("number_locale")) {
+        try {
+          const locale = Intl.getCanonicalLocales(record.getString("number_locale").replace(/_/g, "-"))[0];
+          if (!locale || !Intl.NumberFormat.supportedLocalesOf([locale]).length) throw new Error();
+          record.set("number_locale", locale);
+        } catch { throw new BadRequestError("number_locale_invalid"); }
+      }
       if (collection.name === "subscriptions") {
         record.set("name", normalizeSubscriptionName(record.get("name")));
+        const months = Number(record.get("trial_months") || 0);
+        if (!Number.isInteger(months) || months < 0 || months > 120 ||
+            (months > 0 && record.getString("record_type") === "credit"))
+          throw new BadRequestError("trial_months_invalid");
+        record.set("trial_months", months);
+        const start = months ? record.getString("trial_start_date").slice(0, 10) || formatLocalDate(new Date()) : "";
+        record.set("trial_start_date", start);
+        if (isNew && months && !record.getString("start_date")) record.set("start_date", start);
+        if (months && !require("./domain/lib/pure/subscription-trial.mjs").trialEndDate(record))
+          throw new BadRequestError("trial_start_invalid");
         // Older account backups can carry the retired permanent-hiding flag.
         if (record.getBool("calendar_projection_hidden")) {
           const today = formatLocalDate(new Date());
@@ -662,6 +695,7 @@ class Repository {
       owner = record.getString(
         collection.name === "notification_log" ? "user_id" : "user",
       );
+    if (collection.name === "payment_accounts") record.set("name", record.getString("name").trim());
     if (
       collection.name === "payment_records" &&
       !record.getString("subscription_id")

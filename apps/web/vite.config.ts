@@ -65,6 +65,8 @@ function isScopedPackage(packageName: string, scope: string) {
 }
 
 export default defineConfig({
+  // Local worktrees can share node_modules, but must not share optimizer output.
+  cacheDir: path.resolve(__dirname, "./.local/vite"),
   plugins: [react(), pdfAssets()],
   test: {
     globals: true,
@@ -97,6 +99,7 @@ export default defineConfig({
     },
   },
   resolve: {
+    dedupe: ["react", "react-dom"],
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },

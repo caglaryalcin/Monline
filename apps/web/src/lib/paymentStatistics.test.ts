@@ -34,6 +34,20 @@ const record = (overrides: Partial<PaymentRecord> = {}): PaymentRecord => ({
 });
 
 describe("monthly payment statistics", () => {
+  it("distributes legacy automatic catch-up charges across their original months", () => {
+    const records = Array.from({ length: 7 }, (_, index) => record({
+      id: `automatic-${index}`, due_date: `2026-${String(index + 3).padStart(2, "0")}-01`,
+      paid_at: "2026-10-01T12:00:00", auto_paid: true, amount: 30,
+    }));
+    const result = buildPaymentStatistics([sub], [], records, now, 12, 12, 2026);
+    expect(result.paid.slice(2, 9).map(month => month.total)).toEqual([30,30,30,30,30,30,30]);
+    expect(result.paid[9].total).toBe(0);
+    expect(result.paid.reduce((sum, month) => sum + month.total, 0)).toBe(210);
+  });
+  it("keeps automatic month-end payments in their billing month in every browser timezone", () => {
+    const result = buildPaymentStatistics([sub], [], [record({due_date:"2026-09-01",paid_at:"2026-09-01T00:00:00Z",auto_paid:true,amount:30})],now,12,12,2026);
+    expect(result.paid[8].total).toBe(30);expect(result.paid[7].total).toBe(0);
+  });
   it("limits both views to January–December of the selected calendar year", () => {
     const payments = [
       record({ id: "january", due_date: "2026-01-05", paid_at: "2026-01-05T12:00:00", amount: 20 }),

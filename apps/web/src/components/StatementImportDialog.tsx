@@ -20,6 +20,7 @@ import { api } from "@/lib/api";
 import { type BackfillSelection, localToday } from "@/lib/backfillPayments";
 import { CYCLE_NAME_KEYS } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
+import { numberFormatter } from "@/lib/numberFormat";
 import { queryKeys } from "@/lib/queryKeys";
 import { nextStatementPaymentDate } from "@/lib/statementPaymentDate";
 import { type ReviewTransaction, validStatementDate } from "@/lib/statements";
@@ -530,7 +531,7 @@ function ImportForm({
         }
         const combinableDays = [...selectedByDate].filter(([, items]) => items.length > 1);
         const formatAmount = (amount: number) =>
-          new Intl.NumberFormat(i18n.language.replace("_", "-"), {
+          numberFormatter({
             style: "currency",
             currency: group.currency,
           }).format(amount);
@@ -649,7 +650,7 @@ function ImportForm({
                       )}
                     </span>
                     <span className="shrink-0 tabular-nums">
-                      {new Intl.NumberFormat(i18n.language.replace("_", "-"), {
+                      {numberFormatter({
                         style: "currency",
                         currency: row.currency,
                       }).format(row.amount)}

@@ -3128,3 +3128,50 @@ it("deletes the complete statement archive atomically without touching other acc
   expect(await list("payment_records", other.token)).toEqual(beforePayments);
   expect(await list("subscriptions", other.token)).toEqual(beforeSubs);
 });
+
+
+it("keeps personal and joint payment accounts private and preserves selections in clone/export/backup", async () => {
+  const account = await request("/api/data/payment_accounts", {token:owner.token,method:"POST",body:{name:"Joint account"}});
+  expect(account.status).toBe(201);
+  const id=account.data.id;
+  const ownList=await request("/api/data/payment_accounts",{token:owner.token});
+  expect(ownList.data.items.some(a=>a.id===id)).toBe(true);
+  const foreignList=await request("/api/data/payment_accounts",{token:other.token});
+  expect(foreignList.data.items.some(a=>a.id===id)).toBe(false);
+  for(const method of ["GET","PATCH","DELETE"]){
+    const response=await request("/api/data/payment_accounts/"+id,{token:other.token,method,...(method==="PATCH"?{body:{name:"stolen"}}:{})});
+    expect([403,404]).toContain(response.status);
+  }
+  const payload={name:"Account selection",price:30,frequency:1,currency:currency.id,category:category.id,cycle:cycle.id,next_payment:"2027-01-01",payment_account:id};
+  const foreignSub=await request("/api/data/subscriptions",{token:other.token,method:"POST",body:payload});
+  expect(foreignSub.status).toBe(400);
+  const created=await request("/api/data/subscriptions",{token:owner.token,method:"POST",body:payload});
+  expect(created.status).toBe(201);
+  expect(created.data.payment_account).toBe(id);
+  const cloned=await request("/api/subscription/clone",{token:owner.token,method:"POST",body:{id:created.data.id}});
+  expect(cloned.status).toBe(200);
+  expect((await request("/api/data/subscriptions/"+cloned.data.id,{token:owner.token})).data.payment_account).toBe(id);
+  const exported=await request("/api/subscriptions/export",{token:owner.token});
+  expect(exported.data.subscriptions.find(s=>s.name==="Account selection").payment_account).toBe("Joint account");
+  const backup=await request("/api/account/export",{token:owner.token});
+  expect(backup.data.data.payment_accounts.some(a=>a.id===id)).toBe(true);
+  expect((await request("/api/data/payment_accounts/"+id,{token:owner.token,method:"PATCH",body:{name:"Renamed account"}})).status).toBe(200);
+  expect((await request("/api/data/payment_accounts/"+id,{token:owner.token,method:"DELETE"})).status).toBe(204);
+  expect((await request("/api/data/subscriptions/"+created.data.id,{token:owner.token})).data.payment_account).toBe("");
+  for(const sid of [created.data.id,cloned.data.id])await request("/api/data/subscriptions/"+sid,{token:owner.token,method:"DELETE"});
+});
+
+it("fills all elapsed monthly payments on paid automatic creation and keeps renewal idempotent", async () => {
+ const today=new Date(),first=new Date(Date.UTC(today.getUTCFullYear(),today.getUTCMonth()-6,1)).toISOString().slice(0,10);
+ const result=await request("/api/data/subscriptions",{token:owner.token,method:"POST",body:{name:"Past phone subscription",price:30,frequency:1,currency:currency.id,category:category.id,cycle:cycle.id,next_payment:first,auto_renew:true,auto_mark_paid:true,initial_payment:{date:first,utc_offset_minutes:0,paid_utc_offset_minutes:0}}});
+ expect(result.status).toBe(201);
+ const id=result.data.id;
+ try {
+   expect(result.data.next_payment.slice(0,10)>today.toISOString().slice(0,10)).toBe(true);
+   const read=async()=> (await request("/api/data/payment_records",{token:owner.token})).data.items.filter(p=>p.subscription_id===id);
+   const payments=await read();expect(payments).toHaveLength(7);
+   expect(payments.every(p=>p.amount===30 && p.paid_at.slice(0,10)===p.due_date.slice(0,10))).toBe(true);
+   await request("/api/subscription/renew",{token:owner.token,method:"POST",body:{id}});
+   expect(await read()).toHaveLength(7);
+ } finally {await request("/api/data/subscriptions/"+id,{token:owner.token,method:"DELETE"});}
+});

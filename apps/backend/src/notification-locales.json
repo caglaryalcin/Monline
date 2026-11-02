@@ -273,5 +273,21 @@
     "openApp": "Отваряне на Monline",
     "testTitle": "🔔 Monline — Тестово известие",
     "testMessage": "Това е тестово известие от Monline."
+  },
+  "hu": {
+    "paymentTitle": "Monline — Közelgő fizetések",
+    "cancellationTitle": "Monline — Közelgő lemondások",
+    "paymentIntro": "{payer} közelgő fizetései ({when}):",
+    "cancellationIntro": "Lemondásra kerülő előfizetések ({when}):",
+    "today": "ma",
+    "daysOne": "{days} nap múlva",
+    "daysOther": "{days} nap múlva",
+    "due": "esedékes",
+    "cancels": "lemondás dátuma",
+    "you": "Ön",
+    "example": "Példa-előfizetés",
+    "openApp": "Monline megnyitása",
+    "testTitle": "🔔 Monline — Tesztértesítés",
+    "testMessage": "Ez a Monline tesztértesítése."
   }
 }

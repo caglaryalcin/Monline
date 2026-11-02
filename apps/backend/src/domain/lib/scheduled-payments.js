@@ -30,11 +30,35 @@ function saveScheduledPayment(
   record.set("subscription_id", subscription.id);
   record.set("user", subscription.get("user"));
   record.set("due_date", dueDate);
-  record.set("amount", subscription.get("price"));
-  record.set("paid_at", markPaid ? new Date().toISOString() : "");
+  record.set(
+    "amount",
+    require("./pure/subscription-trial.mjs").subscriptionAmount(
+      subscription,
+      dueDate,
+    ),
+  );
+  // Automatic catch-up charges belong to their billing date, not the day the
+  // scheduler happened to run. Keep today's timestamp for an on-time charge.
+  const now = new Date();
+  const today = require("./date-helpers.js").formatLocalDate(now);
+  record.set(
+    "paid_at",
+    markPaid
+      ? dueDate < today
+        ? new Date(dueDate + "T00:00:00Z").toISOString()
+        : now.toISOString()
+      : "",
+  );
   record.set("auto_paid", markPaid);
   if (details.notes) record.set("notes", details.notes);
-  for (const key of ["name", "currency", "category", "payment_method", "payer"])
+  for (const key of [
+    "name",
+    "currency",
+    "category",
+    "payment_method",
+    "payment_account",
+    "payer",
+  ])
     record.set(key, subscription.get(key));
   app.save(record);
   return true;

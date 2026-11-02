@@ -333,6 +333,8 @@ routerAdd("GET", "/api/external/subscriptions", function (e) {
         name: sub.get("name"),
         record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
         price: sub.get("price"),
+        trial_months: sub.get("trial_months"),
+        trial_start_date: sub.get("trial_start_date"),
         currency_symbol: currencySymbol,
         currency_code: currencyCode,
         frequency: sub.get("frequency"),
@@ -456,6 +458,8 @@ routerAdd("GET", "/api/external/subscriptions/{id}", function (e) {
       name: sub.get("name"),
       record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
       price: sub.get("price"),
+        trial_months: sub.get("trial_months"),
+        trial_start_date: sub.get("trial_start_date"),
       currency_id: sub.get("currency"),
       currency_symbol: currencySymbol,
       currency_code: currencyCode,
@@ -666,6 +670,8 @@ routerAdd("POST", "/api/external/subscriptions", function (e) {
     record.set("name", name);
     record.set("record_type", recordType);
     record.set("price", price);
+    record.set("trial_months", body.trial_months || 0);
+    record.set("trial_start_date", body.trial_start_date || "");
     record.set("currency", currencyId);
     record.set("cycle", cycleId);
     record.set("frequency", frequency);
@@ -812,7 +818,7 @@ routerAdd("GET", "/api/external/statistics", function (e) {
         else if (recordTypes.isOneTimeCycle(cn)) cycleMultiplier = 0;
       } catch (_) {}
       var freq = sub.get("frequency") || 1;
-      var price = sub.get("price") || 0;
+      var price = require("./lib/pure/subscription-trial.mjs").subscriptionAmount(sub, require("./lib/date-helpers.js").formatLocalDate(new Date()));
       var monthly = (price / freq) * cycleMultiplier;
       totalMonthly += monthly;
       breakdown.push({
@@ -1604,6 +1610,8 @@ routerAdd("PUT", "/api/external/subscriptions/{id}", function (e) {
       });
     if (body.name !== undefined) record.set("name", String(body.name).trim());
     record.set("record_type", proposedRecordType);
+    for (const key of ["trial_months", "trial_start_date"])
+      if (body[key] !== undefined) record.set(key, body[key]);
     if (body.price !== undefined)
       record.set("price", parseFloat(body.price) || 0);
     if (body.currency_id !== undefined)
@@ -2386,11 +2394,12 @@ routerAdd("POST", "/api/external/subscriptions/{id}/mark-paid", function (e) {
       });
     }
     var body = e.requestInfo().body || {};
-    var amount = body.amount == null ? sub.get("price") : body.amount;
+    var amount = body.amount;
     var paymentDate =
       body.payment_date == null
         ? String(sub.get("next_payment")).slice(0, 10)
         : body.payment_date;
+    if (amount == null) amount = require("./lib/pure/subscription-trial.mjs").subscriptionAmount(sub, paymentDate);
     var validDate = require(
       domainPath + "/lib/pure/historical-payment.js",
     ).validDate;
@@ -2582,6 +2591,8 @@ routerAdd("POST", "/api/external/subscriptions/batch", function (e) {
       record.set("user", userId);
       record.set("name", itemName);
       record.set("price", parseFloat(item.price) || 0);
+      record.set("trial_months", item.trial_months || 0);
+      record.set("trial_start_date", item.trial_start_date || "");
       record.set("currency", String(item.currency_id));
       record.set("cycle", String(item.cycle_id));
       record.set("next_payment", itemNextPayment);

@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import i18n from "i18next";
 import { twMerge } from "tailwind-merge";
 
+import { resolveNumberLocale } from "@/lib/numberFormat";
 import { automaticLogoUrls } from "@/lib/subscriptionLogo";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Currency, Subscription } from "@/types";
@@ -72,8 +73,7 @@ export function formatPrice(
 ): string {
   // Keep accepting a locale string for backwards compatibility.
   const opts = typeof options === "string" ? {} : options;
-  const locale =
-    typeof options === "string" ? options : (options.locale ?? i18n.resolvedLanguage ?? "en-US");
+  const locale = typeof options === "string" ? options : (options.locale ?? resolveNumberLocale());
   const fractionDigits = getCurrencyFractionDigits(opts.currencyCode);
 
   let amount: string;

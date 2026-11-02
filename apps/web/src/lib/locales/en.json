@@ -1,4 +1,11 @@
 {
+  "payment_account": "Payment account",
+  "payment_accounts": "Payment accounts",
+  "payment_account_name": "Account name",
+  "payment_accounts_help": "Add personal or joint bank accounts and select one for each subscription.",
+  "payment_accounts_manage_hint": "Manage accounts in Settings → Payment methods → Payment accounts.",
+  "payment_account_delete_help": "Delete this payment account? Linked subscriptions and payments will remain, without this account selection.",
+  "historical_auto_fill_help": "Paid + automatic payment and renewal records all elapsed billing dates as paid and moves the next payment into the future.",
   "subscription_payments_awaiting": "Awaiting confirmation",
   "payment_confirmation_pending": "Awaiting payment confirmation",
   "calendar_existing_periods_hint": "Existing period records are skipped and their amounts stay unchanged. Added periods are not automatically marked as paid.",
@@ -1236,5 +1243,17 @@
   "sharing_payer_hint": "Choose the payer for this subscription’s upcoming payments.",
   "sharing_payers_load_error": "Shared payers could not be loaded. Reopen the edit dialog to refresh the list.",
   "sharing_invalid_payer": "Select an eligible payer for this subscription. Refresh the list if sharing access has changed.",
-  "system_smtp_title": "System account emails (SMTP)"
+  "system_smtp_title": "System account emails (SMTP)",
+  "trial_period": "Free trial",
+  "trial_months": "Trial length (months)",
+  "trial_regular_price": "Price after trial",
+  "trial_start_date": "Trial start date",
+  "trial_period_help": "The starting month is included in the trial. Each trial month has a zero-cost payment in the selected currency; the normal billing cycle and price resume afterwards.",
+  "trial_amount_hint": "{{count}} trial months at 0 {{currency}}, including the starting month. The regular price applies afterwards.",
+  "trial_months_invalid": "Choose a whole number of months from 1 to 120.",
+  "trial_start_invalid": "Choose a valid trial start date.",
+  "number_format": "Number format",
+  "number_format_browser": "Browser settings",
+  "number_format_help": "Choose how decimal and thousands separators are displayed, independently of the interface language. This preference is saved for your account.",
+  "number_format_invalid": "Choose a valid number format."
 }

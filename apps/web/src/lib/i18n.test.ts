@@ -29,9 +29,9 @@ describe("i18n", () => {
       );
     });
   });
-  it("fully translates Monline workflows in Turkish, German and Bulgarian with matching placeholders", () => {
+  it("fully translates Monline workflows in Turkish, German, Bulgarian and Hungarian with matching placeholders", () => {
     const english = i18n.getResourceBundle("en", "translation");
-    for (const language of ["tr", "de", "bg"]) {
+    for (const language of ["tr", "de", "bg", "hu"]) {
       const resources = i18n.getResourceBundle(language, "translation");
       for (const key of Object.keys(english)) {
         expect(resources[key], `${language}.${key}`).toBeTruthy();
@@ -70,9 +70,10 @@ describe("i18n", () => {
         { code: "pt_BR", name: "Português (Brasil)" },
         { code: "zh_CN", name: "中文 (简体)" },
         { code: "bg", name: "Български" },
+        { code: "hu", name: "Magyar" },
       ]),
     );
-    expect(SUPPORTED_LANGUAGES).toHaveLength(17);
+    expect(SUPPORTED_LANGUAGES).toHaveLength(18);
   });
 
   it("translates the income-credit workflow in every supported language", () => {

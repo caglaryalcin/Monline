@@ -15,6 +15,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { IconPicker } from "@/components/settings/payment-methods/IconPicker";
+import { PaymentAccountsSection } from "@/components/settings/payment-methods/PaymentAccountsSection";
 import { PaymentMethodIcon } from "@/components/settings/payment-methods/PaymentMethodIcon";
 import {
   BulkSettingsActions,
@@ -480,6 +481,7 @@ export function PaymentMethodsTab() {
           </div>
         )}
       </div>
+      <PaymentAccountsSection />
       <ConfirmDialog
         confirmOnEnter
         open={!!pendingDeleteId}

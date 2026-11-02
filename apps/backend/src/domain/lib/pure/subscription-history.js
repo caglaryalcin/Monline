@@ -1,3 +1,4 @@
+var trialHelpers = require("./subscription-trial.mjs");
 var limits = require("./subscription-limits.js");
 
 /**
@@ -276,7 +277,7 @@ function computeSpendTotal(options) {
     // ever moves forward, so at least that segment is in force.
     var segment = segmentAt(segments, date);
     if (!isPausedOn(pausedRanges, date)) {
-      result.total += segment.price;
+      result.total += trialHelpers.subscriptionAmount({ ...config.trial, price: segment.price }, date);
       result.payments += 1;
       if (!result.firstDate) result.firstDate = date;
       result.lastDate = date;
@@ -287,7 +288,7 @@ function computeSpendTotal(options) {
       segment.frequency,
       anchorDay,
     );
-    var next = limits.dateOnly(advanced && advanced.toISOString());
+    var next = trialHelpers.nextTrialPaymentDate(config.trial, date, anchorDay) || limits.dateOnly(advanced && advanced.toISOString());
     if (!next || next <= date) break;
     if (segment.cycleName === "Daily" || segment.cycleName === "Weekly")
       anchorDay = Number(next.slice(8, 10));
@@ -304,7 +305,7 @@ function computeSpendTotal(options) {
  * the price the timeline says was in force on their due date rather than being
  * silently counted as zero.
  */
-function summarizePaidRecords(records, segments) {
+function summarizePaidRecords(records, segments, trial) {
   var result = {
     total: 0,
     payments: 0,
@@ -315,9 +316,10 @@ function summarizePaidRecords(records, segments) {
     var paidAt = limits.dateOnly(record.paid_at);
     if (!String(record.paid_at || "")) continue;
     var amount = Number(record.amount);
-    if (!isFinite(amount) || amount === 0) {
+    // Zero is an explicit payment amount, even after trial settings are edited.
+    if (record.amount == null || record.amount === "" || !isFinite(amount)) {
       var segment = segmentAt(segments, record.due_date);
-      amount = segment ? segment.price : 0;
+      amount = segment ? trialHelpers.subscriptionAmount({ ...trial, price: segment.price }, record.due_date) : 0;
     }
     result.total += amount;
     result.payments += 1;

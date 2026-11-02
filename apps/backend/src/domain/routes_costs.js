@@ -30,7 +30,7 @@ routerAdd("POST", "/api/costs/snapshot", (e) => {
     const currencyRates = {};
     for (const sub of subs) {
       if (!recordTypes.isExpense(sub.get("record_type"))) continue;
-      const price = sub.get("price") || 0;
+      const price = require("./lib/pure/subscription-trial.mjs").subscriptionAmount(sub, dateHelpers.formatLocalDate(now));
       const frequency = sub.get("frequency") || 1;
       const cycleId = sub.getString("cycle");
       if (!Object.prototype.hasOwnProperty.call(cycleNames, cycleId)) {

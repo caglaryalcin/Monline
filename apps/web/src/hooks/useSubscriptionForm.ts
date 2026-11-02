@@ -29,11 +29,15 @@ const _schemaShape = z.object({
   payment_status: z.enum(["unpaid", "paid"]),
   start_date: z.string(),
   payment_method: z.string(),
+  payment_account: z.string().optional(),
   payer: z.string(),
   category: z.string(),
   notes: z.string(),
   url: z.string(),
   auto_renew: z.boolean(),
+  trial_enabled: z.boolean(),
+  trial_months: z.string(),
+  trial_start_date: z.string(),
   notify: z.boolean(),
   notify_days_before: z.string(),
   notification_mode: z.enum(["default", "custom"]),
@@ -104,6 +108,7 @@ export function useSubscriptionForm({
       // Stored for compatibility when editing; new tracking dates are inferred.
       start_date: z.string(),
       payment_method: z.string(),
+      payment_account: z.string().optional(),
       payer: z.string(),
       category: z
         .string()
@@ -113,6 +118,9 @@ export function useSubscriptionForm({
       // Kept for old records/backups; the user no longer enters a URL.
       url: z.string(),
       auto_renew: z.boolean(),
+      trial_enabled: z.boolean(),
+      trial_months: z.string(),
+      trial_start_date: z.string(),
       notify: z.boolean(),
       notify_days_before: z.string(),
       notification_mode: z.enum(["default", "custom"]),
@@ -134,6 +142,10 @@ export function useSubscriptionForm({
     })
     .superRefine((values, context) => {
       if (values.record_type === "credit") return;
+      if (values.trial_enabled && (!Number.isInteger(Number(values.trial_months)) ||
+          Number(values.trial_months) < 1 || Number(values.trial_months) > 120)) {
+        context.addIssue({ code: "custom", path: ["trial_months"], message: t("trial_months_invalid") });
+      }
       if (!sub && values.payment_status === "paid" && values.next_payment > localToday()) {
         context.addIssue({
           code: "custom",
@@ -224,11 +236,15 @@ export function useSubscriptionForm({
       payment_status: "unpaid",
       start_date: new Date().toISOString().split("T")[0],
       payment_method: "",
+      payment_account: "",
       payer: "",
       category: "",
       notes: "",
       url: "",
       auto_renew: true,
+      trial_enabled: false,
+      trial_months: "1",
+      trial_start_date: localToday(),
       notify: false,
       notify_days_before: "3",
       notification_mode: "default",
@@ -266,11 +282,15 @@ export function useSubscriptionForm({
         payment_status: "unpaid",
         start_date: toDateOnly(sub.start_date) || new Date().toISOString().split("T")[0],
         payment_method: sub.payment_method || "",
+        payment_account: sub.payment_account || "",
         payer: sub.payer || "",
         category: sub.category || "",
         notes: sub.notes || "",
         url: sub.url || "",
         auto_renew: !sub.inactive && sub.auto_renew,
+        trial_enabled: (sub.trial_months ?? 0) > 0,
+        trial_months: String(sub.trial_months || 1),
+        trial_start_date: sub.trial_start_date || localToday(),
         notify: sub.notify,
         notify_days_before: String(sub.notify_days_before ?? 3),
         notification_mode: sub.notification_reminders ? "custom" : "default",
@@ -298,11 +318,15 @@ export function useSubscriptionForm({
         payment_status: "unpaid",
         start_date: new Date().toISOString().split("T")[0],
         payment_method: paymentMethods?.find((method) => method.is_main)?.id || "",
+        payment_account: "",
         payer: defaultPayer,
         category: "",
         notes: "",
         url: "",
         auto_renew: true,
+        trial_enabled: false,
+        trial_months: "1",
+        trial_start_date: localToday(),
         notify: false,
         notify_days_before: "3",
         notification_mode: "default",

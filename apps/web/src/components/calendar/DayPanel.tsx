@@ -119,7 +119,7 @@ export function DayPanel({
                   )}
                 >
                   {/* Logo */}
-                  <div className="relative h-11 w-11 shrink-0">
+                  <div className="relative h-11 w-11 shrink-0 overflow-visible">
                     {logo ? (
                       <div className="h-full w-full overflow-hidden rounded-xl border bg-background p-1.5">
                         <SubscriptionLogo sub={sub} className="h-full w-full object-contain" />
@@ -134,10 +134,11 @@ export function DayPanel({
                         {sub.name[0]?.toUpperCase()}
                       </div>
                     )}
+                    {/* Keep the status badge outside the clipped logo frame. */}
                     {isAwaitingConfirmation && (
                       <span
                         aria-hidden="true"
-                        className="absolute -bottom-1 -right-1 rounded-full bg-red-500 p-0.5 ring-2 ring-background"
+                        className="pointer-events-none absolute -bottom-1 -right-1 z-10 rounded-full bg-red-500 p-0.5 ring-2 ring-background"
                       >
                         <CircleDot className="h-3 w-3 text-white" />
                       </span>

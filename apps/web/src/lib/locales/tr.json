@@ -1,4 +1,11 @@
 {
+  "payment_account": "Ödeme hesabı",
+  "payment_accounts": "Ödeme hesapları",
+  "payment_account_name": "Hesap adı",
+  "payment_accounts_help": "Kişisel veya ortak banka hesaplarını ekleyip aboneliklerde ödeme hesabını seçebilirsiniz.",
+  "payment_accounts_manage_hint": "Hesapları Ayarlar → Ödeme yöntemleri → Ödeme hesapları bölümünden yönetebilirsiniz.",
+  "payment_account_delete_help": "Bu ödeme hesabı silinsin mi? Bağlı abonelikler ve ödemeler korunur; hesap seçimi kaldırılır.",
+  "historical_auto_fill_help": "Ödendi, otomatik ödeme ve yenileme birlikte seçildiğinde bugüne kadarki ödeme günleri ödendi olarak kaydedilir; sonraki ödeme ileri alınır.",
   "subscription_payments_awaiting": "Onay bekleyen",
   "payment_confirmation_pending": "Ödeme onayı bekliyor",
   "calendar_existing_periods_hint": "Mevcut dönem kayıtları atlanır ve tutarları değiştirilmez. Eklenen dönemler otomatik olarak ödendi işaretlenmez.",
@@ -1236,5 +1243,17 @@
   "sharing_payer_hint": "Aboneliğin sonraki ödemelerinde kullanılacak kişiyi seçin.",
   "sharing_payers_load_error": "Paylaşımdaki kişiler yüklenemedi. Listeyi güncellemek için düzenleme ekranını yeniden açın.",
   "sharing_invalid_payer": "Bu abonelik için geçerli bir ödeyen seçin. Paylaşım erişimi değiştiyse listeyi yenileyin.",
-  "system_smtp_title": "Sistem hesap e-postaları (SMTP)"
+  "system_smtp_title": "Sistem hesap e-postaları (SMTP)",
+  "trial_period": "Deneme süresi",
+  "trial_months": "Deneme süresi (ay)",
+  "trial_regular_price": "Deneme sonrası fiyat",
+  "trial_start_date": "Deneme başlangıcı",
+  "trial_period_help": "Başlangıç ayı deneme süresine dahildir. Her deneme ayında seçilen para biriminde 0 tutarlı ödeme görünür; süre sonunda normal ödeme döngüsü ve ücret uygulanır.",
+  "trial_amount_hint": "Başlangıç ayı dahil {{count}} ay boyunca 0 {{currency}}. Ardından normal ücret uygulanır.",
+  "trial_months_invalid": "1 ile 120 arasında tam bir ay sayısı seçin.",
+  "trial_start_invalid": "Geçerli bir deneme başlangıç tarihi seçin.",
+  "number_format": "Sayı biçimi",
+  "number_format_browser": "Tarayıcı ayarı",
+  "number_format_help": "Ondalık ve binlik ayıraçlarının görünümünü arayüz dilinden bağımsız seçin. Bu tercih hesabınıza kaydedilir.",
+  "number_format_invalid": "Geçerli bir sayı biçimi seçin."
 }

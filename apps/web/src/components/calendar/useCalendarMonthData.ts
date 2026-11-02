@@ -12,6 +12,7 @@ import {
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { isExpense } from "@/lib/recordTypes";
 import { paymentOwnerId, withStandalonePayments } from "@/lib/standalonePayments";
+import { isTrialDate } from "@/lib/subscriptionTrial";
 import type { Currency, Cycle, PaymentRecord, Subscription } from "@/types";
 
 const NO_RECORDS: PaymentRecord[] = [];
@@ -83,7 +84,9 @@ export function useCalendarMonthData({
         (entries[key] ??= []).push({
           sub: subscription,
           date,
-          ...(record?.amount != null ? { amount: record.amount } : {}),
+          ...(record?.amount != null
+            ? { amount: record.amount }
+            : isTrialDate(subscription, key) ? { amount: 0 } : {}),
         });
       }
     }
