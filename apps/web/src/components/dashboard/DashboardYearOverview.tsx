@@ -18,6 +18,7 @@ import {
 } from "@/lib/dashboardYear";
 import { type FinanceData, percentChange } from "@/lib/finance";
 import { resolveLocale } from "@/lib/locale";
+import { numberFormatter } from "@/lib/numberFormat";
 import { queryKeys } from "@/lib/queryKeys";
 import { EMPTY_SPENDING, spendingKey } from "@/lib/spending";
 import { cn, formatCurrency, getCurrencySymbol } from "@/lib/utils";
@@ -207,7 +208,6 @@ export function DashboardYearOverview({
 
   const money = (amount: number, currency = "TRY") =>
     formatCurrency(amount, currency, {
-      locale,
       minimumFractionDigits: Math.round(amount * 100) % 100 === 0 ? 0 : 2,
       maximumFractionDigits: 2,
     });
@@ -251,7 +251,7 @@ export function DashboardYearOverview({
     ? "…"
     : minimumWageChange == null
       ? t("finance_salary_no_comparison_data")
-      : new Intl.NumberFormat(locale, {
+      : numberFormatter({
           style: "percent",
           maximumFractionDigits: 1,
           signDisplay: "exceptZero",
@@ -336,7 +336,7 @@ export function DashboardYearOverview({
               value={
                 finance.isError || salary.change == null
                   ? "—"
-                  : new Intl.NumberFormat(locale, {
+                  : numberFormatter({
                       style: "percent",
                       maximumFractionDigits: 1,
                       signDisplay: "exceptZero",

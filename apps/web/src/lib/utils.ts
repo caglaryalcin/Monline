@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import i18n from "i18next";
 import { twMerge } from "tailwind-merge";
 
+import { resolveNumberLocale } from "@/lib/numberFormat";
 import { automaticLogoUrls } from "@/lib/subscriptionLogo";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Currency, Subscription } from "@/types";
@@ -80,29 +81,42 @@ export function formatMultiplier(value: number): string {
 }
 
 /** Resolve display symbols without depending on the locale's currency position. */
-export function getCurrencySymbol(currency: string, locale = i18n.resolvedLanguage || "en-US"): string {
+export function getCurrencySymbol(
+  currency: string,
+  locale = i18n.resolvedLanguage || "en-US",
+): string {
   const code = currency.trim().toUpperCase();
   if (code === "TRY" || code === "TL") return "₺";
   if (code === "USD") return "$";
   if (code === "EUR") return "€";
   if (!/^[A-Z]{3}$/.test(code)) return currency.trim();
   try {
-    return numberFormatter(locale.replace(/_/g, "-"), { style: "currency", currency: code })
-      .formatToParts(0).find((part) => part.type === "currency")?.value || code;
+    return (
+      numberFormatter(locale.replace(/_/g, "-"), { style: "currency", currency: code })
+        .formatToParts(0)
+        .find((part) => part.type === "currency")?.value || code
+    );
   } catch {
     return code;
   }
 }
 
 /** All displayed money uses amount + currency, with no intervening space. */
-export function formatCurrency(amount: number, currency: string, options: CurrencyFormatOptions = {}): string {
-  const { locale = i18n.resolvedLanguage || "en-US", ...numberOptions } = options;
-  const maximumFractionDigits = numberOptions.maximumFractionDigits ?? getCurrencyFractionDigits(currency);
+export function formatCurrency(
+  amount: number,
+  currency: string,
+  options: CurrencyFormatOptions = {},
+): string {
+  const { locale = resolveNumberLocale(), ...numberOptions } = options;
+  const maximumFractionDigits =
+    numberOptions.maximumFractionDigits ?? getCurrencyFractionDigits(currency);
   const minimumFractionDigits = numberOptions.minimumFractionDigits ?? maximumFractionDigits;
   let value: string;
   try {
     value = numberFormatter(locale.replace(/_/g, "-"), {
-      ...numberOptions, minimumFractionDigits, maximumFractionDigits,
+      ...numberOptions,
+      minimumFractionDigits,
+      maximumFractionDigits,
     }).format(amount);
   } catch {
     value = amount.toFixed(maximumFractionDigits);
@@ -133,12 +147,17 @@ export function formatPrice(
   options: PriceFormatOptions | string = {},
 ): string {
   // Keep accepting a locale string for backwards compatibility.
-  const locale = typeof options === "string" ? options : (options.locale ?? i18n.resolvedLanguage ?? "en-US");
+  const locale = typeof options === "string" ? options : (options.locale ?? resolveNumberLocale());
   const code = typeof options === "string" ? undefined : options.currencyCode;
   const digits = getCurrencyFractionDigits(code);
-  const formatted = formatCurrency(price, symbol, { locale, minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const formatted = formatCurrency(price, symbol, {
+    locale,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
   return typeof options !== "string" && options.showCurrencyCode && code?.trim()
-    ? `${formatted} ${code.trim().toUpperCase()}` : formatted;
+    ? `${formatted} ${code.trim().toUpperCase()}`
+    : formatted;
 }
 
 /**

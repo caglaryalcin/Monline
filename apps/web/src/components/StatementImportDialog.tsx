@@ -494,8 +494,7 @@ function ImportForm({
           selectedByDate.set(row.date, day);
         }
         const combinableDays = [...selectedByDate].filter(([, items]) => items.length > 1);
-        const formatAmount = (amount: number) =>
-          formatCurrency(amount, group.currency, { locale: i18n.language.replace("_", "-") });
+        const formatAmount = (amount: number) => formatCurrency(amount, group.currency, {});
         return (
           <section
             key={group.key}
@@ -611,9 +610,7 @@ function ImportForm({
                       )}
                     </span>
                     <span className="shrink-0 tabular-nums">
-                      {formatCurrency(row.amount, row.currency, {
-                        locale: i18n.language.replace("_", "-"),
-                      })}
+                      {formatCurrency(row.amount, row.currency, {})}
                     </span>
                   </label>
                 );

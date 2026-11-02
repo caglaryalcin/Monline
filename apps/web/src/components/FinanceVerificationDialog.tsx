@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import type { FinanceEntry, FinanceRow } from "@/lib/finance";
-import { resolveLocale } from "@/lib/locale";
 import { spendingKey } from "@/lib/spending";
 import { formatCurrency } from "@/lib/utils";
 import { type BudgetEvent, budgetService } from "@/services/budget";
@@ -36,7 +35,7 @@ export function FinanceVerificationDialog({
   onCardPayment?: () => void;
   onClose: () => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const label = (key: string) => t(`finance_${key}`);
   const queryClient = useQueryClient();
   const queryKey = ["finance-verification", userId, month];
@@ -65,8 +64,7 @@ export function FinanceVerificationDialog({
     }
   };
   const busy = mutation.isPending || query.isFetching;
-  const money = (amount: number, currency: string) =>
-    formatCurrency(amount, currency, { locale: resolveLocale(i18n) });
+  const money = (amount: number, currency: string) => formatCurrency(amount, currency, {});
   const ids = new Set(
     entries
       .filter((entry) => entry.row_id === row.id && entry.date.startsWith(month))
@@ -76,10 +74,7 @@ export function FinanceVerificationDialog({
     (target) => ids.has(target.id) && target.date.startsWith(month),
   );
   return (
-    <Dialog
-      open
-      onOpenChange={dialogDismissHandler(onClose, mutation.isPending)}
-    >
+    <Dialog open onOpenChange={dialogDismissHandler(onClose, mutation.isPending)}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>

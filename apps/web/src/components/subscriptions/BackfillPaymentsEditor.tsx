@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { backfillDates, type BackfillSelection, localToday } from "@/lib/backfillPayments";
 import { resolveLocale } from "@/lib/locale";
+import { numberFormatter } from "@/lib/numberFormat";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { Currency } from "@/types";
@@ -111,7 +112,12 @@ export function BackfillPaymentsEditor({
         date,
         amount: Object.prototype.hasOwnProperty.call(current.amounts, date)
           ? current.amounts[date]
-          : price === null ? null : subscriptionAmount({ price, trial_months: trialMonths, trial_start_date: trialStartDate }, date),
+          : price === null
+            ? null
+            : subscriptionAmount(
+                { price, trial_months: trialMonths, trial_start_date: trialStartDate },
+                date,
+              ),
         included: !current.excluded.includes(date),
       })),
     [schedule.dates, current.amounts, current.excluded, price, trialMonths, trialStartDate],
@@ -156,7 +162,9 @@ export function BackfillPaymentsEditor({
       year: "numeric",
     }).format(new Date(date + "T12:00:00"));
   const total = selected.reduce((sum, row) => sum + (row.amount ?? 0), 0);
-  const totalLabel = currency?.code ? formatCurrency(total, currency.code, { locale }) : new Intl.NumberFormat(locale).format(total);
+  const totalLabel = currency?.code
+    ? formatCurrency(total, currency.code, {})
+    : numberFormatter().format(total);
 
   return (
     <fieldset disabled={disabled} className="space-y-3 rounded-xl border bg-muted/20 p-4">

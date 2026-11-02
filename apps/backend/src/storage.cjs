@@ -201,6 +201,8 @@ class Repository {
       this.connection.exec(
         "ALTER TABLE users ADD COLUMN disabled INTEGER NOT NULL DEFAULT 0",
       );
+    if (!this.connection.prepare('PRAGMA table_info("users")').all().some(column => column.name === "number_locale"))
+      this.connection.exec("ALTER TABLE users ADD COLUMN number_locale TEXT NOT NULL DEFAULT ''");
     for (const name of [
       "name",
       "currency",
@@ -644,6 +646,13 @@ class Repository {
     return this.runInTransaction(() => {
       const collection = record.collection(),
         isNew = !record._original;
+      if (collection.name === "users" && record.getString("number_locale")) {
+        try {
+          const locale = Intl.getCanonicalLocales(record.getString("number_locale").replace(/_/g, "-"))[0];
+          if (!locale || !Intl.NumberFormat.supportedLocalesOf([locale]).length) throw new Error();
+          record.set("number_locale", locale);
+        } catch { throw new BadRequestError("number_locale_invalid"); }
+      }
       if (collection.name === "subscriptions") {
         record.set("name", normalizeSubscriptionName(record.get("name")));
         const months = Number(record.get("trial_months") || 0);

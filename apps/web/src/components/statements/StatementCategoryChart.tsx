@@ -5,7 +5,7 @@ import { Cell, Label, Pie, PieChart, ResponsiveContainer, Tooltip } from "rechar
 
 import { STATISTICS_CATEGORY_COLORS } from "@/components/statistics/constants";
 import { Button } from "@/components/ui/button";
-import { resolveLocale } from "@/lib/locale";
+import { numberFormatter } from "@/lib/numberFormat";
 import { STATEMENT_CATEGORIES, type StatementCategory } from "@/lib/statementCategories";
 import type { ReportGroup } from "@/lib/statementReport";
 import { cn, formatCurrency, formatMultiplier } from "@/lib/utils";
@@ -25,14 +25,12 @@ export function StatementCategoryChart({
   canImport: boolean;
   onSubscriptions: () => void;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<StatementCategory | null>(null);
   const detailsId = useId();
-  const language = resolveLocale(i18n);
-  const money = (value: number) =>
-    formatCurrency(value, currency, { locale: language });
+  const money = (value: number) => formatCurrency(value, currency, {});
   const percent = (value: number) =>
-    new Intl.NumberFormat(language, { style: "percent", maximumFractionDigits: 1 }).format(value);
+    numberFormatter({ style: "percent", maximumFractionDigits: 1 }).format(value);
   const total = groups.reduce((sum, group) => sum + Math.round(group.total * 100), 0) / 100;
   const positiveTotal =
     groups.reduce((sum, group) => sum + Math.max(0, Math.round(group.total * 100)), 0) / 100;
@@ -223,7 +221,9 @@ export function StatementCategoryChart({
                       </span>
                     )}
                     {item.count > 1 && (
-                      <span className="ml-1 text-xs text-muted-foreground">{formatMultiplier(item.count)}</span>
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        {formatMultiplier(item.count)}
+                      </span>
                     )}
                     {item.derived && (
                       <span className="mt-1 block text-xs text-muted-foreground">

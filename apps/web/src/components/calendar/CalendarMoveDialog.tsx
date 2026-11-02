@@ -52,10 +52,7 @@ export function CalendarMoveDialog({
   const formatDate = (date: Date) =>
     date.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
   return (
-    <Dialog
-      open
-      onOpenChange={dialogDismissHandler(onClose, moving)}
-    >
+    <Dialog open onOpenChange={dialogDismissHandler(onClose, moving)}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("calendar_move_to_month")}</DialogTitle>
@@ -141,7 +138,7 @@ export function CalendarMoveDialog({
                   ? t("calendar_ledger_move_summary", {
                       from: formatDate(parseLocalDate(source.date)!),
                       to: formatDate(date),
-                      amount: formatCurrency(source.amount, source.currency, { locale: locale }),
+                      amount: formatCurrency(source.amount, source.currency, {}),
                     })
                   : t("calendar_only_move_summary", {
                       from: formatDate(entry.date),

@@ -8,6 +8,8 @@ import {
   ChevronRight,
   ClipboardPaste,
   Copy,
+  Eye,
+  EyeOff,
   Lightbulb,
   Plus,
   Redo2,
@@ -58,6 +60,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { type FinanceGrid, useFinanceGrid } from "@/hooks/useFinanceGrid";
 import { useFinanceHistory } from "@/hooks/useFinanceHistory";
+import { useHiddenFinanceRows } from "@/hooks/useHiddenFinanceRows";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { LS_KEYS } from "@/lib/constants";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
@@ -77,6 +80,7 @@ import {
   sumEntries,
 } from "@/lib/finance";
 import { resolveLocale } from "@/lib/locale";
+import { resolveNumberLocale } from "@/lib/numberFormat";
 import { spendingKey } from "@/lib/spending";
 import { cn, formatCurrency } from "@/lib/utils";
 import { financeService } from "@/services/finance";
@@ -198,6 +202,13 @@ export function FinancePage() {
     finance_rows: financeRowsForYear(rawData.finance_rows, year, rawData),
   };
   const carryoverRow = data.finance_rows.find(isFinanceCarryoverRow);
+  const { hiddenRowIds, hideRows, showRow, showAllRows } = useHiddenFinanceRows(user?.id, year);
+  const hiddenRows = data.finance_rows.filter(
+    (row) => row.id !== carryoverRow?.id && hiddenRowIds.has(row.id),
+  );
+  const displayedRows = data.finance_rows.filter(
+    (row) => row.id === carryoverRow?.id || !hiddenRowIds.has(row.id),
+  );
   const firstFinanceYear = financeStartYear(rawData) ?? Number(today.slice(0, 4));
   const openingDeficitEntries = rawData.finance_entries.filter(
     (entry) =>
@@ -212,7 +223,6 @@ export function FinancePage() {
   const language = resolveLocale(i18n);
   const money = (value: number) =>
     formatCurrency(value, "TRY", {
-      locale: language,
       minimumFractionDigits: decimalPlaces,
       maximumFractionDigits: decimalPlaces,
     });
@@ -230,14 +240,14 @@ export function FinancePage() {
   };
   const history = useFinanceHistory(user?.id ? `${user.id}:${year}` : undefined, refresh);
   const visibleRows = [
-    ...data.finance_rows.filter((row) => row.kind !== "expense"),
-    ...data.finance_rows.filter((row) => row.kind === "expense"),
+    ...displayedRows.filter((row) => row.kind !== "expense"),
+    ...displayedRows.filter((row) => row.kind === "expense"),
   ];
   const grid = useFinanceGrid({
     rows: visibleRows.filter((row) => row.id !== carryoverRow?.id),
     entries: data.finance_entries,
     year,
-    language,
+    language: resolveNumberLocale(),
     locked: history.busy,
     ownerId: user?.id,
     statementLinks: data.finance_statement_links,
@@ -266,7 +276,7 @@ export function FinancePage() {
             : { month: year + "-" + String(context.month).padStart(2, "0") }),
         }
       : null;
-  const contextRows = visibleRows.filter(
+  const contextRows = data.finance_rows.filter(
     (row) => (row.kind === "expense") === (context?.row?.kind === "expense"),
   );
   const contextRowIndex = contextRows.findIndex((row) => row.id === context?.row?.id);
@@ -423,7 +433,6 @@ export function FinancePage() {
   const summaryRows = ["received", "paid", "remaining"] as const;
   const sheetMoney = (value: number) =>
     formatCurrency(value, "TRY", {
-      locale: language,
       minimumFractionDigits: decimalPlaces,
       maximumFractionDigits: decimalPlaces,
     });
@@ -493,6 +502,28 @@ export function FinancePage() {
   const workbookTools = (
     <div className="finance-workbook__toolbar">
       <div className="finance-workbook__actions">
+        {sheet === "ledger" && hiddenRows.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={grid.busy}>
+                <Eye className="mr-2 h-4 w-4" />
+                {t("finance_hidden_rows", { count: hiddenRows.length })}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={showAllRows}>
+                {label("show_all_rows")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {hiddenRows.map((row) => (
+                <DropdownMenuItem key={row.id} onSelect={() => showRow(row.id)}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  {row.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         <div className="finance-workbook__year">
           <button
             disabled={year <= 1970 || grid.busy}
@@ -693,7 +724,7 @@ export function FinancePage() {
                   grid={grid}
                   run={run}
                   pending={mutate.isPending || grid.busy}
-                  rows={data.finance_rows.filter((row) => row.kind !== "expense")}
+                  rows={displayedRows.filter((row) => row.kind !== "expense")}
                   cellEntries={cellEntries}
                   verifications={data.entry_verifications}
                   linkedStatement={linkedStatement}
@@ -717,7 +748,7 @@ export function FinancePage() {
                   grid={grid}
                   run={run}
                   pending={mutate.isPending || grid.busy}
-                  rows={data.finance_rows.filter((row) => row.kind === "expense")}
+                  rows={displayedRows.filter((row) => row.kind === "expense")}
                   cellEntries={cellEntries}
                   verifications={data.entry_verifications}
                   linkedStatement={linkedStatement}
@@ -918,6 +949,17 @@ export function FinancePage() {
             )}
             {context.scope === "row" && context.row ? (
               <>
+                <DropdownMenuItem
+                  disabled={grid.busy}
+                  onSelect={() => {
+                    hideRows(contextSelectedRows.map((row) => row.id));
+                    grid.clearSelection();
+                  }}
+                >
+                  <EyeOff className="mr-2 h-4 w-4" />
+                  {t("finance_hide_rows", { count: contextSelectedRows.length })}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => setEditor({ type: "row", row: context!.row })}>
                   {label("edit")}
                 </DropdownMenuItem>

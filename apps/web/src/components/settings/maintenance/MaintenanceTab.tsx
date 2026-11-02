@@ -11,11 +11,12 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
+import { numberFormatter } from "@/lib/numberFormat";
 import { toast } from "@/lib/toast";
-import { type DatabaseMaintenanceResult,serverSettingsService } from "@/services/serverSettings";
+import { type DatabaseMaintenanceResult, serverSettingsService } from "@/services/serverSettings";
 
 export function MaintenanceTab() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [busy, setBusy] = useState<"logos" | "check" | "optimize" | null>(null);
   const [result, setResult] = useState<DatabaseMaintenanceResult | null>(null);
 
@@ -66,7 +67,7 @@ export function MaintenanceTab() {
   const formatSize = (bytes: number) => {
     const unit = bytes >= 1024 * 1024 ? "MiB" : "KiB";
     const divisor = unit === "MiB" ? 1024 * 1024 : 1024;
-    return `${new Intl.NumberFormat(i18n?.resolvedLanguage, { maximumFractionDigits: 2 }).format(bytes / divisor)} ${unit}`;
+    return `${numberFormatter({ maximumFractionDigits: 2 }).format(bytes / divisor)} ${unit}`;
   };
 
   return (

@@ -350,13 +350,6 @@ export function SubscriptionSections({
         />
       )}
 
-      {section === "installments" &&
-        spending.data?.installments.some((plan) => plan.period === month) && (
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold">{t("spending_installments_source")}</h2>
-            <p className="text-sm text-muted-foreground">{t("spending_installments_help")}</p>
-          </div>
-        )}
       {["installments", "bills"].includes(section) && (
         <SpendingMonthPicker
           month={month}
@@ -378,6 +371,13 @@ export function SubscriptionSections({
           }
         />
       )}
+      {section === "installments" &&
+        spending.data?.installments.some((plan) => plan.period === month) && (
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">{t("spending_installments_source")}</h2>
+            <p className="text-sm text-muted-foreground">{t("spending_installments_help")}</p>
+          </div>
+        )}
       {["installments", "bills"].includes(section) && (
         <p className="flex items-start gap-2 rounded-xl border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
           <Lightbulb

@@ -1,4 +1,9 @@
 {
+  "finance_hide_rows_one": "Sor elrejtése",
+  "finance_hide_rows_other": "Kijelölt sorok elrejtése",
+  "finance_hidden_rows_one": "{{count}} rejtett sor",
+  "finance_hidden_rows_other": "{{count}} rejtett sor",
+  "finance_show_all_rows": "Összes sor megjelenítése",
   "finance_previous_month_deficit": "Előző havi hiány",
   "subscription_payments_awaiting": "Megerősítésre vár",
   "payment_confirmation_pending": "A fizetés megerősítésére vár",
@@ -2289,5 +2294,9 @@
   "spreadsheet_schedule_drive_config": "Ellenőrizze a Google OAuth-kliens beállításait és a telepítés szerver URL-címét.",
   "spreadsheet_schedule_drive_failed": "A Google Drive nem frissíthető. Ellenőrizze a kapcsolatot és a rendelkezésre álló tárhelyet.",
   "spreadsheet_schedule_reconnect": "Csatlakoztassa újra a Google Drive-ot a hozzáférés megújításához.",
-  "spreadsheet_schedule_render_failed": "Az Excel fájlt nem lehetett előkészíteni."
+  "spreadsheet_schedule_render_failed": "Az Excel fájlt nem lehetett előkészíteni.",
+  "number_format": "Számformátum",
+  "number_format_browser": "Böngésző beállítása",
+  "number_format_help": "A tizedes- és ezreselválasztó megjelenítését a felület nyelvétől függetlenül választhatja ki. A beállítást a fiókjához mentjük.",
+  "number_format_invalid": "Válasszon érvényes számformátumot."
 }

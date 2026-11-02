@@ -3,6 +3,7 @@ const { Record, security, files: fileHelpers } = require("../../runtime.cjs");
 const PROFILE = [
   "name",
   "language",
+  "number_locale",
   "main_currency",
   "dark_theme_mode",
   "color_theme",

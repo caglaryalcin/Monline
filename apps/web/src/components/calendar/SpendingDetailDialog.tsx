@@ -34,22 +34,23 @@ export function SpendingDetailDialog({
   onMoveDate?: (date: string) => void;
   movingPayment?: boolean;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [providerOpen, setProviderOpen] = useState(false);
   const [moveDate, setMoveDate] = useState(calendarDate || event.date);
-  const choice = useMerchantLogo(event.name, { month: event.date.slice(0, 7), rowId: event.provider_row_id });
+  const choice = useMerchantLogo(event.name, {
+    month: event.date.slice(0, 7),
+    rowId: event.provider_row_id,
+  });
   return (
-    <Dialog
-      open
-      onOpenChange={dialogDismissHandler(onClose)}
-    >
+    <Dialog open onOpenChange={dialogDismissHandler(onClose)}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <span aria-hidden="true">
               <SubscriptionLogo
                 sub={{ name: event.name, url: "" }}
-                month={event.date.slice(0, 7)} rowId={event.provider_row_id}
+                month={event.date.slice(0, 7)}
+                rowId={event.provider_row_id}
                 className="h-9 w-9 object-contain"
               />
             </span>
@@ -70,7 +71,7 @@ export function SpendingDetailDialog({
           )}
           <dt className="text-muted-foreground">{t("statement_amount")}</dt>
           <dd className="text-right font-semibold tabular-nums">
-            {formatCurrency(event.amount, event.currency, { locale: i18n.language.replace("_", "-") })}
+            {formatCurrency(event.amount, event.currency, {})}
           </dd>
           {event.card_name && (
             <>
@@ -150,8 +151,12 @@ export function SpendingDetailDialog({
           </div>
         )}
         {providerOpen && (
-          <MerchantProviderDialog name={event.name} month={isBillRecord(event) ? event.date.slice(0, 7) : undefined}
-            rowId={event.provider_row_id} onClose={() => setProviderOpen(false)} />
+          <MerchantProviderDialog
+            name={event.name}
+            month={isBillRecord(event) ? event.date.slice(0, 7) : undefined}
+            rowId={event.provider_row_id}
+            onClose={() => setProviderOpen(false)}
+          />
         )}
       </DialogContent>
     </Dialog>

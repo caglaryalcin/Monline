@@ -14,6 +14,7 @@ import {
 import { ProfileAvatarCard } from "@/components/settings/profile/ProfileAvatarCard";
 import { ProfileBudgetCard } from "@/components/settings/profile/ProfileBudgetCard";
 import { Button } from "@/components/ui/button";
+import { InfoButton } from "@/components/ui/info-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -28,6 +29,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
 import i18n from "@/lib/i18n";
 import { compressImage } from "@/lib/image";
+import { formatNumber, NUMBER_FORMAT_LOCALES, resolveNumberLocale } from "@/lib/numberFormat";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { currenciesService } from "@/services/currencies";
@@ -85,6 +87,7 @@ export function ProfileTab() {
       email: user?.email ?? "",
       oldPwd: "",
       language: user?.language || i18n.resolvedLanguage || "en",
+      number_locale: user?.number_locale || "",
     },
   });
 
@@ -102,6 +105,7 @@ export function ProfileTab() {
       fd.set("name", data.username);
       fd.set("email", data.email);
       fd.set("language", data.language);
+      fd.set("number_locale", data.number_locale || "");
       fd.set("budget", String(budget || 0));
       if (emailChanged) fd.set("oldPassword", data.oldPwd);
       if (avatarFile) fd.set("avatar", avatarFile);
@@ -219,6 +223,61 @@ export function ProfileTab() {
                   </Select>
                 )}
               />
+            </div>
+            <div className="grid gap-2">
+              <div className="flex items-center gap-1">
+                <Label htmlFor="profile-number-locale">{t("number_format")}</Label>
+                <InfoButton title={t("number_format")}>{t("number_format_help")}</InfoButton>
+              </div>
+              <Controller
+                name="number_locale"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value || "browser"}
+                    onValueChange={(value) => field.onChange(value === "browser" ? "" : value)}
+                  >
+                    <SelectTrigger id="profile-number-locale" className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="browser">
+                        {t("number_format_browser")} (
+                        {formatNumber(
+                          123456.78,
+                          { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                          resolveNumberLocale(""),
+                        )}
+                        )
+                      </SelectItem>
+                      {NUMBER_FORMAT_LOCALES.map((locale) => (
+                        <SelectItem key={locale} value={locale}>
+                          {formatNumber(
+                            123456.78,
+                            { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                            locale,
+                          )}
+                        </SelectItem>
+                      ))}
+                      {field.value &&
+                        !(NUMBER_FORMAT_LOCALES as readonly string[]).includes(field.value) && (
+                          <SelectItem value={field.value}>
+                            {formatNumber(
+                              123456.78,
+                              { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                              resolveNumberLocale(field.value),
+                            )}
+                          </SelectItem>
+                        )}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.number_locale && (
+                <p role="alert" className="text-sm text-destructive">
+                  {errors.number_locale.message}
+                </p>
+              )}
             </div>
           </div>
         </div>

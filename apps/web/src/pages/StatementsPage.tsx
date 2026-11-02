@@ -65,9 +65,7 @@ import {
   type StatementTransaction,
   validStatementDate,
 } from "@/lib/statements";
-import {
-  createSubscriptionMatcher,
-} from "@/lib/statementSubscriptions";
+import { createSubscriptionMatcher } from "@/lib/statementSubscriptions";
 import { formatCurrency } from "@/lib/utils";
 import {
   type StatementDuplicateResult,
@@ -219,10 +217,11 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
   const included = useMemo(() => statementRows.filter((row) => row.included), [statementRows]);
   const invalidRows = useMemo(() => included.filter((row) => !validReviewRow(row)), [included]);
   const excluded = useMemo(
-    () => statementSourceRows([
-      ...savedExcluded,
-      ...statementRows.filter((row) => !row.included && validReviewRow(row)),
-    ]),
+    () =>
+      statementSourceRows([
+        ...savedExcluded,
+        ...statementRows.filter((row) => !row.included && validReviewRow(row)),
+      ]),
     [statementRows, savedExcluded],
   );
   const sourceRows = useMemo(
@@ -246,9 +245,13 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
     () => statementUnitemizedFees(included, summary, excluded),
     [included, summary, excluded],
   );
-  const verification = useMemo(() => inspectStatementAccounting(sourceRows, summary, bank, {
-    unresolvedCount: extractionIssueCount,
-  }), [sourceRows, summary, bank, extractionIssueCount]);
+  const verification = useMemo(
+    () =>
+      inspectStatementAccounting(sourceRows, summary, bank, {
+        unresolvedCount: extractionIssueCount,
+      }),
+    [sourceRows, summary, bank, extractionIssueCount],
+  );
   const differences = verification.differences;
   useEffect(() => setDifferencesReviewed(false), [rows, summary, bank, extractionIssueCount]);
   const outsideStatementPeriod = (row: ReviewTransaction) =>
@@ -276,10 +279,10 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
     included.every(validReviewRow);
   const archivePageCount = archive.data?.totalPages ?? 0;
   const validPeriod = /^20\d{2}-(0[1-9]|1[0-2])$/.test(period);
-  const canExtract = !!file && fileCheck === "new" && !busy && !subscriptions.isPending && validPeriod;
+  const canExtract =
+    !!file && fileCheck === "new" && !busy && !subscriptions.isPending && validPeriod;
   const canSave = !!metadata && !!bank && valid && reviewed && !busy && !viewing && validPeriod;
-  const money = (amount: number, currency: string) =>
-    formatCurrency(amount, currency, { locale: i18n.language.replace("_", "-") });
+  const money = (amount: number, currency: string) => formatCurrency(amount, currency, {});
   const monthLabel = (value: string) => {
     const date = new Date(`${value}-15T12:00:00`);
     if (!Number.isFinite(date.getTime())) return "—";
@@ -336,8 +339,13 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
     } catch (err) {
       if (operation !== requestId.current || aborter.signal.aborted) return;
       setFileCheck("error");
-      setError(t(err instanceof Error && err.message.startsWith("statement_")
-        ? err.message : "statement_file_check_failed"));
+      setError(
+        t(
+          err instanceof Error && err.message.startsWith("statement_")
+            ? err.message
+            : "statement_file_check_failed",
+        ),
+      );
     } finally {
       if (operation === requestId.current) {
         setBusy("");
@@ -346,12 +354,17 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
     }
   }
   function update(id: string, patch: Partial<ReviewTransaction>) {
-    const pairedRefundIds = new Set(patch.included === undefined ? [] : matchedRefunds
-      .filter((pair) => pair.charge.id === id).map((pair) => pair.refund.id));
+    const pairedRefundIds = new Set(
+      patch.included === undefined
+        ? []
+        : matchedRefunds.filter((pair) => pair.charge.id === id).map((pair) => pair.refund.id),
+    );
     if (patch.included !== undefined) {
       for (const group of merchantRefundGroups) {
-        if (group.charges.some((charge) => charge.id === id) &&
-          (patch.included || group.charges.every((charge) => charge.id === id || !charge.included))) {
+        if (
+          group.charges.some((charge) => charge.id === id) &&
+          (patch.included || group.charges.every((charge) => charge.id === id || !charge.included))
+        ) {
           for (const refund of group.refunds) pairedRefundIds.add(refund.id);
         }
       }
@@ -550,9 +563,10 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
       ]);
       setImportOpen(subscriptionRows.length > 0);
     } catch (err) {
-      const key = err instanceof Error && err.message.startsWith("statement_")
-        ? err.message
-        : "statement_save_failed";
+      const key =
+        err instanceof Error && err.message.startsWith("statement_")
+          ? err.message
+          : "statement_save_failed";
       if (key === "statement_duplicate") setDuplicateReview(null);
       setError(t(key));
     } finally {
@@ -739,11 +753,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
                     className="h-11 rounded-xl"
                   />
                 </label>
-                <Button
-                  className="h-11 rounded-xl"
-                  disabled={!canExtract}
-                  onClick={extract}
-                >
+                <Button className="h-11 rounded-xl" disabled={!canExtract} onClick={extract}>
                   {busy === "read" || busy === "check-file" ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
@@ -752,10 +762,14 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
                   {t("statement_read")}
                 </Button>
                 {(busy === "read" || busy === "check-file") && (
-                  <Button className="h-11 rounded-xl" variant="outline" onClick={() => {
-                    if (busy === "check-file") void chooseFile(null);
-                    else clear();
-                  }}>
+                  <Button
+                    className="h-11 rounded-xl"
+                    variant="outline"
+                    onClick={() => {
+                      if (busy === "check-file") void chooseFile(null);
+                      else clear();
+                    }}
+                  >
                     {t("cancel")}
                   </Button>
                 )}
@@ -849,23 +863,32 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
                 })}
               </p>
             )}
-            {!viewing && <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm text-muted-foreground">{t("statement_review_note")}</p>
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                {unmatchedRefunds.length > 0 && <Button type="button" variant="outline" size="sm"
-                  className="h-8 gap-1.5 border-amber-500/30 text-xs text-amber-700 dark:text-amber-300"
-                  onClick={() => {
-                    const section = refundsSectionRef.current;
-                    if (section) {
-                      section.open = true;
-                      section.focus({ preventScroll: true });
-                      section.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }
-                  }}>
-                  {t("statement_refunds_review_short", { count: unmatchedRefunds.length })}<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                </Button>}
+            {!viewing && (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">{t("statement_review_note")}</p>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  {unmatchedRefunds.length > 0 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 border-amber-500/30 text-xs text-amber-700 dark:text-amber-300"
+                      onClick={() => {
+                        const section = refundsSectionRef.current;
+                        if (section) {
+                          section.open = true;
+                          section.focus({ preventScroll: true });
+                          section.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }
+                      }}
+                    >
+                      {t("statement_refunds_review_short", { count: unmatchedRefunds.length })}
+                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                    </Button>
+                  )}
+                </div>
               </div>
-            </div>}
+            )}
             {!!emptyPages && (
               <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
                 {t("statement_empty_pages", { count: emptyPages })}
@@ -916,8 +939,15 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
                 {t("statement_summary_fees_applied", { amount: money(summaryFees, "TRY") })}
               </p>
             )}
-            <StatementReconciliationNotice checks={differences} inspection={verification} money={money} viewing={!!viewing}
-              busy={!!busy} accepted={differencesReviewed} onAcceptedChange={setDifferencesReviewed} />
+            <StatementReconciliationNotice
+              checks={differences}
+              inspection={verification}
+              money={money}
+              viewing={!!viewing}
+              busy={!!busy}
+              accepted={differencesReviewed}
+              onAcceptedChange={setDifferencesReviewed}
+            />
             <label className="flex items-center gap-3 text-sm">
               <span>{t("statement_category_filter")}</span>
               <ThemedSelect
@@ -1261,9 +1291,17 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
                 </Button>
               </div>
             )}
-            <StatementMatchedRefunds matches={matchedRefunds} groups={merchantRefundGroups} money={money} />
+            <StatementMatchedRefunds
+              matches={matchedRefunds}
+              groups={merchantRefundGroups}
+              money={money}
+            />
             {unmatchedRefunds.length > 0 && (
-              <details ref={refundsSectionRef} tabIndex={-1} className="scroll-mt-4 rounded-xl border p-4 text-sm focus:outline-none">
+              <details
+                ref={refundsSectionRef}
+                tabIndex={-1}
+                className="scroll-mt-4 rounded-xl border p-4 text-sm focus:outline-none"
+              >
                 <summary className="cursor-pointer font-medium">
                   {t("statement_unmatched_refunds_title", { count: unmatchedRefunds.length })}
                 </summary>
@@ -1388,8 +1426,12 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
                       {invalidRows.map((row) => (
                         <li key={row.id}>
                           <span className="font-medium">{row.merchant || row.date}</span>
-                          {" · "}{t("statement_page", { page: row.page })}
-                          {" · "}{invalidReviewFields(row).map((field) => t(field)).join(", ")}
+                          {" · "}
+                          {t("statement_page", { page: row.page })}
+                          {" · "}
+                          {invalidReviewFields(row)
+                            .map((field) => t(field))
+                            .join(", ")}
                         </li>
                       ))}
                     </ul>

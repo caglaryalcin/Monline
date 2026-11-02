@@ -1,3 +1,4 @@
+import { setNumberLocale } from "@/lib/numberFormat";
 import type { User } from "@/types";
 
 type QueryOptions = {
@@ -27,8 +28,10 @@ try {
 } catch {
   /* Storage may be unavailable. */
 }
+setNumberLocale(current?.record?.number_locale);
 function publish(value: Session | null) {
   current = value;
+  setNumberLocale(value?.record?.number_locale);
   try {
     if (value?.remember) {
       localStorage.setItem(SESSION_KEY, JSON.stringify(value));
@@ -51,6 +54,7 @@ window.addEventListener("storage", (event) => {
   } catch {
     current = null;
   }
+  setNumberLocale(current?.record?.number_locale);
   for (const listener of listeners) listener(current?.token || "", current?.record || null);
 });
 export class ClientError extends Error {

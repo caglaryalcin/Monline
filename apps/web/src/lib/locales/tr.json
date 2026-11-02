@@ -1,4 +1,9 @@
 {
+  "finance_hide_rows_one": "Satırı gizle",
+  "finance_hide_rows_other": "Seçili satırları gizle",
+  "finance_hidden_rows_one": "{{count}} gizli satır",
+  "finance_hidden_rows_other": "{{count}} gizli satır",
+  "finance_show_all_rows": "Tüm satırları göster",
   "finance_previous_month_deficit": "Önceki ay eksi",
   "subscription_payments_awaiting": "Onay bekleyen",
   "payment_confirmation_pending": "Ödeme onayı bekliyor",
@@ -1298,5 +1303,9 @@
   "trial_period_help": "Başlangıç ayı deneme süresine dahildir. Her deneme ayında seçilen para biriminde 0 tutarlı ödeme görünür; süre sonunda normal ödeme döngüsü ve ücret uygulanır.",
   "trial_amount_hint": "Başlangıç ayı dahil {{count}} ay boyunca 0 {{currency}}. Ardından normal ücret uygulanır.",
   "trial_months_invalid": "1 ile 120 arasında tam bir ay sayısı seçin.",
-  "trial_start_invalid": "Geçerli bir deneme başlangıç tarihi seçin."
+  "trial_start_invalid": "Geçerli bir deneme başlangıç tarihi seçin.",
+  "number_format": "Sayı biçimi",
+  "number_format_browser": "Tarayıcı ayarı",
+  "number_format_help": "Ondalık ve binlik ayıraçlarının görünümünü arayüz dilinden bağımsız seçin. Bu tercih hesabınıza kaydedilir.",
+  "number_format_invalid": "Geçerli bir sayı biçimi seçin."
 }

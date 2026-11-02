@@ -7,7 +7,7 @@ import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Button } from "@/components/ui/button";
 import { MerchantLogosContext } from "@/contexts/MerchantLogosContext";
 import { findLogoService } from "@/lib/logoServices";
-import { type MerchantLogoTarget,resolveMerchantLogo } from "@/lib/merchantLogo";
+import { type MerchantLogoTarget, resolveMerchantLogo } from "@/lib/merchantLogo";
 import {
   currentSpendingMonth,
   estimatedInstallmentTotal,
@@ -36,10 +36,15 @@ export function StatementCommitments({
 }) {
   const { t, i18n } = useTranslation();
   const [limit, setLimit] = useState(20);
-  const [providerFor, setProviderFor] = useState<({ name: string } & MerchantLogoTarget) | null>(null);
+  const [providerFor, setProviderFor] = useState<({ name: string } & MerchantLogoTarget) | null>(
+    null,
+  );
   const { choices } = useContext(MerchantLogosContext);
   const choiceFor = (bill: SpendingData["events"][number]) =>
-    resolveMerchantLogo(choices, bill.name, { month: bill.date.slice(0, 7), rowId: bill.provider_row_id });
+    resolveMerchantLogo(choices, bill.name, {
+      month: bill.date.slice(0, 7),
+      rowId: bill.provider_row_id,
+    });
   const matches = (name: string) => name.toLocaleLowerCase().includes(search.toLocaleLowerCase());
   const plans = data.installments.filter(
     (plan) => plan.period === month && matches(`${plan.name} ${plan.card_name}`),
@@ -51,8 +56,7 @@ export function StatementCommitments({
   const bills = billCandidates.filter(
     (event) => !event.duplicate_of || !billIds.has(event.duplicate_of),
   );
-  const money = (amount: number, currency: string) =>
-    formatCurrency(amount, currency, { locale: i18n.language.replace("_", "-") });
+  const money = (amount: number, currency: string) => formatCurrency(amount, currency, {});
   const periodName = (period: string) =>
     new Intl.DateTimeFormat(i18n.language.replace("_", "-"), {
       month: "long",
@@ -145,7 +149,11 @@ export function StatementCommitments({
                 >
                   {t("finance_go_statement")}
                 </StatementLink>
-                <Button variant="ghost" size="sm" onClick={() => setProviderFor({ name: plan.name })}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setProviderFor({ name: plan.name })}
+                >
                   {t("spending_provider_change")}
                 </Button>
               </article>
@@ -162,7 +170,13 @@ export function StatementCommitments({
               <p className="text-lg font-medium text-foreground">{t("spending_no_bills")}</p>
             </div>
           )}
-          <div className={layout === "list" ? "space-y-2" : "grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3"}>
+          <div
+            className={
+              layout === "list"
+                ? "space-y-2"
+                : "grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3"
+            }
+          >
             {bills.slice(0, limit).map((bill) => (
               <BillCard
                 key={bill.id}
@@ -170,7 +184,13 @@ export function StatementCommitments({
                 layout={layout}
                 providerName={choiceFor(bill)?.provider_name}
                 providerKnown={!!findLogoService(bill.name) || !!choiceFor(bill)}
-                onChooseProvider={() => setProviderFor({ name: bill.name, month: bill.date.slice(0, 7), rowId: bill.provider_row_id })}
+                onChooseProvider={() =>
+                  setProviderFor({
+                    name: bill.name,
+                    month: bill.date.slice(0, 7),
+                    rowId: bill.provider_row_id,
+                  })
+                }
               />
             ))}
           </div>

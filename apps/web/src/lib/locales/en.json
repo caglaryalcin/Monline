@@ -1,4 +1,9 @@
 {
+  "finance_hide_rows_one": "Hide row",
+  "finance_hide_rows_other": "Hide selected rows",
+  "finance_hidden_rows_one": "{{count}} hidden row",
+  "finance_hidden_rows_other": "{{count}} hidden rows",
+  "finance_show_all_rows": "Show all rows",
   "finance_previous_month_deficit": "Previous month deficit",
   "subscription_payments_awaiting": "Awaiting confirmation",
   "payment_confirmation_pending": "Awaiting payment confirmation",
@@ -1298,5 +1303,9 @@
   "trial_period_help": "The starting month is included in the trial. Each trial month has a zero-cost payment in the selected currency; the normal billing cycle and price resume afterwards.",
   "trial_amount_hint": "{{count}} trial months at 0 {{currency}}, including the starting month. The regular price applies afterwards.",
   "trial_months_invalid": "Choose a whole number of months from 1 to 120.",
-  "trial_start_invalid": "Choose a valid trial start date."
+  "trial_start_invalid": "Choose a valid trial start date.",
+  "number_format": "Number format",
+  "number_format_browser": "Browser settings",
+  "number_format_help": "Choose how decimal and thousands separators are displayed, independently of the interface language. This preference is saved for your account.",
+  "number_format_invalid": "Choose a valid number format."
 }

@@ -27,7 +27,7 @@ const V2_COLLECTIONS = new Set([
 ]);
 // Match the additive migrations in Repository. All other columns remain required.
 const MIGRATED_COLUMNS = {
-  users: ["disabled", "show_currency_code"],
+  users: ["disabled", "show_currency_code", "number_locale"],
   payment_records: [
     "scheduled_date",
     "statement_sources",

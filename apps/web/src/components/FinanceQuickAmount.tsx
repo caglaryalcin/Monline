@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 
 import type { FinanceEntry, FinanceRow } from "@/lib/finance";
 import { parseClipboardAmount } from "@/lib/financeClipboard";
+import { numberFormatter } from "@/lib/numberFormat";
 
 export function FinanceQuickAmount({
   row,
   entries,
   title,
-  language,
   label,
   pending,
   onSave,
@@ -25,7 +25,7 @@ export function FinanceQuickAmount({
   const [values, setValues] = useState(() =>
     entries.length
       ? entries.map((entry) =>
-          new Intl.NumberFormat(language, {
+          numberFormatter({
             useGrouping: false,
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,

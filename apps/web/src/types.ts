@@ -7,6 +7,7 @@ export interface User {
   name: string;
   avatar?: string;
   language?: string;
+  number_locale?: string;
   main_currency?: string;
   totp_enabled?: boolean;
   totp_configured?: boolean;

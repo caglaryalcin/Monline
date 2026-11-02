@@ -15,6 +15,7 @@ import {
   financialStatisticsSum,
 } from "@/lib/financialStatistics";
 import { resolveLocale } from "@/lib/locale";
+import { numberFormatter } from "@/lib/numberFormat";
 import { EMPTY_SPENDING, spendingKey } from "@/lib/spending";
 import { cn, formatCurrency } from "@/lib/utils";
 import { spendingService } from "@/services/spending";
@@ -75,7 +76,7 @@ export function FinancialStatistics({ section }: { section: FinancialStatisticsS
       : period
         ? yearRows.filter((row) => row.month === period)
         : yearRows;
-  const money = (amount: number) => formatCurrency(amount, currency, { locale: locale });
+  const money = (amount: number) => formatCurrency(amount, currency, {});
   const monthName = (value: string, short = false) =>
     new Intl.DateTimeFormat(locale, {
       month: short ? "short" : "long",
@@ -433,7 +434,7 @@ export function FinancialStatistics({ section }: { section: FinancialStatisticsS
                             {money(group.value)}
                           </span>
                           <span className="text-xs tabular-nums text-muted-foreground">
-                            {new Intl.NumberFormat(locale, {
+                            {numberFormatter({
                               style: "percent",
                               maximumFractionDigits: 1,
                             }).format(group.value / sum("amount"))}

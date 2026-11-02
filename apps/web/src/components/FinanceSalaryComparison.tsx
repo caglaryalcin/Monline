@@ -26,6 +26,7 @@ import {
   type SalaryTag,
 } from "@/lib/finance";
 import { resolveLocale } from "@/lib/locale";
+import { numberFormatter } from "@/lib/numberFormat";
 import { SALARY_TAG_STYLES } from "@/lib/salaryTagStyles";
 import { cn, formatCurrency, formatMultiplier } from "@/lib/utils";
 import { financeService } from "@/services/finance";
@@ -101,14 +102,13 @@ export function FinanceSalaryComparison({
   const locale = resolveLocale(i18n, "tr");
   const currency = (amount: number, code = "TRY") =>
     formatCurrency(amount, code, {
-      locale,
       minimumFractionDigits: decimalPlaces,
       maximumFractionDigits: decimalPlaces,
     });
   const percent = (amount: number | null) =>
     amount == null
       ? "—"
-      : new Intl.NumberFormat(locale, {
+      : numberFormatter({
           style: "percent",
           maximumFractionDigits: 1,
           signDisplay: "exceptZero",

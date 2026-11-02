@@ -7,6 +7,8 @@
 export const LS_KEYS = {
   FINANCE_DECIMALS: "monline_finance_decimals",
   financeYear: (userId: string) => `monline_finance_year_${userId}`,
+  financeHiddenRows: (userId: string, year: number) =>
+    `monline_finance_hidden_rows_${userId}_${year}`,
   LANGUAGE: "monline_language",
   COLOR_THEME: "monline_color_theme",
   SIDEBAR_WIDTH: "monline_sidebar_width",

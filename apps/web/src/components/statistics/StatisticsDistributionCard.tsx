@@ -14,6 +14,7 @@ import { ThemedSelect } from "@/components/ui/themed-select";
 import { usePersistentExpandedItems } from "@/hooks/usePersistentDisclosure";
 import type { CategoryCostMode } from "@/lib/categoryPeriodCosts";
 import { resolveLocale } from "@/lib/locale";
+import { numberFormatter } from "@/lib/numberFormat";
 import { cn, formatPrice } from "@/lib/utils";
 
 interface StatisticsDistributionCardProps {
@@ -56,11 +57,14 @@ export function StatisticsDistributionCard({
   hasError,
 }: StatisticsDistributionCardProps) {
   const { t, i18n } = useTranslation();
-  const [expandedCategories, toggleCategory] = usePersistentExpandedItems(userId, "statistics.categories");
+  const [expandedCategories, toggleCategory] = usePersistentExpandedItems(
+    userId,
+    "statistics.categories",
+  );
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const language = resolveLocale(i18n);
   const percent = (value: number) =>
-    new Intl.NumberFormat(language, { style: "percent", maximumFractionDigits: 1 }).format(value);
+    numberFormatter({ style: "percent", maximumFractionDigits: 1 }).format(value);
   const chartData = data.map((item) => ({ ...item, share: total > 0 ? item.value / total : 0 }));
   const formattedTotal = formatPrice(total, mainSymbol, { currencyCode: mainCode });
   // Reset Recharts' cached sectors and active tooltip when the displayed dataset changes.

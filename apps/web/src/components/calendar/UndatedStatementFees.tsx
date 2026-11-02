@@ -5,7 +5,7 @@ import type { SpendingEvent } from "@/lib/spending";
 import { formatCurrency } from "@/lib/utils";
 
 export function UndatedStatementFees({ events }: { events: SpendingEvent[] }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   if (!events.length) return null;
   return (
     <section className="space-y-2 rounded-xl border p-4 text-sm">
@@ -17,7 +17,7 @@ export function UndatedStatementFees({ events }: { events: SpendingEvent[] }) {
             {event.card_name || event.statement_period} · {t("statement_category_fees")}
           </span>
           <span className="font-medium tabular-nums">
-            {formatCurrency(event.amount, event.currency, { locale: i18n.language.replace("_", "-") })}
+            {formatCurrency(event.amount, event.currency, {})}
           </span>
           {event.statement_id && (
             <StatementLink statementId={event.statement_id} className="text-primary underline">

@@ -24,6 +24,7 @@ import {
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { type CostHistoryPoint, historyMonth, yearMonths } from "@/lib/costHistory";
 import { resolveLocale } from "@/lib/locale";
+import { numberFormatter } from "@/lib/numberFormat";
 import { getCurrencySymbol } from "@/lib/utils";
 
 interface CostHistoryCardProps {
@@ -75,12 +76,12 @@ export function CostHistoryCard({
   const classic = variant === "classic";
   const lineColor = classic ? "hsl(var(--primary))" : "var(--history-line)";
   const forecastColor = "hsl(var(--muted-foreground))";
-  const axisNumber = new Intl.NumberFormat(language.replace("_", "-"), {
+  const axisNumber = numberFormatter({
     notation: "standard",
     useGrouping: false,
     maximumFractionDigits: 0,
   });
-  const groupedAxisNumber = new Intl.NumberFormat(language.replace("_", "-"), {
+  const groupedAxisNumber = numberFormatter({
     notation: "standard",
     useGrouping: true,
     maximumFractionDigits: 0,

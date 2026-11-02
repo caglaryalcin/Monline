@@ -15,6 +15,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { SalaryTag } from "@/lib/finance";
 import { resolveLocale } from "@/lib/locale";
+import { numberFormatter } from "@/lib/numberFormat";
 import { SALARY_TAG_STYLES } from "@/lib/salaryTagStyles";
 
 export interface DashboardYearPoint {
@@ -74,11 +75,11 @@ export function YearHistoryCard({
       color: forecastColor ?? "hsl(var(--muted-foreground))",
       formatValue,
     });
-  const axisNumber = new Intl.NumberFormat(locale, {
+  const axisNumber = numberFormatter({
     useGrouping: false,
     maximumFractionDigits: 0,
   });
-  const groupedAxisNumber = new Intl.NumberFormat(locale, {
+  const groupedAxisNumber = numberFormatter({
     useGrouping: true,
     maximumFractionDigits: 0,
   });

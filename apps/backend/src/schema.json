@@ -71,6 +71,14 @@
         "hidden": false
       },
       {
+        "name": "number_locale",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 100
+      },
+      {
         "name": "language",
         "type": "text",
         "hidden": false,

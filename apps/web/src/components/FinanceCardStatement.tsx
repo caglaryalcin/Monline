@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import type { FinanceCardTransaction, FinanceRow } from "@/lib/finance";
 import { parseClipboardAmount } from "@/lib/financeClipboard";
+import { formatNumber } from "@/lib/numberFormat";
 import { financeService } from "@/services/finance";
 
 export function FinanceCardStatement({
@@ -167,7 +168,15 @@ export function FinanceCardStatement({
                 required
                 maxLength={32}
                 className="text-right tabular-nums"
-                defaultValue={editing?.amount.toFixed(2) || ""}
+                defaultValue={
+                  editing
+                    ? formatNumber(editing.amount, {
+                        useGrouping: false,
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })
+                    : ""
+                }
                 aria-invalid={invalid === "purchase_invalid" || undefined}
                 onChange={() => setInvalid("")}
               />

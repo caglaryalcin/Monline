@@ -1,4 +1,9 @@
 {
+  "finance_hide_rows_one": "Zeile ausblenden",
+  "finance_hide_rows_other": "Ausgewählte Zeilen ausblenden",
+  "finance_hidden_rows_one": "{{count}} ausgeblendete Zeile",
+  "finance_hidden_rows_other": "{{count}} ausgeblendete Zeilen",
+  "finance_show_all_rows": "Alle Zeilen anzeigen",
   "finance_previous_month_deficit": "Fehlbetrag des Vormonats",
   "subscription_payments_awaiting": "Bestätigung ausstehend",
   "payment_confirmation_pending": "Zahlungsbestätigung ausstehend",
@@ -1298,5 +1303,9 @@
   "trial_period_help": "Der Startmonat zählt zur Testphase. In jedem Testmonat wird eine Zahlung von 0 in der gewählten Währung angezeigt. Danach gelten der reguläre Zahlungszyklus und Preis.",
   "trial_amount_hint": "{{count}} Testmonate mit 0 {{currency}}, einschließlich des Startmonats. Danach gilt der reguläre Preis.",
   "trial_months_invalid": "Wählen Sie eine ganze Monatszahl zwischen 1 und 120.",
-  "trial_start_invalid": "Wählen Sie ein gültiges Startdatum der Testphase."
+  "trial_start_invalid": "Wählen Sie ein gültiges Startdatum der Testphase.",
+  "number_format": "Zahlenformat",
+  "number_format_browser": "Browsereinstellung",
+  "number_format_help": "Wählen Sie Dezimal- und Tausendertrennzeichen unabhängig von der Sprache der Oberfläche. Diese Einstellung wird für Ihr Konto gespeichert.",
+  "number_format_invalid": "Wählen Sie ein gültiges Zahlenformat."
 }

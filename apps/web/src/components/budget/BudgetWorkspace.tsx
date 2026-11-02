@@ -37,7 +37,7 @@ const selectClass = "h-10 max-w-full rounded-md border border-input bg-backgroun
 export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
   const { user } = useAuth();
   const userId = user?.id ?? "";
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const today = useLocalToday();
   const [month, setMonth] = useState(today.slice(0, 7));
   const [tab, setTab] = useState("expenses");
@@ -69,8 +69,7 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
     onError: (error) =>
       toast.error(t(error.message.startsWith("budget_") ? error.message : "budget_save_failed")),
   });
-  const money = (value: number, currency = "TRY") =>
-    formatCurrency(value, currency, { locale: i18n.language.replace("_", "-") });
+  const money = (value: number, currency = "TRY") => formatCurrency(value, currency, {});
   const amounts = (values: BudgetTotal[]) =>
     values.length
       ? values.map((value) => money(value.amount, value.currency)).join(" · ")
@@ -157,7 +156,11 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
             </a>
           ) : (
             <>
-              <PersistentDetails userId={userId} preference="budget.getting-started" className="rounded-xl border p-4">
+              <PersistentDetails
+                userId={userId}
+                preference="budget.getting-started"
+                className="rounded-xl border p-4"
+              >
                 <summary className="cursor-pointer font-medium">{t("budget_start")}</summary>
                 <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
                   {[1, 2, 3, 4].map((step) => (
@@ -831,10 +834,7 @@ function PlanDialog({
     },
   });
   return (
-    <Dialog
-      open
-      onOpenChange={dialogDismissHandler(onClose, mutation.isPending)}
-    >
+    <Dialog open onOpenChange={dialogDismissHandler(onClose, mutation.isPending)}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>

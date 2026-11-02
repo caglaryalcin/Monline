@@ -30,18 +30,10 @@ export function StatementOverview({
   canImport: boolean;
   bank?: string;
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const groups = useMemo(() => statementReport(rows, summary, excluded), [rows, summary, excluded]);
-  const money = (value: number, currency = "TRY") =>
-    formatCurrency(value, currency, { locale: i18n.language.replace("_", "-") });
-  const fields = [
-    "previous_balance",
-    "payments",
-    "purchases",
-    "cash",
-    "fees",
-    "balance",
-  ] as const;
+  const money = (value: number, currency = "TRY") => formatCurrency(value, currency, {});
+  const fields = ["previous_balance", "payments", "purchases", "cash", "fees", "balance"] as const;
   const equation = [
     summary.previous_balance,
     summary.payments,
@@ -65,22 +57,54 @@ export function StatementOverview({
         <section className="rounded-2xl border p-4" aria-label={t("statement_account_summary")}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <h3 className="text-sm font-semibold">{t("statement_account_summary")}</h3>
-            {summary.minimum_payment !== undefined && <dl className="text-right">
-              <dt className="text-xs text-muted-foreground">{t("statement_summary_minimum_payment")}</dt>
-              <dd className={cn("mt-1 text-base font-semibold tabular-nums", summaryColors.minimum_payment)}>{money(summary.minimum_payment)}</dd>
-            </dl>}
+            {summary.minimum_payment !== undefined && (
+              <dl className="text-right">
+                <dt className="text-xs text-muted-foreground">
+                  {t("statement_summary_minimum_payment")}
+                </dt>
+                <dd
+                  className={cn(
+                    "mt-1 text-base font-semibold tabular-nums",
+                    summaryColors.minimum_payment,
+                  )}
+                >
+                  {money(summary.minimum_payment)}
+                </dd>
+              </dl>
+            )}
           </div>
           <div className="mt-4 overflow-x-auto pb-1">
-            <div role="group" aria-label={t("statement_balance_formula_help")} className="flex min-w-[64rem] items-stretch gap-2 xl:min-w-0">
+            <div
+              role="group"
+              aria-label={t("statement_balance_formula_help")}
+              className="flex min-w-[64rem] items-stretch gap-2 xl:min-w-0"
+            >
               {fields.map((key, index) => (
                 <Fragment key={key}>
-                  {index > 0 && <span className="flex shrink-0 items-center justify-center text-xl font-medium text-muted-foreground" aria-hidden="true">
-                    {key === "payments" ? "−" : key === "balance" ? "=" : "+"}
-                  </span>}
-                  <dl className={cn("flex min-w-0 flex-1 flex-col justify-between gap-3 rounded-xl border border-border/60 bg-muted/10 p-3",
-                    key === "balance" && "border-rose-500/25 bg-rose-500/5")}>
-                    <dt className="text-xs leading-relaxed text-muted-foreground">{t(`statement_summary_${key}`)}</dt>
-                    <dd className={cn("whitespace-nowrap text-base font-semibold tabular-nums", summaryColors[key], key === "balance" && "font-bold")}>
+                  {index > 0 && (
+                    <span
+                      className="flex shrink-0 items-center justify-center text-xl font-medium text-muted-foreground"
+                      aria-hidden="true"
+                    >
+                      {key === "payments" ? "−" : key === "balance" ? "=" : "+"}
+                    </span>
+                  )}
+                  <dl
+                    className={cn(
+                      "flex min-w-0 flex-1 flex-col justify-between gap-3 rounded-xl border border-border/60 bg-muted/10 p-3",
+                      key === "balance" && "border-rose-500/25 bg-rose-500/5",
+                    )}
+                  >
+                    <dt className="text-xs leading-relaxed text-muted-foreground">
+                      {t(`statement_summary_${key}`)}
+                    </dt>
+                    <dd
+                      className={cn(
+                        "whitespace-nowrap text-base font-semibold tabular-nums",
+                        summaryColors[key],
+                        key === "balance" && "font-bold",
+                      )}
+                    >
                       {summary[key] === undefined ? "—" : money(summary[key])}
                     </dd>
                   </dl>
