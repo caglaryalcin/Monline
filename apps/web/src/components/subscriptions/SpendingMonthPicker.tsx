@@ -11,11 +11,13 @@ export function SpendingMonthPicker({
   onChange,
   recordedMonths,
   calendarPicker = false,
+  monthsLabel,
 }: {
   month: string;
   onChange: (month: string) => void;
   recordedMonths: string[];
   calendarPicker?: boolean;
+  monthsLabel?: string;
 }) {
   const { t, i18n } = useTranslation();
   const shift = (delta: number) => {
@@ -67,14 +69,14 @@ export function SpendingMonthPicker({
         </Button>
         {recordedMonths.length > 0 && (
           <select
-            aria-label={t("spending_recorded_months")}
+            aria-label={monthsLabel ?? t("spending_recorded_months")}
             className="h-9 max-w-full rounded-md border bg-background px-2 text-sm"
             value=""
             onChange={(event) => {
               if (event.target.value) onChange(event.target.value);
             }}
           >
-            <option value="">{t("spending_recorded_months")}</option>
+            <option value="">{monthsLabel ?? t("spending_recorded_months")}</option>
             {recordedMonths.map((value) => (
               <option key={value} value={value}>
                 {new Intl.DateTimeFormat(i18n.language.replace("_", "-"), {

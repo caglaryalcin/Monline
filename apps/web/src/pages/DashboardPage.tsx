@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
-import { BudgetOverviewCard } from "@/components/dashboard/BudgetOverviewCard";
+import { DashboardPaymentSidebar } from "@/components/dashboard/DashboardPaymentSidebar";
 import { DashboardYearOverview } from "@/components/dashboard/DashboardYearOverview";
 import { useDashboardDerivedData } from "@/components/dashboard/useDashboardDerivedData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -72,8 +72,14 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <DashboardYearOverview key={userId} userId={userId} today={today} sidebar={
-          <BudgetOverviewCard
+      <DashboardYearOverview
+        key={userId}
+        userId={userId}
+        today={today}
+        sidebar={(data) => (
+          <DashboardPaymentSidebar
+            data={data}
+            today={today}
             budget={budget}
             entries={monthlyBudget.entries}
             totalCredits={totalCredits}
@@ -81,7 +87,8 @@ export function DashboardPage() {
             hasError={monthlyBudget.hasError || summary.isError}
             formatValue={formatValue}
           />
-      } />
+        )}
+      />
     </div>
   );
 }

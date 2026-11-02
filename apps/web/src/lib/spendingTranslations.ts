@@ -1,20 +1,36 @@
 export const spendingTranslations = {
   tr: {
+    spending_installment_months: "Taksit ayları",
+    spending_installment_month_empty: "Bu ay için taksit ödemesi bulunmuyor.",
+    dashboard_month_payment_sections: "Bu ayın ödeme bölümleri",
+    dashboard_month_payments: "Bu ayın ödemeleri",
+    dashboard_month_payments_empty: "Bu ay için ödeme bulunmuyor.",
+    dashboard_month_payments_help:
+      "Seçilen bölümün bu ayki ödenen ve bekleyen ödemelerini gösterir. Tutarlar ana para birimine çevrilir. Tutarı henüz girilmemiş sabit faturalar, son kayıtlı tutarla tahmini olarak gösterilir.",
+    dashboard_month_estimated: "Tahmini tutar",
+    spending_installment_payable: "Ödenecek",
+    spending_installment_estimated: "Son ekstreye göre tahmini",
     spending_provider_unset: "Sağlayıcı seçilmedi",
-    spending_provider_year_help: "Seçtiğin sağlayıcı bu giderin {{year}} yılındaki tüm aylarına uygulanır. Diğer yıllar değişmez.",
-    spending_provider_period_help: "Sağlayıcıyı hangi aydan itibaren kullanacağını seç. Ödeme adı, tutarı ve durumu değişmez.",
+    spending_provider_year_help:
+      "Seçtiğin sağlayıcı bu giderin {{year}} yılındaki tüm aylarına uygulanır. Diğer yıllar değişmez.",
+    spending_provider_period_help:
+      "Sağlayıcıyı hangi aydan itibaren kullanacağını seç. Ödeme adı, tutarı ve durumu değişmez.",
     spending_provider_month: "Ay",
     spending_provider_apply: "Uygulama",
     spending_provider_scope_from: "Bu aydan itibaren",
     spending_provider_scope_month: "Yalnızca bu ay",
-    spending_provider_scope_from_help: "Önceki aylar değişmez. Bu seçim, sonraki sağlayıcı değişikliğine kadar geçerli olur. İleri aylara özel seçimler korunur.",
-    spending_provider_scope_month_help: "Yalnızca seçilen ay değişir. Sonraki ay mevcut sağlayıcı devam eder.",
+    spending_provider_scope_from_help:
+      "Önceki aylar değişmez. Bu seçim, sonraki sağlayıcı değişikliğine kadar geçerli olur. İleri aylara özel seçimler korunur.",
+    spending_provider_scope_month_help:
+      "Yalnızca seçilen ay değişir. Sonraki ay mevcut sağlayıcı devam eder.",
     spending_provider_period_reset: "Bu dönem seçimini kaldır",
     spending_provider_search: "İl veya sağlayıcı ara",
     spending_provider_search_placeholder: "Örn. Ankara, Denizli, Aksa",
-    spending_provider_area_help: "Bir ilde birden fazla sağlayıcı olabilir. Faturandaki şirketi seç.",
+    spending_provider_area_help:
+      "Bir ilde birden fazla sağlayıcı olabilir. Faturandaki şirketi seç.",
     spending_provider_selected: "Seçili sağlayıcı",
-    spending_provider_no_results: "Bu aramaya uygun sağlayıcı bulunamadı. Başka firma seçeneğini kullanabilirsin.",
+    spending_provider_no_results:
+      "Bu aramaya uygun sağlayıcı bulunamadı. Başka firma seçeneğini kullanabilirsin.",
     spending_provider_group_electricity_retail: "Elektrik · Fatura şirketleri",
     spending_provider_group_electricity_distribution: "Elektrik · Dağıtım şirketleri",
     spending_provider_group_water: "Su",
@@ -26,7 +42,8 @@ export const spendingTranslations = {
     installment_stats_purchase_total: "Taksitli alışveriş sayısı",
     installment_stats_final_count: "{{count}} alışveriş bu ay bitiyor",
     installment_stats_monthly: "Ekstrelere göre aylık taksitler",
-    installment_stats_recorded_only: "Yalnızca ekstre yüklediğin aylar gösterilir. Bir ayı seçerek alışverişlerini görebilirsin.",
+    installment_stats_recorded_only:
+      "Yalnızca ekstre yüklediğin aylar gösterilir. Bir ayı seçerek alışverişlerini görebilirsin.",
     installment_stats_purchases: "Taksitler hangi alışverişlerden geliyor?",
     installment_stats_period: "{{month}} ekstresindeki taksitli alışverişler",
     installment_stats_empty: "Bu ay için kayıtlı taksit bulunamadı.",
@@ -39,8 +56,10 @@ export const spendingTranslations = {
     finance_stats_loans: "Kredi istatistikleri",
     finance_stats_installments: "Taksit istatistikleri",
     finance_stats_bills: "Fatura istatistikleri",
-    finance_stats_loans_source: "Gelir/Gider’deki Kredi etiketli satırlar. Tutarlar seçilen yıl/aydaki ödemelerden hesaplanır.",
-    finance_stats_installments_source: "Bir ekstre ayı seç. O ayki taksitleri, hangi alışverişlere ait olduklarını ve sonraki aylara ne kadar kaldığını gör.",
+    finance_stats_loans_source:
+      "Gelir/Gider’deki Kredi etiketli satırlar. Tutarlar seçilen yıl/aydaki ödemelerden hesaplanır.",
+    finance_stats_installments_source:
+      "Bir ekstre ayı seç. O ayki taksitleri, hangi alışverişlere ait olduklarını ve sonraki aylara ne kadar kaldığını gör.",
     finance_stats_bills_source: "Gelir/Gider’deki fatura etiketli ödemeler ve manuel faturalar.",
     finance_stats_error: "İstatistikler yüklenemedi.",
     finance_stats_records: "{{count}} ödeme",
@@ -95,7 +114,8 @@ export const spendingTranslations = {
     loans_paid: "Ödenen",
     loans_remaining: "Kalan",
     loans_count: "{{count}} kredi",
-    loans_credit_installment_summary: "<strong>{{loans}}</strong> farklı kredi, <strong>{{installments}}</strong> taksit",
+    loans_credit_installment_summary:
+      "<strong>{{loans}}</strong> farklı kredi, <strong>{{installments}}</strong> taksit",
     loans_installment_count: "{{count}} taksit",
     loans_source: "Gelir/Gider",
     loans_progress: "{{name}} ödeme ilerlemesi",
@@ -111,7 +131,7 @@ export const spendingTranslations = {
     loans_status_planned: "Ödenmedi",
     loans_open_finance: "Gelir/Gider’e git",
     spending_installments_info:
-      "Yükleyip kaydettiğin ekstrelerdeki taksitler burada listelenir; Gelir/Gider eşleştirmesi gerekmez.",
+      "Ekstrelerdeki taksitler ve kalan taksitlerin bu aydan bitiş ayına kadar ödeme planı gösterilir. Ekstre olmayan aylarda tutarlar son ekstreye göre tahminidir; yeni ekstre gelince kayıtlı taksit esas alınır.",
     spending_bills_info:
       "Gelir/Gider’de fatura etiketi verdiğin ödemeler ve elle eklediğin faturalar burada görünür. Ekstre işlemleri bu listeye eklenmez.",
     spending_credit_card_source: "Kredi kartı ekstresi",
@@ -195,19 +215,34 @@ export const spendingTranslations = {
     spending_show_more: "Daha fazla göster",
   },
   en: {
+    spending_installment_months: "Installment months",
+    spending_installment_month_empty: "No installment payments for this month.",
+    dashboard_month_payment_sections: "This month's payment sections",
+    dashboard_month_payments: "This month's payments",
+    dashboard_month_payments_empty: "No payments for this month.",
+    dashboard_month_payments_help:
+      "Shows this month's paid and pending payments for the selected section, converted to your main currency. Fixed bills without an entered amount use their latest recorded amount as an estimate.",
+    dashboard_month_estimated: "Estimated amount",
+    spending_installment_payable: "To be paid",
+    spending_installment_estimated: "Estimated from the latest statement",
     spending_provider_unset: "No provider selected",
-    spending_provider_year_help: "This provider applies to every month of {{year}} for this expense. Other years stay unchanged.",
-    spending_provider_period_help: "Choose when to use this provider. Payment names, amounts and statuses stay unchanged.",
+    spending_provider_year_help:
+      "This provider applies to every month of {{year}} for this expense. Other years stay unchanged.",
+    spending_provider_period_help:
+      "Choose when to use this provider. Payment names, amounts and statuses stay unchanged.",
     spending_provider_month: "Month",
     spending_provider_apply: "Apply",
     spending_provider_scope_from: "From this month onward",
     spending_provider_scope_month: "Only this month",
-    spending_provider_scope_from_help: "Earlier months stay unchanged. Applies until the next provider change. Exceptions for later months are preserved.",
-    spending_provider_scope_month_help: "Only the selected month changes. The existing provider resumes next month.",
+    spending_provider_scope_from_help:
+      "Earlier months stay unchanged. Applies until the next provider change. Exceptions for later months are preserved.",
+    spending_provider_scope_month_help:
+      "Only the selected month changes. The existing provider resumes next month.",
     spending_provider_period_reset: "Remove this period's choice",
     spending_provider_search: "Search city or provider",
     spending_provider_search_placeholder: "E.g. Ankara, Denizli, Aksa",
-    spending_provider_area_help: "A city can have multiple providers. Choose the company shown on your bill.",
+    spending_provider_area_help:
+      "A city can have multiple providers. Choose the company shown on your bill.",
     spending_provider_selected: "Selected provider",
     spending_provider_no_results: "No matching provider found. You can use Another company.",
     spending_provider_group_electricity_retail: "Electricity · Billing companies",
@@ -221,7 +256,8 @@ export const spendingTranslations = {
     installment_stats_purchase_total: "Installment purchases",
     installment_stats_final_count: "{{count}} purchases finish this month",
     installment_stats_monthly: "Monthly installments from statements",
-    installment_stats_recorded_only: "Only months with uploaded statements are shown. Select a month to see its purchases.",
+    installment_stats_recorded_only:
+      "Only months with uploaded statements are shown. Select a month to see its purchases.",
     installment_stats_purchases: "Which purchases make up these installments?",
     installment_stats_period: "Installment purchases on the {{month}} statement",
     installment_stats_empty: "No recorded installments for this month.",
@@ -234,9 +270,12 @@ export const spendingTranslations = {
     finance_stats_loans: "Loan statistics",
     finance_stats_installments: "Installment statistics",
     finance_stats_bills: "Bill statistics",
-    finance_stats_loans_source: "Loan-tagged rows in Income & Expenses. Amounts come from payments in the selected year/month.",
-    finance_stats_installments_source: "Choose a statement month to see its installments, the purchases they belong to and the amount remaining for later months.",
-    finance_stats_bills_source: "Bill-tagged payments in Income & Expenses and manually entered bills.",
+    finance_stats_loans_source:
+      "Loan-tagged rows in Income & Expenses. Amounts come from payments in the selected year/month.",
+    finance_stats_installments_source:
+      "Choose a statement month to see its installments, the purchases they belong to and the amount remaining for later months.",
+    finance_stats_bills_source:
+      "Bill-tagged payments in Income & Expenses and manually entered bills.",
     finance_stats_error: "Statistics could not be loaded.",
     finance_stats_records: "{{count}} payments",
     finance_stats_payment_count: "Payment count",
@@ -290,7 +329,8 @@ export const spendingTranslations = {
     loans_paid: "Paid",
     loans_remaining: "Remaining",
     loans_count: "{{count}} loans",
-    loans_credit_installment_summary: "<strong>{{loans}}</strong> distinct loans, <strong>{{installments}}</strong> installments",
+    loans_credit_installment_summary:
+      "<strong>{{loans}}</strong> distinct loans, <strong>{{installments}}</strong> installments",
     loans_installment_count: "{{count}} installments",
     loans_source: "Income & Expenses",
     loans_progress: "{{name}} payment progress",
@@ -306,7 +346,7 @@ export const spendingTranslations = {
     loans_status_planned: "Unpaid",
     loans_open_finance: "Go to Income & Expenses",
     spending_installments_info:
-      "Installments from uploaded and saved statements appear here; no Income & Expenses match is required.",
+      "Shows recorded installments and the remaining payment schedule from this month through the final installment. Months without a statement are estimated; a new statement takes precedence over estimates.",
     spending_bills_info:
       "Payments with a bill row tag in Income & Expenses and manually added bills appear here. Statement transactions are not added to this list.",
     spending_credit_card_source: "Credit card statement",
@@ -389,21 +429,37 @@ export const spendingTranslations = {
     spending_show_more: "Show more",
   },
   de: {
+    spending_installment_months: "Ratenmonate",
+    spending_installment_month_empty: "Keine Ratenzahlungen für diesen Monat.",
+    dashboard_month_payment_sections: "Zahlungsbereiche dieses Monats",
+    dashboard_month_payments: "Zahlungen dieses Monats",
+    dashboard_month_payments_empty: "Keine Zahlungen für diesen Monat.",
+    dashboard_month_payments_help:
+      "Zeigt bezahlte und ausstehende Zahlungen dieses Monats im gewählten Bereich, umgerechnet in die Hauptwährung. Feste Rechnungen ohne erfassten Betrag werden mit dem letzten bekannten Betrag geschätzt.",
+    dashboard_month_estimated: "Geschätzter Betrag",
+    spending_installment_payable: "Zu bezahlen",
+    spending_installment_estimated: "Nach der letzten Abrechnung geschätzt",
     spending_provider_unset: "Kein Anbieter ausgewählt",
-    spending_provider_year_help: "Dieser Anbieter gilt für alle Monate dieser Ausgabe im Jahr {{year}}. Andere Jahre bleiben unverändert.",
-    spending_provider_period_help: "Wähle, ab welchem Monat dieser Anbieter verwendet wird. Zahlungsnamen, Beträge und Status bleiben unverändert.",
+    spending_provider_year_help:
+      "Dieser Anbieter gilt für alle Monate dieser Ausgabe im Jahr {{year}}. Andere Jahre bleiben unverändert.",
+    spending_provider_period_help:
+      "Wähle, ab welchem Monat dieser Anbieter verwendet wird. Zahlungsnamen, Beträge und Status bleiben unverändert.",
     spending_provider_month: "Monat",
     spending_provider_apply: "Anwenden",
     spending_provider_scope_from: "Ab diesem Monat",
     spending_provider_scope_month: "Nur diesen Monat",
-    spending_provider_scope_from_help: "Frühere Monate bleiben unverändert. Gilt bis zum nächsten Anbieterwechsel. Ausnahmen für spätere Monate bleiben erhalten.",
-    spending_provider_scope_month_help: "Nur der gewählte Monat ändert sich. Ab dem nächsten Monat gilt wieder der bisherige Anbieter.",
+    spending_provider_scope_from_help:
+      "Frühere Monate bleiben unverändert. Gilt bis zum nächsten Anbieterwechsel. Ausnahmen für spätere Monate bleiben erhalten.",
+    spending_provider_scope_month_help:
+      "Nur der gewählte Monat ändert sich. Ab dem nächsten Monat gilt wieder der bisherige Anbieter.",
     spending_provider_period_reset: "Auswahl für diesen Zeitraum entfernen",
     spending_provider_search: "Stadt oder Anbieter suchen",
     spending_provider_search_placeholder: "Z. B. Ankara, Denizli, Aksa",
-    spending_provider_area_help: "Eine Stadt kann mehrere Anbieter haben. Wähle das Unternehmen auf deiner Rechnung.",
+    spending_provider_area_help:
+      "Eine Stadt kann mehrere Anbieter haben. Wähle das Unternehmen auf deiner Rechnung.",
     spending_provider_selected: "Ausgewählter Anbieter",
-    spending_provider_no_results: "Kein passender Anbieter gefunden. Du kannst Andere Firma verwenden.",
+    spending_provider_no_results:
+      "Kein passender Anbieter gefunden. Du kannst Andere Firma verwenden.",
     spending_provider_group_electricity_retail: "Strom · Rechnungssteller",
     spending_provider_group_electricity_distribution: "Strom · Verteilnetzbetreiber",
     spending_provider_group_water: "Wasser",
@@ -415,7 +471,8 @@ export const spendingTranslations = {
     installment_stats_purchase_total: "Ratenkäufe",
     installment_stats_final_count: "{{count}} Käufe enden diesen Monat",
     installment_stats_monthly: "Monatliche Raten aus Abrechnungen",
-    installment_stats_recorded_only: "Nur Monate mit hochgeladenen Abrechnungen werden angezeigt. Wähle einen Monat für seine Käufe.",
+    installment_stats_recorded_only:
+      "Nur Monate mit hochgeladenen Abrechnungen werden angezeigt. Wähle einen Monat für seine Käufe.",
     installment_stats_purchases: "Aus welchen Käufen bestehen die Raten?",
     installment_stats_period: "Ratenkäufe in der Abrechnung für {{month}}",
     installment_stats_empty: "Keine erfassten Raten für diesen Monat.",
@@ -428,9 +485,12 @@ export const spendingTranslations = {
     finance_stats_loans: "Kreditstatistik",
     finance_stats_installments: "Ratenstatistik",
     finance_stats_bills: "Rechnungsstatistik",
-    finance_stats_loans_source: "Kredit-Zeilen aus Einnahmen & Ausgaben. Die Beträge stammen aus dem gewählten Jahr/Monat.",
-    finance_stats_installments_source: "Wähle einen Abrechnungsmonat für seine Raten, die zugehörigen Käufe und den Restbetrag für spätere Monate.",
-    finance_stats_bills_source: "Als Rechnung markierte Zahlungen aus Einnahmen & Ausgaben und manuell erfasste Rechnungen.",
+    finance_stats_loans_source:
+      "Kredit-Zeilen aus Einnahmen & Ausgaben. Die Beträge stammen aus dem gewählten Jahr/Monat.",
+    finance_stats_installments_source:
+      "Wähle einen Abrechnungsmonat für seine Raten, die zugehörigen Käufe und den Restbetrag für spätere Monate.",
+    finance_stats_bills_source:
+      "Als Rechnung markierte Zahlungen aus Einnahmen & Ausgaben und manuell erfasste Rechnungen.",
     finance_stats_error: "Statistik konnte nicht geladen werden.",
     finance_stats_records: "{{count}} Zahlungen",
     finance_stats_payment_count: "Anzahl der Zahlungen",
@@ -484,7 +544,8 @@ export const spendingTranslations = {
     loans_paid: "Bezahlt",
     loans_remaining: "Verbleibend",
     loans_count: "{{count}} Kredite",
-    loans_credit_installment_summary: "<strong>{{loans}}</strong> verschiedene Kredite, <strong>{{installments}}</strong> Raten",
+    loans_credit_installment_summary:
+      "<strong>{{loans}}</strong> verschiedene Kredite, <strong>{{installments}}</strong> Raten",
     loans_installment_count: "{{count}} Raten",
     loans_source: "Einnahmen & Ausgaben",
     loans_progress: "Zahlungsfortschritt für {{name}}",
@@ -500,7 +561,7 @@ export const spendingTranslations = {
     loans_status_planned: "Unbezahlt",
     loans_open_finance: "Zu Einnahmen & Ausgaben",
     spending_installments_info:
-      "Raten aus hochgeladenen und gespeicherten Abrechnungen erscheinen hier; eine Zuordnung im Haushaltsbuch ist nicht nötig.",
+      "Zeigt erfasste Raten und den verbleibenden Zahlungsplan ab diesem Monat bis zur letzten Rate. Monate ohne Abrechnung werden geschätzt; eine neue Abrechnung ersetzt die Schätzung.",
     spending_bills_info:
       "Zahlungen mit einer Rechnungskennzeichnung aus Einnahmen & Ausgaben und manuell hinzugefügte Rechnungen erscheinen hier. Abrechnungsbuchungen werden dieser Liste nicht hinzugefügt.",
     spending_credit_card_source: "Kreditkartenabrechnung",

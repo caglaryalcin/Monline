@@ -1,19 +1,20 @@
-import { Check, Clock3, ReceiptText, TriangleAlert } from "lucide-react";
-import type { CSSProperties } from "react";
+import { Check, Clock3, Landmark, ReceiptText, TriangleAlert } from "lucide-react";
+import type { CSSProperties, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { InfoButton } from "@/components/ui/info-button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useLocalToday } from "@/hooks/useLocalToday";
+import type { DashboardMonthlyEntry } from "@/lib/dashboardMonthlyPayments";
 import { resolveLocale } from "@/lib/locale";
-import type { MonthlyBudgetEntry } from "@/lib/monthlyBudget";
 import { cn } from "@/lib/utils";
 
 interface BudgetOverviewCardProps {
   budget: number;
-  entries?: MonthlyBudgetEntry[];
+  entries?: DashboardMonthlyEntry[];
+  section?: "online" | "bills" | "loans";
+  controls?: ReactNode;
   totalCredits?: number;
   isLoading?: boolean;
   hasError?: boolean;
@@ -27,6 +28,8 @@ export function BudgetOverviewCard({
   isLoading,
   hasError,
   formatValue,
+  section = "online",
+  controls,
 }: BudgetOverviewCardProps) {
   const { t, i18n } = useTranslation();
   const today = useLocalToday();
@@ -38,41 +41,46 @@ export function BudgetOverviewCard({
     new Intl.DateTimeFormat(language, { day: "numeric", month: "short" }).format(
       new Date(`${date}T12:00:00`),
     );
-  const paid = entries
-    .filter((entry) => entry.status === "paid")
-    .reduce((sum, entry) => sum + entry.amount, 0);
-  const pending = entries
-    .filter((entry) => entry.status !== "paid")
-    .reduce((sum, entry) => sum + entry.amount, 0);
+  const paid =
+    entries.reduce(
+      (sum, entry) =>
+        sum + Math.round((entry.paidAmount ?? (entry.status === "paid" ? entry.amount : 0)) * 100),
+      0,
+    ) / 100;
+  const pending =
+    entries.reduce(
+      (sum, entry) =>
+        sum +
+        Math.round((entry.pendingAmount ?? (entry.status !== "paid" ? entry.amount : 0)) * 100),
+      0,
+    ) / 100;
   const total = paid + pending;
   const available = budget + totalCredits;
   const remaining = available - total;
   const overBudget = available > 0 && remaining < 0;
   const progress = available > 0 ? Math.min(100, (total / available) * 100) : 0;
-  const ready = !isLoading && !hasError;
   return (
     <Card className="monline-budget-card flex flex-col overflow-hidden rounded-3xl border shadow-sm">
-      <CardHeader className="shrink-0 border-b bg-muted/30 pb-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-1 text-lg capitalize">
-            {t("dashboard_year_section_online")}
-            {ready && <InfoButton title={t("dashboard_year_section_online")}>{t("budget_month_note")}</InfoButton>}
-          </CardTitle>
-          <span className="text-xs capitalize text-muted-foreground">{month}</span>
+      <CardHeader className="shrink-0 border-b bg-muted/30 pb-4 pt-4">
+        <div className="flex flex-wrap items-center gap-2">
+          {controls}
+          <span className="ml-auto shrink-0 text-xs capitalize text-muted-foreground">{month}</span>
         </div>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-5 pt-5">
-        <div className="shrink-0 space-y-1">
-          <p className="text-sm text-muted-foreground">{t("budget_this_month")}</p>
-          <p className="text-3xl font-bold tracking-tight">
-            {budget > 0 ? formatValue(budget) : t("no_budget_set")}
-          </p>
-          {totalCredits > 0 && (
-            <p className="text-xs text-green-700 dark:text-green-400">
-              {t("credits_this_month")}: +{formatValue(totalCredits)}
+        {section === "online" && (
+          <div className="shrink-0 space-y-1">
+            <p className="text-sm text-muted-foreground">{t("budget_this_month")}</p>
+            <p className="text-3xl font-bold tracking-tight">
+              {budget > 0 ? formatValue(budget) : t("no_budget_set")}
             </p>
-          )}
-        </div>
+            {totalCredits > 0 && (
+              <p className="text-xs text-green-700 dark:text-green-400">
+                {t("credits_this_month")}: +{formatValue(totalCredits)}
+              </p>
+            )}
+          </div>
+        )}
         {isLoading ? (
           <div
             role="status"
@@ -97,7 +105,7 @@ export function BudgetOverviewCard({
                 <p className="mt-1 text-lg font-bold tabular-nums">{formatValue(pending)}</p>
               </div>
             </div>
-            {available > 0 && (
+            {section === "online" && available > 0 && (
               <div className="shrink-0 space-y-2">
                 <Progress
                   value={progress}
@@ -123,33 +131,66 @@ export function BudgetOverviewCard({
             )}
             <div className="flex min-h-0 flex-col gap-3 xl:flex-1">
               <div className="flex shrink-0 items-center justify-between gap-2 border-t pt-4">
-                <h3 className="text-sm font-semibold">{t("budget_month_subscriptions")}</h3>
+                <h3 className="text-sm font-semibold">
+                  {t(
+                    section === "online"
+                      ? "budget_month_subscriptions"
+                      : "dashboard_month_payments",
+                  )}
+                </h3>
                 <span className="rounded-md bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
                   {entries.length}
                 </span>
               </div>
               {entries.length ? (
                 <ul
-                  className="monline-scroll min-h-0 max-h-96 space-y-1 overflow-y-auto overscroll-contain pr-1 xl:max-h-none xl:flex-1"
-                  aria-label={t("budget_month_subscriptions")}
+                  className="monline-scroll -mr-3 min-h-0 max-h-96 space-y-1 overflow-y-auto overscroll-contain pr-4 xl:max-h-none xl:flex-1"
+                  aria-label={t(
+                    section === "online"
+                      ? "budget_month_subscriptions"
+                      : "dashboard_month_payments",
+                  )}
                 >
                   {entries.map((entry) => (
                     <li key={entry.id} className="flex items-center gap-3 rounded-xl px-1 py-2.5">
                       <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl border bg-background">
-                        <SubscriptionLogo sub={entry.subscription} />
+                        {entry.subscription ? (
+                          <SubscriptionLogo sub={entry.subscription} />
+                        ) : (
+                          <span className="flex h-full items-center justify-center text-muted-foreground">
+                            {section === "loans" ? (
+                              <Landmark className="h-4 w-4" />
+                            ) : (
+                              <ReceiptText className="h-4 w-4" />
+                            )}
+                          </span>
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold">{entry.subscription.name}</p>
+                        <p className="truncate text-sm font-semibold">
+                          {entry.name || entry.subscription?.name}
+                        </p>
+                        {entry.status === "partial" && (
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {t("budget_paid")}: {formatValue(entry.paidAmount ?? 0)} ·{" "}
+                            {t("budget_pending")}: {formatValue(entry.pendingAmount ?? 0)}
+                          </p>
+                        )}
+                        {entry.labelKey && (
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {t(entry.labelKey)}
+                          </p>
+                        )}
                         <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                           <time
                             dateTime={entry.date}
                             className={
-                              entry.status !== "paid" && entry.date <= today
+                              entry.status !== "paid" && !entry.monthOnly && entry.date <= today
                                 ? "text-red-600 dark:text-red-400"
                                 : undefined
                             }
                           >
-                            {dateLabel(entry.date)}
+                            {entry.monthOnly ? month : dateLabel(entry.date)}
                           </time>
                           <span aria-hidden="true">·</span>
                           {entry.status === "paid" ? (
@@ -175,9 +216,11 @@ export function BudgetOverviewCard({
                             }
                           >
                             {t(
-                              entry.status === "overdue"
-                                ? "not_paid"
-                                : `budget_status_${entry.status}`,
+                              entry.status === "partial"
+                                ? "loans_status_partial"
+                                : entry.status === "overdue"
+                                  ? "not_paid"
+                                  : `budget_status_${entry.status}`,
                             )}
                           </span>
                         </p>
@@ -191,7 +234,9 @@ export function BudgetOverviewCard({
               ) : (
                 <div className="flex flex-col items-center gap-2 py-5 text-center text-sm text-muted-foreground">
                   <ReceiptText className="h-6 w-6" aria-hidden="true" />
-                  {t("budget_month_empty")}
+                  {t(
+                    section === "online" ? "budget_month_empty" : "dashboard_month_payments_empty",
+                  )}
                 </div>
               )}
             </div>

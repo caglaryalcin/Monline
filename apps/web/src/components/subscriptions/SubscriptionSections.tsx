@@ -28,6 +28,7 @@ import { useFilteredSubscriptions } from "@/hooks/useFilteredSubscriptions";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { usePersistentDisclosure } from "@/hooks/usePersistentDisclosure";
 import { useSubscriptionSort } from "@/hooks/useSubscriptionSort";
+import { installmentSchedule } from "@/lib/installmentSchedule";
 import { queryKeys } from "@/lib/queryKeys";
 import {
   currentSpendingMonth,
@@ -82,7 +83,10 @@ export function SubscriptionSections({
     },
     onError: () => toast.error(t("error_deleting_subscription")),
   });
-  const [showFilters, setShowFilters] = usePersistentDisclosure(userId, `subscriptions.filters.${section}`);
+  const [showFilters, setShowFilters] = usePersistentDisclosure(
+    userId,
+    `subscriptions.filters.${section}`,
+  );
   const [view, setView] = useState<"grid" | "list">("grid");
   const [month, setMonth] = useState(currentSpendingMonth);
   const spending = useQuery({
@@ -125,6 +129,10 @@ export function SubscriptionSections({
   });
 
   const mainCurrency = currencies.find((currency) => currency.is_main);
+  const installmentPayments =
+    section === "installments"
+      ? installmentSchedule(spending.data ?? EMPTY_SPENDING, today.slice(0, 7))
+      : [];
 
   const statusMutation = useMutation({
     mutationFn: ({ id, inactive }: { id: string; inactive: boolean }) =>
@@ -355,9 +363,17 @@ export function SubscriptionSections({
           month={month}
           onChange={setMonth}
           calendarPicker={section === "installments"}
+          monthsLabel={section === "installments" ? t("spending_installment_months") : undefined}
           recordedMonths={
             section === "installments"
-              ? (spending.data?.statement_months ?? [])
+              ? [
+                  ...new Set([
+                    ...(spending.data?.statement_months ?? []),
+                    ...installmentPayments.map((plan) => plan.period),
+                  ]),
+                ]
+                  .sort()
+                  .reverse()
               : [
                   ...new Set([
                     ...(spending.data?.events
@@ -371,13 +387,12 @@ export function SubscriptionSections({
           }
         />
       )}
-      {section === "installments" &&
-        spending.data?.installments.some((plan) => plan.period === month) && (
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold">{t("spending_installments_source")}</h2>
-            <p className="text-sm text-muted-foreground">{t("spending_installments_help")}</p>
-          </div>
-        )}
+      {section === "installments" && installmentPayments.some((plan) => plan.period === month) && (
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold">{t("spending_installments_source")}</h2>
+          <p className="text-sm text-muted-foreground">{t("spending_installments_help")}</p>
+        </div>
+      )}
       {["installments", "bills"].includes(section) && (
         <p className="flex items-start gap-2 rounded-xl border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
           <Lightbulb
@@ -462,14 +477,28 @@ export function SubscriptionSections({
       )}
 
       {section === "loans" && !spending.isPending && !spending.isError && (
-        <LoansSection userId={userId} loans={spending.data?.loans ?? []} month={today.slice(0, 7)} search="" />
+        <LoansSection
+          userId={userId}
+          loans={spending.data?.loans ?? []}
+          month={today.slice(0, 7)}
+          search=""
+        />
       )}
 
       {section === "online" && (
-        <SharedSubscriptions userId={userId} searchTerm={searchTerm} layout={view} showCurrencyCode={user?.show_currency_code} />
+        <SharedSubscriptions
+          userId={userId}
+          searchTerm={searchTerm}
+          layout={view}
+          showCurrencyCode={user?.show_currency_code}
+        />
       )}
       {sharingSubscription && (
-        <SubscriptionSharingDialog sub={sharingSubscription} userId={userId} onClose={() => setSharingSubscription(null)} />
+        <SubscriptionSharingDialog
+          sub={sharingSubscription}
+          userId={userId}
+          onClose={() => setSharingSubscription(null)}
+        />
       )}
       {showBillForm && <ManualBillDialog month={month} onClose={() => setShowBillForm(false)} />}
       {showForm ? (

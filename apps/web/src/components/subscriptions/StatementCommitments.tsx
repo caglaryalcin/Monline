@@ -6,6 +6,8 @@ import { StatementLink } from "@/components/StatementLink";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Button } from "@/components/ui/button";
 import { MerchantLogosContext } from "@/contexts/MerchantLogosContext";
+import { useLocalToday } from "@/hooks/useLocalToday";
+import { installmentSchedule } from "@/lib/installmentSchedule";
 import { findLogoService } from "@/lib/logoServices";
 import { type MerchantLogoTarget, resolveMerchantLogo } from "@/lib/merchantLogo";
 import {
@@ -35,6 +37,7 @@ export function StatementCommitments({
   layout?: "grid" | "list";
 }) {
   const { t, i18n } = useTranslation();
+  const currentMonth = useLocalToday().slice(0, 7);
   const [limit, setLimit] = useState(20);
   const [providerFor, setProviderFor] = useState<({ name: string } & MerchantLogoTarget) | null>(
     null,
@@ -46,9 +49,12 @@ export function StatementCommitments({
       rowId: bill.provider_row_id,
     });
   const matches = (name: string) => name.toLocaleLowerCase().includes(search.toLocaleLowerCase());
-  const plans = data.installments.filter(
-    (plan) => plan.period === month && matches(`${plan.name} ${plan.card_name}`),
-  );
+  const plans =
+    section === "installments"
+      ? installmentSchedule(data, currentMonth).filter(
+          (plan) => plan.period === month && matches(`${plan.name} ${plan.card_name}`),
+        )
+      : [];
   const billCandidates = data.events
     .filter((event) => isBillRecord(event) && event.date.startsWith(month) && matches(event.name))
     .sort((a, b) => b.date.localeCompare(a.date));
@@ -67,7 +73,12 @@ export function StatementCommitments({
   const remainingTotals = spendingTotals(
     plans.map((plan) => ({ currency: plan.currency, amount: plan.remaining_amount })),
   );
-  if (section === "installments" && plans.length === 0) return null;
+  if (section === "installments" && plans.length === 0)
+    return (
+      <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+        {t("spending_installment_month_empty")}
+      </p>
+    );
 
   return (
     <section className="space-y-4" aria-label={t(`spending_${section}_source`)}>
@@ -115,8 +126,18 @@ export function StatementCommitments({
                     <h3 className="font-semibold break-words">{plan.name}</h3>
                     <SubscriptionSourceBadge
                       source="statement"
-                      label={`${plan.card_name ? `${plan.card_name} · ` : ""}${t("spending_installment_statement", { period: periodName(plan.period) })}`}
+                      label={`${plan.card_name ? `${plan.card_name} · ` : ""}${t("spending_installment_statement", { period: periodName(plan.source_period) })}`}
                     />
+                    {plan.period >= currentMonth && (
+                      <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-400">
+                        {t("spending_installment_payable")}
+                        {plan.projected && (
+                          <span className="ml-2 text-muted-foreground">
+                            {t("spending_installment_estimated")}
+                          </span>
+                        )}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <dl className="grid grid-cols-2 gap-2 text-sm">

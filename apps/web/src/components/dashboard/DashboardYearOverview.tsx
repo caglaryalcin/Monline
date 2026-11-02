@@ -3,6 +3,7 @@ import { CreditCard, Globe, Landmark, Lightbulb, TrendingUp } from "lucide-react
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import type { DashboardSidebarData } from "@/components/dashboard/DashboardPaymentSidebar";
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
 import { YearHistoryCard } from "@/components/dashboard/YearHistoryCard";
 import { PageLoading } from "@/components/PageLoading";
@@ -59,7 +60,7 @@ export function DashboardYearOverview({
 }: {
   userId: string;
   today: string;
-  sidebar?: ReactNode;
+  sidebar?: ReactNode | ((data: DashboardSidebarData) => ReactNode);
 }) {
   const { t, i18n } = useTranslation();
   const locale = resolveLocale(i18n, "tr");
@@ -107,9 +108,10 @@ export function DashboardYearOverview({
   const statements = useQuery({
     queryKey: ["bank-statements", userId, "dashboard-minimums"],
     queryFn: () =>
-      client
-        .collection("bank_statements")
-        .getFullList<DashboardStatement>({ fields: "id,period,summary", sort: "-period,-created" }),
+      client.collection("bank_statements").getFullList<DashboardStatement>({
+        fields: "id,bank,period,summary",
+        sort: "-period,-created",
+      }),
     ...options,
   });
   const payments = useMemo(
@@ -432,7 +434,21 @@ export function DashboardYearOverview({
             {t("dashboard_year_overlap_note")}
           </p>
         </div>
-        {sidebar && <div className="min-w-0 xl:col-span-4">{sidebar}</div>}
+        {sidebar && (
+          <div className="min-w-0 xl:col-span-4">
+            {typeof sidebar === "function"
+              ? sidebar({
+                  bills: payments.bills,
+                  loans: spending.data?.loans ?? [],
+                  currencies: currencies.data ?? [],
+                  billsLoading: finance.isPending || spending.isPending || currencies.isPending,
+                  billsError: finance.isError || spending.isError || currencies.isError,
+                  loansLoading: spending.isPending || currencies.isPending,
+                  loansError: spending.isError || currencies.isError,
+                })
+              : sidebar}
+          </div>
+        )}
       </div>
     </section>
   );

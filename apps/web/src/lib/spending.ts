@@ -20,6 +20,7 @@ export interface SpendingEvent {
   bill_type?: BillType | "";
   statement_id?: string;
   statement_period?: string;
+  bank?: string;
   category?: string;
   installment?: string;
   card_name?: string;

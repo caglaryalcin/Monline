@@ -13,13 +13,20 @@ import {
   spendingTotals,
   subscriptionSection,
 } from "@/lib/spending";
-import type { SavedStatement } from "@/lib/statements";
+import { type SavedStatement, STATEMENT_BANKS } from "@/lib/statements";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
 export type DashboardPaymentSection = "cards" | "online" | "bills" | "loans";
-export type DashboardStatement = Pick<SavedStatement, "id" | "period" | "summary">;
-type PaymentItem = { date: string; amount: number; currency: string };
+export type DashboardStatement = Pick<SavedStatement, "id" | "period" | "summary"> &
+  Partial<Pick<SavedStatement, "bank">>;
+type PaymentItem = {
+  date: string;
+  amount: number;
+  currency: string;
+  name?: string;
+  labelKey?: string;
+};
 export interface DashboardPaymentGroup {
   items: PaymentItem[];
   upcoming: PaymentItem[];
@@ -64,19 +71,53 @@ function forecastCardPayments(
     const month = date.slice(0, 7);
     if (!futureMonths.includes(month)) continue;
     const items = minimums.get(month) ?? [];
-    items.push({ date, amount, currency: "TRY" });
+    items.push({
+      date,
+      amount,
+      currency: "TRY",
+      name: statement.bank ? STATEMENT_BANKS[statement.bank] : undefined,
+      labelKey: "statement_summary_minimum_payment",
+    });
     minimums.set(month, items);
   }
 
   // Count every elapsed calendar month, including months without a payment.
   const elapsedMonths = Number(currentMonth.slice(5, 7));
   const paidCents = paid.reduce((sum, item) => sum + Math.round(item.amount * 100), 0);
-  const average = paid.length ? Math.round(paidCents / elapsedMonths) / 100 : null;
+  const averageCents = paid.length ? Math.round(paidCents / elapsedMonths) : null;
+  const byName = new Map<string, number>();
+  for (const item of paid) {
+    const name = item.name || "";
+    byName.set(name, (byName.get(name) ?? 0) + Math.round(item.amount * 100));
+  }
+  const averages = [...byName]
+    .map(([name, cents]) => ({
+      name,
+      cents: Math.floor(cents / elapsedMonths),
+      remainder: cents % elapsedMonths,
+    }))
+    .sort((left, right) => right.remainder - left.remainder);
+  // Split the existing monthly average by card without changing its total.
+  const remainder = (averageCents ?? 0) - averages.reduce((sum, item) => sum + item.cents, 0);
+  averages.forEach((item, index) => {
+    if (index < remainder) item.cents++;
+  });
   let result = [...planned];
   for (const month of futureMonths) {
+    // Keep actual current-month plans; already-paid entries need no estimate.
+    if (month === currentMonth && [...paid, ...planned].some((item) => item.date.startsWith(month)))
+      continue;
     const replacement =
       minimums.get(month) ??
-      (average != null ? [{ date: `${month}-01`, amount: average, currency: "TRY" }] : null);
+      (averageCents != null
+        ? averages.map((item) => ({
+            date: `${month}-01`,
+            amount: item.cents / 100,
+            currency: "TRY",
+            name: item.name || undefined,
+            labelKey: "finance_average",
+          }))
+        : null);
     if (!replacement) continue;
     result = result.filter((item) => !item.date.startsWith(month));
     result.push(...replacement);
@@ -86,7 +127,7 @@ function forecastCardPayments(
 
 /** Project one bill row at a time so separate phone lines stay separate. */
 function forecastFixedBill(
-  entries: { date: string; amount: number }[],
+  entries: { date: string; amount: number; status?: string }[],
   currency: string,
   futureMonths: string[],
   currentMonth: string,
@@ -102,7 +143,14 @@ function forecastFixedBill(
     .sort(([left], [right]) => right.localeCompare(left))[0];
   if (!latest) return [];
   return futureMonths
-    .filter((month) => (monthly.get(month) ?? 0) <= 0)
+    .filter(
+      (month) =>
+        (monthly.get(month) ?? 0) <= 0 &&
+        !(
+          month === currentMonth &&
+          entries.some((entry) => entry.date.startsWith(month) && entry.status === "settled")
+        ),
+    )
     .map((month) => ({ date: `${month}-01`, amount: latest[1] / 100, currency }));
 }
 
@@ -122,12 +170,12 @@ export function dashboardYearPayments({
   const inYear = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date) && date.startsWith(`${year}-`);
   const inPeriod = (date: string) => inYear(date) && date.slice(0, 7) <= currentMonth;
   const inFuture = (date: string) =>
-    inYear(date) && date.slice(0, 7) > currentMonth && year === today.slice(0, 4);
+    inYear(date) && date.slice(0, 7) >= currentMonth && year === today.slice(0, 4);
   const futureMonths =
     year === today.slice(0, 4)
       ? Array.from(
-          { length: 12 - Number(today.slice(5, 7)) },
-          (_, index) => `${year}-${String(Number(today.slice(5, 7)) + index + 1).padStart(2, "0")}`,
+          { length: 13 - Number(today.slice(5, 7)) },
+          (_, index) => `${year}-${String(Number(today.slice(5, 7)) + index).padStart(2, "0")}`,
         )
       : [];
   const groups: Record<DashboardPaymentSection, PaymentItem[]> = {
@@ -170,7 +218,7 @@ export function dashboardYearPayments({
             : null;
     if (!section) continue;
     const date = entry.date.slice(0, 10),
-      item = { date, amount: entry.amount, currency: "TRY" };
+      item = { date, amount: entry.amount, currency: "TRY", name: row.name };
     if (entry.status === "settled" && inPeriod(date)) add(section, item);
     else if (entry.status === "planned" && inFuture(date)) add(section, item, true);
   }
@@ -181,7 +229,7 @@ export function dashboardYearPayments({
   for (const event of billCandidates) {
     if (event.duplicate_of && billIds.has(event.duplicate_of)) continue;
     const date = event.date.slice(0, 10),
-      item = { date, amount: event.amount, currency: event.currency };
+      item = { date, amount: event.amount, currency: event.currency, name: event.name };
     if (event.status === "settled" && inPeriod(date)) add("bills", item);
     else if (event.status === "planned" && inFuture(date)) add("bills", item, true);
   }
@@ -198,9 +246,13 @@ export function dashboardYearPayments({
 
   // Fixed bills are estimated per row/series, never per bill tag: two phone
   // lines remain two charges. An explicit positive future amount wins.
-  const projectFixedBill = (entries: { date: string; amount: number }[], currency: string) => {
+  const projectFixedBill = (
+    entries: { date: string; amount: number; status?: string }[],
+    currency: string,
+    name: string,
+  ) => {
     for (const item of forecastFixedBill(entries, currency, futureMonths, currentMonth))
-      add("bills", item, true);
+      add("bills", { ...item, name, labelKey: "dashboard_month_estimated" }, true);
   };
   for (const row of rows.values()) {
     if (
@@ -212,7 +264,7 @@ export function dashboardYearPayments({
     const entries = finance.finance_entries.filter((entry) => entry.row_id === row.id);
     if (row.year !== Number(year) && !entries.some((entry) => entry.date.startsWith(`${year}-`)))
       continue;
-    projectFixedBill(entries, "TRY");
+    projectFixedBill(entries, "TRY", row.name);
   }
   const manualSeries = new Map<string, typeof billCandidates>();
   for (const event of billCandidates) {
@@ -232,7 +284,7 @@ export function dashboardYearPayments({
   }
   for (const entries of manualSeries.values())
     if (entries.some((entry) => entry.date.startsWith(`${year}-`)))
-      projectFixedBill(entries, entries[0].currency);
+      projectFixedBill(entries, entries[0].currency, entries[0].name);
   // Match the subscriptions page, including paused subscriptions' paid history.
   const now = parseLocalDate(today)!;
   now.setHours(23, 59, 59, 999);
@@ -264,7 +316,12 @@ export function dashboardYearPayments({
       unpriced.online++;
       continue;
     }
-    add("online", { date, amount: record.amount, currency });
+    add("online", {
+      date,
+      amount: record.amount,
+      currency,
+      name: record.name || subscription.name,
+    });
   }
   // Saved pending charges take precedence over the subscription's current
   // price. Project renewals only inside the active schedule and lifetime.
@@ -279,7 +336,7 @@ export function dashboardYearPayments({
       // Imported history hides calendar projections to avoid duplicate events.
       // That presentation flag must not hide an active subscription's forecast.
       const schedule = { ...subscription, calendar_projection_hidden: false };
-      for (let month = Number(today.slice(5, 7)) + 1; month <= 12; month++) {
+      for (let month = Number(today.slice(5, 7)); month <= 12; month++) {
         for (const occurrence of getOccurrencesInMonth(
           schedule,
           Number(year),
@@ -302,6 +359,7 @@ export function dashboardYearPayments({
         "online",
         {
           date,
+          name: subscription.name,
           amount: record?.amount ?? subscriptionAmount(subscription, date),
           currency: currencyCode(
             currencyId,
@@ -342,12 +400,43 @@ export function dashboardPaymentHistory(
   };
   const points = Array.from({ length: 12 }, (_, index) => {
     const month = `${year}-${String(index + 1).padStart(2, "0")}`;
-    const forecast = sum(group.upcoming, month);
-    return { month, value: sum(group.items, month), forecast, isForecast: forecast != null };
+    const paidTotal = sum(group.items, month);
+    const upcomingTotal = sum(group.upcoming, month);
+    const payments = group.items
+      .filter((item) => item.date.startsWith(month) && item.currency === currency)
+      .flatMap((item) => (item.name ? [{ name: item.name, amount: item.amount }] : []));
+    const upcomingPayments = group.upcoming
+      .filter((item) => item.date.startsWith(month) && item.currency === currency)
+      .map((item) => ({ name: item.name, labelKey: item.labelKey, amount: item.amount }));
+    // An unfinished month has one expected total, rather than two competing
+    // chart points. Keep the actual paid/pending amounts for the tooltip.
+    return {
+      month,
+      value: upcomingTotal == null ? paidTotal : null,
+      forecast:
+        upcomingTotal == null
+          ? null
+          : (Math.round((paidTotal ?? 0) * 100) + Math.round(upcomingTotal * 100)) / 100,
+      paidTotal,
+      upcomingTotal,
+      isForecast: upcomingTotal != null,
+      payments,
+      upcomingPayments,
+    };
   });
-  const current = points.find((point) => point.month === today.slice(0, 7));
-  if (current && points.some((point) => point.isForecast) && current.value != null)
-    current.forecast = current.value;
+  // Join each upcoming segment to the immediately preceding paid month.
+  // The anchor is only visual; it stays out of upcoming totals and tooltips.
+  for (let index = 1; index < points.length; index++) {
+    const point = points[index];
+    const previous = points[index - 1];
+    if (
+      point.isForecast &&
+      point.month >= today.slice(0, 7) &&
+      previous.forecast == null &&
+      previous.value != null
+    )
+      previous.forecast = previous.value;
+  }
   return points;
 }
 

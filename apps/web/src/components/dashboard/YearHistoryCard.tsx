@@ -24,7 +24,11 @@ export interface DashboardYearPoint {
   usd?: number | null;
   forecast?: number | null;
   isForecast?: boolean;
+  paidTotal?: number | null;
+  upcomingTotal?: number | null;
   salaryTag?: SalaryTag | "";
+  payments?: { name: string; amount: number }[];
+  upcomingPayments?: { name?: string; labelKey?: string; amount: number }[];
 }
 interface YearHistorySeries {
   key: "value" | "usd" | "forecast";
@@ -219,6 +223,7 @@ export function YearHistoryCard({
                 />
                 <Tooltip<number, string>
                   filterNull
+                  wrapperStyle={{ pointerEvents: "auto" }}
                   cursor={{ stroke: color, strokeOpacity: 0.3, strokeDasharray: "3 4" }}
                   content={({ active, payload, label }) => {
                     if (!active || !payload?.length) return null;
@@ -233,8 +238,38 @@ export function YearHistoryCard({
                       })
                       .sort((a, b) => b.value - a.value);
                     const tag = point?.salaryTag;
+                    const payments = point?.payments?.length
+                      ? point.payments
+                      : point?.paidTotal != null
+                        ? [{ labelKey: "paid", amount: point.paidTotal }]
+                        : [];
+                    const upcomingPayments = !point?.isForecast
+                      ? []
+                      : point.upcomingPayments?.length
+                        ? point.upcomingPayments
+                        : point.upcomingTotal != null
+                          ? [{ labelKey: "history_upcoming_payment", amount: point.upcomingTotal }]
+                          : [];
+                    const paymentGroups = [
+                      {
+                        key: "paid",
+                        label: t("paid"),
+                        color,
+                        items: payments as NonNullable<DashboardYearPoint["upcomingPayments"]>,
+                      },
+                      {
+                        key: "upcoming",
+                        label: t("history_upcoming_payment"),
+                        color: forecastColor ?? "hsl(var(--muted-foreground))",
+                        items: upcomingPayments,
+                      },
+                    ].filter((group) => group.items.length > 0);
                     return (
-                      <div className="space-y-2 rounded-xl border bg-card px-4 py-3 text-xs shadow-lg">
+                      <div
+                        role="tooltip"
+                        className="monline-scroll max-h-60 max-w-[min(22rem,80vw)] space-y-2 overflow-y-auto overscroll-contain rounded-xl border bg-card px-4 py-3 text-xs shadow-lg"
+                        onMouseMove={(event) => event.stopPropagation()}
+                      >
                         <p className="font-semibold">{monthName(String(label))}</p>
                         {tag && (
                           <p
@@ -243,25 +278,66 @@ export function YearHistoryCard({
                             {t(`finance_salary_tag_${tag}`)}
                           </p>
                         )}
-                        {values.map(({ item, value }) => (
-                          <div key={item.key} className="flex items-center justify-between gap-6">
-                            {chartSeries.length > 1 && (
-                              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                        {paymentGroups.length > 0
+                          ? paymentGroups.map((group) => (
+                              <div key={group.key} className="space-y-2">
+                                {(paymentGroups.length > 1 || group.key === "upcoming") && (
+                                  <p className="text-muted-foreground">{group.label}</p>
+                                )}
+                                <ul className="space-y-2">
+                                  {group.items.map((payment, index) => (
+                                    <li
+                                      key={`${payment.name}-${index}`}
+                                      className="flex items-start justify-between gap-6"
+                                    >
+                                      <span className="inline-flex min-w-0 items-start gap-1.5">
+                                        <span
+                                          className="mt-1 h-2 w-2 shrink-0 rounded-full"
+                                          style={{ backgroundColor: group.color }}
+                                        />
+                                        <span className="break-words">
+                                          {payment.name ||
+                                            t(payment.labelKey || "history_upcoming_payment")}
+                                          {payment.name && payment.labelKey && (
+                                            <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                                              {t(payment.labelKey)}
+                                            </span>
+                                          )}
+                                        </span>
+                                      </span>
+                                      <span
+                                        className="shrink-0 font-semibold tabular-nums"
+                                        style={{ color: group.color }}
+                                      >
+                                        {formatValue(payment.amount)}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))
+                          : values.map(({ item, value }) => (
+                              <div
+                                key={item.key}
+                                className="flex items-center justify-between gap-6"
+                              >
+                                {chartSeries.length > 1 && (
+                                  <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                                    <span
+                                      className="h-2 w-2 rounded-full"
+                                      style={{ backgroundColor: item.color }}
+                                    />
+                                    {item.name}
+                                  </span>
+                                )}
                                 <span
-                                  className="h-2 w-2 rounded-full"
-                                  style={{ backgroundColor: item.color }}
-                                />
-                                {item.name}
-                              </span>
-                            )}
-                            <span
-                              className="font-semibold tabular-nums"
-                              style={{ color: item.color }}
-                            >
-                              {item.formatValue(value)}
-                            </span>
-                          </div>
-                        ))}
+                                  className="font-semibold tabular-nums"
+                                  style={{ color: item.color }}
+                                >
+                                  {item.formatValue(value)}
+                                </span>
+                              </div>
+                            ))}
                       </div>
                     );
                   }}
