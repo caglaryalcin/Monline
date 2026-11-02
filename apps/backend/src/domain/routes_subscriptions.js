@@ -340,6 +340,8 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
       rec.set("price", price);
       if (!isWallos) {
         rec.set("trial_months", sub.trial_months || 0);
+        rec.set("trial_duration", sub.trial_duration || 0);
+        rec.set("trial_unit", sub.trial_unit || "");
         rec.set("trial_start_date", sub.trial_start_date || "");
       }
       rec.set("frequency", frequency);
@@ -421,6 +423,8 @@ routerAdd("POST", "/api/subscription/clone", (e) => {
     "name",
     "price",
     "trial_months",
+    "trial_duration",
+    "trial_unit",
     "trial_start_date",
     "record_type",
     "frequency",
@@ -622,6 +626,8 @@ routerAdd("GET", "/api/subscriptions/export", (e) => {
       record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
       price: sub.get("price"),
       trial_months: sub.get("trial_months"),
+      trial_duration: sub.get("trial_duration"),
+      trial_unit: sub.get("trial_unit"),
       trial_start_date: sub.get("trial_start_date"),
       currency: currencyCode,
       currency_symbol: currencySymbol,

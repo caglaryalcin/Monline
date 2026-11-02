@@ -132,3 +132,60 @@ test('registers Hungarian reminder templates and keeps translated placeholders i
  }
  assert.equal(hu.trial_period,'Próbaidő');
 });
+
+
+it.each([
+  ["day", 7, "2026-11-09"],
+  ["week", 1, "2026-11-09"], ["week", 2, "2026-11-16"], ["week", 3, "2026-11-23"],
+  ["month", 1, "2026-12-02"], ["month", 2, "2027-01-02"], ["month", 3, "2027-02-02"],
+  ["month", 6, "2027-05-02"], ["year", 1, "2027-11-02"],
+])("ends a %s/%i trial on its exact date and charges only after it", (unit, duration, end) => {
+  const trial = { price: 200, trial_duration: duration, trial_unit: unit, trial_start_date: "2026-11-02" };
+  expect(trialEndDate(trial)).toBe(end);
+  expect(subscriptionAmount(trial, "2026-11-01")).toBe(200);
+  expect(subscriptionAmount(trial, "2026-11-02")).toBe(0);
+  const last = new Date(end + "T12:00:00Z"); last.setUTCDate(last.getUTCDate() - 1);
+  expect(subscriptionAmount(trial, last.toISOString().slice(0, 10))).toBe(0);
+  expect(subscriptionAmount(trial, end)).toBe(200);
+  expect(nextTrialPaymentDate(trial, "2026-11-02")).toBe(end);
+});
+
+it("catches up a weekly trial on the first paid date and preserves its new monthly billing day", () => {
+  const f = fixture();
+  try {
+    const sub = f.subscription({trial_months:0, trial_duration:1, trial_unit:"week", trial_start_date:"2026-11-02",
+      start_date:"2026-11-02", next_payment:"2026-11-02", billing_anchor_day:9});
+    advanceSubscription(f.app, sub.id, "2026-12-09");
+    expect(f.app.findRecordsByFilter("payment_records", "subscription_id = {:id}", "due_date", 0, 0, {id:sub.id})
+      .map(row => [row.getString("due_date").slice(0,10), row.getFloat("amount")]))
+      .toEqual([["2026-11-02",0],["2026-11-09",200],["2026-12-09",200]]);
+    expect(f.app.findRecordById("subscriptions",sub.id).getString("next_payment")).toBe("2027-01-09");
+    advanceSubscription(f.app, sub.id, "2026-12-09");
+    expect(f.app.countRecords("payment_records")).toBe(3);
+    const { exportAccount, importAccount } = load("domain/lib/account-backup.js");
+    const backup = exportAccount(f.app, f.user.id);
+    expect(backup.data.subscriptions[0]).toMatchObject({trial_duration:1,trial_unit:"week",trial_months:0});
+    const other = f.create("users", {email:"weekly-restore@example.test",password:"fixture-hash"});
+    importAccount(f.app, other.id, backup, false);
+    const restored = f.app.findRecordsByFilter("subscriptions","user = {:id}","",1,0,{id:other.id})[0];
+    expect(subscriptionAmount(restored,"2026-11-08")).toBe(0);
+    expect(subscriptionAmount(restored,"2026-11-09")).toBe(200);
+  } finally { f.close(); }
+});
+
+it("rejects malformed flexible trials without persisting a partial subscription", () => {
+  const f = fixture();
+  try {
+    for (const change of [{trial_duration:-1},{trial_duration:1.5},{trial_duration:0.5},{trial_duration:521},
+      {trial_duration:1,trial_unit:"invalid"},{trial_duration:1,record_type:"credit"}]) {
+      expect(() => f.subscription({trial_months:0,trial_unit:"week",...change})).toThrow("trial_duration_invalid");
+    }
+    const subscription = f.subscription({trial_months:0,trial_duration:2,trial_unit:"week"});
+    subscription.set("trial_duration",0); f.app.save(subscription);
+    expect(subscription.getString("trial_start_date")).toBe("");
+    expect(subscription.getString("trial_unit")).toBe("");
+    expect(f.app.countRecords("subscriptions")).toBe(1);
+    expect(trialEndDate({trial_duration:1,trial_unit:"month",trial_start_date:"2028-01-31"})).toBe("2028-02-29");
+    expect(trialEndDate({trial_duration:1,trial_unit:"year",trial_start_date:"2028-02-29"})).toBe("2029-02-28");
+  } finally { f.close(); }
+});

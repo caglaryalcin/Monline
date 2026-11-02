@@ -275,6 +275,8 @@ class Repository {
       this.connection.exec("ALTER TABLE subscriptions ADD COLUMN calendar_projection_from TEXT NOT NULL DEFAULT ''");
     for (const [field, definition] of [
       ["trial_months", "INTEGER NOT NULL DEFAULT 0"],
+      ["trial_duration", "INTEGER NOT NULL DEFAULT 0"],
+      ["trial_unit", "TEXT NOT NULL DEFAULT ''"],
       ["trial_start_date", "TEXT NOT NULL DEFAULT ''"],
     ]) {
       if (!this.connection.prepare('PRAGMA table_info("subscriptions")').all().some(column => column.name === field))
@@ -346,6 +348,7 @@ class Repository {
       CREATE INDEX IF NOT EXISTS bank_hash ON bank_statements(user,file_hash);
       CREATE INDEX IF NOT EXISTS sessions_expiry ON monline_sessions(expires);
     `);
+    require("./category-defaults.cjs").addMissingDefaultCategories(this.connection);
     if (
       !this.connection
         .prepare("PRAGMA table_info(monline_sessions)")
@@ -561,10 +564,19 @@ class Repository {
             (months > 0 && record.getString("record_type") === "credit"))
           throw new BadRequestError("trial_months_invalid");
         record.set("trial_months", months);
-        const start = months ? record.getString("trial_start_date").slice(0, 10) || formatLocalDate(new Date()) : "";
+        const duration = Number(record.get("trial_duration") || 0);
+        const unit = record.getString("trial_unit");
+        const { TRIAL_LIMITS } = require("./domain/lib/pure/subscription-trial.mjs");
+        if (!Number.isInteger(duration) || duration < 0 ||
+            (duration > 0 && (!Object.hasOwn(TRIAL_LIMITS, unit) || duration > TRIAL_LIMITS[unit] || record.getString("record_type") === "credit")))
+          throw new BadRequestError("trial_duration_invalid");
+        record.set("trial_duration", duration);
+        record.set("trial_unit", duration ? unit : "");
+        const hasTrial = duration > 0 || months > 0;
+        const start = hasTrial ? record.getString("trial_start_date").slice(0, 10) || formatLocalDate(new Date()) : "";
         record.set("trial_start_date", start);
-        if (isNew && months && !record.getString("start_date")) record.set("start_date", start);
-        if (months && !require("./domain/lib/pure/subscription-trial.mjs").trialEndDate(record))
+        if (isNew && hasTrial && !record.getString("start_date")) record.set("start_date", start);
+        if (hasTrial && !require("./domain/lib/pure/subscription-trial.mjs").trialEndDate(record))
           throw new BadRequestError("trial_start_invalid");
         // Older account backups can carry the retired permanent-hiding flag.
         if (record.getBool("calendar_projection_hidden")) {

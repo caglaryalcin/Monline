@@ -10,6 +10,7 @@ import { findBillingPreset } from "@/lib/billingPeriods";
 import { isValidISODate } from "@/lib/dateInput";
 import { queryKeys } from "@/lib/queryKeys";
 import { nextStatementPaymentDate } from "@/lib/statementPaymentDate";
+import { TRIAL_LIMITS } from "@/lib/subscriptionTrial";
 import { cyclesService } from "@/services/cycles";
 import type { Category, Currency, Cycle, Household, PaymentMethod, Subscription } from "@/types";
 
@@ -36,7 +37,8 @@ const _schemaShape = z.object({
   url: z.string(),
   auto_renew: z.boolean(),
   trial_enabled: z.boolean(),
-  trial_months: z.string(),
+  trial_duration: z.string(),
+  trial_unit: z.enum(["day", "week", "month", "year"]),
   trial_start_date: z.string(),
   notify: z.boolean(),
   notify_days_before: z.string(),
@@ -119,7 +121,8 @@ export function useSubscriptionForm({
       url: z.string(),
       auto_renew: z.boolean(),
       trial_enabled: z.boolean(),
-      trial_months: z.string(),
+      trial_duration: z.string(),
+      trial_unit: z.enum(["day", "week", "month", "year"]),
       trial_start_date: z.string(),
       notify: z.boolean(),
       notify_days_before: z.string(),
@@ -142,9 +145,9 @@ export function useSubscriptionForm({
     })
     .superRefine((values, context) => {
       if (values.record_type === "credit") return;
-      if (values.trial_enabled && (!Number.isInteger(Number(values.trial_months)) ||
-          Number(values.trial_months) < 1 || Number(values.trial_months) > 120)) {
-        context.addIssue({ code: "custom", path: ["trial_months"], message: t("trial_months_invalid") });
+      if (values.trial_enabled && (!Number.isInteger(Number(values.trial_duration)) ||
+          Number(values.trial_duration) < 1 || Number(values.trial_duration) > TRIAL_LIMITS[values.trial_unit])) {
+        context.addIssue({ code: "custom", path: ["trial_duration"], message: t("trial_duration_invalid", { max: TRIAL_LIMITS[values.trial_unit] }) });
       }
       if (!sub && values.payment_status === "paid" && values.next_payment > localToday()) {
         context.addIssue({
@@ -243,7 +246,8 @@ export function useSubscriptionForm({
       url: "",
       auto_renew: true,
       trial_enabled: false,
-      trial_months: "1",
+      trial_duration: "1",
+      trial_unit: "month",
       trial_start_date: localToday(),
       notify: false,
       notify_days_before: "3",
@@ -288,8 +292,9 @@ export function useSubscriptionForm({
         notes: sub.notes || "",
         url: sub.url || "",
         auto_renew: !sub.inactive && sub.auto_renew,
-        trial_enabled: (sub.trial_months ?? 0) > 0,
-        trial_months: String(sub.trial_months || 1),
+        trial_enabled: (sub.trial_duration || sub.trial_months || 0) > 0,
+        trial_duration: String(sub.trial_duration || sub.trial_months || 1),
+        trial_unit: sub.trial_unit || "month",
         trial_start_date: sub.trial_start_date || localToday(),
         notify: sub.notify,
         notify_days_before: String(sub.notify_days_before ?? 3),
@@ -325,7 +330,8 @@ export function useSubscriptionForm({
         url: "",
         auto_renew: true,
         trial_enabled: false,
-        trial_months: "1",
+        trial_duration: "1",
+        trial_unit: "month",
         trial_start_date: localToday(),
         notify: false,
         notify_days_before: "3",

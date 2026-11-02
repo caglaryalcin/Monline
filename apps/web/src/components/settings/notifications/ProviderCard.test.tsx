@@ -49,7 +49,7 @@ describe("ProviderCard", () => {
     ],
   };
 
-  it("requests activation without expanding its settings", async () => {
+  it("opens settings when requesting activation", async () => {
     const onChange = vi.fn();
     render(
       <ProviderCard
@@ -64,7 +64,7 @@ describe("ProviderCard", () => {
     await userEvent.click(screen.getByRole("switch"));
 
     expect(onChange).toHaveBeenCalledWith("email_enabled", true);
-    expect(screen.getByRole("button", { name: "Email" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: "Email" })).toHaveAttribute("aria-expanded", "true");
   });
 
   it("updates provider fields and runs a test notification", async () => {
@@ -168,7 +168,7 @@ describe("ProviderCard", () => {
     expect(screen.getByDisplayValue("draft@example.test")).toBeVisible();
     expect(onChange).not.toHaveBeenCalled();
   });
-  it("locks disabled channel settings and prevents expanding them", async () => {
+  it("previews disabled channel settings without activating or unlocking them", async () => {
     const onChange = vi.fn();
     render(
       <ProviderCard
@@ -183,9 +183,9 @@ describe("ProviderCard", () => {
     );
     expect(screen.getByText("SMTP settings")).not.toBeVisible();
     const disclosure = screen.getByRole("button", { name: "Email · expand_settings" });
-    expect(disclosure).toBeDisabled();
+    expect(disclosure).toBeEnabled();
     await userEvent.click(disclosure);
-    expect(screen.getByText("SMTP settings")).not.toBeVisible();
+    expect(screen.getByText("SMTP settings")).toBeVisible();
     expect(screen.getByRole("switch")).not.toBeChecked();
     expect(screen.getByPlaceholderText("you@domain.com")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Test", hidden: true })).toBeDisabled();
@@ -193,7 +193,7 @@ describe("ProviderCard", () => {
   });
 
   it.each(PROVIDERS.filter((item) => item.id !== "email"))(
-    "prevents opening disabled $label settings without changing activation",
+    "opens and closes disabled $label settings without changing activation",
     async (channel) => {
       const onChange = vi.fn();
       render(
@@ -207,12 +207,12 @@ describe("ProviderCard", () => {
       );
       const header = screen.getByRole("button", { name: channel.label });
       expect(header).toHaveAttribute("aria-expanded", "false");
-      expect(header).toBeDisabled();
-      expect(screen.getByRole("button", { name: `${channel.label} · expand_settings` })).toBeDisabled();
+      expect(header).toBeEnabled();
+      expect(screen.getByRole("button", { name: `${channel.label} · expand_settings` })).toBeEnabled();
       await userEvent.click(
         screen.getByRole("button", { name: `${channel.label} · expand_settings` }),
       );
-      expect(header).toHaveAttribute("aria-expanded", "false");
+      expect(header).toHaveAttribute("aria-expanded", "true");
       expect(screen.getByRole("switch")).not.toBeChecked();
       expect(screen.getByRole("button", { name: "Test", hidden: true })).toBeDisabled();
       await userEvent.click(header);
@@ -245,7 +245,7 @@ describe("ProviderCard", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("preserves a collapsed card when switching it off and back on", async () => {
+  it("closes on deactivation and reopens on activation", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     const props = { provider, onChange, onTest: vi.fn(), isTesting: false };
@@ -256,15 +256,15 @@ describe("ProviderCard", () => {
     expect(onChange).toHaveBeenCalledExactlyOnceWith("email_enabled", false);
     rerender(<ProviderCard {...props} formData={{ email_enabled: false }} />);
     expect(header).toHaveAttribute("aria-expanded", "false");
-    expect(header).toBeDisabled();
+    expect(header).toBeEnabled();
     await user.click(screen.getByRole("switch"));
     expect(onChange).toHaveBeenLastCalledWith("email_enabled", true);
     rerender(<ProviderCard {...props} formData={{ email_enabled: true }} />);
-    expect(header).toHaveAttribute("aria-expanded", "false");
+    expect(header).toHaveAttribute("aria-expanded", "true");
     expect(header).toBeEnabled();
   });
 
-  it("keeps expanded settings visible but locks fields, save and test while disabled", async () => {
+  it("collapses when disabled and preserves locked drafts when reopened for preview", async () => {
     const onSave = vi.fn(), onTest = vi.fn(), onChange = vi.fn();
     const props = { provider, onSave, onTest, onChange, isTesting: false };
     const { rerender } = render(
@@ -275,6 +275,9 @@ describe("ProviderCard", () => {
     rerender(
       <ProviderCard {...props} formData={{ email_enabled: false, email_to: "draft@example.test" }} />,
     );
+    expect(screen.getByRole("button", { name: "Email" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByDisplayValue("draft@example.test")).not.toBeVisible();
+    await userEvent.click(screen.getByRole("button", { name: "Email · expand_settings" }));
     expect(screen.getByRole("button", { name: "Email" })).toHaveAttribute("aria-expanded", "true");
     const destination = screen.getByDisplayValue("draft@example.test");
     expect(destination).toBeVisible();

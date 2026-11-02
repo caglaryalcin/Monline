@@ -227,7 +227,15 @@ function assertUpgraded(target) {
       )
       .all()
       .map((row) => ({ ...row }));
-    expect(rows, `${name} existing data`).toEqual(before[name]);
+    const originalIds = new Set(before[name].map((row) => row.id));
+    expect(rows.filter((row) => originalIds.has(row.id)), `${name} existing data`).toEqual(before[name]);
+    if (name === "categories") {
+      expect(rows).toHaveLength(before[name].length + 9);
+      for (let index = 1; index <= 3; index++) {
+        expect(rows.filter((row) => row.user === id(index) && !originalIds.has(row.id)).map((row) => row.name).sort())
+          .toEqual(["Entertainment", "Insurance", "Transportation"]);
+      }
+    }
   }
   const self = target.findRecordsByFilter(
     "household",

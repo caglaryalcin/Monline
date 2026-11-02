@@ -1,6 +1,6 @@
 import type { TrialSubscription } from "../../../backend/src/domain/lib/pure/subscription-trial.mjs";
 import { isTrialDate as datedTrial, subscriptionAmount as datedAmount } from "../../../backend/src/domain/lib/pure/subscription-trial.mjs";
-export { MAX_TRIAL_MONTHS, nextTrialPaymentDate, trialEndDate } from "../../../backend/src/domain/lib/pure/subscription-trial.mjs";
+export { MAX_TRIAL_MONTHS, nextTrialPaymentDate, TRIAL_LIMITS, trialEndDate } from "../../../backend/src/domain/lib/pure/subscription-trial.mjs";
 function localDate() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;

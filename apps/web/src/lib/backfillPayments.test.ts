@@ -103,3 +103,22 @@ it("recovers the original billing day from a clamped February anchor", () => {
     }),
   ).toEqual(["2026-01-31", "2026-02-28", "2026-03-31"]);
 });
+
+
+it("starts regular history on the exact weekly trial end, preserving limits and date bounds", () => {
+  const trial = { trial_duration: 1, trial_unit: "week" as const, trial_start_date: "2026-11-02" };
+  const base = { start:"2026-11-02",until:"2027-02-09",cycle:"Monthly",frequency:1,trial };
+  expect(backfillDates(base)).toEqual(["2026-11-02","2026-11-09","2026-12-09","2027-01-09","2027-02-09"]);
+  expect(backfillDates({...base,limit:1})).toEqual(["2026-11-02"]);
+  expect(backfillDates({...base,limit:2})).toEqual(["2026-11-02","2026-11-09"]);
+  expect(backfillDates({...base,end:"2026-11-08"})).toEqual(["2026-11-02"]);
+  expect(backfillDates({...base,end:"2026-11-01"})).toEqual([]);
+  expect(backfillDates({...base,start:"2026-12-01"})).toEqual(["2026-12-09","2027-01-09","2027-02-09"]);
+  expect(backfillDates({...base,trial:{...trial,trial_duration:0}})).toContain("2026-12-02");
+});
+
+it("enforces the total history limit including the free trial occurrence", () => {
+  const trial = {trial_duration:1,trial_unit:"day" as const,trial_start_date:"2026-01-01"};
+  expect(() => backfillDates({start:"2026-01-01",until:"2028-09-27",cycle:"Daily",frequency:1,trial}))
+    .toThrow("backfill_too_many");
+});

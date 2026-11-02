@@ -18,6 +18,7 @@ function* iterateBackfillDates({
   frequency,
   end = "",
   limit = 0,
+  trial,
 }) {
   const months = { Monthly: 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
   if (
@@ -33,6 +34,21 @@ function* iterateBackfillDates({
     limit < 0
   )
     throw new Error("backfill_invalid_schedule");
+  const { trialEndDate } = require("./subscription-trial.mjs");
+  const trialEnd = Number(trial?.get ? trial.get("trial_duration") : trial?.trial_duration) > 0 ? trialEndDate(trial) : "";
+  if (trialEnd) {
+    const trialStart = String(trial?.get ? trial.get("trial_start_date") : trial?.trial_start_date).slice(0, 10);
+    const cutoff = end && end < until ? end : until;
+    const includeStart = trialStart >= start && trialStart <= cutoff;
+    if (includeStart) yield trialStart;
+    if (includeStart && limit === 1) return;
+    yield* iterateBackfillDates({
+      start: start > trialEnd ? start : trialEnd, anchorDate: trialEnd,
+      billingAnchorDay: Number(trialEnd.slice(8, 10)), until, cycle, frequency, end,
+      limit: limit ? limit - Number(includeStart) : 0,
+    });
+    return;
+  }
   const anchor = new Date(anchorDate + "T00:00:00.000Z");
   const dayOfMonth =
     Number.isInteger(billingAnchorDay) &&

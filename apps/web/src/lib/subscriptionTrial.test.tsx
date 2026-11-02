@@ -79,22 +79,26 @@ it("keeps an explicitly recorded payment authoritative during a trial", () => {
 it("respects history clearing without recreating erased free months", () => {
   expect(getOccurrencesInMonth(sub({calendar_projection_from:"2026-12-01"}),2026,11,cycles)).toEqual([]);
 });
-it("reloads trial settings in the edit form and validates the month count", async () => {
+it("reloads trial settings in the edit form and validates the trial duration", async () => {
   const options = { sub:sub(), currencies:[currency], categories, household:[] };
   const {result}=renderHook(()=>useSubscriptionForm(options),{wrapper:wrapper()});
   expect(result.current.getValues("trial_enabled")).toBe(true);
-  expect(result.current.getValues("trial_months")).toBe("3");
+  expect(result.current.getValues("trial_duration")).toBe("3");
   expect(result.current.getValues("trial_start_date")).toBe("2026-11-01");
-  act(()=>result.current.setValue("trial_months","0"));
-  let valid=true;await act(async()=>{valid=await result.current.trigger("trial_months");});
+  act(()=>result.current.setValue("trial_duration","0"));
+  let valid=true;await act(async()=>{valid=await result.current.trigger("trial_duration");});
   expect(valid).toBe(false);
 });
-it("saves a new trial from the checkbox with the normal price and selected months", async () => {
+it.each([
+  ["First 1 week", "week", 1], ["First 2 weeks", "week", 2], ["First 3 weeks", "week", 3],
+  ["First 1 month", "month", 1], ["First 2 months", "month", 2], ["First 3 months", "month", 3],
+  ["First 6 months", "month", 6],
+] as const)("saves the %s trial preset with its normal price", async (label, unit, duration) => {
   const saved=vi.fn();
   render(<SubscriptionFormModal sub={null} userId="owner" currencies={[currency]} categories={categories} paymentMethods={[]} household={[]} onClose={vi.fn()} onSaved={saved}/>,{wrapper:wrapper()});
   await userEvent.click(screen.getByRole("checkbox",{name:"Free trial"}));
-  expect(screen.getByLabelText("Trial length (months)")).toBeVisible();
-  fireEvent.change(screen.getByLabelText("Trial length (months)"),{target:{value:"3"}});
+  await userEvent.click(screen.getByRole("combobox", { name: "Trial length" }));
+  await userEvent.click(screen.getByRole("option", { name: label }));
   fireEvent.change(screen.getByLabelText(/^Name/),{target:{value:"YouTube Premium"}});
   fireEvent.change(screen.getByLabelText(/Price after trial/),{target:{value:"200"}});
   await userEvent.click(screen.getByRole("combobox",{name:/Category/}));
@@ -102,7 +106,7 @@ it("saves a new trial from the checkbox with the normal price and selected month
   await userEvent.click(screen.getByRole("button",{name:"Save"}));
   await waitFor(()=>expect(saved).toHaveBeenCalledOnce());
   expect(mocks.create).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
-    price:200,trial_months:3,trial_start_date:"2026-11-01",next_payment:"2026-11-01",start_date:"2026-11-01",
+    price:200,trial_months:0,trial_duration:duration,trial_unit:unit,trial_start_date:"2026-11-01",next_payment:"2026-11-01",start_date:"2026-11-01",
   }));
 });
 it("supports Hungarian, native weekdays and the translated trial workflow", async () => {
@@ -113,4 +117,23 @@ it("supports Hungarian, native weekdays and the translated trial workflow", asyn
   expect(i18n.t("paid")).toBe("Fizetve");
   for(const [index,key]of ["sun","mon","tue","wed","thu","fri","sat"].entries())
     expect(i18n.t(key).toLocaleLowerCase("hu")).toBe(new Intl.DateTimeFormat("hu",{weekday:"long"}).format(new Date(2026,10,1+index)).toLocaleLowerCase("hu"));
+});
+
+
+it("preserves an existing monthly trial when saving unrelated changes", async () => {
+  const saved = vi.fn();
+  render(<SubscriptionFormModal sub={sub({category:"category"})} userId="owner" currencies={[currency]} categories={categories} paymentMethods={[]} household={[]} onClose={vi.fn()} onSaved={saved}/>,{wrapper:wrapper()});
+  await userEvent.click(screen.getByRole("button",{name:"Save"}));
+  await waitFor(() => expect(saved).toHaveBeenCalledOnce());
+  expect(mocks.update).toHaveBeenCalledWith("trial",expect.objectContaining({trial_months:3,trial_duration:0,trial_unit:""}));
+});
+
+it("loads a saved flexible trial and keeps an imported duration available without rounding it to a preset", async () => {
+  const options = {sub:sub({trial_months:0,trial_duration:7,trial_unit:"day"}),currencies:[currency],categories,household:[]};
+  const {result}=renderHook(() => useSubscriptionForm(options),{wrapper:wrapper()});
+  expect(result.current.getValues("trial_unit")).toBe("day");
+  expect(result.current.getValues("trial_duration")).toBe("7");
+  render(<SubscriptionFormModal sub={sub({category:"category",trial_months:0,trial_duration:7,trial_unit:"day"})} userId="owner" currencies={[currency]} categories={categories} paymentMethods={[]} household={[]} onClose={vi.fn()} onSaved={vi.fn()}/>,{wrapper:wrapper()});
+  await userEvent.click(screen.getByRole("combobox",{name:"Trial length"}));
+  expect(screen.getByRole("option",{name:"7 Days"})).toHaveAttribute("aria-disabled","true");
 });

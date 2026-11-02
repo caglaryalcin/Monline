@@ -88,6 +88,7 @@ function recoverCalendarHistory(app, today, userId = "") {
               Math.floor(sub.getFloat("payment_limit")),
             );
             for (const date of iterateBackfillDates({
+              trial: sub,
               start: sub.getString("start_date").slice(0, 10),
               anchorDate: next,
               billingAnchorDay: sub.getFloat("billing_anchor_day"),

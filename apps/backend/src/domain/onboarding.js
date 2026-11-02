@@ -9,7 +9,7 @@ const domainPath = __dirname;
  * Monline — User Onboarding Hook
  *
  * After a new user is created, generates default per-user data:
- * - 11 default subscription categories
+ * - 14 default subscription categories
  * - 34 default currencies (EUR as main)
  * - 29 default payment methods
  * - 1 default household member linked to the account itself

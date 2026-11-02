@@ -590,6 +590,8 @@ function registerSharingApi(app, repository, auth) {
             "logo",
             "price",
             "trial_months",
+            "trial_duration",
+            "trial_unit",
             "trial_start_date",
             "currency",
             "cycle",

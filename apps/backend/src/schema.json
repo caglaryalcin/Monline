@@ -950,6 +950,22 @@
         "max": 120
       },
       {
+        "name": "trial_duration",
+        "type": "number",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 3650
+      },
+      {
+        "name": "trial_unit",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 5
+      },
+      {
         "name": "trial_start_date",
         "type": "date",
         "hidden": false,
@@ -1204,7 +1220,7 @@
         "cascadeDelete": false
       }
     ],
-    "sql": "CREATE TABLE \"subscriptions\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"price\" REAL NOT NULL DEFAULT 0, \"frequency\" REAL NOT NULL DEFAULT 0, \"next_payment\" TEXT NOT NULL DEFAULT '', \"auto_renew\" INTEGER NOT NULL DEFAULT 0, \"start_date\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"url\" TEXT NOT NULL DEFAULT '', \"notify\" INTEGER NOT NULL DEFAULT 0, \"notify_days_before\" REAL NOT NULL DEFAULT 0, \"inactive\" INTEGER NOT NULL DEFAULT 0, \"cancellation_date\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"cycle\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"replacement_subscription\" TEXT NOT NULL DEFAULT '', \"auto_mark_paid\" INTEGER NOT NULL DEFAULT 0, \"record_type\" TEXT NOT NULL DEFAULT '', \"end_date\" TEXT NOT NULL DEFAULT '', \"payment_limit\" REAL NOT NULL DEFAULT 0, \"payments_completed\" REAL NOT NULL DEFAULT 0, \"statement_imported\" INTEGER NOT NULL DEFAULT 0, \"billing_anchor_day\" REAL NOT NULL DEFAULT 0, \"calendar_history_recovery_passes\" REAL NOT NULL DEFAULT 0, \"calendar_projection_hidden\" INTEGER NOT NULL DEFAULT 0, \"calendar_projection_from\" TEXT NOT NULL DEFAULT '', `sharing` JSON DEFAULT NULL, \"notification_reminders\" JSON DEFAULT NULL, \"payment_account\" TEXT NOT NULL DEFAULT '')"
+    "sql": "CREATE TABLE \"subscriptions\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"price\" REAL NOT NULL DEFAULT 0, \"trial_months\" INTEGER NOT NULL DEFAULT 0, \"trial_duration\" INTEGER NOT NULL DEFAULT 0, \"trial_unit\" TEXT NOT NULL DEFAULT '', \"trial_start_date\" TEXT NOT NULL DEFAULT '', \"frequency\" REAL NOT NULL DEFAULT 0, \"next_payment\" TEXT NOT NULL DEFAULT '', \"auto_renew\" INTEGER NOT NULL DEFAULT 0, \"start_date\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"url\" TEXT NOT NULL DEFAULT '', \"notify\" INTEGER NOT NULL DEFAULT 0, \"notify_days_before\" REAL NOT NULL DEFAULT 0, \"inactive\" INTEGER NOT NULL DEFAULT 0, \"cancellation_date\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"cycle\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"replacement_subscription\" TEXT NOT NULL DEFAULT '', \"auto_mark_paid\" INTEGER NOT NULL DEFAULT 0, \"record_type\" TEXT NOT NULL DEFAULT '', \"end_date\" TEXT NOT NULL DEFAULT '', \"payment_limit\" REAL NOT NULL DEFAULT 0, \"payments_completed\" REAL NOT NULL DEFAULT 0, \"statement_imported\" INTEGER NOT NULL DEFAULT 0, \"billing_anchor_day\" REAL NOT NULL DEFAULT 0, \"calendar_history_recovery_passes\" REAL NOT NULL DEFAULT 0, \"calendar_projection_hidden\" INTEGER NOT NULL DEFAULT 0, \"calendar_projection_from\" TEXT NOT NULL DEFAULT '', `sharing` JSON DEFAULT NULL, \"notification_reminders\" JSON DEFAULT NULL, \"payment_account\" TEXT NOT NULL DEFAULT '')"
   },
   {
     "name": "notifications_config",

@@ -53,6 +53,16 @@ import type { Category, Currency, Household, PaymentMethod, Subscription } from 
 import { SubscriptionLogo } from "./SubscriptionLogo";
 import { SubscriptionLogoSection } from "./SubscriptionLogoSection";
 
+const TRIAL_PRESETS = [
+  { unit: "week", duration: 1, labelKey: "trial_first_week_1" },
+  { unit: "week", duration: 2, labelKey: "trial_first_week_2" },
+  { unit: "week", duration: 3, labelKey: "trial_first_week_3" },
+  { unit: "month", duration: 1, labelKey: "trial_first_month_1" },
+  { unit: "month", duration: 2, labelKey: "trial_first_month_2" },
+  { unit: "month", duration: 3, labelKey: "trial_first_month_3" },
+  { unit: "month", duration: 6, labelKey: "trial_first_month_6" },
+] as const;
+
 interface Props {
   sub: Subscription | null;
   userId: string;
@@ -113,6 +123,8 @@ export function SubscriptionFormModal({
   const notificationMode = watch("notification_mode");
   const watchedInactive = watch("inactive");
   const watchedTrial = watch("trial_enabled");
+  const legacyTrial = !!sub?.trial_months && !sub.trial_duration &&
+    watch("trial_unit") === "month" && Number(watch("trial_duration")) === sub.trial_months;
   const watchedName = watch("name");
   const logo = useLogoSearch(watchedName || "", !!sub?.logo);
   const watchedEndMode = watch("end_mode");
@@ -167,7 +179,9 @@ export function SubscriptionFormModal({
         record_type: isCredit ? "credit" : "expense",
         name: data.name,
         price: data.price,
-        trial_months: !isCredit && data.trial_enabled ? Number(data.trial_months) : 0,
+        trial_months: !isCredit && data.trial_enabled && legacyTrial ? sub!.trial_months : 0,
+        trial_duration: !isCredit && data.trial_enabled && !legacyTrial ? Number(data.trial_duration) : 0,
+        trial_unit: !isCredit && data.trial_enabled && !legacyTrial ? data.trial_unit : "",
         trial_start_date: !isCredit && data.trial_enabled ? (!sub ? data.next_payment : data.trial_start_date) : "",
         currency: data.currency,
         frequency: isCredit ? 1 : parseInt(data.frequency),
@@ -431,25 +445,40 @@ export function SubscriptionFormModal({
                     )}
                   />
                   <Label htmlFor="subscription-trial-enabled">{t("trial_period")}</Label>
-                  <InfoButton title={t("trial_period")}>{t("trial_period_help")}</InfoButton>
+                  <InfoButton title={t("trial_period")}>{t(legacyTrial ? "trial_period_help" : "trial_duration_help")}</InfoButton>
                 </div>
                 {watchedTrial && (
                   <div className="flex flex-wrap items-center gap-3">
-                    <Label htmlFor="subscription-trial-months">{t("trial_months")}</Label>
-                    <Input
-                      id="subscription-trial-months"
-                      type="number"
-                      min="1"
-                      max="120"
-                      step="1"
-                      className="w-24"
-                      {...register("trial_months")}
-                      {...invalidProps("trial_months")}
-                    />
+                    <Label htmlFor="subscription-trial-duration">{t("trial_duration")}</Label>
+                    <Select
+                      value={`${watch("trial_unit")}:${watch("trial_duration")}`}
+                      onValueChange={(value) => {
+                        const preset = TRIAL_PRESETS.find((item) => `${item.unit}:${item.duration}` === value);
+                        if (!preset) return;
+                        setValue("trial_unit", preset.unit, { shouldValidate: true, shouldDirty: true });
+                        setValue("trial_duration", String(preset.duration), { shouldValidate: true, shouldDirty: true });
+                      }}
+                    >
+                      <SelectTrigger id="subscription-trial-duration" className="w-full sm:w-56" {...invalidProps("trial_duration")}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TRIAL_PRESETS.map((preset) => (
+                          <SelectItem key={`${preset.unit}:${preset.duration}`} value={`${preset.unit}:${preset.duration}`}>
+                            {t(preset.labelKey)}
+                          </SelectItem>
+                        ))}
+                        {!TRIAL_PRESETS.some((preset) => preset.unit === watch("trial_unit") && preset.duration === Number(watch("trial_duration"))) && (
+                          <SelectItem value={`${watch("trial_unit")}:${watch("trial_duration")}`} disabled>
+                            {watch("trial_duration")} {t(`trial_unit_${watch("trial_unit")}`)}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
                     <p className="basis-full text-xs text-muted-foreground">
-                      {t("trial_amount_hint", { count: Number(watch("trial_months")) || 1, currency: selectedCurrency?.code || selectedCurrency?.symbol || "" })}
+                      {t(legacyTrial ? "trial_amount_hint" : "trial_duration_hint", { count: Number(watch("trial_duration")) || 1, currency: selectedCurrency?.code || selectedCurrency?.symbol || "" })}
                     </p>
-                    {renderError("trial_months")}
+                    {renderError("trial_duration")}
                   </div>
                 )}
               </div>
@@ -956,16 +985,13 @@ export function SubscriptionFormModal({
 
             {!sub && !isCredit && !isPaid && (
               <BackfillPaymentsEditor
-                start={automaticStartDate(
-                  watch("next_payment"),
-                  watchedCycleName || "Monthly",
-                  watchedFrequency,
-                )}
+                start={watchedTrial ? watch("next_payment") : automaticStartDate(watch("next_payment"), watchedCycleName || "Monthly", watchedFrequency)}
                 anchorDate={watch("next_payment")}
                 cycle={watchedCycleName || ""}
                 frequency={watchedFrequency}
                 price={watch("price")}
-                trialMonths={watchedTrial ? Number(watch("trial_months")) : 0}
+                trialDuration={watchedTrial ? Number(watch("trial_duration")) : 0}
+                trialUnit={watch("trial_unit")}
                 trialStartDate={!sub ? watch("next_payment") : watch("trial_start_date")}
                 currency={selectedCurrency}
                 end={
