@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { matchesCalendarSearch } from "@/components/calendar/calendarSearch";
-import { calendarAmounts } from "@/components/calendar/calendarTotals";
+import { calendarAmounts, calendarCarryover } from "@/components/calendar/calendarTotals";
 import { paymentAppearance } from "@/components/calendar/paymentAppearance";
 import {
   type DayEntry,
@@ -12,6 +12,7 @@ import {
   toDateStr,
 } from "@/components/calendar/types";
 import { useLocalToday } from "@/hooks/useLocalToday";
+import type { FinanceData } from "@/lib/finance";
 import { type SpendingData, type SpendingEvent, uncoveredSpending } from "@/lib/spending";
 import { paymentOwnerId, withStandalonePayments } from "@/lib/standalonePayments";
 import { isTrialDate } from "@/lib/subscriptionTrial";
@@ -30,6 +31,7 @@ interface UseCalendarMonthDataParams {
   selectedDay: number | null;
   paymentRecords?: PaymentRecord[];
   spendingEvents?: SpendingEvent[];
+  financeData?: FinanceData;
   calendarMoves?: SpendingData["calendar_moves"];
   includeAdjacentDays?: boolean;
   searchTerm?: string;
@@ -45,6 +47,7 @@ export function useCalendarMonthData({
   selectedDay,
   paymentRecords = NO_RECORDS,
   spendingEvents = NO_SPENDING,
+  financeData,
   calendarMoves = NO_MOVES,
   includeAdjacentDays = false,
   searchTerm = "",
@@ -220,8 +223,12 @@ export function useCalendarMonthData({
   );
 
   const amounts = useMemo(
-    () => calendarAmounts(spendingEvents, currencies),
-    [spendingEvents, currencies],
+    () => calendarAmounts(spendingEvents, currencies, financeData),
+    [spendingEvents, currencies, financeData],
+  );
+  const carryover = useMemo(
+    () => enabled ? calendarCarryover(financeData, currencies, year, month) : 0,
+    [financeData, currencies, year, month, enabled],
   );
   const undatedEvents = useMemo(
     () =>
@@ -233,11 +240,12 @@ export function useCalendarMonthData({
   );
 
   const stats = useMemo(() => {
-    if (!enabled) return { count: 0, total: 0, due: 0, awaitingConfirmation: 0, unpaidTotal: 0 };
+    if (!enabled) return { count: 0, subscriptionTotal: 0, total: 0, due: 0, awaitingConfirmation: 0, unpaidTotal: 0 };
     const today = new Date(localToday + "T00:00:00");
 
     let count = 0;
-    let total = 0;
+    let subscriptionTotal = 0;
+    let total = Math.round((carryover ?? 0) * 100);
     let due = 0;
     let awaitingConfirmation = 0;
 
@@ -245,7 +253,8 @@ export function useCalendarMonthData({
       for (const entry of entries) {
         const { sub, date } = entry;
         count += 1;
-        const amount = amounts.entryCents(entry);
+        subscriptionTotal += amounts.subscriptionCents(entry) ?? 0;
+        const amount = amounts.overviewCents(entry);
         if (amount === null) continue;
         total += amount;
 
@@ -267,12 +276,13 @@ export function useCalendarMonthData({
 
     return {
       count,
+      subscriptionTotal: subscriptionTotal / 100,
       total: total / 100,
       due: due / 100,
       awaitingConfirmation: awaitingConfirmation / 100,
       unpaidTotal: (due + awaitingConfirmation) / 100,
     };
-  }, [entriesByDay, amounts, undatedEvents, recordsByOwner, localToday, searchTerm, enabled]);
+  }, [entriesByDay, amounts, undatedEvents, recordsByOwner, localToday, searchTerm, enabled, carryover]);
 
   const monthTotal = useMemo(() => {
     if (!enabled) return 0;
@@ -280,12 +290,21 @@ export function useCalendarMonthData({
     const dated = Object.entries(allEntriesByDate)
       .filter(([date]) => date.startsWith(prefix))
       .flatMap(([, entries]) => entries)
-      .reduce((sum, entry) => sum + (amounts.entryCents(entry) ?? 0), 0);
+      .reduce((sum, entry) => sum + (amounts.overviewCents(entry) ?? 0), 0);
     return (
-      (dated + undatedEvents.reduce((sum, event) => sum + (amounts.spendingCents(event) ?? 0), 0)) /
+      (dated + Math.round((carryover ?? 0) * 100) + undatedEvents.reduce((sum, event) => sum + (amounts.spendingCents(event) ?? 0), 0)) /
       100
     );
-  }, [allEntriesByDate, amounts, undatedEvents, year, month, enabled]);
+  }, [allEntriesByDate, amounts, undatedEvents, year, month, enabled, carryover]);
+
+  const subscriptionMonthTotal = useMemo(() => {
+    if (!enabled) return 0;
+    const prefix = `${year}-${String(month).padStart(2, "0")}-`;
+    return Object.entries(allEntriesByDate)
+      .filter(([date]) => date.startsWith(prefix))
+      .flatMap(([, entries]) => entries)
+      .reduce((sum, entry) => sum + (amounts.subscriptionCents(entry) ?? 0), 0) / 100;
+  }, [allEntriesByDate, amounts, year, month, enabled]);
 
   const daysInMonth = useMemo(() => new Date(year, month, 0).getDate(), [year, month]);
 
@@ -332,7 +351,9 @@ export function useCalendarMonthData({
     entriesByDay,
     entriesByDate,
     mainCurrency,
+    carryover,
     monthTotal,
+    subscriptionMonthTotal,
     selectedDayTotal,
     selectedEntries,
     stats,

@@ -1,4 +1,4 @@
-import { CircleAlert, Clock, RefreshCw, TrendingUp, Wallet } from "lucide-react";
+import { RefreshCw, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { StatCard } from "@/components/calendar/StatCard";
@@ -7,29 +7,29 @@ import { formatPrice } from "@/lib/utils";
 import type { Currency } from "@/types";
 
 interface CalendarOverviewProps {
-  count: number;
-  total: number;
-  unpaidTotal: number;
-  awaitingConfirmation: number;
+  subscriptionBudget: number;
+  incomeTotal: number | null;
+  expenseTotal: number;
   loading: boolean;
   hasError?: boolean;
   mainCurrency?: Currency;
   remainingBudget?: number | null;
-  budgetLoading?: boolean;
-  budgetError?: boolean;
+  financeLoading?: boolean;
+  incomeError?: boolean;
+  expenseError?: boolean;
 }
 
 export function CalendarOverview({
-  count,
-  total,
-  unpaidTotal,
-  awaitingConfirmation,
+  subscriptionBudget,
+  incomeTotal,
+  expenseTotal,
   loading,
   hasError = false,
   mainCurrency,
   remainingBudget = null,
-  budgetLoading = false,
-  budgetError = false,
+  financeLoading = false,
+  incomeError = false,
+  expenseError = false,
 }: CalendarOverviewProps) {
   const { t } = useTranslation();
   const currencySymbol = mainCurrency?.symbol ?? "$";
@@ -37,40 +37,19 @@ export function CalendarOverview({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5 xl:gap-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4">
         <StatCard
           icon={<RefreshCw className="h-5 w-5" />}
           iconClass="bg-primary/20 text-primary"
-          label={t("subscriptions")}
-          value={hasError ? "—" : String(count)}
-          loading={loading}
-        />
-        <StatCard
-          icon={<TrendingUp className="h-5 w-5" />}
-          iconClass="bg-blue-500/20 text-blue-500"
           label={
             <span className="inline-flex items-center gap-1">
-              {t("total")}
-              <InfoButton title={t("total")}>
-                {t("calendar_payment_totals_help")}
+              {t("calendar_subscription_budget")}
+              <InfoButton title={t("calendar_subscription_budget")}>
+                {t("calendar_subscription_budget_limit_help")}
               </InfoButton>
             </span>
           }
-          value={hasError ? "—" : formatPrice(total, currencySymbol, priceOptions)}
-          loading={loading}
-        />
-        <StatCard
-          icon={<Clock className="h-5 w-5" />}
-          iconClass="bg-amber-500/20 text-amber-500"
-          label={
-            <span className="inline-flex items-center gap-1">
-              {t("calendar_unpaid_total")}
-              <InfoButton title={t("calendar_unpaid_total")}>
-                {t("calendar_unpaid_total_help")}
-              </InfoButton>
-            </span>
-          }
-          value={hasError ? "—" : formatPrice(unpaidTotal, currencySymbol, priceOptions)}
+          value={formatPrice(subscriptionBudget, currencySymbol, priceOptions)}
           loading={loading}
         />
         <StatCard
@@ -82,37 +61,48 @@ export function CalendarOverview({
           }
           label={
             <span className="inline-flex items-center gap-1">
-              {t("calendar_remaining_budget")}
-              <InfoButton title={t("calendar_remaining_budget")}>
-                {t("calendar_salary_budget_help")}
-                {budgetError ? (
-                  <p className="mt-2">{t("calendar_salary_budget_error")}</p>
-                ) : remainingBudget === null && !budgetLoading ? (
-                  <p className="mt-2">{t("calendar_salary_budget_missing")}</p>
-                ) : null}
+              {t("calendar_remaining_subscription_budget")}
+              <InfoButton title={t("calendar_remaining_subscription_budget")}>
+                {t("calendar_subscription_budget_help")}
               </InfoButton>
             </span>
           }
           value={
-            hasError || budgetError || remainingBudget === null
+            hasError || remainingBudget === null
               ? "—"
               : formatPrice(remainingBudget, currencySymbol, priceOptions)
           }
-          loading={loading || budgetLoading}
+          loading={loading}
         />
         <StatCard
-          icon={<CircleAlert className="h-5 w-5" />}
-          iconClass="bg-red-500/20 text-red-600 dark:text-red-400"
+          icon={<TrendingUp className="h-5 w-5" />}
+          iconClass="bg-blue-500/20 text-blue-500"
           label={
             <span className="inline-flex items-center gap-1">
-              {t("subscription_payments_awaiting")}
-              <InfoButton title={t("subscription_payments_awaiting")}>
-                {t("calendar_pending_confirmation_help")}
+              {t("calendar_income_total")}
+              <InfoButton title={t("calendar_income_total")}>
+                {t("calendar_income_total_help")}
+                {incomeError && <p className="mt-2">{t("calendar_income_total_error")}</p>}
               </InfoButton>
             </span>
           }
-          value={hasError ? "—" : formatPrice(awaitingConfirmation, currencySymbol, priceOptions)}
-          loading={loading}
+          value={incomeError || incomeTotal === null ? "—" : formatPrice(incomeTotal, currencySymbol, priceOptions)}
+          loading={loading || financeLoading}
+        />
+        <StatCard
+          icon={<TrendingDown className="h-5 w-5" />}
+          iconClass="bg-amber-500/20 text-amber-500"
+          label={
+            <span className="inline-flex items-center gap-1">
+              {t("calendar_expense_total")}
+              <InfoButton title={t("calendar_expense_total")}>
+                {t("calendar_payment_totals_help")}
+                {expenseError && <p className="mt-2">{t("calendar_carryover_error")}</p>}
+              </InfoButton>
+            </span>
+          }
+          value={hasError || expenseError ? "—" : formatPrice(expenseTotal, currencySymbol, priceOptions)}
+          loading={loading || financeLoading}
         />
       </div>
       {hasError && (

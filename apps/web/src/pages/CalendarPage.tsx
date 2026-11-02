@@ -8,7 +8,7 @@ import { CalendarMoveDialog } from "@/components/calendar/CalendarMoveDialog";
 import { CalendarOverview } from "@/components/calendar/CalendarOverview";
 import { CalendarPageHeader } from "@/components/calendar/CalendarPageHeader";
 import { matchesCalendarSearch } from "@/components/calendar/calendarSearch";
-import { calendarSalary } from "@/components/calendar/calendarTotals";
+import { calendarIncome } from "@/components/calendar/calendarTotals";
 import { DayPanel } from "@/components/calendar/DayPanel";
 import { HistoricalPaymentDialog } from "@/components/calendar/HistoricalPaymentDialog";
 import { MarkAsPaidModal } from "@/components/calendar/MarkAsPaidModal";
@@ -274,7 +274,8 @@ export function CalendarPage() {
     entriesByDate,
     mainCurrency,
     stats,
-    monthTotal,
+    subscriptionMonthTotal,
+    carryover,
     selectedEntries,
     selectedDayTotal,
   } = useCalendarMonthData({
@@ -286,6 +287,7 @@ export function CalendarPage() {
     selectedDay,
     paymentRecords,
     spendingEvents: spendingData.events,
+    financeData: finance.data,
     calendarMoves: spendingData.calendar_moves,
     includeAdjacentDays: true,
     searchTerm,
@@ -304,6 +306,7 @@ export function CalendarPage() {
     month: selectedDate ? selectedDate.getMonth() + 1 : month,
     selectedDay: selectedDate?.getDate() ?? null,
     spendingEvents: spendingData.events,
+    financeData: finance.data,
     calendarMoves: spendingData.calendar_moves,
     searchTerm,
   });
@@ -315,8 +318,8 @@ export function CalendarPage() {
       matchesCalendarSearch(event.name, searchTerm),
   );
 
-  const salary = calendarSalary(finance.data, currencies, year, month);
-  const remainingBudget = salary === null ? null : Math.round((salary - monthTotal) * 100) / 100;
+  const remainingBudget = Math.round(((user?.budget ?? 0) - subscriptionMonthTotal) * 100) / 100;
+  const incomeTotal = calendarIncome(finance.data, currencies, year, month);
 
   const isCurrentMonth = month === now.getMonth() + 1 && year === now.getFullYear();
 
@@ -398,16 +401,16 @@ export function CalendarPage() {
       )}
 
       <CalendarOverview
-        count={stats.count}
-        total={stats.total}
-        unpaidTotal={stats.unpaidTotal}
-        awaitingConfirmation={stats.awaitingConfirmation}
+        subscriptionBudget={user?.budget ?? 0}
+        incomeTotal={incomeTotal}
+        expenseTotal={stats.total}
         loading={loadingSubscriptions || loadingCurrencies || loadingPayments || spending.isLoading}
         hasError={subscriptionsError || currenciesError || paymentsError || spending.isError}
         mainCurrency={mainCurrency}
         remainingBudget={remainingBudget}
-        budgetLoading={finance.isLoading}
-        budgetError={finance.isError}
+        financeLoading={finance.isLoading}
+        incomeError={finance.isError || (!finance.isLoading && incomeTotal === null)}
+        expenseError={finance.isError || (!finance.isLoading && carryover === null)}
       />
       {spending.isError && (
         <p role="alert" className="text-sm text-destructive">

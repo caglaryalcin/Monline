@@ -1,5 +1,22 @@
 Cached brand logos, used only to identify the corresponding merchant/provider.
 
+## Bank providers — 2026-11-02
+
+Original bank website artwork and official website icons are bundled so provider
+previews and payment logos do not depend on third-party favicon responses. Files
+are preserved as supplied by the bank.
+
+- DenizBank (SVG): https://www.denizbank.com/_assets/img/DenizbankLOGO-en-v6.svg
+- Enpara (SVG): https://www.enpara.com/Frontend/dist/images/enpara.svg?v=2
+- Garanti BBVA (180px PNG): https://www.garantibbva.com.tr/apple-touch-icon-180x180.png
+- Akbank (ICO): https://www.akbank.com/SiteAssets/img/favicon.ico
+- Türkiye İş Bankası (57px JPEG): https://gorsel.isbank.com.tr/sttk/StaticFiles/Isbank/images/icons/isbank-apple-touch-icon-57x57.jpg
+- Yapı Kredi (PNG): https://assets.yapikredi.com.tr/WebSite/_assets/img/apple-touch-icon.png?v=3
+- Ziraat Bankası (GIF): https://www.ziraatbank.com.tr/SiteAssets/images/logo.gif
+- VakıfBank (ICO): https://www.vakifbank.com.tr/Templates/Default/assets/img/favicon.ico
+- Halkbank (180px PNG): https://www.halkbank.com.tr/etc.clientlibs/corporate-website/clientlibs/clientlib-site/resources/images/touch-icons/halkbank-180x180.png
+- TEB (JPEG): https://www.teb.com.tr/images/TEB/mainLogo.jpg
+
 Fetched 2026-10-21. Prefer original vector artwork and larger raster sources;
 Prefer larger raster sources and scalable SVG artwork where available. Valid small
 favicons and horizontal logos are also accepted in search and display; they are

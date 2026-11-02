@@ -1,5 +1,15 @@
 // Original brand artwork from official sites and ELDER. See assets/logos/merchants/SOURCES.md.
 export const BILL_PROVIDER_LOGOS: Record<string, string> = {
+  "denizbank.com": "bank-denizbank.svg",
+  "enpara.com": "bank-enpara.svg",
+  "garantibbva.com.tr": "bank-garantibbva.png",
+  "akbank.com": "bank-akbank.ico",
+  "isbank.com.tr": "bank-isbank.jpg",
+  "yapikredi.com.tr": "bank-yapikredi.png",
+  "ziraatbank.com.tr": "bank-ziraatbank.gif",
+  "vakifbank.com.tr": "bank-vakifbank.ico",
+  "halkbank.com.tr": "bank-halkbank.png",
+  "teb.com.tr": "bank-teb.jpg",
   "admelektrik.com.tr": "provider-admelektrik-com-tr.webp",
   "akdenizedas.com.tr": "provider-akdenizedas-com-tr.jpg",
   "akedasdagitim.com.tr": "provider-akedasdagitim-com-tr.jpg",
