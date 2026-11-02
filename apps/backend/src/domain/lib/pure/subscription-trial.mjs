@@ -5,16 +5,23 @@ function dateOnly(value) {
   return typeof value === "string" ? value.slice(0, 10) : "";
 }
 export const MAX_TRIAL_MONTHS = 120;
+export const TRIAL_LIMITS = { day: 3650, week: 520, month: 120, year: 10 };
 export function trialEndDate(subscription) {
-  const months = Number(field(subscription, "trial_months") || 0);
+  const duration = Number(field(subscription, "trial_duration") || 0);
+  const unit = duration ? field(subscription, "trial_unit") : "month";
+  const count = duration || Number(field(subscription, "trial_months") || 0);
   const start = dateOnly(field(subscription, "trial_start_date"));
-  if (!Number.isInteger(months) || months < 1 || months > MAX_TRIAL_MONTHS ||
+  if (!Object.hasOwn(TRIAL_LIMITS, unit) || !Number.isInteger(count) || count < 1 || count > TRIAL_LIMITS[unit] ||
       !/^\d{4}-\d{2}-\d{2}$/.test(start)) return "";
   const date = new Date(start + "T12:00:00Z");
   if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== start) return "";
+  if (unit === "day" || unit === "week") {
+    date.setUTCDate(date.getUTCDate() + count * (unit === "week" ? 7 : 1));
+    return date.toISOString().slice(0, 10);
+  }
   const day = date.getUTCDate();
   date.setUTCDate(1);
-  date.setUTCMonth(date.getUTCMonth() + months);
+  date.setUTCMonth(date.getUTCMonth() + count * (unit === "year" ? 12 : 1));
   const last = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
   date.setUTCDate(Math.min(day, last));
   return date.toISOString().slice(0, 10);
@@ -24,6 +31,8 @@ export function isTrialDate(subscription, value) {
   const start = dateOnly(field(subscription, "trial_start_date"));
   const end = trialEndDate(subscription);
   const date = dateOnly(value);
+  if (Number(field(subscription, "trial_duration") || 0) > 0)
+    return !!end && /^\d{4}-\d{2}-\d{2}$/.test(date) && date >= start && date < end;
   return !!end && /^\d{4}-\d{2}-\d{2}$/.test(date) &&
     date.slice(0, 7) >= start.slice(0, 7) && date.slice(0, 7) < end.slice(0, 7);
 }
@@ -31,10 +40,11 @@ export function isTrialDate(subscription, value) {
 export function subscriptionAmount(subscription, date) {
   return isTrialDate(subscription, date) ? 0 : Number(field(subscription, "price") || 0);
 }
-/** Trials have one zero-cost occurrence per month, then resume the normal cycle. */
+/** Legacy trials keep monthly occurrences; flexible trials resume on their exact end date. */
 export function nextTrialPaymentDate(subscription, value, anchorDay) {
   const day = dateOnly(value);
   if (!isTrialDate(subscription, day)) return "";
+  if (Number(field(subscription, "trial_duration") || 0) > 0) return trialEndDate(subscription);
   const date = new Date(day + "T12:00:00Z");
   const anchor = Number(anchorDay || field(subscription, "billing_anchor_day")) || Number(day.slice(8, 10));
   date.setUTCDate(1);

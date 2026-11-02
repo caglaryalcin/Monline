@@ -91,7 +91,6 @@ export function ProviderCard({
           aria-label={provider.label}
           aria-expanded={expanded}
           aria-controls={contentId}
-          disabled={!isEnabled || isSaving || isTesting || saveDisabled}
           onClick={() => changeExpansion(!expanded)}
           className={`flex w-full min-w-0 items-center gap-3 px-4 py-3 ${hasToggle ? "pr-28" : "pr-14"} text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary disabled:cursor-default`}
         >
@@ -121,8 +120,9 @@ export function ProviderCard({
               checked={isEnabled}
               disabled={toggleDisabled}
               onCheckedChange={(checked) => {
-                // Preserve the disclosure before activation changes its default.
-                changeExpansion(expanded);
+                // Activation opens settings; deactivation closes them. The arrow
+                // can still open a disabled channel for a read-only preview.
+                changeExpansion(checked);
                 if (configurationOnly) onConfigurationEnabledChange?.(checked);
                 else onChange(provider.enabledKey, checked);
               }}
@@ -132,7 +132,6 @@ export function ProviderCard({
             name={provider.label}
             expanded={expanded}
             controls={contentId}
-            disabled={!isEnabled || isSaving || isTesting || saveDisabled}
             onToggle={() => changeExpansion(!expanded)}
           />
         </div>

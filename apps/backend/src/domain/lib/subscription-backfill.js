@@ -38,6 +38,7 @@ function prepareBackfill(app, subscription, input, now = new Date()) {
       .sort();
     const dates = new Set(
       backfillDates({
+        trial: subscription,
         start: subscription.getString("start_date").slice(0, 10),
         anchorDate:
           subscription.getString("next_payment").slice(0, 10) ||

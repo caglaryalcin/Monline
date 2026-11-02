@@ -41,6 +41,7 @@ function restoreReactivatedMonth(app, subscription, today) {
   else {
     if (!["Daily", "Weekly", "Monthly", "Quarterly", "Half-Yearly", "Yearly"].includes(cycle)) return 0;
     dates = [...iterateBackfillDates({
+      trial: subscription,
       start: beginning, anchorDate: next, until: last, end, cycle, frequency,
       billingAnchorDay: subscription.getFloat("billing_anchor_day"),
     })];

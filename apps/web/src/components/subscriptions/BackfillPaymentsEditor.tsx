@@ -21,6 +21,8 @@ interface Props {
   frequency: number;
   price: number | null;
   trialMonths?: number;
+  trialDuration?: number;
+  trialUnit?: "day" | "week" | "month" | "year";
   trialStartDate?: string;
   currency?: Currency;
   end?: string;
@@ -51,6 +53,8 @@ export function BackfillPaymentsEditor({
   frequency,
   price,
   trialMonths = 0,
+  trialDuration = 0,
+  trialUnit = "month",
   trialStartDate = "",
   currency,
   end = "",
@@ -80,6 +84,7 @@ export function BackfillPaymentsEditor({
     end,
     limit,
     price,
+    trialMonths, trialDuration, trialUnit, trialStartDate,
     markAsPaid,
     currency?.id,
     today,
@@ -91,6 +96,7 @@ export function BackfillPaymentsEditor({
     try {
       return {
         dates: backfillDates({
+          trial: { trial_duration: trialDuration, trial_unit: trialUnit, trial_start_date: trialStartDate },
           start: rangeStart,
           anchorDate,
           billingAnchorDay,
@@ -105,7 +111,7 @@ export function BackfillPaymentsEditor({
     } catch (error) {
       return { dates: [], error: (error as Error).message };
     }
-  }, [rangeStart, anchorDate, billingAnchorDay, cycle, frequency, end, limit, today, excludeDates]);
+  }, [rangeStart, anchorDate, billingAnchorDay, cycle, frequency, end, limit, today, excludeDates, trialDuration, trialUnit, trialStartDate]);
   const rows = useMemo(
     () =>
       schedule.dates.map((date) => ({
@@ -115,12 +121,12 @@ export function BackfillPaymentsEditor({
           : price === null
             ? null
             : subscriptionAmount(
-                { price, trial_months: trialMonths, trial_start_date: trialStartDate },
+                { price, trial_months: trialMonths, trial_duration: trialDuration, trial_unit: trialUnit, trial_start_date: trialStartDate },
                 date,
               ),
         included: !current.excluded.includes(date),
       })),
-    [schedule.dates, current.amounts, current.excluded, price, trialMonths, trialStartDate],
+    [schedule.dates, current.amounts, current.excluded, price, trialMonths, trialDuration, trialUnit, trialStartDate],
   );
   const selected = useMemo(() => rows.filter((row) => row.included), [rows]);
   const validAmounts =

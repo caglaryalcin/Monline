@@ -1,4 +1,5 @@
 const { onRecordCreate, onRecordUpdate } = require("../runtime.cjs");
+const { trialEndDate } = require("./lib/pure/subscription-trial.mjs");
 const { automaticStartDate } = require("./lib/pure/subscription-start.js");
 
 onRecordCreate((e) => {
@@ -40,6 +41,9 @@ onRecordCreate((e) => {
         ),
       );
   }
+  const trialEnd = Number(e.record.get("trial_duration")) > 0 ? trialEndDate(e.record) : "";
+  if (trialEnd && e.record.getString("next_payment").slice(0, 10) <= trialEnd)
+    e.record.set("billing_anchor_day", Number(trialEnd.slice(8, 10)));
   e.next();
 }, "subscriptions");
 
@@ -57,6 +61,9 @@ onRecordUpdate((e) => {
             Number(original.getString("next_payment").slice(8, 10)),
     );
   }
+  const trialEnd = Number(e.record.get("trial_duration")) > 0 ? trialEndDate(e.record) : "";
+  if (trialEnd && e.record.getString("next_payment").slice(0, 10) <= trialEnd)
+    e.record.set("billing_anchor_day", Number(trialEnd.slice(8, 10)));
   e.next();
   e.record.set("__monline_schedule_advance", false);
 }, "subscriptions");

@@ -1,3 +1,7 @@
+import { trialEndDate } from "@/lib/subscriptionTrial";
+
+import type { TrialSubscription } from "../../../backend/src/domain/lib/pure/subscription-trial.mjs";
+
 export const MAX_BACKFILL_PAYMENTS = 1000;
 export interface BackfillPayment {
   due_date: string;
@@ -35,6 +39,7 @@ export function backfillDates({
   frequency,
   end = "",
   limit = 0,
+  trial,
 }: {
   start: string;
   anchorDate?: string;
@@ -44,6 +49,7 @@ export function backfillDates({
   frequency: number;
   end?: string;
   limit?: number;
+  trial?: TrialSubscription;
 }): string[] {
   const months: Record<string, number> = { Monthly: 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
   if (
@@ -59,6 +65,20 @@ export function backfillDates({
     limit < 0
   )
     throw new Error("backfill_invalid_schedule");
+  const trialEnd = trial && Number(trial.trial_duration) > 0 ? trialEndDate(trial) : "";
+  if (trialEnd) {
+    const trialStart = trial!.trial_start_date!.slice(0, 10);
+    const cutoff = end && end < until ? end : until;
+    const initial = trialStart >= start && trialStart <= cutoff ? [trialStart] : [];
+    if (initial.length && limit === 1) return initial;
+    const dates = initial.concat(backfillDates({
+      start: start > trialEnd ? start : trialEnd, anchorDate: trialEnd,
+      billingAnchorDay: Number(trialEnd.slice(8, 10)), until, cycle, frequency, end,
+      limit: limit ? limit - initial.length : 0,
+    }));
+    if (dates.length > MAX_BACKFILL_PAYMENTS) throw new Error("backfill_too_many");
+    return dates;
+  }
   const anchor = new Date(anchorDate + "T00:00:00.000Z");
   const dayOfMonth =
     Number.isInteger(billingAnchorDay) && billingAnchorDay! >= 1 && billingAnchorDay! <= 31

@@ -334,6 +334,8 @@ routerAdd("GET", "/api/external/subscriptions", function (e) {
         record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
         price: sub.get("price"),
         trial_months: sub.get("trial_months"),
+        trial_duration: sub.get("trial_duration"),
+        trial_unit: sub.get("trial_unit"),
         trial_start_date: sub.get("trial_start_date"),
         currency_symbol: currencySymbol,
         currency_code: currencyCode,
@@ -459,6 +461,8 @@ routerAdd("GET", "/api/external/subscriptions/{id}", function (e) {
       record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
       price: sub.get("price"),
         trial_months: sub.get("trial_months"),
+        trial_duration: sub.get("trial_duration"),
+        trial_unit: sub.get("trial_unit"),
         trial_start_date: sub.get("trial_start_date"),
       currency_id: sub.get("currency"),
       currency_symbol: currencySymbol,
@@ -671,6 +675,8 @@ routerAdd("POST", "/api/external/subscriptions", function (e) {
     record.set("record_type", recordType);
     record.set("price", price);
     record.set("trial_months", body.trial_months || 0);
+    record.set("trial_duration", body.trial_duration || 0);
+    record.set("trial_unit", body.trial_unit || "");
     record.set("trial_start_date", body.trial_start_date || "");
     record.set("currency", currencyId);
     record.set("cycle", cycleId);
@@ -1610,7 +1616,7 @@ routerAdd("PUT", "/api/external/subscriptions/{id}", function (e) {
       });
     if (body.name !== undefined) record.set("name", String(body.name).trim());
     record.set("record_type", proposedRecordType);
-    for (const key of ["trial_months", "trial_start_date"])
+    for (const key of ["trial_months", "trial_duration", "trial_unit", "trial_start_date"])
       if (body[key] !== undefined) record.set(key, body[key]);
     if (body.price !== undefined)
       record.set("price", parseFloat(body.price) || 0);
@@ -2592,6 +2598,8 @@ routerAdd("POST", "/api/external/subscriptions/batch", function (e) {
       record.set("name", itemName);
       record.set("price", parseFloat(item.price) || 0);
       record.set("trial_months", item.trial_months || 0);
+      record.set("trial_duration", item.trial_duration || 0);
+      record.set("trial_unit", item.trial_unit || "");
       record.set("trial_start_date", item.trial_start_date || "");
       record.set("currency", String(item.currency_id));
       record.set("cycle", String(item.cycle_id));

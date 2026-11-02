@@ -266,7 +266,8 @@ function computeSpendTotal(options) {
   var date = segments[0].from;
   var since = limits.dateOnly(config.since);
   if (since && since > date) date = since;
-  var anchorDay = Number(date.slice(8, 10));
+  var trialEnd = Number(config.trial?.trial_duration) > 0 ? trialHelpers.trialEndDate(config.trial) : "";
+  var anchorDay = Number((trialEnd || date).slice(8, 10));
   var steps = 0;
   while (date <= until && steps < MAX_OCCURRENCES) {
     steps += 1;
