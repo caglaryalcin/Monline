@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { RemindersEditor } from "@/components/settings/notifications/RemindersEditor";
 import { BackfillPaymentsEditor } from "@/components/subscriptions/BackfillPaymentsEditor";
+import { SubscriptionCategorySelect } from "@/components/subscriptions/SubscriptionCategorySelect";
 import { SubscriptionPriceChangesEditor } from "@/components/subscriptions/SubscriptionPriceChangesEditor";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -40,7 +41,6 @@ import {
   CYCLE_NAME_KEYS,
   formatBillingPeriod,
 } from "@/lib/billingPeriods";
-import { categoryLabel } from "@/lib/categoryLabel";
 import { displayDateInput } from "@/lib/dateInput";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { compressImage } from "@/lib/image";
@@ -86,6 +86,15 @@ export function SubscriptionFormModal({
   onSaved,
 }: Props) {
   const { t } = useTranslation();
+  const [createdCategories, setCreatedCategories] = useState<Category[]>([]);
+  const [creatingCategory, setCreatingCategory] = useState(false);
+  const formCategories = [
+    ...categories,
+    ...createdCategories.filter(
+      (category) =>
+        category.user === userId && !categories.some((existing) => existing.id === category.id),
+    ),
+  ];
   const { user: authUser } = useAuth();
   const sharedPayers = useQuery({
     queryKey: sharingKeys.payers(userId, sub?.id ?? ""),
@@ -109,18 +118,28 @@ export function SubscriptionFormModal({
     handleSubmit,
     control,
     setValue,
+    clearErrors,
     watch,
     cycles,
     selectedCurrency,
     formState: { errors, isSubmitting },
-  } = useSubscriptionForm({ sub, currencies, categories, household, paymentMethods });
+  } = useSubscriptionForm({
+    sub,
+    currencies,
+    categories: formCategories,
+    household,
+    paymentMethods,
+  });
 
   const watchedNotify = watch("notify");
   const notificationMode = watch("notification_mode");
   const watchedInactive = watch("inactive");
   const watchedTrial = watch("trial_enabled");
-  const legacyTrial = !!sub?.trial_months && !sub.trial_duration &&
-    watch("trial_unit") === "month" && Number(watch("trial_duration")) === sub.trial_months;
+  const legacyTrial =
+    !!sub?.trial_months &&
+    !sub.trial_duration &&
+    watch("trial_unit") === "month" &&
+    Number(watch("trial_duration")) === sub.trial_months;
   const watchedName = watch("name");
   const logo = useLogoSearch(watchedName || "", !!sub?.logo);
   const watchedEndMode = watch("end_mode");
@@ -128,7 +147,15 @@ export function SubscriptionFormModal({
   // records when editing so an unrelated change never converts their history.
   const isCredit = sub?.record_type === "credit";
   const isPaid = !sub && !isCredit && watch("payment_status") === "paid";
-  const dateLabel = t(isCredit ? "received_on" : isPaid ? "historical_paid_date" : watchedTrial && !sub ? "trial_start_date" : "next_payment");
+  const dateLabel = t(
+    isCredit
+      ? "received_on"
+      : isPaid
+        ? "historical_paid_date"
+        : watchedTrial && !sub
+          ? "trial_start_date"
+          : "next_payment",
+  );
   const isFiniteSchedule = !isCredit && watchedEndMode !== "never";
   const oneTimeCycle = cycles.find((cycle) => cycle.name === ONE_TIME_CYCLE);
   const recurringCycles = cycles.filter((cycle) => cycle.name !== ONE_TIME_CYCLE);
@@ -167,6 +194,7 @@ export function SubscriptionFormModal({
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const onSubmit = async (data: SubscriptionFormValues) => {
+    if (creatingCategory) return;
     try {
       if (!isPaid && backfill.enabled && !backfill.valid) {
         toast.error(t("backfill_confirm_required"));
@@ -176,19 +204,24 @@ export function SubscriptionFormModal({
         record_type: isCredit ? "credit" : "expense",
         name: data.name,
         price: data.price,
-        price_changes: isCredit ? [] : data.price_changes.map((change) => ({ ...change, price: change.price! })),
+        price_changes: isCredit
+          ? []
+          : data.price_changes.map((change) => ({ ...change, price: change.price! })),
         trial_months: !isCredit && data.trial_enabled && legacyTrial ? sub!.trial_months : 0,
-        trial_duration: !isCredit && data.trial_enabled && !legacyTrial ? Number(data.trial_duration) : 0,
+        trial_duration:
+          !isCredit && data.trial_enabled && !legacyTrial ? Number(data.trial_duration) : 0,
         trial_unit: !isCredit && data.trial_enabled && !legacyTrial ? data.trial_unit : "",
-        trial_start_date: !isCredit && data.trial_enabled ? (!sub ? data.next_payment : data.trial_start_date) : "",
+        trial_start_date:
+          !isCredit && data.trial_enabled ? (!sub ? data.next_payment : data.trial_start_date) : "",
         currency: data.currency,
         frequency: isCredit ? 1 : parseInt(data.frequency),
         cycle: isCredit && oneTimeCycle ? oneTimeCycle.id : data.cycle,
         next_payment: data.next_payment,
         ...(!sub
           ? {
-              start_date:
-                data.trial_enabled ? data.next_payment : backfill.input && backfill.startDate
+              start_date: data.trial_enabled
+                ? data.next_payment
+                : backfill.input && backfill.startDate
                   ? backfill.startDate
                   : automaticStartDate(data.next_payment, dateCycleName, parseInt(data.frequency)),
             }
@@ -296,13 +329,15 @@ export function SubscriptionFormModal({
       onSaved();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("unknown_error");
-      toast.error(/^(backfill_|historical_|subscription_reminders_|price_changes_)/.test(msg) ? t(msg) : msg);
+      toast.error(
+        /^(backfill_|historical_|subscription_reminders_|price_changes_)/.test(msg) ? t(msg) : msg,
+      );
     }
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
   const requestClose = () => {
-    if (!isSubmitting) onClose();
+    if (!isSubmitting && !creatingCategory) onClose();
   };
 
   return (
@@ -318,11 +353,7 @@ export function SubscriptionFormModal({
           <DialogTitle>{sub ? t("edit_subscription") : t("add_subscription")}</DialogTitle>
         </DialogHeader>
 
-        <form
-          noValidate
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex min-h-0 flex-col gap-4"
-        >
+        <form noValidate onSubmit={handleSubmit(onSubmit)} className="flex min-h-0 flex-col gap-4">
           <div className="relative z-10 shrink-0 space-y-4 bg-background">
             {/* Name */}
             <div className="space-y-2">
@@ -361,7 +392,16 @@ export function SubscriptionFormModal({
             {/* Price + Currency */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="subscription-price">{t(watch("price_changes").length ? "price_changes_base_price" : watchedTrial ? "trial_regular_price" : "price")} *</Label>
+                <Label htmlFor="subscription-price">
+                  {t(
+                    watch("price_changes").length
+                      ? "price_changes_base_price"
+                      : watchedTrial
+                        ? "trial_regular_price"
+                        : "price",
+                  )}{" "}
+                  *
+                </Label>
                 <Controller
                   name="price"
                   control={control}
@@ -411,7 +451,12 @@ export function SubscriptionFormModal({
             </div>
 
             {!isCredit && (
-              <SubscriptionPriceChangesEditor control={control} errors={errors} currency={selectedCurrency} savedChanges={sub?.price_changes} />
+              <SubscriptionPriceChangesEditor
+                control={control}
+                errors={errors}
+                currency={selectedCurrency}
+                savedChanges={sub?.price_changes}
+              />
             )}
 
             {!isCredit && (
@@ -442,7 +487,9 @@ export function SubscriptionFormModal({
                     )}
                   />
                   <Label htmlFor="subscription-trial-enabled">{t("trial_period")}</Label>
-                  <InfoButton title={t("trial_period")}>{t(legacyTrial ? "trial_period_help" : "trial_duration_help")}</InfoButton>
+                  <InfoButton title={t("trial_period")}>
+                    {t(legacyTrial ? "trial_period_help" : "trial_duration_help")}
+                  </InfoButton>
                 </div>
                 {watchedTrial && (
                   <div className="flex flex-wrap items-center gap-3">
@@ -450,30 +497,55 @@ export function SubscriptionFormModal({
                     <Select
                       value={`${watch("trial_unit")}:${watch("trial_duration")}`}
                       onValueChange={(value) => {
-                        const preset = TRIAL_PRESETS.find((item) => `${item.unit}:${item.duration}` === value);
+                        const preset = TRIAL_PRESETS.find(
+                          (item) => `${item.unit}:${item.duration}` === value,
+                        );
                         if (!preset) return;
-                        setValue("trial_unit", preset.unit, { shouldValidate: true, shouldDirty: true });
-                        setValue("trial_duration", String(preset.duration), { shouldValidate: true, shouldDirty: true });
+                        setValue("trial_unit", preset.unit, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                        setValue("trial_duration", String(preset.duration), {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
                       }}
                     >
-                      <SelectTrigger id="subscription-trial-duration" className="w-full sm:w-56" {...invalidProps("trial_duration")}>
+                      <SelectTrigger
+                        id="subscription-trial-duration"
+                        className="w-full sm:w-56"
+                        {...invalidProps("trial_duration")}
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         {TRIAL_PRESETS.map((preset) => (
-                          <SelectItem key={`${preset.unit}:${preset.duration}`} value={`${preset.unit}:${preset.duration}`}>
+                          <SelectItem
+                            key={`${preset.unit}:${preset.duration}`}
+                            value={`${preset.unit}:${preset.duration}`}
+                          >
                             {t(preset.labelKey)}
                           </SelectItem>
                         ))}
-                        {!TRIAL_PRESETS.some((preset) => preset.unit === watch("trial_unit") && preset.duration === Number(watch("trial_duration"))) && (
-                          <SelectItem value={`${watch("trial_unit")}:${watch("trial_duration")}`} disabled>
+                        {!TRIAL_PRESETS.some(
+                          (preset) =>
+                            preset.unit === watch("trial_unit") &&
+                            preset.duration === Number(watch("trial_duration")),
+                        ) && (
+                          <SelectItem
+                            value={`${watch("trial_unit")}:${watch("trial_duration")}`}
+                            disabled
+                          >
                             {watch("trial_duration")} {t(`trial_unit_${watch("trial_unit")}`)}
                           </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
                     <p className="basis-full text-xs text-muted-foreground">
-                      {t(legacyTrial ? "trial_amount_hint" : "trial_duration_hint", { count: Number(watch("trial_duration")) || 1, currency: selectedCurrency?.code || selectedCurrency?.symbol || "" })}
+                      {t(legacyTrial ? "trial_amount_hint" : "trial_duration_hint", {
+                        count: Number(watch("trial_duration")) || 1,
+                        currency: selectedCurrency?.code || selectedCurrency?.symbol || "",
+                      })}
                     </p>
                     {renderError("trial_duration")}
                   </div>
@@ -710,26 +782,25 @@ export function SubscriptionFormModal({
                   name="category"
                   control={control}
                   render={({ field }) => (
-                    <Select required value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger
-                        id="subscription-category"
-                        aria-label={t("category")}
-                        aria-required="true"
-                        aria-invalid={!!errors.category}
-                        aria-describedby={
-                          errors.category ? "subscription-category-error" : undefined
-                        }
-                      >
-                        <SelectValue placeholder="" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {categoryLabel(c, t)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <SubscriptionCategorySelect
+                      userId={userId}
+                      categories={formCategories}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      disabled={isSubmitting || creatingCategory}
+                      invalid={!!errors.category}
+                      describedBy={errors.category ? "subscription-category-error" : undefined}
+                      onCreatingChange={setCreatingCategory}
+                      onCreated={(category) => {
+                        setCreatedCategories((current) => [
+                          ...current.filter((item) => item.id !== category.id),
+                          category,
+                        ]);
+                        setValue("category", category.id, { shouldDirty: true, shouldTouch: true });
+                        clearErrors("category");
+                      }}
+                    />
                   )}
                 />
                 {errors.category && (
@@ -959,7 +1030,11 @@ export function SubscriptionFormModal({
 
             {!sub && !isCredit && !isPaid && (
               <BackfillPaymentsEditor
-                start={watchedTrial ? watch("next_payment") : automaticStartDate(watch("next_payment"), dateCycleName, watchedFrequency)}
+                start={
+                  watchedTrial
+                    ? watch("next_payment")
+                    : automaticStartDate(watch("next_payment"), dateCycleName, watchedFrequency)
+                }
                 anchorDate={watch("next_payment")}
                 cycle={watchedCycleName || ""}
                 frequency={watchedFrequency}
@@ -978,7 +1053,7 @@ export function SubscriptionFormModal({
                     .sort()[0] || ""
                 }
                 limit={watchedEndMode === "payments" ? Number(watch("payment_limit")) : 0}
-                disabled={isSubmitting}
+                disabled={isSubmitting || creatingCategory}
                 onChange={setBackfill}
               />
             )}
@@ -986,14 +1061,18 @@ export function SubscriptionFormModal({
               <Button
                 type="button"
                 variant="outline"
-                disabled={isSubmitting}
+                disabled={isSubmitting || creatingCategory}
                 onClick={requestClose}
               >
                 {t("cancel")}
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || (!isPaid && backfill.enabled && !backfill.valid)}
+                disabled={
+                  isSubmitting ||
+                  creatingCategory ||
+                  (!isPaid && backfill.enabled && !backfill.valid)
+                }
               >
                 {isSubmitting
                   ? t("loading")

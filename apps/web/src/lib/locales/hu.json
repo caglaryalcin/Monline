@@ -596,6 +596,9 @@
   "success_delete": "Sikeresen törölve",
   "success_delete_account": "A fiók sikeresen törölve",
   "confirm_delete": "Biztosan törli ezt?",
+  "category_delete_confirm_one": "Ezt a kategóriát <strong>{{count}}</strong> előfizetés használja. Biztosan törölni szeretné?",
+  "category_delete_confirm_other": "Ezt a kategóriát <strong>{{count}}</strong> előfizetés használja. Biztosan törölni szeretné?",
+  "category_usage_load_error": "Nem sikerült betölteni a kategóriát használó előfizetések számát. Zárja be ezt az ablakot, és próbálja újra.",
   "manage_users": "A felhasználók és hozzáférésük kezelése.",
   "payment_methods_desc": "Kezelje az előfizetéseihez tartozó fizetési módokat.",
   "payment_method_name_placeholder": "Módszer neve... (pl. Visa, PayPal)",
@@ -2340,5 +2343,7 @@
   "price_changes_upcoming": "{{amount}} ettől: {{date}}",
   "price_changes_invalid": "Adjon meg érvényes dátumokat és nem negatív árakat. Legfeljebb 100 árváltozás engedélyezett.",
   "price_changes_future_only": "Válasszon jövőbeli dátumot. A már hatályos változások nem módosíthatók vagy törölhetők.",
-  "price_changes_duplicate_date": "Egy dátumhoz csak egy árváltozás adható meg."
+  "price_changes_duplicate_date": "Egy dátumhoz csak egy árváltozás adható meg.",
+  "subscription_add_category": "Új kategória hozzáadása",
+  "subscription_new_category_name": "Az új kategória neve"
 }

@@ -788,9 +788,8 @@ export function FinancePage() {
           <div className="mt-3 overflow-hidden rounded-xl border bg-card/20">
             <div className="flex flex-wrap items-center justify-between gap-4 px-3 py-2.5">
               <div className="finance-workbook__legend">
-                <div className="finance-sheet__received">{label("income_received")}</div>
+                <div className="finance-sheet__settled">{label("settled")}</div>
                 <div className="finance-sheet__expected">{label("income_expected")}</div>
-                <div className="finance-sheet__settled">{label("expense_paid")}</div>
                 <div className="finance-sheet__pending">{label("expense_pending")}</div>
               </div>
             </div>

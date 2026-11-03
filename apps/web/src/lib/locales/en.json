@@ -596,6 +596,9 @@
   "success_delete": "Deleted successfully",
   "success_delete_account": "Account deleted successfully",
   "confirm_delete": "Are you sure you want to delete this?",
+  "category_delete_confirm_one": "This category is used by <strong>{{count}}</strong> subscription. Are you sure you want to delete it?",
+  "category_delete_confirm_other": "This category is used by <strong>{{count}}</strong> subscriptions. Are you sure you want to delete it?",
+  "category_usage_load_error": "Could not load the number of subscriptions using this category. Close this dialog and try again.",
   "manage_users": "Manage users and their access.",
   "payment_methods_desc": "Manage payment methods for your subscriptions.",
   "payment_method_name_placeholder": "Method name... (e.g. Visa, PayPal)",
@@ -1349,5 +1352,7 @@
   "price_changes_upcoming": "{{amount}} from {{date}}",
   "price_changes_invalid": "Enter valid dates and non-negative prices. Up to 100 price changes are allowed.",
   "price_changes_future_only": "Choose a future date. Changes already in effect cannot be edited or removed.",
-  "price_changes_duplicate_date": "Only one price change is allowed per date."
+  "price_changes_duplicate_date": "Only one price change is allowed per date.",
+  "subscription_add_category": "Add new category",
+  "subscription_new_category_name": "New category name"
 }

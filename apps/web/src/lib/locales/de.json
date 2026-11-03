@@ -574,6 +574,9 @@
   "success_delete": "Erfolgreich gelöscht",
   "success_delete_account": "Konto erfolgreich gelöscht",
   "confirm_delete": "Sind Sie sicher, dass Sie dies löschen möchten?",
+  "category_delete_confirm_one": "Diese Kategorie wird von <strong>{{count}}</strong> Abonnement verwendet. Möchten Sie sie wirklich löschen?",
+  "category_delete_confirm_other": "Diese Kategorie wird von <strong>{{count}}</strong> Abonnements verwendet. Möchten Sie sie wirklich löschen?",
+  "category_usage_load_error": "Die Anzahl der Abonnements mit dieser Kategorie konnte nicht geladen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut.",
   "manage_users": "Verwalten Sie Benutzer und deren Zugriff.",
   "payment_methods_desc": "Verwalten Sie Zahlungsmethoden für Ihre Abonnements.",
   "payment_method_name_placeholder": "Methodenname... (z. B. Visa, PayPal)",
@@ -1349,5 +1352,7 @@
   "price_changes_upcoming": "{{amount}} ab {{date}}",
   "price_changes_invalid": "Geben Sie gültige Daten und nicht negative Preise ein. Maximal 100 Preisänderungen sind erlaubt.",
   "price_changes_future_only": "Wählen Sie ein zukünftiges Datum. Bereits gültige Änderungen können nicht bearbeitet oder entfernt werden.",
-  "price_changes_duplicate_date": "Pro Datum ist nur eine Preisänderung erlaubt."
+  "price_changes_duplicate_date": "Pro Datum ist nur eine Preisänderung erlaubt.",
+  "subscription_add_category": "Neue Kategorie hinzufügen",
+  "subscription_new_category_name": "Name der neuen Kategorie"
 }

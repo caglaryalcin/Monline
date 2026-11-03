@@ -1171,7 +1171,7 @@ export const financeTranslations = {
     finance_date: "Bütçe tarihi",
     finance_settled_date: "Ödeme / tahsilat tarihi",
     finance_planned: "Planlandı",
-    finance_settled: "Ödendi / alındı",
+    finance_settled: "Ödendi / Alındı",
     finance_status: "Durum",
     finance_save: "Kaydet",
     finance_cancel: "Vazgeç",

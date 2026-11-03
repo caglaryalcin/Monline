@@ -1,4 +1,4 @@
-import { Building2, Check, ChevronRight, Landmark, Lightbulb } from "lucide-react";
+import { Building2, Check, ChevronRight, Landmark } from "lucide-react";
 import { useContext, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
@@ -107,7 +107,10 @@ export function LoansSection({
       month: providerMonth,
       rowId: providerRowId,
     });
-    const showLogo = !!providerChoice || findBillProvider(loan.name)?.group === "banks";
+    const matchedProvider = findBillProvider(loan.name);
+    const automaticProvider = matchedProvider?.group === "banks" ? matchedProvider : undefined;
+    const providerName = providerChoice?.provider_name || automaticProvider?.name;
+    const showLogo = !!providerChoice || !!automaticProvider;
     return (
       <article
         key={loan.row_id}
@@ -161,7 +164,7 @@ export function LoansSection({
                   variant="ghost"
                   size="sm"
                   className="mt-1 h-7 max-w-full gap-1.5 px-1 text-xs text-muted-foreground"
-                  aria-label={`${t(providerChoice ? "spending_provider_change" : "spending_provider_choose")} · ${loan.name}`}
+                  aria-label={`${t(providerName ? "spending_provider_change" : "spending_provider_choose")} · ${loan.name}`}
                   onClick={() =>
                     setProviderFor({
                       name: loan.name,
@@ -173,7 +176,7 @@ export function LoansSection({
                 >
                   <Building2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                   <span className="truncate">
-                    {providerChoice?.provider_name || t("spending_provider_choose")}
+                    {providerName || t("spending_provider_choose")}
                   </span>
                 </Button>
               </div>
@@ -323,19 +326,6 @@ export function LoansSection({
 
   return (
     <section className="space-y-6" aria-label={t("spending_section_loans")}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full rounded-xl border bg-muted/10 px-3 py-2 text-xs sm:w-auto sm:max-w-md">
-          <p className="flex items-center gap-2 font-medium text-muted-foreground">
-            <Lightbulb
-              className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400"
-              aria-hidden="true"
-            />
-            {t("loans_calculation")}
-          </p>
-          <p className="pt-2 leading-relaxed text-muted-foreground">{t("loans_help")}</p>
-        </div>
-      </div>
-
       {visible.length === 0 ? (
         <p className="rounded-2xl border bg-muted/10 p-6 text-sm text-muted-foreground">
           {t(loans.length ? "loans_no_results" : "loans_empty")}
