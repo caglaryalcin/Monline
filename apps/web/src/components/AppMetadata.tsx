@@ -35,7 +35,7 @@ export function AppMetadata() {
   useEffect(() => {
     const appName = t("app_name", { defaultValue: "Monline" });
     const subtitle = t("meta_subtitle", {
-      defaultValue: "Monthly online spending, clearly.",
+      defaultValue: "Your monthly spending",
     });
     const description = t("meta_description", {
       defaultValue:
@@ -43,7 +43,7 @@ export function AppMetadata() {
     });
 
     document.documentElement.lang = locale;
-    document.title = `${appName} — ${subtitle}`;
+    document.title = `${appName} - ${subtitle}`;
 
     setMeta('meta[name="application-name"]', "content", appName);
     setMeta('meta[name="apple-mobile-web-app-title"]', "content", appName);

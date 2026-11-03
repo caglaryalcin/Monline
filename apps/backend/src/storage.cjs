@@ -351,6 +351,7 @@ class Repository {
       this.connection.exec("ALTER TABLE subscriptions ADD COLUMN calendar_projection_from TEXT NOT NULL DEFAULT ''");
     for (const [field, definition] of [
       ["trial_months", "INTEGER NOT NULL DEFAULT 0"],
+      ["price_changes", "JSON DEFAULT NULL"],
       ["trial_duration", "INTEGER NOT NULL DEFAULT 0"],
       ["trial_unit", "TEXT NOT NULL DEFAULT ''"],
       ["trial_start_date", "TEXT NOT NULL DEFAULT ''"],
@@ -658,6 +659,20 @@ class Repository {
       }
       if (collection.name === "subscriptions") {
         record.set("name", normalizeSubscriptionName(record.get("name")));
+        const { validatePriceChanges } = require("./domain/lib/pure/subscription-prices.mjs");
+        let priceChanges;
+        try { priceChanges = validatePriceChanges(record._values.price_changes); }
+        catch { throw new BadRequestError("price_changes_invalid"); }
+        if (priceChanges.length && record.getString("record_type") === "credit")
+          throw new BadRequestError("price_changes_invalid");
+        if (record.get("__monline_restore") !== true && record.get("__monline_import_prices") !== true) {
+          const today = formatLocalDate(new Date());
+          const previous = validatePriceChanges(record.original().get("price_changes"));
+          const elapsed = (changes) => changes.filter((change) => change.effective_date <= today);
+          if (JSON.stringify(elapsed(priceChanges)) !== JSON.stringify(elapsed(previous)))
+            throw new BadRequestError("price_changes_future_only");
+        }
+        record.set("price_changes", priceChanges);
         const months = Number(record.get("trial_months") || 0);
         if (!Number.isInteger(months) || months < 0 || months > 120 ||
             (months > 0 && record.getString("record_type") === "credit"))
@@ -770,6 +785,10 @@ class Repository {
         }
       });
       if (isNew) this.emit("afterCreate", record);
+      if (!isNew && collection.name === "subscriptions" &&
+          record.get("__monline_restore") !== true &&
+          JSON.stringify(record.get("price_changes")) !== JSON.stringify(record.original().get("price_changes")))
+        require("./domain/lib/subscription-prices.js").repriceUpcomingPayments(this, record, record.original());
       if (
         !isNew &&
         collection.name === "users" &&

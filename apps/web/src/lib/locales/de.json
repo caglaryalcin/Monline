@@ -1,4 +1,5 @@
 {
+  "finance_show_hidden_rows": "{{count}} ausgeblendete Zeilen anzeigen",
   "finance_hide_rows_one": "Zeile ausblenden",
   "finance_hide_rows_other": "Ausgewählte Zeilen ausblenden",
   "finance_hidden_rows_one": "{{count}} ausgeblendete Zeile",
@@ -101,7 +102,7 @@
   "instance_restore_confirm_legacy": "Dieses alte .db-Backup ersetzt alle Datenbankeinträge und Servereinstellungen. Vorhandene Dateien bleiben erhalten. Alle werden abgemeldet. Zuvor wird eine vollständige Sicherung auf dem Server gespeichert. Fortfahren?",
   "instance_restore_success": "Installation wiederhergestellt. Bitte erneut anmelden.",
   "app_name": "Monline",
-  "meta_subtitle": "Monatliche Ausgaben im Blick.",
+  "meta_subtitle": "Ihre monatlichen Ausgaben",
   "meta_description": "Verwalten Sie Abonnements und monatliche Online-Ausgaben mit Tabellenverbindungen und Kontrolle über Ihre Daten.",
   "login": "Anmelden",
   "logout": "Abmelden",
@@ -1335,5 +1336,18 @@
   "number_format": "Zahlenformat",
   "number_format_browser": "Browsereinstellung",
   "number_format_help": "Wählen Sie Dezimal- und Tausendertrennzeichen unabhängig von der Sprache der Oberfläche. Diese Einstellung wird für Ihr Konto gespeichert.",
-  "number_format_invalid": "Wählen Sie ein gültiges Zahlenformat."
+  "number_format_invalid": "Wählen Sie ein gültiges Zahlenformat.",
+  "price_changes_title": "Geplante Preisänderungen",
+  "price_changes_add": "Preisänderung planen",
+  "price_changes_help": "Der Anfangspreis gilt bis zum ersten Stichtag. Jeder neue Preis gilt für ab diesem Tag fällige Zahlungen bis zur nächsten Änderung. Erfasste vergangene Zahlungen bleiben unverändert.",
+  "price_changes_base_price": "Anfangspreis",
+  "price_changes_new_price": "Neuer Preis",
+  "price_changes_effective_date": "Gültig ab",
+  "price_changes_remove": "Preisänderung entfernen",
+  "price_changes_applied": "Bereits gültig. Planen Sie eine weitere Preisänderung.",
+  "price_changes_current": "Aktueller regulärer Preis: {{amount}}",
+  "price_changes_upcoming": "{{amount}} ab {{date}}",
+  "price_changes_invalid": "Geben Sie gültige Daten und nicht negative Preise ein. Maximal 100 Preisänderungen sind erlaubt.",
+  "price_changes_future_only": "Wählen Sie ein zukünftiges Datum. Bereits gültige Änderungen können nicht bearbeitet oder entfernt werden.",
+  "price_changes_duplicate_date": "Pro Datum ist nur eine Preisänderung erlaubt."
 }

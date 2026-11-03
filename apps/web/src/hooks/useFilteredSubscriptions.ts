@@ -4,6 +4,7 @@ import type {
   SubscriptionFiltersState,
   SubscriptionSortKey,
 } from "@/components/subscriptions/subscriptionsPage.types";
+import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import type { Subscription } from "@/types";
 
 interface UseFilteredSubscriptionsParams {
@@ -62,7 +63,7 @@ export function useFilteredSubscriptions({
       if (sort === "name") {
         comparison = left.name.localeCompare(right.name);
       } else if (sort === "price") {
-        comparison = left.price - right.price;
+        comparison = subscriptionAmount(left) - subscriptionAmount(right);
       } else if (sort === "date") {
         comparison = (left.next_payment || "").localeCompare(right.next_payment || "");
       } else if (sort === "status") {

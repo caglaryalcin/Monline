@@ -2,6 +2,15 @@ const { Record } = require("../../runtime.cjs");
 var historyMath = require("./pure/subscription-history.js");
 var historyDates = require("./date-helpers.js");
 var historyLimits = require("./pure/subscription-limits.js");
+const { subscriptionPrice } = require("./pure/subscription-prices.mjs");
+
+function applyScheduledPrices(segments, changes) {
+  const dates = [...new Set([...segments.map((segment) => segment.from), ...changes.map((change) => change.effective_date)])].sort();
+  return dates.flatMap((date) => {
+    const segment = segments.filter((item) => item.from <= date).at(-1);
+    return segment ? [{ ...segment, from: date, price: subscriptionPrice({ price: segment.price, price_changes: changes }, date) }] : [];
+  });
+}
 
 /**
  * Database-facing half of the subscription history feature.
@@ -213,6 +222,26 @@ function buildHistoryResponse(app, subscription) {
     since:
       startDate || historyLimits.dateOnly(subscription.get("next_payment")),
   });
+  const changes = subscription.get("price_changes") || [];
+  const baseSegments = segments;
+  segments = applyScheduledPrices(baseSegments, changes);
+  for (const change of changes) {
+    if (change.effective_date > todayStr) continue;
+    const previous = new Date(change.effective_date + "T12:00:00Z");
+    previous.setUTCDate(previous.getUTCDate() - 1);
+    const date = previous.toISOString().slice(0, 10);
+    const segment = baseSegments.filter((item) => item.from <= date).at(-1);
+    events.push({
+      id: `scheduled-price-${change.effective_date}`,
+      event_type: "price_changed",
+      effective_date: change.effective_date,
+      old_price: subscriptionPrice({ price: segment?.price ?? snapshot.price, price_changes: changes }, date),
+      new_price: change.price,
+      old_cycle: "", new_cycle: "", old_frequency: 0, new_frequency: 0,
+      old_currency: snapshot.currency, new_currency: snapshot.currency,
+      note: "scheduled", created: "",
+    });
+  }
 
   // A cancelled subscription stopped charging on its cancellation date; every
   // other one is charged up to today.
@@ -250,7 +279,7 @@ function buildHistoryResponse(app, subscription) {
       ),
       cycle: snapshot.cycleName,
       frequency: snapshot.frequency,
-      price: snapshot.price,
+      price: subscriptionPrice(subscription, todayStr),
     },
     events: events,
     timeline: segments,

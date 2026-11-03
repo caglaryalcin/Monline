@@ -17,6 +17,7 @@ A self-hosted home for your subscriptions, recurring payments, and budget. React
 
 - **Subscription tracking** — automatic service logos, flexible billing cycles, active/inactive controls, and optional automatic renewal. Cards show their saved billing amount and period by default; a calendar icon switches each card between monthly and yearly equivalents.
 - **Budget overview** — monthly charges, paid and outstanding amounts, and remaining budget.
+- **Scheduled subscription prices** — enter a new price and a future effective date in the subscription form. The initial price applies until that date, and payments due on or after it use the new price. Plan several changes ahead, edit or cancel future changes, and see the next change on the subscription card. Changes already in effect are retained in the price history. Recorded past and paid payments keep their saved amounts; manually overridden or moved upcoming payments retain their amounts too. Price schedules are included in subscription exports and account/instance backups.
 
 ![](https://raw.githubusercontent.com/caglaryalcin/Monline/refs/heads/main/screenshots/subscriptions.png)
 

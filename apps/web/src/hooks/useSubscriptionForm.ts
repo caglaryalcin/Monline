@@ -22,6 +22,7 @@ const _schemaShape = z.object({
   record_type: z.enum(["expense", "credit"]),
   name: z.string(),
   price: z.number().nullable(),
+  price_changes: z.array(z.object({ effective_date: z.string(), price: z.number().nullable() })),
   currency: z.string(),
   frequency: z.string(),
   cycle: z.string(),
@@ -97,6 +98,10 @@ export function useSubscriptionForm({
         .nullable()
         .refine((value) => value !== null, t("required")),
       currency: z.string().min(1, t("required")),
+      price_changes: z.array(z.object({
+        effective_date: z.string().min(1, t("required")).refine(isValidISODate, t("validation_date")),
+        price: z.number().nonnegative().max(1e12).nullable().refine((value) => value !== null, t("required")),
+      })).max(100, t("price_changes_invalid")),
       frequency: z.string().min(1, t("required")),
       cycle: z.string().min(1, t("required")),
       // UI-only: which preset drives cycle/frequency, or "custom". Never sent.
@@ -143,6 +148,16 @@ export function useSubscriptionForm({
     })
     .superRefine((values, context) => {
       if (values.record_type === "credit") return;
+      const dates = new Set<string>();
+      values.price_changes.forEach((change, index) => {
+        const saved = sub?.price_changes?.find((item) => item.effective_date === change.effective_date);
+        if (dates.has(change.effective_date)) {
+          context.addIssue({ code: "custom", path: ["price_changes", index, "effective_date"], message: t("price_changes_duplicate_date") });
+        } else if (change.effective_date && change.effective_date <= localToday() && (!saved || saved.price !== change.price)) {
+          context.addIssue({ code: "custom", path: ["price_changes", index, "effective_date"], message: t("price_changes_future_only") });
+        }
+        dates.add(change.effective_date);
+      });
       if (values.trial_enabled && (!Number.isInteger(Number(values.trial_duration)) ||
           Number(values.trial_duration) < 1 || Number(values.trial_duration) > TRIAL_LIMITS[values.trial_unit])) {
         context.addIssue({ code: "custom", path: ["trial_duration"], message: t("trial_duration_invalid", { max: TRIAL_LIMITS[values.trial_unit] }) });
@@ -229,6 +244,7 @@ export function useSubscriptionForm({
       record_type: "expense",
       name: "",
       price: null,
+      price_changes: [],
       currency: "",
       frequency: "1",
       cycle: "",
@@ -272,6 +288,7 @@ export function useSubscriptionForm({
         record_type: sub.record_type === "credit" ? "credit" : "expense",
         name: sub.name,
         price: sub.price,
+        price_changes: sub.price_changes ?? [],
         currency: sub.currency,
         frequency: String(sub.frequency),
         cycle: sub.cycle,
@@ -311,6 +328,7 @@ export function useSubscriptionForm({
         record_type: "expense",
         name: "",
         price: null,
+        price_changes: [],
         currency: mainCur?.id || currencies[0]?.id || "",
         frequency: "1",
         cycle: monthCycle?.id || cycles[0]?.id || "",

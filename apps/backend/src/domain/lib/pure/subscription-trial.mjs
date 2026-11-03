@@ -1,3 +1,5 @@
+import { subscriptionPrice } from "./subscription-prices.mjs";
+
 function field(subscription, key) {
   return typeof subscription?.get === "function" ? subscription.get(key) : subscription?.[key];
 }
@@ -38,7 +40,7 @@ export function isTrialDate(subscription, value) {
 }
 /** Keep the normal price on the subscription; only dated occurrences become free. */
 export function subscriptionAmount(subscription, date) {
-  return isTrialDate(subscription, date) ? 0 : Number(field(subscription, "price") || 0);
+  return isTrialDate(subscription, date) ? 0 : subscriptionPrice(subscription, date);
 }
 /** Legacy trials keep monthly occurrences; flexible trials resume on their exact end date. */
 export function nextTrialPaymentDate(subscription, value, anchorDay) {

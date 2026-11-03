@@ -88,6 +88,7 @@ const FIELDS = {
   subscriptions: [
     "name",
     "price",
+    "price_changes",
     "trial_months",
     "trial_duration",
     "trial_unit",
@@ -339,6 +340,7 @@ function validateBackup(backup) {
       ids.add(row.id);
       if (name === "subscriptions") {
         try {
+          row.price_changes = require("./pure/subscription-prices.mjs").validatePriceChanges(row.price_changes);
           row.notification_reminders =
             require("./pure/subscription-reminders.js").validateSubscriptionReminders(
               row.notification_reminders,

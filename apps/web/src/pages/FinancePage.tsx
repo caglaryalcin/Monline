@@ -198,7 +198,7 @@ export function FinancePage() {
     finance_rows: financeRowsForYear(rawData.finance_rows, year, rawData),
   };
   const carryoverRow = data.finance_rows.find(isFinanceCarryoverRow);
-  const { hiddenRowIds, hideRows, showRow, showAllRows } = useHiddenFinanceRows(user?.id, year);
+  const { hiddenRowIds, hideRows, showRow, showRows, showAllRows } = useHiddenFinanceRows(user?.id, year);
   const hiddenRows = data.finance_rows.filter(
     (row) => row.id !== carryoverRow?.id && hiddenRowIds.has(row.id),
   );
@@ -715,7 +715,9 @@ export function FinancePage() {
                   grid={grid}
                   run={run}
                   pending={mutate.isPending || grid.busy}
-                  rows={displayedRows.filter((row) => row.kind !== "expense")}
+                  rows={data.finance_rows.filter((row) => row.kind !== "expense")}
+                  hiddenRowIds={hiddenRowIds}
+                  showRows={showRows}
                   cellEntries={cellEntries}
                   verifications={data.entry_verifications}
                   linkedStatement={linkedStatement}
@@ -739,7 +741,9 @@ export function FinancePage() {
                   grid={grid}
                   run={run}
                   pending={mutate.isPending || grid.busy}
-                  rows={displayedRows.filter((row) => row.kind === "expense")}
+                  rows={data.finance_rows.filter((row) => row.kind === "expense")}
+                  hiddenRowIds={hiddenRowIds}
+                  showRows={showRows}
                   cellEntries={cellEntries}
                   verifications={data.entry_verifications}
                   linkedStatement={linkedStatement}
@@ -1588,6 +1592,8 @@ function FinanceSection({
   run,
   pending,
   rows,
+  hiddenRowIds,
+  showRows,
   cellEntries,
   money,
   label,
@@ -1611,6 +1617,8 @@ function FinanceSection({
   run: (action: () => Promise<unknown>, close?: boolean) => Promise<boolean>;
   pending: boolean;
   rows: FinanceRow[];
+  hiddenRowIds: Set<string>;
+  showRows: (ids: string[]) => void;
   cellEntries: (row: FinanceRow, month: number) => FinanceEntry[];
   money: (value: number) => string;
   label: (key: string) => string;
@@ -1653,7 +1661,31 @@ function FinanceSection({
           else setDraftName("");
         }}
       />
-      {editableRows.map((row) => {
+      {editableRows.map((row, rowIndex) => {
+        if (hiddenRowIds.has(row.id)) {
+          if (rowIndex > 0 && hiddenRowIds.has(editableRows[rowIndex - 1].id)) return null;
+          const group: FinanceRow[] = [];
+          for (let index = rowIndex; index < editableRows.length && hiddenRowIds.has(editableRows[index].id); index++)
+            group.push(editableRows[index]);
+          const revealLabel = t("finance_show_hidden_rows", { count: group.length });
+          return (
+            <tr key={`hidden-${row.id}`} className="finance-sheet__hidden-row-gap">
+              <th scope="row">
+                <button
+                  type="button"
+                  className="finance-sheet__hidden-row-button"
+                  aria-label={revealLabel}
+                  title={`${revealLabel}\n${group.map((item) => item.name).join(", ")}`}
+                  disabled={pending}
+                  onClick={() => showRows(group.map((item) => item.id))}
+                >
+                  <span className="finance-sheet__hidden-row-arrows" aria-hidden="true" />
+                </button>
+              </th>
+              <td colSpan={14} aria-hidden="true" />
+            </tr>
+          );
+        }
         const entries = Array.from({ length: 12 }, (_, index) => cellEntries(row, index + 1));
         const actual = sumEntries(entries.flat().filter((entry) => entry.status === "settled"));
         const planned = sumEntries(entries.flat().filter((entry) => entry.status === "planned"));

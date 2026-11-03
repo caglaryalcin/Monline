@@ -116,6 +116,66 @@
 .finance-sheet__name-column {
   width: 176px;
 }
+.finance-sheet .finance-sheet__hidden-row-gap {
+  height: 0;
+}
+.finance-sheet .finance-sheet__hidden-row-gap > th:first-child,
+.finance-sheet .finance-sheet__hidden-row-gap > td {
+  height: 0;
+  padding: 0;
+  border: none;
+  font-size: 0;
+  line-height: 0;
+  color: hsl(var(--muted-foreground));
+  background: hsl(var(--card));
+}
+.finance-sheet .finance-sheet__hidden-row-gap > th:first-child {
+  z-index: 3;
+  overflow: visible;
+}
+.finance-sheet__hidden-row-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 14px;
+  padding: 0 6px;
+  cursor: pointer;
+}
+.finance-sheet__hidden-row-button:hover,
+.finance-sheet__hidden-row-button:focus-visible {
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.1);
+}
+.finance-sheet__hidden-row-button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+.finance-sheet__hidden-row-arrows {
+  display: flex;
+  flex: 0 0 8px;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 12px;
+}
+.finance-sheet__hidden-row-arrows::before,
+.finance-sheet__hidden-row-arrows::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+}
+.finance-sheet__hidden-row-arrows::before {
+  border-bottom: 4px solid currentColor;
+}
+.finance-sheet__hidden-row-arrows::after {
+  border-top: 4px solid currentColor;
+}
 .finance-sheet__card-detail {
   margin-top: 3px;
   font-size: 10px;

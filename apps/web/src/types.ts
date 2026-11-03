@@ -136,6 +136,7 @@ export interface Subscription {
   logo?: string;
   price: number;
   trial_months?: number;
+  price_changes?: { effective_date: string; price: number }[] | null;
   trial_duration?: number;
   trial_unit?: "day" | "week" | "month" | "year" | "";
   trial_start_date?: string;

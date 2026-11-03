@@ -1,4 +1,5 @@
 {
+  "finance_show_hidden_rows": "{{count}} gizli satırı göster",
   "finance_hide_rows_one": "Satırı gizle",
   "finance_hide_rows_other": "Seçili satırları gizle",
   "finance_hidden_rows_one": "{{count}} gizli satır",
@@ -119,7 +120,7 @@
   "instance_restore_confirm_legacy": "Bu eski .db yedeği tüm kullanıcıların veritabanı kayıtlarını ve sunucu ayarlarını değiştirecek. Mevcut yüklenen dosyalar korunacak. Herkesin oturumu kapatılacak. Önce mevcut kurulumun tam yedeği sunucuda saklanacak. Devam edilsin mi?",
   "instance_restore_success": "Kurulum geri yüklendi. Lütfen yeniden giriş yapın.",
   "app_name": "Monline",
-  "meta_subtitle": "Aylık online harcamalarınız, açık ve net.",
+  "meta_subtitle": "Aylık harcamalarınız",
   "meta_description": "Aboneliklerinizi ve aylık online harcamalarınızı takip edin. E-tablolarınızı bağlayın, verilerinizin kontrolünü elinizde tutun.",
   "login": "Giriş Yap",
   "logout": "Çıkış Yap",
@@ -1335,5 +1336,18 @@
   "number_format": "Sayı biçimi",
   "number_format_browser": "Tarayıcı ayarı",
   "number_format_help": "Ondalık ve binlik ayıraçlarının görünümünü arayüz dilinden bağımsız seçin. Bu tercih hesabınıza kaydedilir.",
-  "number_format_invalid": "Geçerli bir sayı biçimi seçin."
+  "number_format_invalid": "Geçerli bir sayı biçimi seçin.",
+  "price_changes_title": "Planlanan fiyat değişiklikleri",
+  "price_changes_add": "Fiyat değişikliği ekle",
+  "price_changes_help": "İlk geçerlilik tarihine kadar başlangıç fiyatı korunur. Her yeni fiyat, o tarih ve sonrasına düşen ödemelerde bir sonraki değişikliğe kadar uygulanır. Kayıtlı geçmiş ödemeler değişmez.",
+  "price_changes_base_price": "Başlangıç fiyatı",
+  "price_changes_new_price": "Yeni fiyat",
+  "price_changes_effective_date": "Geçerlilik tarihi",
+  "price_changes_remove": "Fiyat değişikliğini kaldır",
+  "price_changes_applied": "Yürürlükte. Fiyatı güncellemek için yeni bir değişiklik planlayın.",
+  "price_changes_current": "Güncel normal fiyat: {{amount}}",
+  "price_changes_upcoming": "{{date}} itibarıyla {{amount}}",
+  "price_changes_invalid": "Geçerli tarihler ve negatif olmayan fiyatlar girin. En fazla 100 fiyat değişikliği eklenebilir.",
+  "price_changes_future_only": "İleri bir tarih seçin. Yürürlüğe girmiş değişiklikler düzenlenemez veya kaldırılamaz.",
+  "price_changes_duplicate_date": "Aynı tarih için yalnızca bir fiyat değişikliği eklenebilir."
 }

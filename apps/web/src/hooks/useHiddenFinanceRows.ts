@@ -35,6 +35,10 @@ export function useHiddenFinanceRows(userId: string | undefined, year: number) {
   return {
     hiddenRowIds: new Set(rows),
     hideRows: (ids: string[]) => update([...new Set([...rows, ...ids])]),
+    showRows: (ids: string[]) => {
+      const shown = new Set(ids);
+      update(rows.filter((row) => !shown.has(row)));
+    },
     showRow: (id: string) => update(rows.filter((row) => row !== id)),
     showAllRows: () => update([]),
   };
