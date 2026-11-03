@@ -7,6 +7,7 @@ import { numberFormatter } from "@/lib/numberFormat";
 export function FinanceQuickAmount({
   row,
   entries,
+  initialValue,
   title,
   label,
   pending,
@@ -15,6 +16,7 @@ export function FinanceQuickAmount({
 }: {
   row: FinanceRow;
   entries: FinanceEntry[];
+  initialValue?: string;
   title: string;
   language: string;
   label: (key: string) => string;
@@ -24,22 +26,27 @@ export function FinanceQuickAmount({
 }) {
   const [values, setValues] = useState(() =>
     entries.length
-      ? entries.map((entry) =>
-          numberFormatter({
-            useGrouping: false,
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }).format(entry.amount),
+      ? entries.map((entry, index) =>
+          index === 0 && initialValue !== undefined
+            ? initialValue
+            : numberFormatter({
+                useGrouping: false,
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(entry.amount),
         )
-      : [""],
+      : [initialValue ?? ""],
   );
   const [invalid, setInvalid] = useState(false);
   const firstInput = useRef<HTMLInputElement>(null);
   const saving = useRef(false);
   const cancelled = useRef(false);
+  const typedToEdit = useRef(initialValue !== undefined);
   useEffect(() => {
-    firstInput.current?.focus();
-    firstInput.current?.select();
+    const input = firstInput.current;
+    input?.focus();
+    if (typedToEdit.current) input?.setSelectionRange(input.value.length, input.value.length);
+    else input?.select();
   }, []);
   const commit = async (focus: boolean) => {
     if (saving.current || cancelled.current || pending) return;

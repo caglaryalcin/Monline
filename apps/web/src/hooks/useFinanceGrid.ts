@@ -83,6 +83,7 @@ export function useFinanceGrid({
     month: number;
     year: number;
     entries: FinanceEntry[];
+    initialValue?: string;
   } | null>(null);
   const busy = isSaving || locked;
   const [context, setContext] = useState<GridContext | null>(null);
@@ -156,7 +157,7 @@ export function useFinanceGrid({
     columnAnchor.current = null;
     setSelection((current) => additive ? toggleSelectionCells(current, [at]) : { anchor: extend && current ? current.anchor : at, focus: at });
   };
-  const startQuickEdit = (row: FinanceRow, month: number) => {
+  const startQuickEdit = (row: FinanceRow, month: number, initialValue?: string) => {
     if (busy) return;
     selectCell(point(row.id, month - 1), false);
     setEnabled(true);
@@ -166,6 +167,7 @@ export function useFinanceGrid({
       row,
       month,
       year,
+      initialValue,
       entries: entries.filter(
         (entry) =>
           entry.row_id === row.id &&
@@ -748,6 +750,20 @@ export function useFinanceGrid({
         ["Enter", " "].includes(event.key)
       )
         return;
+      if (
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        !event.nativeEvent.isComposing &&
+        /^[0-9.,-]$/.test(event.key) &&
+        button?.hasAttribute("data-finance-cell") &&
+        selection.focus.col >= 0 &&
+        rows[selection.focus.row]
+      ) {
+        event.preventDefault();
+        startQuickEdit(rows[selection.focus.row], selection.focus.col + 1, event.key);
+        return;
+      }
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") {
         event.preventDefault();
         if (rows.length) {

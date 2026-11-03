@@ -764,31 +764,6 @@ export function FinancePage() {
               </div>
             )}
           </div>
-          {grid.enabled && (
-            <div className="finance-workbook__selection-help">
-              <div className="finance-workbook__selection-shortcuts">
-                <span className="finance-workbook__selection-count" role="status">
-                  {t("finance_selected_cells", { count: grid.count })}
-                </span>
-                {[
-                  ["Ctrl+C / Ctrl+X / Ctrl+V", label("shortcut_clipboard")],
-                  [label("shortcut_amount_keys"), label("shortcut_amount")],
-                  ["Enter", label("shortcut_details")],
-                ].map(([keys, description]) => (
-                  <span key={keys} className="inline-flex items-center gap-1.5">
-                    <kbd>{keys}</kbd>
-                    <span>{description}</span>
-                  </span>
-                ))}
-              </div>
-              <div className="mt-3 border-t pt-3">
-                <p className="leading-relaxed">
-                  <span className="font-medium text-foreground">{label("copy_inside_title")}</span>{" "}
-                  {label("copy_inside_help")}
-                </p>
-              </div>
-            </div>
-          )}
           <div className="mt-3 overflow-hidden rounded-xl border bg-card/20">
             <div className="flex flex-wrap items-center justify-between gap-4 px-3 py-2.5">
               <div className="finance-workbook__legend">
@@ -1822,6 +1797,7 @@ function FinanceSection({
                       key={`${row.id}-${index}`}
                       row={row}
                       entries={grid.quickEdit.entries}
+                      initialValue={grid.quickEdit.initialValue}
                       title={row.name + " · " + monthName(index)}
                       language={language}
                       label={label}

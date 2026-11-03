@@ -1844,7 +1844,7 @@
   "finance_shortcut_months_keys": "Ctrl + kattintás",
   "finance_shortcut_months": "Adjon hozzá egy másik hónap oszlopot",
   "finance_shortcut_clipboard": "Másolás / kivágás / beillesztés",
-  "finance_shortcut_amount_keys": "Kattintson duplán az / F2 gombra",
+  "finance_shortcut_amount_keys": "Szám beírása / Dupla kattintás / F2",
   "finance_shortcut_amount": "Szerkessze az összeget",
   "finance_shortcut_details": "Nyissa meg a fizetési részleteket",
   "finance_copy_inside_title": "Másolás a táblázatban:",
