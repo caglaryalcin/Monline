@@ -333,6 +333,7 @@ routerAdd("GET", "/api/external/subscriptions", function (e) {
         name: sub.get("name"),
         record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
         price: sub.get("price"),
+        price_changes: sub.get("price_changes"),
         trial_months: sub.get("trial_months"),
         trial_duration: sub.get("trial_duration"),
         trial_unit: sub.get("trial_unit"),
@@ -460,6 +461,7 @@ routerAdd("GET", "/api/external/subscriptions/{id}", function (e) {
       name: sub.get("name"),
       record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
       price: sub.get("price"),
+        price_changes: sub.get("price_changes"),
         trial_months: sub.get("trial_months"),
         trial_duration: sub.get("trial_duration"),
         trial_unit: sub.get("trial_unit"),
@@ -674,6 +676,7 @@ routerAdd("POST", "/api/external/subscriptions", function (e) {
     record.set("name", name);
     record.set("record_type", recordType);
     record.set("price", price);
+    record.set("price_changes", body.price_changes ?? []);
     record.set("trial_months", body.trial_months || 0);
     record.set("trial_duration", body.trial_duration || 0);
     record.set("trial_unit", body.trial_unit || "");
@@ -1616,7 +1619,7 @@ routerAdd("PUT", "/api/external/subscriptions/{id}", function (e) {
       });
     if (body.name !== undefined) record.set("name", String(body.name).trim());
     record.set("record_type", proposedRecordType);
-    for (const key of ["trial_months", "trial_duration", "trial_unit", "trial_start_date"])
+    for (const key of ["price_changes", "trial_months", "trial_duration", "trial_unit", "trial_start_date"])
       if (body[key] !== undefined) record.set(key, body[key]);
     if (body.price !== undefined)
       record.set("price", parseFloat(body.price) || 0);
@@ -2597,6 +2600,8 @@ routerAdd("POST", "/api/external/subscriptions/batch", function (e) {
       record.set("user", userId);
       record.set("name", itemName);
       record.set("price", parseFloat(item.price) || 0);
+      record.set("price_changes", item.price_changes ?? []);
+      record.set("__monline_import_prices", true);
       record.set("trial_months", item.trial_months || 0);
       record.set("trial_duration", item.trial_duration || 0);
       record.set("trial_unit", item.trial_unit || "");

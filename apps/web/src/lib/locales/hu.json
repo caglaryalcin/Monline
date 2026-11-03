@@ -124,7 +124,7 @@
   "instance_restore_confirm_legacy": "Ez az örökölt .db biztonsági másolat minden felhasználó adatbázis-rekordját és szerverbeállításait lecseréli. Az aktuálisan feltöltött fájlok megmaradnak. Mindenki ki lesz jelentkezve. A teljes biztonsági mentés először a szerverre kerül mentésre. Folytatja?",
   "instance_restore_success": "Példány visszaállítva. Kérjük, jelentkezzen be újra.",
   "app_name": "Monline",
-  "meta_subtitle": "Havi online kiadás, egyértelműen.",
+  "meta_subtitle": "Havi kiadásai",
   "meta_description": "Kövesse nyomon az előfizetéseket és a havi online kiadásokat táblázatos csatlakozásokkal és az adatok teljes felügyeletével.",
   "login": "Bejelentkezés",
   "logout": "Kijelentkezés",
@@ -1395,5 +1395,18 @@
   "number_format": "Számformátum",
   "number_format_browser": "Böngésző beállítása",
   "number_format_help": "A tizedes- és ezreselválasztó megjelenítését a felület nyelvétől függetlenül választhatja ki. A beállítást a fiókjához mentjük.",
-  "number_format_invalid": "Válasszon érvényes számformátumot."
+  "number_format_invalid": "Válasszon érvényes számformátumot.",
+  "price_changes_title": "Ütemezett árváltozások",
+  "price_changes_add": "Árváltozás ütemezése",
+  "price_changes_help": "A kezdeti ár az első hatálybalépési dátumig érvényes. Minden új ár az adott napon vagy azután esedékes fizetésekre vonatkozik a következő változásig. A rögzített korábbi fizetések változatlanok maradnak.",
+  "price_changes_base_price": "Kezdeti ár",
+  "price_changes_new_price": "Új ár",
+  "price_changes_effective_date": "Hatálybalépés dátuma",
+  "price_changes_remove": "Árváltozás eltávolítása",
+  "price_changes_applied": "Már hatályos. Az ár módosításához ütemezzen újabb változást.",
+  "price_changes_current": "Jelenlegi normál ár: {{amount}}",
+  "price_changes_upcoming": "{{amount}} ettől: {{date}}",
+  "price_changes_invalid": "Adjon meg érvényes dátumokat és nem negatív árakat. Legfeljebb 100 árváltozás engedélyezett.",
+  "price_changes_future_only": "Válasszon jövőbeli dátumot. A már hatályos változások nem módosíthatók vagy törölhetők.",
+  "price_changes_duplicate_date": "Egy dátumhoz csak egy árváltozás adható meg."
 }

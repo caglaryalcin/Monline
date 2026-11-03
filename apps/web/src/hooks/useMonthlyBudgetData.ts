@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { useLocalToday } from "@/hooks/useLocalToday";
+import { costHistoryPayments } from "@/lib/costHistoryPayments";
 import { buildMonthlyBudget } from "@/lib/monthlyBudget";
 import { queryKeys } from "@/lib/queryKeys";
 import { recordedPayments } from "@/lib/recordedPayments";
@@ -9,7 +10,12 @@ import { currenciesService } from "@/services/currencies";
 import { paymentRecordsService } from "@/services/paymentRecords";
 import { subscriptionsService } from "@/services/subscriptions";
 
-export function useMonthlyBudgetData(userId: string, paymentTracking: boolean, enabled = true) {
+export function useMonthlyBudgetData(
+  userId: string,
+  paymentTracking: boolean,
+  enabled = true,
+  selectedYear?: number,
+) {
   const options = { enabled: !!userId && enabled };
   const subscriptions = useQuery({
     queryKey: queryKeys.subscriptions.all(userId),
@@ -27,6 +33,25 @@ export function useMonthlyBudgetData(userId: string, paymentTracking: boolean, e
     ...options,
   });
   const [year, month, day] = useLocalToday().split("-").map(Number);
+  const historyYear = selectedYear ?? year;
+  const historyPayments = useMemo(() => {
+    const time = new Date();
+    const now = new Date(
+      year,
+      month - 1,
+      day,
+      time.getHours(),
+      time.getMinutes(),
+      time.getSeconds(),
+    );
+    return costHistoryPayments(
+      subscriptions.data ?? [],
+      currencies.data ?? [],
+      records.data ?? [],
+      historyYear,
+      now,
+    );
+  }, [subscriptions.data, currencies.data, records.data, historyYear, year, month, day]);
   const entries = useMemo(
     () =>
       buildMonthlyBudget(
@@ -60,6 +85,8 @@ export function useMonthlyBudgetData(userId: string, paymentTracking: boolean, e
   return {
     entries,
     paymentCosts,
+    paymentDetails: historyPayments.details,
+    paymentForecasts: historyPayments.forecasts,
     isLoading: subscriptions.isPending || currencies.isPending || records.isPending,
     hasError: subscriptions.isError || currencies.isError || records.isError,
   };

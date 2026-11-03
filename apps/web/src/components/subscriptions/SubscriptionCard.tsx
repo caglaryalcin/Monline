@@ -28,6 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { localToday } from "@/lib/backfillPayments";
 import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { isCredit } from "@/lib/recordTypes";
@@ -385,6 +386,16 @@ export function SubscriptionCard({
   const recurring = !credit && cycleName !== "One-Time";
   const normalizePeriod = recurring && priceDisplay !== "billing";
   const currentPrice = subscriptionAmount(sub);
+  const nextPriceChange = sub.price_changes?.filter((change) => change.effective_date > localToday())
+    .sort((a, b) => a.effective_date.localeCompare(b.effective_date))[0];
+  const scheduledPriceDetails = nextPriceChange ? (
+    <p className="mt-1 text-xs text-muted-foreground">
+      {t("price_changes_upcoming", {
+        amount: formatPrice(nextPriceChange.price, currency?.symbol || "", { currencyCode: currency?.code, showCurrencyCode }),
+        date: formatDate(nextPriceChange.effective_date),
+      })}
+    </p>
+  ) : null;
   const rawPrice = normalizePeriod
     ? toMonthly(currentPrice, cycleName, sub.frequency || 1) * (priceDisplay === "yearly" ? 12 : 1)
     : currentPrice;
@@ -496,6 +507,7 @@ export function SubscriptionCard({
               </p>
               {paymentAccount && <span className="block truncate text-xs text-muted-foreground" title={paymentAccount.name}>{paymentAccount.name}</span>}
               {originalPriceDetails}
+              {scheduledPriceDetails}
               {isTrialDate(sub) && <Badge variant="secondary" className="mt-1 text-[10px]">{t("trial_period")}</Badge>}
             </div>
             {statusToggle && <div className="shrink-0 pt-0.5">{statusToggle}</div>}
@@ -616,6 +628,7 @@ export function SubscriptionCard({
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider whitespace-nowrap">
               {displayPeriod}
             </p>
+            {scheduledPriceDetails}
           </div>
           {statusToggle && <div className="shrink-0 pt-0.5">{statusToggle}</div>}
         </div>

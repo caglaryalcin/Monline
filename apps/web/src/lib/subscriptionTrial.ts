@@ -1,3 +1,4 @@
+import { subscriptionPrice as datedPrice } from "../../../backend/src/domain/lib/pure/subscription-prices.mjs";
 import type { TrialSubscription } from "../../../backend/src/domain/lib/pure/subscription-trial.mjs";
 import { isTrialDate as datedTrial, subscriptionAmount as datedAmount } from "../../../backend/src/domain/lib/pure/subscription-trial.mjs";
 export { MAX_TRIAL_MONTHS, nextTrialPaymentDate, TRIAL_LIMITS, trialEndDate } from "../../../backend/src/domain/lib/pure/subscription-trial.mjs";
@@ -10,4 +11,7 @@ export function isTrialDate(subscription: TrialSubscription, date = localDate())
 }
 export function subscriptionAmount(subscription: TrialSubscription, date = localDate()) {
   return datedAmount(subscription, date);
+}
+export function subscriptionPrice(subscription: TrialSubscription, date = localDate()) {
+  return datedPrice(subscription, date);
 }

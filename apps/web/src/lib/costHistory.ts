@@ -8,6 +8,8 @@ export interface CostHistoryChartPoint extends Omit<CostHistoryPoint, "cost"> {
   cost: number | null;
   forecast?: number;
   isForecast?: boolean;
+  paidCost?: number | null;
+  upcomingCost?: number;
 }
 
 export function buildCostHistory(
@@ -80,23 +82,34 @@ export function yearMonths(
     (point) =>
       Number.isFinite(point.cost) &&
       point.cost >= 0 &&
-      point.name > currentName &&
+      point.name >= currentName &&
       (point.name.startsWith(`${year}/`) ||
         (now.getMonth() === 11 && point.name === `${year + 1}/01`)) &&
       /^\d{4}\/(0[1-9]|1[0-2])$/.test(point.name),
   );
   if (!upcoming.length) return points;
-  const current = points.find((point) => point.name === currentName)!;
-  if (current.cost !== null) current.forecast = current.cost;
   for (const forecast of upcoming) {
     let target = points.find((point) => point.name === forecast.name);
     if (!target) {
       target = { name: forecast.name, cost: null };
       points.push(target);
     }
+    if (forecast.name === currentName) {
+      target.paidCost = target.cost;
+      target.upcomingCost = forecast.cost;
+      target.forecast =
+        (Math.round((target.cost ?? 0) * 100) + Math.round(forecast.cost * 100)) / 100;
+    } else target.forecast = forecast.cost;
     target.cost = null;
-    target.forecast = forecast.cost;
     target.isForecast = true;
+  }
+  // Join each upcoming segment to the immediately preceding paid month.
+  // Keep the anchor out of the upcoming-payment tooltip.
+  for (let index = 1; index < points.length; index++) {
+    const point = points[index];
+    const previous = points[index - 1];
+    if (point.isForecast && previous.forecast == null && previous.cost !== null)
+      previous.forecast = previous.cost;
   }
   return points;
 }

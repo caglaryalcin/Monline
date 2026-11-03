@@ -6,6 +6,9 @@ import { createQueryClientWrapper } from "@/test/query-client";
 import type { User } from "@/types";
 
 const mocks = vi.hoisted(() => ({
+  budgetEntries: [] as { status: string; amount: number }[],
+  budgetError: false,
+  paymentForecasts: [] as { name: string; cost: number }[],
   snapshot: vi.fn(),
   useSummaryData: vi.fn(),
   usePaidTotals: vi.fn(),
@@ -39,7 +42,13 @@ vi.mock("@/hooks/useYearlyCosts", () => ({
   useYearlyCosts: mocks.useYearlyCosts,
 }));
 vi.mock("@/hooks/useMonthlyBudgetData", () => ({
-  useMonthlyBudgetData: () => ({ entries: [], isLoading: false, hasError: false }),
+  useMonthlyBudgetData: () => ({
+    entries: mocks.budgetEntries,
+    paymentForecasts: mocks.paymentForecasts,
+    paymentDetails: {},
+    isLoading: false,
+    hasError: mocks.budgetError,
+  }),
 }));
 
 vi.mock("@/components/dashboard/useDashboardDerivedData", () => ({
@@ -104,6 +113,9 @@ import { DashboardPage } from "./DashboardPage";
 describe("DashboardPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.budgetEntries = [];
+    mocks.budgetError = false;
+    mocks.paymentForecasts = [{ name: "2026/11", cost: 90 }];
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 9, 18, 12));
     mocks.user = { id: "user-1", name: "Daniel", username: "daniel", email: "daniel@example.com" };
@@ -137,6 +149,25 @@ describe("DashboardPage", () => {
     });
   });
   afterEach(() => vi.useRealTimers());
+
+  it("uses dated payment forecasts without changing the next-month card and hides incomplete forecasts on errors", () => {
+    mocks.paymentForecasts = [{ name: "2026/10", cost: 20.3 }];
+    mocks.budgetEntries = [
+      { status: "paid", amount: 999 },
+      { status: "pending", amount: 0.1 },
+      { status: "scheduled", amount: 0.2 },
+      { status: "overdue", amount: 20 },
+      { status: "pending", amount: Number.NaN },
+      { status: "pending", amount: -50 },
+    ];
+    const { Wrapper } = createQueryClientWrapper();
+    const { rerender } = render(<DashboardPage />, { wrapper: Wrapper });
+    expect(screen.getByText("forecast:20.3")).toBeInTheDocument();
+    expect(screen.getByText("next_month_cost:90 $")).toBeInTheDocument();
+    mocks.budgetError = true;
+    rerender(<DashboardPage />);
+    expect(screen.getByText("forecast:")).toBeInTheDocument();
+  });
 
   it("uses the graph's selected year for all three paid summary cards", () => {
     mocks.usePaidTotals.mockImplementation((_userId: string, year: number) => ({

@@ -247,6 +247,40 @@ describe("CostHistoryCard", () => {
     expect(screen.queryByText("history_upcoming_payment")).not.toBeInTheDocument();
   });
 
+  it("plots paid plus pending once and keeps the tooltip subtotals separate", () => {
+    vi.setSystemTime(new Date(2026, 10, 2));
+    render(
+      <CostHistoryCard
+        data={[
+          { name: "2026/10", cost: 100 },
+          { name: "2026/11", cost: 20 },
+        ]}
+        forecasts={[
+          { name: "2026/11", cost: 80 },
+          { name: "2026/12", cost: 100 },
+        ]}
+        formatValue={(value) => `$${value}`}
+      />,
+    );
+    const points = JSON.parse(screen.getByTestId("area-chart").getAttribute("data-values")!);
+    expect(points[10]).toMatchObject({ cost: null, forecast: 100 });
+    const content = capturedTooltipProps.content as (
+      props: Record<string, unknown>,
+    ) => React.ReactElement;
+    const tooltip = render(
+      content({
+        ...capturedTooltipProps,
+        label: "2026/11",
+        payload: [{ dataKey: "forecast", name: "forecast", value: 100, payload: points[10] }],
+      }),
+    );
+    expect(within(tooltip.container).getByText("$20")).toBeInTheDocument();
+    expect(within(tooltip.container).getByText("$80")).toBeInTheDocument();
+    expect(within(tooltip.container).queryByText("$100")).not.toBeInTheDocument();
+    expect(within(tooltip.container).getByText("amount")).toBeInTheDocument();
+    expect(within(tooltip.container).getByText("history_upcoming_payment")).toBeInTheDocument();
+  });
+
   it.each(["dot", "activeDot"])("does not draw %s markers for missing forecast values", (key) => {
     render(
       <CostHistoryCard

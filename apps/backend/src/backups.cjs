@@ -207,7 +207,7 @@ function validateDatabase(file) {
                   "statement_imported",
                   "calendar_history_recovery_passes",
                   "calendar_projection_hidden",
-                  "calendar_projection_from", "trial_months", "trial_duration", "trial_unit", "trial_start_date",
+                  "calendar_projection_from", "price_changes", "trial_months", "trial_duration", "trial_unit", "trial_start_date",
                 ].includes(field.name)) ||
               (entry.name === "notifications_config" && field.name === "delivery_settings") ||
               (["payment_methods", "household"].includes(entry.name) &&

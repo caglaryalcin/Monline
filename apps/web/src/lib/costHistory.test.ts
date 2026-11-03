@@ -1,6 +1,45 @@
 import { buildCostHistory, historyDelta, historyMonth, yearMonths } from "./costHistory";
 
 describe("monthly cost history", () => {
+  it("shows a single expected current-month total while preserving paid and pending subtotals", () => {
+    const source = [
+      { name: "2026/10", cost: 100 },
+      { name: "2026/11", cost: 20 },
+    ];
+    const points = yearMonths(
+      source,
+      2026,
+      [
+        { name: "2026/11", cost: 80 },
+        { name: "2026/12", cost: 100 },
+      ],
+      new Date(2026, 10, 2),
+    );
+    expect(points[9]).toMatchObject({ cost: 100, forecast: 100 });
+    expect(points[9].isForecast).toBeUndefined();
+    expect(points[10]).toMatchObject({
+      cost: null,
+      forecast: 100,
+      paidCost: 20,
+      upcomingCost: 80,
+      isForecast: true,
+    });
+    expect(points[11]).toMatchObject({ cost: null, forecast: 100 });
+    expect(source[1].cost).toBe(20);
+  });
+
+  it("keeps a zero current-month pending total and does not bridge a missing preceding month", () => {
+    const points = yearMonths(
+      [{ name: "2026/09", cost: 10 }],
+      2026,
+      [{ name: "2026/11", cost: 0 }],
+      new Date(2026, 10, 2),
+    );
+    expect(points[8].forecast).toBeUndefined();
+    expect(points[9]).toEqual({ name: "2026/10", cost: null });
+    expect(points[10]).toMatchObject({ cost: null, forecast: 0, upcomingCost: 0, paidCost: null });
+  });
+
   it("replaces a stale current snapshot with the live estimate without rewriting past months", () => {
     expect(
       buildCostHistory(

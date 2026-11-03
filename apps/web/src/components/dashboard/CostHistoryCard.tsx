@@ -13,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { CostHistoryTooltip } from "@/components/dashboard/CostHistoryTooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { type CostHistoryPoint, historyMonth, yearMonths } from "@/lib/costHistory";
+import type { CostHistoryPaymentDetails } from "@/lib/costHistoryPayments";
 import { numberFormatter } from "@/lib/numberFormat";
 
 interface CostHistoryCardProps {
@@ -36,6 +38,7 @@ interface CostHistoryCardProps {
   selectedYear?: number;
   onYearChange?: (year: number) => void;
   forecasts?: CostHistoryPoint[];
+  paymentDetails?: CostHistoryPaymentDetails;
 }
 
 export function CostHistoryCard({
@@ -49,6 +52,7 @@ export function CostHistoryCard({
   selectedYear: controlledYear,
   onYearChange,
   forecasts,
+  paymentDetails,
 }: CostHistoryCardProps) {
   const { t, i18n } = useTranslation();
   const language = i18n?.resolvedLanguage ?? i18n?.language ?? "en";
@@ -218,19 +222,52 @@ export function CostHistoryCard({
                   domain={[0, "auto"]}
                 />
                 <Tooltip<number, string>
+                  wrapperStyle={{ pointerEvents: "auto" }}
                   labelFormatter={(name) => historyMonth(String(name), language, true)}
                   formatter={(value: number, _name, item) => [
                     formatValue(value),
                     t(item?.dataKey === "forecast" ? "history_upcoming_payment" : "amount"),
                   ]}
-                  content={(props) => (
-                    <DefaultTooltipContent<number, string>
-                      {...props}
-                      payload={props.payload?.filter(
-                        (entry) => entry.dataKey !== "forecast" || entry.payload?.isForecast,
-                      )}
-                    />
-                  )}
+                  content={(props) => {
+                    const details = paymentDetails?.[String(props.label)];
+                    if (
+                      props.active &&
+                      !hasError &&
+                      details &&
+                      (details.paid.length || details.pending.length)
+                    )
+                      return (
+                        <CostHistoryTooltip
+                          month={String(props.label)}
+                          details={details}
+                          language={language}
+                          formatValue={formatValue}
+                        />
+                      );
+                    return (
+                      <DefaultTooltipContent<number, string>
+                        {...props}
+                        payload={props.payload?.flatMap((entry) => {
+                          if (entry.dataKey !== "forecast") return [entry];
+                          const point = entry.payload;
+                          if (!point?.isForecast) return [];
+                          const pending = { ...entry, value: point.upcomingCost ?? entry.value };
+                          return point.paidCost == null
+                            ? [pending]
+                            : [
+                                {
+                                  ...entry,
+                                  dataKey: "cost",
+                                  name: "cost",
+                                  color: lineColor,
+                                  value: point.paidCost,
+                                },
+                                pending,
+                              ];
+                        })}
+                      />
+                    );
+                  }}
                   contentStyle={{
                     borderRadius: 14,
                     border: "1px solid hsl(var(--border))",

@@ -78,7 +78,9 @@ describe("new subscription status switches", () => {
       expect(paused).not.toBeChecked();
       if (inactive) await userEvent.click(paused);
       fireEvent.change(screen.getByLabelText(/name/), { target: { value: "Status test" } });
-      fireEvent.change(screen.getByLabelText(/price/), { target: { value: "25" } });
+      fireEvent.change(screen.getByRole("textbox", { name: /^price\s*\*$/ }), {
+        target: { value: "25" },
+      });
       await userEvent.click(screen.getByRole("combobox", { name: "category" }));
       await userEvent.click(screen.getByRole("option", { name: "AI" }));
       await userEvent.click(screen.getByRole("button", { name: "save" }));

@@ -1,5 +1,6 @@
 export interface TrialSubscription {
   price?: unknown;
+  price_changes?: import("./subscription-prices.mjs").SubscriptionPriceChange[] | null;
   trial_months?: number;
   trial_duration?: number;
   trial_unit?: "day" | "week" | "month" | "year" | "";

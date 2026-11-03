@@ -24,13 +24,14 @@ export function DashboardPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const userId = user?.id ?? "";
-  const currentYear = Number(useLocalToday().slice(0, 4));
+  const today = useLocalToday();
+  const currentYear = Number(today.slice(0, 4));
   const [selectedYear, setSelectedYear] = useState(currentYear);
   useEffect(() => setSelectedYear(currentYear), [currentYear]);
 
   const summary = useSummaryData(userId);
   const paid = usePaidTotals(userId, selectedYear);
-  const monthlyBudget = useMonthlyBudgetData(userId, !!user?.payment_tracking);
+  const monthlyBudget = useMonthlyBudgetData(userId, !!user?.payment_tracking, true, selectedYear);
   const yearlyCosts = useYearlyCosts(userId);
   const lastSnapshot = useRef("");
 
@@ -120,7 +121,8 @@ export function DashboardPage() {
               onYearChange={setSelectedYear}
               variant="classic"
               data={chartData}
-              forecasts={summaryData?.forecasts}
+              forecasts={monthlyBudget.hasError ? undefined : monthlyBudget.paymentForecasts}
+              paymentDetails={monthlyBudget.paymentDetails}
               formatValue={formatValue}
               currencySymbol={summaryData?.mainSymbol ?? "$"}
               isLoading={summary.isLoading || yearlyCosts.isLoading || monthlyBudget.isLoading}

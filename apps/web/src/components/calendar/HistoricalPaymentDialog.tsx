@@ -23,6 +23,7 @@ import { isValidISODate } from "@/lib/dateInput";
 import { compressImage } from "@/lib/image";
 import { queryKeys } from "@/lib/queryKeys";
 import { isExpense } from "@/lib/recordTypes";
+import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import { toast } from "@/lib/toast";
 import { paymentRecordsService } from "@/services/paymentRecords";
 import type {
@@ -91,7 +92,7 @@ export function HistoricalPaymentDialog({
     initialDate && initialDate >= range.min && initialDate <= range.max ? initialDate : range.max;
   const [paidDate, setPaidDate] = useState(initial);
   const [dueDate, setDueDate] = useState(initial);
-  const [amount, setAmount] = useState(String(options[0]?.price ?? ""));
+  const [amount, setAmount] = useState(options[0] ? String(subscriptionAmount(options[0], initial)) : "");
   const [notes, setNotes] = useState("");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const subscription = options.find((sub) => sub.id === subscriptionId);
@@ -100,6 +101,11 @@ export function HistoricalPaymentDialog({
     : (subscription?.expand?.currency ??
       currencies.find((item) => item.id === subscription?.currency));
   const duplicate = !standalone && !!getPaymentRecord(records, subscriptionId, dueDate)?.paid_at;
+  const changeDueDate = (value: string) => {
+    if (subscription && Number(amount) === subscriptionAmount(subscription, dueDate))
+      setAmount(String(subscriptionAmount(subscription, value)));
+    setDueDate(value);
+  };
   const [error, setError] = useState<string | null>(null);
   const mutation = useMutation({
     mutationFn: async () => {
@@ -229,9 +235,8 @@ export function HistoricalPaymentDialog({
                 className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
                 onChange={(event) => {
                   setSubscriptionId(event.target.value);
-                  setAmount(
-                    String(options.find((sub) => sub.id === event.target.value)?.price ?? ""),
-                  );
+                  const selected = options.find((sub) => sub.id === event.target.value);
+                  setAmount(selected ? String(subscriptionAmount(selected, dueDate)) : "");
                   setError(null);
                 }}
               >
@@ -364,7 +369,7 @@ export function HistoricalPaymentDialog({
                   max={range.max}
                   value={paidDate}
                   onChange={(value) => {
-                    if (dueDate === paidDate) setDueDate(value);
+                    if (dueDate === paidDate) changeDueDate(value);
                     setPaidDate(value);
                     setError(null);
                   }}
@@ -380,7 +385,7 @@ export function HistoricalPaymentDialog({
                   max={range.max}
                   value={dueDate}
                   onChange={(value) => {
-                    setDueDate(value);
+                    changeDueDate(value);
                     setError(null);
                   }}
                 />

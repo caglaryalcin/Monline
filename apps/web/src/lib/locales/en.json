@@ -124,7 +124,7 @@
   "instance_restore_confirm_legacy": "This legacy .db backup replaces every user’s database records and server settings. Current uploaded files will be kept. Everyone will be signed out. A complete safety backup will be saved on the server first. Continue?",
   "instance_restore_success": "Instance restored. Please sign in again.",
   "app_name": "Monline",
-  "meta_subtitle": "Monthly online spending, clearly.",
+  "meta_subtitle": "Your monthly spending",
   "meta_description": "Track subscriptions and monthly online spending, with spreadsheet connections and full control of your data.",
   "login": "Login",
   "logout": "Logout",
@@ -1272,5 +1272,18 @@
   "number_format": "Number format",
   "number_format_browser": "Browser settings",
   "number_format_help": "Choose how decimal and thousands separators are displayed, independently of the interface language. This preference is saved for your account.",
-  "number_format_invalid": "Choose a valid number format."
+  "number_format_invalid": "Choose a valid number format.",
+  "price_changes_title": "Scheduled price changes",
+  "price_changes_add": "Schedule a change",
+  "price_changes_help": "Keep the initial price until the first effective date. Each new price applies to payments due on or after its date, until the next change. Recorded past payments stay unchanged.",
+  "price_changes_base_price": "Initial price",
+  "price_changes_new_price": "New price",
+  "price_changes_effective_date": "Effective from",
+  "price_changes_remove": "Remove price change",
+  "price_changes_applied": "Already effective. Schedule another change to update the price.",
+  "price_changes_current": "Current regular price: {{amount}}",
+  "price_changes_upcoming": "{{amount}} from {{date}}",
+  "price_changes_invalid": "Enter valid dates and non-negative prices. Up to 100 price changes are allowed.",
+  "price_changes_future_only": "Choose a future date. Changes already in effect cannot be edited or removed.",
+  "price_changes_duplicate_date": "Only one price change is allowed per date."
 }

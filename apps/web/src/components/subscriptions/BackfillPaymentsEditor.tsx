@@ -19,6 +19,7 @@ interface Props {
   cycle: string;
   frequency: number;
   price: number | null;
+  priceChanges?: { effective_date: string; price: number | null }[] | null;
   trialMonths?: number;
   trialDuration?: number;
   trialUnit?: "day" | "week" | "month" | "year";
@@ -51,6 +52,7 @@ export function BackfillPaymentsEditor({
   cycle,
   frequency,
   price,
+  priceChanges,
   trialMonths = 0,
   trialDuration = 0,
   trialUnit = "month",
@@ -83,6 +85,7 @@ export function BackfillPaymentsEditor({
     end,
     limit,
     price,
+    priceChanges,
     trialMonths, trialDuration, trialUnit, trialStartDate,
     markAsPaid,
     currency?.id,
@@ -120,12 +123,12 @@ export function BackfillPaymentsEditor({
           : price === null
             ? null
             : subscriptionAmount(
-                { price, trial_months: trialMonths, trial_duration: trialDuration, trial_unit: trialUnit, trial_start_date: trialStartDate },
+                { price, price_changes: priceChanges?.filter((change): change is { effective_date: string; price: number } => change.price !== null), trial_months: trialMonths, trial_duration: trialDuration, trial_unit: trialUnit, trial_start_date: trialStartDate },
                 date,
               ),
         included: !current.excluded.includes(date),
       })),
-    [schedule.dates, current.amounts, current.excluded, price, trialMonths, trialDuration, trialUnit, trialStartDate],
+    [schedule.dates, current.amounts, current.excluded, price, priceChanges, trialMonths, trialDuration, trialUnit, trialStartDate],
   );
   const selected = useMemo(() => rows.filter((row) => row.included), [rows]);
   const validAmounts =

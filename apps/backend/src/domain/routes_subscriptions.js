@@ -339,6 +339,8 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
       rec.set("name", name);
       rec.set("price", price);
       if (!isWallos) {
+        rec.set("price_changes", sub.price_changes ?? []);
+        rec.set("__monline_import_prices", true);
         rec.set("trial_months", sub.trial_months || 0);
         rec.set("trial_duration", sub.trial_duration || 0);
         rec.set("trial_unit", sub.trial_unit || "");
@@ -422,6 +424,7 @@ routerAdd("POST", "/api/subscription/clone", (e) => {
   const fieldsToCopy = [
     "name",
     "price",
+    "price_changes",
     "trial_months",
     "trial_duration",
     "trial_unit",
@@ -453,6 +456,7 @@ routerAdd("POST", "/api/subscription/clone", (e) => {
   }
 
   // A clone always starts active with a clean installment count.
+  clone.set("__monline_import_prices", true);
   clone.set("inactive", false);
   clone.set("payments_completed", 0);
   const policyError = recordTypeHelpers.applyRecordTypeToRecord(
@@ -625,6 +629,7 @@ routerAdd("GET", "/api/subscriptions/export", (e) => {
       name: sub.get("name"),
       record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
       price: sub.get("price"),
+      price_changes: sub.get("price_changes"),
       trial_months: sub.get("trial_months"),
       trial_duration: sub.get("trial_duration"),
       trial_unit: sub.get("trial_unit"),

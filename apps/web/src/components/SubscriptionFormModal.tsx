@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { RemindersEditor } from "@/components/settings/notifications/RemindersEditor";
 import { BackfillPaymentsEditor } from "@/components/subscriptions/BackfillPaymentsEditor";
+import { SubscriptionPriceChangesEditor } from "@/components/subscriptions/SubscriptionPriceChangesEditor";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -179,6 +180,7 @@ export function SubscriptionFormModal({
         record_type: isCredit ? "credit" : "expense",
         name: data.name,
         price: data.price,
+        price_changes: isCredit ? [] : data.price_changes.map((change) => ({ ...change, price: change.price! })),
         trial_months: !isCredit && data.trial_enabled && legacyTrial ? sub!.trial_months : 0,
         trial_duration: !isCredit && data.trial_enabled && !legacyTrial ? Number(data.trial_duration) : 0,
         trial_unit: !isCredit && data.trial_enabled && !legacyTrial ? data.trial_unit : "",
@@ -274,7 +276,7 @@ export function SubscriptionFormModal({
       if (logoToUpload) {
         const formData = new FormData();
         Object.entries(body).forEach(([k, v]) => {
-          if (k === "notification_reminders") {
+          if (["notification_reminders", "price_changes"].includes(k)) {
             formData.append(k, JSON.stringify(v));
           } else if (v !== null && v !== undefined)
             formData.append(
@@ -303,7 +305,7 @@ export function SubscriptionFormModal({
       onSaved();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("unknown_error");
-      toast.error(/^(backfill_|historical_|subscription_reminders_)/.test(msg) ? t(msg) : msg);
+      toast.error(/^(backfill_|historical_|subscription_reminders_|price_changes_)/.test(msg) ? t(msg) : msg);
     }
   };
 
@@ -368,7 +370,7 @@ export function SubscriptionFormModal({
             {/* Price + Currency */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="subscription-price">{t(watchedTrial ? "trial_regular_price" : "price")} *</Label>
+                <Label htmlFor="subscription-price">{t(watch("price_changes").length ? "price_changes_base_price" : watchedTrial ? "trial_regular_price" : "price")} *</Label>
                 <Controller
                   name="price"
                   control={control}
@@ -416,6 +418,10 @@ export function SubscriptionFormModal({
                 {renderError("currency")}
               </div>
             </div>
+
+            {!isCredit && (
+              <SubscriptionPriceChangesEditor control={control} errors={errors} currency={selectedCurrency} savedChanges={sub?.price_changes} />
+            )}
 
             {!isCredit && (
               <div className="space-y-3 rounded-xl border bg-muted/20 p-3">
@@ -990,6 +996,7 @@ export function SubscriptionFormModal({
                 cycle={watchedCycleName || ""}
                 frequency={watchedFrequency}
                 price={watch("price")}
+                priceChanges={watch("price_changes")}
                 trialDuration={watchedTrial ? Number(watch("trial_duration")) : 0}
                 trialUnit={watch("trial_unit")}
                 trialStartDate={!sub ? watch("next_payment") : watch("trial_start_date")}

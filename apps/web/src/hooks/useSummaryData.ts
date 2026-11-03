@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
+import { localToday } from "@/lib/backfillPayments";
 import { upcomingMonthCosts } from "@/lib/nextMonthCost";
 import { queryKeys } from "@/lib/queryKeys";
 import { currentMonthKey, isCredit, isDateInMonth } from "@/lib/recordTypes";
@@ -12,6 +13,7 @@ import type { Subscription } from "@/types";
 
 export function useSummaryData(userId: string) {
   const monthKey = currentMonthKey();
+  const today = localToday();
   // Share the source queries with subscriptions, calendar and budget. A saved
   // change must update every total, rather than leave a second summary cache stale.
   const subscriptions = useQuery({
@@ -51,7 +53,7 @@ export function useSummaryData(userId: string) {
     for (const sub of subs) {
       const currency = currencyById.get(sub.currency) ?? sub.expand?.currency;
       const rate = currency?.rate ?? 1;
-      const priceMain = (subscriptionAmount(sub, monthKey + "-01") / rate) * mainRate;
+      const priceMain = (subscriptionAmount(sub, today) / rate) * mainRate;
 
       if (isCredit(sub)) {
         if (isDateInMonth(sub.next_payment, currentMonth)) {
@@ -62,7 +64,7 @@ export function useSummaryData(userId: string) {
 
       expenseCount += 1;
       const cycleName = sub.expand?.cycle?.name ?? "Monthly";
-      const monthly = toMonthly(subscriptionAmount(sub, monthKey + "-01"), cycleName, sub.frequency || 1);
+      const monthly = toMonthly(subscriptionAmount(sub, today), cycleName, sub.frequency || 1);
       const monthlyMain = (monthly / rate) * mainRate;
       totalMonthly += monthlyMain;
 
@@ -93,7 +95,7 @@ export function useSummaryData(userId: string) {
       count: expenseCount,
       mostExpensive,
     };
-  }, [subscriptions.data, currenciesQuery.data, monthKey]);
+  }, [subscriptions.data, currenciesQuery.data, monthKey, today]);
 
   return {
     data,
