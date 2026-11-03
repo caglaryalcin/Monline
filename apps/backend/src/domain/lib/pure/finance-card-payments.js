@@ -27,12 +27,12 @@ function compareCardPayment(data, rowId, statement, ledgerMonth, allowMonthBound
   const comparable = paymentMonths.length <= 1 && !incompleteStatement;
   const paymentMonthMatches = !paymentMonths.length || paymentMonths[0] === ledgerMonth;
   const difference = comparable && paid.length && statementCents !== null ? (paidCents - statementCents) / 100 : null;
-  const previousMonthEnd = new Date(`${ledgerMonth}-01T12:00:00Z`);
-  previousMonthEnd.setUTCDate(0);
-  const boundaryDate = previousMonthEnd.toISOString().slice(0, 10);
+  const previousMonthDate = new Date(`${ledgerMonth}-01T12:00:00Z`);
+  previousMonthDate.setUTCMonth(previousMonthDate.getUTCMonth() - 1);
+  const previousMonth = previousMonthDate.toISOString().slice(0, 7);
   const monthBoundaryEligible = comparable && difference === 0 && !paymentMonthMatches &&
     statementMonth === ledgerMonth && paymentRows.length > 0 &&
-    paymentRows.every((row) => row.date === boundaryDate);
+    paymentRows.every((row) => row.date.slice(0, 7) === previousMonth);
   const monthBoundaryAccepted = allowMonthBoundary === true && monthBoundaryEligible;
   const status = paymentMonths.length > 1 ? "multiple_payment_months"
     : incompleteStatement ? "incomplete_statement"
