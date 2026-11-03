@@ -5,7 +5,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  CircleDot,
+  CircleAlert,
   GripVertical,
 } from "lucide-react";
 import { type CSSProperties, useMemo } from "react";
@@ -323,7 +323,7 @@ export function CalendarMonthCard({
                                     )}
                                   />
                                 ) : (
-                                  <CircleDot
+                                  <CircleAlert
                                     aria-hidden="true"
                                     className={cn(
                                       "h-3 w-3",

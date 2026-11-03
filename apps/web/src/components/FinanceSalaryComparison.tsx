@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Check, Eye, EyeOff, Lightbulb, Pencil, Wallet } from "lucide-react";
+import { Check, Eye, EyeOff, Pencil, Wallet } from "lucide-react";
 import { type MouseEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -30,6 +30,17 @@ import { numberFormatter } from "@/lib/numberFormat";
 import { SALARY_TAG_STYLES } from "@/lib/salaryTagStyles";
 import { cn, formatCurrency, formatMultiplier } from "@/lib/utils";
 import { financeService } from "@/services/finance";
+
+const YEAR_GROUP_TONES = [
+  {
+    header: "bg-sky-500/10 text-sky-900 dark:bg-sky-400/15 dark:text-sky-200",
+    cell: "bg-sky-500/[0.04] dark:bg-sky-400/[0.05]",
+  },
+  {
+    header: "bg-violet-500/10 text-violet-900 dark:bg-violet-400/15 dark:text-violet-200",
+    cell: "bg-violet-500/[0.04] dark:bg-violet-400/[0.05]",
+  },
+];
 
 export function FinanceSalaryComparison({
   data,
@@ -247,22 +258,6 @@ export function FinanceSalaryComparison({
   };
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <p className="flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
-          <Lightbulb
-            className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
-            aria-hidden="true"
-          />
-          {label("salary_source_help")}
-        </p>
-        {salaryRows.length > 1 && (
-          <p className="text-xs text-muted-foreground">
-            {t("finance_salary_combined_sources", {
-              names: salaryRows.map((row) => row.name).join(" + "),
-            })}
-          </p>
-        )}
-      </div>
       {!availableYears.length ? (
         <section className="space-y-4 rounded-2xl border border-dashed bg-card/30 p-6 sm:p-8">
           <Wallet className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
@@ -307,6 +302,16 @@ export function FinanceSalaryComparison({
                       <> {label("salary_future_references")}</>
                     )}
                 </p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {label("salary_source_help")}
+                </p>
+                {salaryRows.length > 1 && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("finance_salary_combined_sources", {
+                      names: salaryRows.map((row) => row.name).join(" + "),
+                    })}
+                  </p>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-4">
                 {!allYears && (
@@ -415,16 +420,19 @@ export function FinanceSalaryComparison({
                       >
                         {label("month")}
                       </th>
-                      {availableYears.map((value) => (
+                      {availableYears.map((value, yearIndex) => (
                         <th
                           key={value}
                           scope="colgroup"
                           colSpan={visibleComparisonRows.length}
-                          className="border-r border-border/50 px-3 py-2 text-center font-semibold last:border-r-0"
+                          className={cn(
+                            "border-r-2 border-border px-3 py-2 text-center font-semibold last:border-r-0",
+                            YEAR_GROUP_TONES[yearIndex % YEAR_GROUP_TONES.length].header,
+                          )}
                         >
                           <button
                             type="button"
-                            className="rounded px-3 py-1 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            className="rounded px-3 py-1 text-sm font-bold tabular-nums hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                             onClick={() => {
                               onYearChange(value);
                               setAllYears(false);
@@ -436,13 +444,15 @@ export function FinanceSalaryComparison({
                       ))}
                     </tr>
                     <tr className="border-t border-border/50">
-                      {availableYears.flatMap((value) =>
+                      {availableYears.flatMap((value, yearIndex) =>
                         visibleComparisonRows.map((field) => (
                           <th
                             key={`${value}-${field}`}
                             scope="col"
                             className={cn(
-                              "border-r border-border/50 py-2 text-right font-medium last:border-r-0",
+                              "border-r border-border/30 py-2 text-right font-medium last:border-r-0",
+                              YEAR_GROUP_TONES[yearIndex % YEAR_GROUP_TONES.length].cell,
+                              field === visibleComparisonRows.at(-1) && "border-r-2 border-border",
                               compactAllYears
                                 ? "w-px px-1"
                                 : field === "salary_minimum_multiple"
@@ -487,7 +497,7 @@ export function FinanceSalaryComparison({
                         >
                           {monthName(`${year}-${String(index + 1).padStart(2, "0")}`)}
                         </th>
-                        {availableYears.flatMap((value) => {
+                        {availableYears.flatMap((value, yearIndex) => {
                           const month = recordedByMonth.get(
                             `${value}-${String(index + 1).padStart(2, "0")}`,
                           );
@@ -495,7 +505,9 @@ export function FinanceSalaryComparison({
                             <td
                               key={`${value}-${field}`}
                               className={cn(
-                                "border-r border-border/50 py-2 text-right last:border-r-0",
+                                "border-r border-border/30 py-2 text-right last:border-r-0",
+                                YEAR_GROUP_TONES[yearIndex % YEAR_GROUP_TONES.length].cell,
+                                field === visibleComparisonRows.at(-1) && "border-r-2 border-border",
                                 field === "salary" && "relative font-semibold",
                                 compactAllYears
                                   ? "w-px px-1"
