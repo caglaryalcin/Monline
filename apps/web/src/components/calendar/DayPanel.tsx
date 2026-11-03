@@ -1,4 +1,4 @@
-import { CircleDot, Info, X } from "lucide-react";
+import { CircleAlert, Info, X } from "lucide-react";
 
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Badge } from "@/components/ui/badge";
@@ -140,7 +140,7 @@ export function DayPanel({
                         aria-hidden="true"
                         className="pointer-events-none absolute -bottom-1 -right-1 z-10 rounded-full bg-red-500 p-0.5 ring-2 ring-background"
                       >
-                        <CircleDot className="h-3 w-3 text-white" />
+                        <CircleAlert className="h-3 w-3 text-white" />
                       </span>
                     )}
                   </div>

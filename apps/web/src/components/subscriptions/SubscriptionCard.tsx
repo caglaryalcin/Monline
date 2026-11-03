@@ -296,7 +296,6 @@ function SubscriptionActions({
         className="h-7 w-7 rounded-full text-muted-foreground"
         onClick={onDelete}
         title={t("delete")}
-        disabled={sub.inactive}
       >
         <Trash2 className="h-3.5 w-3.5" />
       </Button>
@@ -569,8 +568,8 @@ export function SubscriptionCard({
         sub.inactive && "bg-muted/40 text-muted-foreground",
       )}
     >
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-        <div className="flex min-w-[min(100%,8rem)] flex-1 items-center gap-2.5">
+      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2">
+        <div className="flex min-w-0 items-center gap-2.5">
           <div className="h-10 w-10 shrink-0 rounded-xl overflow-hidden bg-background shadow-sm border flex items-center justify-center text-xl font-bold">
             <SubscriptionLogo
               sub={sub}
@@ -580,10 +579,10 @@ export function SubscriptionCard({
               )}
             />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h3
               className={cn(
-                "font-bold text-lg leading-tight line-clamp-1 transition-colors",
+                "font-bold text-lg leading-tight [overflow-wrap:anywhere] transition-colors",
                 sub.inactive ? "text-muted-foreground" : "",
               )}
             >
@@ -628,10 +627,14 @@ export function SubscriptionCard({
             <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider whitespace-nowrap">
               {displayPeriod}
             </p>
-            {scheduledPriceDetails}
           </div>
           {statusToggle && <div className="shrink-0 pt-0.5">{statusToggle}</div>}
         </div>
+        {scheduledPriceDetails && (
+          <div className="col-span-2 min-w-0 [overflow-wrap:anywhere]">
+            {scheduledPriceDetails}
+          </div>
+        )}
       </div>
 
       <div className="space-y-3">

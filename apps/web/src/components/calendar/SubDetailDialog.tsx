@@ -2,7 +2,7 @@ import {
   Banknote,
   CalendarDays,
   CheckCircle2,
-  CircleDot,
+  CircleAlert,
   Clock,
   CreditCard,
   ExternalLink,
@@ -199,7 +199,7 @@ export function SubDetailDialog({
                 </>
               ) : isAwaitingConfirmation ? (
                 <>
-                  <CircleDot className="h-5 w-5 text-red-500 shrink-0" />
+                  <CircleAlert className="h-5 w-5 text-red-500 shrink-0" />
                   <p className="font-semibold text-red-700 dark:text-red-400">
                     {t("payment_confirmation_pending")}
                   </p>

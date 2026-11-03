@@ -27,6 +27,7 @@ let capturedQueryFn: (() => unknown) | undefined;
 
 vi.mock("@tanstack/react-query", () => ({
   useQuery: (opts: { queryFn?: () => unknown }) => {
+    if ((opts as { queryKey?: string[] }).queryKey?.[0] === "subscriptions") return { data: 0, isPending: false, isFetching: false };
     capturedQueryFn = opts.queryFn;
     return mockUseQueryData;
   },

@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { type ReactNode, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -16,10 +16,11 @@ interface ConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  description: string;
+  description: ReactNode;
   confirmLabel?: string;
   onConfirm: () => void;
   confirmOnEnter?: boolean;
+  confirmDisabled?: boolean;
 }
 
 export function ConfirmDialog({
@@ -30,6 +31,7 @@ export function ConfirmDialog({
   confirmLabel,
   onConfirm,
   confirmOnEnter = false,
+  confirmDisabled = false,
 }: ConfirmDialogProps) {
   const { t } = useTranslation();
   const confirmRef = useRef<HTMLButtonElement>(null);
@@ -54,6 +56,7 @@ export function ConfirmDialog({
           <AlertDialogAction
             ref={confirmRef}
             onClick={onConfirm}
+            disabled={confirmDisabled}
             className="bg-destructive text-destructive-foreground rounded-xl"
           >
             {confirmLabel ?? t("delete")}

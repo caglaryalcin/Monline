@@ -613,6 +613,9 @@
   "success_delete": "Başarıyla silindi",
   "success_delete_account": "Hesap başarıyla silindi",
   "confirm_delete": "Bunu silmek istediğinizden emin misiniz?",
+  "category_delete_confirm_one": "Bu kategori <strong>{{count}}</strong> abonelikte kullanılıyor. Silmek istediğinizden emin misiniz?",
+  "category_delete_confirm_other": "Bu kategori <strong>{{count}}</strong> abonelikte kullanılıyor. Silmek istediğinizden emin misiniz?",
+  "category_usage_load_error": "Bu kategoriyi kullanan abonelik sayısı yüklenemedi. Bu pencereyi kapatıp tekrar deneyin.",
   "manage_users": "Kullanıcıları ve erişimlerini yönetin.",
   "payment_methods_desc": "Abonelikleriniz için ödeme yöntemlerini yönetin.",
   "payment_method_name_placeholder": "Yöntem adı... (ör. Visa, PayPal)",
@@ -1285,5 +1288,7 @@
   "price_changes_upcoming": "{{date}} itibarıyla {{amount}}",
   "price_changes_invalid": "Geçerli tarihler ve negatif olmayan fiyatlar girin. En fazla 100 fiyat değişikliği eklenebilir.",
   "price_changes_future_only": "İleri bir tarih seçin. Yürürlüğe girmiş değişiklikler düzenlenemez veya kaldırılamaz.",
-  "price_changes_duplicate_date": "Aynı tarih için yalnızca bir fiyat değişikliği eklenebilir."
+  "price_changes_duplicate_date": "Aynı tarih için yalnızca bir fiyat değişikliği eklenebilir.",
+  "subscription_add_category": "Yeni kategori ekle",
+  "subscription_new_category_name": "Yeni kategori adı"
 }

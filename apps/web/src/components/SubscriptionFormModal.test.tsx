@@ -23,6 +23,7 @@ vi.mock("react-i18next", () => ({
 }));
 
 vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({ cancelQueries: vi.fn(), setQueryData: vi.fn(), invalidateQueries: vi.fn() }),
   useQuery: (options: {queryKey: unknown[]}) => options.queryKey[0] === "payment_accounts" ? {data:mocks.accounts} : mocks.useQuery(options),
 }));
 
@@ -101,6 +102,7 @@ vi.mock("@/components/ui/select", async () => {
     SelectValue: ({ placeholder }: { placeholder?: string }) => (
       <span>{placeholder ?? "value"}</span>
     ),
+    SelectSeparator: () => <hr />,
     SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     SelectItem: ({ children, value }: { children: React.ReactNode; value: string }) => {
       const onValueChange = React.useContext(SelectContext);

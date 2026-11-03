@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Tag } from "lucide-react";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 import { CategoryFormRow } from "@/components/settings/categories/CategoryFormRow";
 import { CategoryListItem } from "@/components/settings/categories/CategoryListItem";
@@ -30,6 +30,20 @@ export function CategoriesTab() {
     queryFn: () => categoriesService.list(user!.id),
     enabled: !!user?.id,
   });
+
+  const categoryUsage = useQuery({
+    queryKey: [
+      ...queryKeys.subscriptions.all(user?.id ?? ""),
+      "category-usage",
+      pendingDeleteId,
+    ],
+    queryFn: () => categoriesService.subscriptionCount(user!.id, pendingDeleteId!),
+    enabled: !!user?.id && !!pendingDeleteId,
+    staleTime: 0,
+    retry: false,
+  });
+  const categoryUsageLoading = categoryUsage.isPending || categoryUsage.isFetching;
+  const categoryUsageCount = categoryUsage.data ?? 0;
 
   const createMut = useMutation({
     mutationFn: (name: string) => categoriesService.create(user!.id, name),
@@ -147,9 +161,25 @@ export function CategoriesTab() {
           if (!open) setPendingDeleteId(null);
         }}
         title={t("delete")}
-        description={t("confirm_delete")}
+        description={
+          categoryUsageLoading ? (
+            t("loading")
+          ) : categoryUsage.isError ? (
+            t("category_usage_load_error")
+          ) : categoryUsageCount > 0 ? (
+            <Trans
+              t={t}
+              i18nKey="category_delete_confirm"
+              count={categoryUsageCount}
+              components={{ strong: <strong className="font-bold" /> }}
+            />
+          ) : (
+            t("confirm_delete")
+          )
+        }
+        confirmDisabled={categoryUsageLoading || categoryUsage.isError}
         onConfirm={() => {
-          if (!pendingDeleteId) return;
+          if (!pendingDeleteId || categoryUsageLoading || categoryUsage.isError) return;
           deleteMut.mutate(pendingDeleteId);
           setPendingDeleteId(null);
         }}

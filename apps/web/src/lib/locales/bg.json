@@ -619,6 +619,9 @@
   "success_delete": "Успешно изтриване",
   "success_delete_account": "Акаунтът е изтрит успешно",
   "confirm_delete": "Сигурни ли сте, че искате да изтриете това?",
+  "category_delete_confirm_one": "Тази категория се използва от <strong>{{count}}</strong> абонамент. Сигурни ли сте, че искате да я изтриете?",
+  "category_delete_confirm_other": "Тази категория се използва от <strong>{{count}}</strong> абонамента. Сигурни ли сте, че искате да я изтриете?",
+  "category_usage_load_error": "Броят на абонаментите, използващи тази категория, не можа да бъде зареден. Затворете този прозорец и опитайте отново.",
   "manage_users": "Управлявайте потребителите и техния достъп.",
   "payment_methods_desc": "Управлявайте начините на плащане за абонаментите си.",
   "payment_method_name_placeholder": "Име на начина на плащане… (напр. Visa, PayPal)",
@@ -1408,5 +1411,7 @@
   "price_changes_upcoming": "{{amount}} от {{date}}",
   "price_changes_invalid": "Въведете валидни дати и неотрицателни цени. Разрешени са до 100 промени.",
   "price_changes_future_only": "Изберете бъдеща дата. Влезлите в сила промени не могат да се редактират или премахват.",
-  "price_changes_duplicate_date": "Разрешена е само една промяна за дадена дата."
+  "price_changes_duplicate_date": "Разрешена е само една промяна за дадена дата.",
+  "subscription_add_category": "Добавяне на нова категория",
+  "subscription_new_category_name": "Име на новата категория"
 }
