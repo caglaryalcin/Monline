@@ -273,7 +273,11 @@ export function CalendarMonthCard({
                           !credit &&
                           !isPaid &&
                           date <= new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                        const colorClass = credit ? PAYMENT_COLORS.upcoming : appearance.className;
+                        const colorClass = isOtherMonth
+                          ? "border-border/40 bg-muted/20 text-muted-foreground"
+                          : credit
+                            ? PAYMENT_COLORS.upcoming
+                            : appearance.className;
 
                         return (
                           <div
@@ -311,12 +315,22 @@ export function CalendarMonthCard({
                                 {isPaid ? (
                                   <CheckCircle2
                                     aria-hidden="true"
-                                    className="h-3 w-3 text-green-600 dark:text-green-400"
+                                    className={cn(
+                                      "h-3 w-3",
+                                      isOtherMonth
+                                        ? "text-muted-foreground"
+                                        : "text-green-600 dark:text-green-400",
+                                    )}
                                   />
                                 ) : (
                                   <CircleDot
                                     aria-hidden="true"
-                                    className="h-3 w-3 text-red-600 dark:text-red-400"
+                                    className={cn(
+                                      "h-3 w-3",
+                                      isOtherMonth
+                                        ? "text-muted-foreground"
+                                        : "text-red-600 dark:text-red-400",
+                                    )}
                                   />
                                 )}
                                 <span className="sr-only">

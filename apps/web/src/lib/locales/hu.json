@@ -1002,7 +1002,7 @@
   "calendar_salary_budget_missing": "Ehhez a hónaphoz nincs munkabér rögzítve, vagy az nem váltható át az alapértelmezett pénznemre. A fennmaradó költségvetés nem számítható ki.",
   "calendar_salary_budget_error": "A munkabér adatai nem tölthetők be.",
   "calendar_subscriptions_total": "Előfizetések összesen",
-  "calendar_subscription_budget": "Előfizetési keret",
+  "calendar_subscription_budget": "Online előfizetési keret",
   "calendar_subscription_budget_limit_help": "A Beállításokban megadott havi előfizetési keret. Az elkülönített keretet mutatja, nem a kiadásokat.",
   "calendar_income_total": "Bevételek összesen",
   "calendar_income_total_help": "A Bevételek / Kiadások kiválasztott hónapjának munkabére és egyéb bevétele, beleértve a beérkezett és tervezett összegeket. Az áthozott hiány nem bevétel. A keresési szűrő nem módosítja ezt a számítást.",

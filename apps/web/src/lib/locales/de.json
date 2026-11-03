@@ -980,7 +980,7 @@
   "calendar_salary_budget_missing": "Für diesen Monat fehlt ein Gehaltseintrag oder das Gehalt kann nicht in die Hauptwährung umgerechnet werden. Das verbleibende Budget kann nicht berechnet werden.",
   "calendar_salary_budget_error": "Die Gehaltsdaten konnten nicht geladen werden.",
   "calendar_subscriptions_total": "Abonnements gesamt",
-  "calendar_subscription_budget": "Abonnementbudget",
+  "calendar_subscription_budget": "Budget für Online-Abonnements",
   "calendar_subscription_budget_limit_help": "Dein monatliches Abonnementbudget aus den Einstellungen. Zeigt das festgelegte Budget und nicht die Ausgaben.",
   "calendar_income_total": "Einnahmen gesamt",
   "calendar_income_total_help": "Gehalt und sonstige Einnahmen des ausgewählten Monats unter Einnahmen / Ausgaben, einschließlich erhaltener und geplanter Einnahmen. Übertragene Fehlbeträge sind keine Einnahmen. Suchfilter ändern diese Berechnung nicht.",

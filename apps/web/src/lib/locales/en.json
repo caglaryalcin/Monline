@@ -1002,7 +1002,7 @@
   "calendar_salary_budget_missing": "There is no salary entry for this month, or salary cannot be converted to the main currency. Remaining budget cannot be calculated.",
   "calendar_salary_budget_error": "Salary information could not be loaded.",
   "calendar_subscriptions_total": "Subscriptions total",
-  "calendar_subscription_budget": "Subscription budget",
+  "calendar_subscription_budget": "Online subscription budget",
   "calendar_subscription_budget_limit_help": "Your monthly subscription budget from Settings. Shows the budget you allocated, rather than spending.",
   "calendar_income_total": "Income total",
   "calendar_income_total_help": "Salary and other income for the selected month in Income / Expenses, including received and planned income. Carried deficits are not income. Search filters do not change this calculation.",

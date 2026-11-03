@@ -998,7 +998,7 @@
   "calendar_salary_budget_missing": "Bu ay için Gelir/Gider’de maaş kaydı yok veya maaş ana para birimine çevrilemiyor. Kalan bütçe hesaplanamıyor.",
   "calendar_salary_budget_error": "Maaş bilgileri yüklenemedi.",
   "calendar_subscriptions_total": "Abonelikler toplam",
-  "calendar_subscription_budget": "Abonelik Bütçesi",
+  "calendar_subscription_budget": "Online Abonelik Bütçesi",
   "calendar_subscription_budget_limit_help": "Ayarlarda belirlediğin aylık abonelik bütçesidir. Harcama toplamını değil, ayırdığın bütçeyi gösterir.",
   "calendar_income_total": "Gelir Toplam",
   "calendar_income_total_help": "Gelir/Gider’de seçilen ayın maaş ve diğer gelirlerinin toplamıdır. Alınmış ve planlanan gelirler dahildir. Devreden açık gelir sayılmaz. Arama filtresi bu hesabı değiştirmez.",
