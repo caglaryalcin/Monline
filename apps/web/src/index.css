@@ -19,32 +19,25 @@
 .monline-main-header--compact {
   height: 44px;
   z-index: 1;
-  transition: height 180ms ease;
 }
 
 .monline-main-header--compact .monline-main-header__content {
   height: 100%;
 }
 
-.monline-main-header--compact:is(:hover, :focus-within, :has([data-state="open"])) {
-  height: var(--monline-header-height);
-}
-
-.monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .monline-main-header__label,
-.monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .header-profile-details,
-.monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .header-subscription-heartbeat,
-.monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .monline-main-header__brand-name {
+.monline-main-header--compact .monline-main-header__label,
+.monline-main-header--compact .header-profile-details,
+.monline-main-header--compact .monline-main-header__brand-name {
   display: none;
 }
 
-.monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .monline-main-header__subscription-icon,
-.monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .monline-main-header__brand-icon {
+.monline-main-header--compact .monline-main-header__brand-icon {
   display: block;
 }
 
-.monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .monline-main-header__stat,
-.monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .header-theme-toggle,
-.monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .header-profile-trigger {
+.monline-main-header--compact .monline-main-header__stat,
+.monline-main-header--compact .header-theme-toggle,
+.monline-main-header--compact .header-profile-trigger {
   justify-content: center;
   width: 32px;
   height: 32px;
@@ -53,9 +46,21 @@
   border-radius: 9px;
 }
 
-.monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .header-profile-avatar {
+.monline-main-header--compact .header-profile-avatar {
   width: 24px;
   height: 24px;
+}
+
+.monline-main-header--compact :is(a, time).monline-main-header__stat {
+  width: auto;
+  min-width: 48px;
+  gap: 6px;
+  padding: 3px 8px;
+}
+
+.monline-main-header--compact time.monline-main-header__stat {
+  gap: 8px;
+  padding-inline: 14px;
 }
 
 @media (hover: none), (pointer: coarse) {
@@ -63,17 +68,11 @@
     height: 52px;
   }
 
-  .monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .monline-main-header__stat,
-  .monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .header-theme-toggle,
-  .monline-main-header--compact:not(:is(:hover, :focus-within, :has([data-state="open"]))) .header-profile-trigger {
+  .monline-main-header--compact .monline-main-header__stat,
+  .monline-main-header--compact .header-theme-toggle,
+  .monline-main-header--compact .header-profile-trigger {
     width: 44px;
     height: 44px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .monline-main-header--compact {
-    transition: none;
   }
 }
 

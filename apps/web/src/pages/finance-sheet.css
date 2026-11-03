@@ -653,11 +653,47 @@
   justify-content: space-between;
   gap: 8px 16px;
   margin-top: 16px;
-  padding: 8px 10px;
-  border: 1px solid hsl(var(--border) / 0.65);
-  border-radius: 12px;
-  background: hsl(var(--background));
-  box-shadow: 0 -4px 16px hsl(var(--foreground) / 0.04);
+  padding: 10px 12px;
+  border: 1px solid rgb(255 255 255 / 0.6);
+  border-radius: 22px;
+  background: transparent;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  box-shadow:
+    0 8px 28px rgb(15 23 42 / 0.1),
+    0 2px 6px rgb(15 23 42 / 0.04),
+    inset 0 1px 0 rgb(255 255 255 / 0.8),
+    inset 0 -1px 0 rgb(255 255 255 / 0.25);
+}
+.finance-workbook__footer::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.finance-workbook__footer > * {
+  position: relative;
+  z-index: 1;
+}
+.dark .finance-workbook__footer {
+  border-color: rgb(255 255 255 / 0.2);
+  box-shadow:
+    0 8px 28px rgb(0 0 0 / 0.25),
+    0 2px 6px rgb(0 0 0 / 0.12),
+    inset 0 1px 0 rgb(255 255 255 / 0.24),
+    inset 0 -1px 0 rgb(255 255 255 / 0.06);
+}
+.dark .finance-workbook__footer::before {
+  border-color: rgb(255 255 255 / 0.06);
+  opacity: 0.5;
+}
+.finance-workbook__footer :is(.finance-workbook__year, .finance-workbook__decimals, .finance-workbook__selection-total),
+.finance-workbook__footer .finance-workbook__actions > button {
+  border-color: hsl(var(--border) / 0.45);
+  background: hsl(var(--card) / 0.22);
 }
 .finance-workbook__footer > .finance-workbook__toolbar {
   margin-inline-end: 12px;
@@ -683,22 +719,24 @@
   min-height: 34px;
   gap: 3px;
   padding: 3px;
-  border: 1px solid hsl(var(--border));
-  border-radius: 10px;
-  background: hsl(var(--muted) / 0.4);
+  border: 1px solid hsl(var(--border) / 0.35);
+  border-radius: 14px;
+  background: hsl(var(--muted) / 0.12);
   color: hsl(var(--muted-foreground));
 }
 .finance-workbook .finance-workbook__tabs > button {
   min-height: 28px;
   padding: 4px 14px;
-  border-radius: 7px;
+  border-radius: 11px;
   font-size: 12px;
   box-shadow: none;
 }
 .finance-workbook .finance-workbook__tabs > button[data-state="active"] {
   color: hsl(var(--foreground));
-  background: hsl(var(--card));
-  box-shadow: 0 1px 3px hsl(var(--foreground) / 0.06);
+  background: hsl(var(--card) / 0.46);
+  box-shadow:
+    0 2px 8px hsl(var(--foreground) / 0.08),
+    inset 0 1px 0 rgb(255 255 255 / 0.45);
 }
 @media (hover: none) {
   .finance-sheet__add {

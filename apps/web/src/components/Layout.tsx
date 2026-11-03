@@ -267,13 +267,12 @@ export function Layout() {
                 aria-label={`${t("active_subscriptions")}: ${summary.data?.count ?? "—"}`}
                 title={t("active_subscriptions")}
               >
-                <CreditCard className="monline-main-header__subscription-icon hidden h-4 w-4 shrink-0" aria-hidden="true" />
                 <span
                   className="header-subscription-heartbeat h-2 w-2 shrink-0 rounded-full"
                   aria-hidden="true"
                 />
                 <span className="monline-main-header__label hidden sm:inline">{t("active_subscriptions")}</span>
-                <span className="monline-main-header__label font-semibold tabular-nums text-foreground">
+                <span className="font-semibold tabular-nums text-foreground">
                   {summary.data?.count ?? "—"}
                 </span>
               </Link>
@@ -286,7 +285,7 @@ export function Layout() {
               >
                 <Landmark className="h-4 w-4 shrink-0 text-purple-500 dark:text-purple-400" aria-hidden="true" />
                 <span className="monline-main-header__label hidden sm:inline">{t("spending_section_loans")}</span>
-                <span className="monline-main-header__label font-semibold tabular-nums text-foreground">{activeLoanCount ?? "—"}</span>
+                <span className="font-semibold tabular-nums text-foreground">{activeLoanCount ?? "—"}</span>
               </Link>
               <time
                 dateTime={today}
@@ -295,7 +294,7 @@ export function Layout() {
                 className="monline-main-header__stat hidden h-11 items-center gap-2 whitespace-nowrap rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground md:flex"
               >
                 <Calendar className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span className="monline-main-header__label">{todayLabel}</span>
+                <span>{todayLabel}</span>
               </time>
               <ThemeToggle />
               <ProfileMenu />
@@ -310,6 +309,8 @@ export function Layout() {
             pathname.startsWith("/calendar") && "monline-calendar-content",
             pathname === "/dashboard" && "monline-dashboard-content",
             pathname === "/finance" && "monline-finance-content",
+            ["/debt", "/subscriptions", "/statistics", "/statements"].includes(pathname) &&
+              "pt-3 md:pt-3 lg:pt-3",
           )}
         >
           <Suspense fallback={<PageLoading />}>
