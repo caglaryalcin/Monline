@@ -263,6 +263,9 @@ export function FinancePage() {
   const context = grid.context;
   const contextCell =
     context?.row && context.month ? { row: context.row, month: context.month } : null;
+  const contextStatementLink = contextCell
+    ? linkedStatement(contextCell.row.id, contextCell.month)
+    : undefined;
   const providerContext = financeProviderTarget(
     context?.row,
     year,
@@ -796,6 +799,27 @@ export function FinancePage() {
             </div>
             <PersistentDetails
               userId={yearOwner}
+              preference="finance.statement-guide"
+              className="group border-t text-xs text-muted-foreground"
+            >
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5 font-medium transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                <Building2 aria-hidden="true" className="h-4 w-4 shrink-0" />
+                <span>{label("statement_guide")}</span>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="ml-auto h-3.5 w-3.5 transition-transform group-open:rotate-90"
+                />
+              </summary>
+              <div className="space-y-2 px-3 pb-3 leading-relaxed">
+                <p>{label("statement_guide_purpose")}</p>
+                <p>{label("statement_guide_month")}</p>
+                <p>{label("statement_guide_refunds")}</p>
+                <p>{label("statement_guide_boundary")}</p>
+                <p>{label("statement_guide_unlink")}</p>
+              </div>
+            </PersistentDetails>
+            <PersistentDetails
+              userId={yearOwner}
               preference="finance.tag-guide"
               defaultOpen
               className="group border-t text-xs text-muted-foreground"
@@ -1112,11 +1136,11 @@ export function FinancePage() {
                 {contextCell?.row.kind === "expense" &&
                   contextCell.row.expense_type === "credit_card" && (
                     <>
-                      {linkedStatement(contextCell.row.id, contextCell.month) ? (
+                      {contextStatementLink ? (
                         <DropdownMenuItem asChild>
                           <StatementLink
                             statementId={
-                              linkedStatement(contextCell.row.id, contextCell.month)!.statement_id
+                              contextStatementLink.statement_id
                             }
                           >
                             {label("go_statement")}
@@ -1138,6 +1162,21 @@ export function FinancePage() {
                       >
                         {label("verify_cell")}
                       </DropdownMenuItem>
+                      {contextStatementLink && (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          disabled={grid.busy}
+                          onSelect={() => {
+                            const linkId = contextStatementLink.id;
+                            void run(
+                              () => financeService.remove("finance_statement_links", linkId),
+                              false,
+                            );
+                          }}
+                        >
+                          {label("unlink_statement")}
+                        </DropdownMenuItem>
+                      )}
                     </>
                   )}
                 {canTagSelection && (!context.row || canTagPayment(context.row)) && (

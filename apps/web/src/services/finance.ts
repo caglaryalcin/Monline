@@ -6,7 +6,7 @@ export type FinanceCellSnapshot = {
   row_id: string;
   month: string;
   entries: FinanceEntry[];
-  statement_link: Pick<FinanceStatementLink, "id" | "statement_id"> | null;
+  statement_link: Pick<FinanceStatementLink, "id" | "statement_id" | "allow_month_boundary"> | null;
 };
 type FinanceProof = { id: string; target_type: string; target_id: string; statement_id: string; transaction_id: string; fingerprint: string; relation: string };
 type FinanceCalendarMove = { id: string; source: string; source_id: string; source_date: string; date: string };
@@ -26,8 +26,8 @@ export type FinanceHistory = {
   moves?: { before: FinanceCalendarMove[]; after: FinanceCalendarMove[] };
 };
 export const financeService = {
-  checkCardPayment: (row_id: string, statement_id: string) =>
-    api.post<CardPaymentCheck>("/api/finance/card-payment-check", { row_id, statement_id }),
+  checkCardPayment: (row_id: string, statement_id: string, month: string, allow_month_boundary = false) =>
+    api.post<CardPaymentCheck>("/api/finance/card-payment-check", { row_id, statement_id, month, allow_month_boundary }),
   setOpeningDeficit: (year: number, amount: number | null, expected_amount: number) =>
     api.post<{ history: FinanceHistory }>("/api/finance/opening-deficit", { year, amount, expected_amount }),
   setSalaryTag: (month: string, tag: SalaryTag | "") =>

@@ -182,7 +182,7 @@ const FIELDS = {
     "transactions",
     "created",
   ],
-  finance_statement_links: ["row_id", "month", "statement_id"],
+  finance_statement_links: ["row_id", "month", "statement_id", "allow_month_boundary"],
   merchant_logos: ["merchant_name", "provider_name", "domain", "row_id", "start_month", "scope", "updated_at"],
   manual_bills: ["name", "date", "amount", "currency", "status", "notes"],
   budget_matches: [

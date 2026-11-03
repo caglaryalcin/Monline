@@ -31,7 +31,7 @@ const fields = {
     "origin_row",
     "is_deleted",
   ],
-  finance_statement_links: ["row_id", "month", "statement_id"],
+  finance_statement_links: ["row_id", "month", "statement_id", "allow_month_boundary"],
   finance_card_transactions: [
     "row_id",
     "month",
@@ -172,12 +172,16 @@ function check(record) {
   if (record.collection().name === "finance_statement_links") {
     const owner = record.getString("user");
     const row = owned("finance_rows", values.row_id, owner);
-    owned("bank_statements", values.statement_id, owner);
+    const statement = owned("bank_statements", values.statement_id, owner);
     if (
       row.getString("kind") !== "expense" ||
       row.getString("expense_type") !== "credit_card"
     )
       throw new BadRequestError("finance_invalid_statement_link");
+    if (values.allow_month_boundary && !compareCardPayment(
+      financeYearData(owner), row.id, statement.publicExport(), values.month,
+    ).month_boundary_eligible)
+      throw new BadRequestError("finance_invalid_month_boundary");
     if (
       own("finance_statement_links", owner).some(
         (link) =>
@@ -470,6 +474,9 @@ routerAdd("POST", "/api/finance/restore", (e) => {
   for (const side of [changes[0].before, changes[0].after])
     for (const entry of side)
       if (entry && entry.payment_tag === undefined) entry.payment_tag = "";
+  for (const side of [changes[3].before, changes[3].after])
+    for (const link of side)
+      if (link && link.allow_month_boundary === undefined) link.allow_month_boundary = false;
   for (const side of [changes[1].before, changes[1].after])
     for (const row of side)
       if (row) {
@@ -633,7 +640,8 @@ routerAdd("POST", "/api/finance/cells/action", (e) => {
           throw new BadRequestError("finance_clipboard_conflict");
         const link = links.find((link) => link.getString("row_id") === cell.row_id && link.getString("month") === cell.month);
         if ((link?.id || null) !== (cell.statement_link?.id || null) ||
-            (link && link.getString("statement_id") !== cell.statement_link?.statement_id))
+            (link && (link.getString("statement_id") !== cell.statement_link?.statement_id ||
+              link.getBool("allow_month_boundary") !== !!cell.statement_link?.allow_month_boundary)))
           throw new BadRequestError("finance_clipboard_conflict");
         return { row, month: cell.month, entries: current, link };
       });
@@ -682,6 +690,8 @@ routerAdd("POST", "/api/finance/cells/action", (e) => {
         restored.set("row_id", target.row.id);
         restored.set("month", target.month);
         restored.set("statement_id", original.getString("statement_id"));
+        restored.set("allow_month_boundary", original.getBool("allow_month_boundary") &&
+          original.getString("month") === target.month && original.getString("row_id") === target.row.id);
         repository.save(restored);
       }
     }
@@ -814,19 +824,21 @@ routerAdd("GET", "/api/finance", (e) => {
     ),
     card_payment_checks: Object.fromEntries(comparisonData.finance_statement_links.flatMap((link) => {
       const statement = statements.get(link.statement_id);
-      return statement ? [[link.id, compareCardPayment(comparisonData, link.row_id, statement)]] : [];
+      return statement ? [[link.id, compareCardPayment(comparisonData, link.row_id, statement, link.month, !!link.allow_month_boundary)]] : [];
     })),
   });
 });
 routerAdd("POST", "/api/finance/card-payment-check", (e) => {
   const owner = user(e), body = e.requestInfo().body;
-  if (!body || typeof body.row_id !== "string" || typeof body.statement_id !== "string")
+  if (!body || typeof body.row_id !== "string" || typeof body.statement_id !== "string" ||
+    typeof body.month !== "string" || !/^20\d{2}-(0[1-9]|1[0-2])$/.test(body.month) ||
+    (body.allow_month_boundary !== undefined && typeof body.allow_month_boundary !== "boolean"))
     throw new BadRequestError("finance_invalid_statement_link");
   const row = owned("finance_rows", body.row_id, owner);
   const statement = owned("bank_statements", body.statement_id, owner);
   if (row.getString("kind") !== "expense" || row.getString("expense_type") !== "credit_card")
     throw new BadRequestError("finance_invalid_statement_link");
-  return e.json(200, compareCardPayment(financeYearData(owner), row.id, statement.publicExport()));
+  return e.json(200, compareCardPayment(financeYearData(owner), row.id, statement.publicExport(), body.month, body.allow_month_boundary === true));
 });
 routerAdd("POST", "/api/finance/opening-deficit", (e) => {
   const owner = user(e), body = e.requestInfo().body;

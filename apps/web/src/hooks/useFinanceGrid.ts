@@ -519,7 +519,7 @@ export function useFinanceGrid({
       row_id: rowId,
       month,
       entries: entries.filter((entry) => entry.row_id === rowId && entry.date.startsWith(month + "-")).map((entry) => ({ ...entry })),
-      statement_link: link ? { id: link.id, statement_id: link.statement_id } : null,
+      statement_link: link ? { id: link.id, statement_id: link.statement_id, allow_month_boundary: !!link.allow_month_boundary } : null,
     };
   };
   const selectedCells = (selected: GridSelection) => {

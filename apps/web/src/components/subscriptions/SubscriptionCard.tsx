@@ -300,7 +300,6 @@ function SubscriptionActions({
         className="h-7 w-7 rounded-full text-muted-foreground"
         onClick={onDelete}
         title={t("delete")}
-        disabled={sub.inactive}
       >
         <Trash2 className="h-3.5 w-3.5" />
       </Button>

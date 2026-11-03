@@ -80,7 +80,8 @@ function validate(name, value) {
     if (
       !/^[a-z0-9]{15}$/.test(value.row_id) ||
       !/^[a-z0-9]{15}$/.test(value.statement_id) ||
-      !/^20\d{2}-(0[1-9]|1[0-2])$/.test(value.month)
+      !/^20\d{2}-(0[1-9]|1[0-2])$/.test(value.month) ||
+      (value.allow_month_boundary !== undefined && typeof value.allow_month_boundary !== "boolean")
     )
       return "finance_invalid_statement_link";
   } else if (name === "finance_card_transactions") {

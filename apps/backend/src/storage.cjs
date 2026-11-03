@@ -224,6 +224,8 @@ class Repository {
       this.connection.exec(
         "ALTER TABLE finance_rows ADD COLUMN expense_type TEXT NOT NULL DEFAULT ''",
       );
+    if (!this.connection.prepare('PRAGMA table_info("finance_statement_links")').all().some(column => column.name === "allow_month_boundary"))
+      this.connection.exec("ALTER TABLE finance_statement_links ADD COLUMN allow_month_boundary INTEGER NOT NULL DEFAULT 0");
     for (const name of ["summary", "unresolved", "excluded_transactions"])
       if (
         !this.connection

@@ -2423,9 +2423,14 @@
         "max": 7,
         "required": true,
         "hidden": false
+      },
+      {
+        "name": "allow_month_boundary",
+        "type": "bool",
+        "hidden": false
       }
     ],
-    "sql": "CREATE TABLE \"finance_statement_links\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"row_id\" TEXT NOT NULL DEFAULT '', \"statement_id\" TEXT NOT NULL DEFAULT '', \"month\" TEXT NOT NULL DEFAULT '')"
+    "sql": "CREATE TABLE \"finance_statement_links\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"row_id\" TEXT NOT NULL DEFAULT '', \"statement_id\" TEXT NOT NULL DEFAULT '', \"month\" TEXT NOT NULL DEFAULT '', \"allow_month_boundary\" INTEGER NOT NULL DEFAULT 0)"
   },
   {
     "name": "merchant_logos",

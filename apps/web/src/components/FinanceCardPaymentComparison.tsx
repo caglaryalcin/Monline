@@ -27,7 +27,9 @@ export function FinanceCardPaymentComparison({
           ? "border-emerald-500/30 bg-emerald-500/5"
           : check.status === "mismatch"
             ? "border-rose-500/30 bg-rose-500/5"
-            : "border-border bg-muted/10",
+            : check.status === "payment_month_mismatch"
+              ? "border-amber-500/30 bg-amber-500/5"
+              : "border-border bg-muted/10",
         compact && "space-y-2 rounded-none border-0 bg-transparent p-0 text-xs",
       )}
       role={compact ? undefined : "status"}
@@ -37,17 +39,23 @@ export function FinanceCardPaymentComparison({
           "font-semibold",
           check.status === "matched" && "text-emerald-700 dark:text-emerald-400",
           check.status === "mismatch" && "text-rose-700 dark:text-rose-400",
+          check.status === "payment_month_mismatch" && "text-amber-700 dark:text-amber-400",
         )}
       >
-        {t(`finance_card_payment_status_${check.status}`)}
+        {t(check.status === "matched" && check.month_boundary_accepted
+          ? "finance_card_payment_status_matched_month_boundary"
+          : `finance_card_payment_status_${check.status}`)}
       </p>
       <p className="text-xs text-muted-foreground">
-        {t("finance_card_payment_period", {
-          month: (check.payment_months?.length ? check.payment_months : [check.ledger_month])
-            .map(monthName)
-            .join(" / "),
-        })}
+        {t("finance_card_payment_ledger_period", { month: monthName(check.ledger_month) })}
       </p>
+      {check.payment_months && check.payment_months.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {t("finance_card_payment_period", {
+            month: check.payment_months.map(monthName).join(" / "),
+          })}
+        </p>
+      )}
       {check.ledger_month !== check.statement_month && (
         <p className="text-xs text-muted-foreground">
           {t("finance_card_payment_statement_period", { month: monthName(check.statement_month) })}

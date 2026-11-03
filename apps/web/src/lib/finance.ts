@@ -131,10 +131,12 @@ export interface FinanceData {
   finance_statement_links?: FinanceStatementLink[];
 }
 export interface CardPaymentCheck {
-  status: "matched" | "mismatch" | "missing_card" | "missing_ledger" | "unpaid_ledger" | "missing_statement_payments" | "multiple_payment_months" | "incomplete_statement";
+  status: "matched" | "mismatch" | "payment_month_mismatch" | "missing_card" | "missing_ledger" | "unpaid_ledger" | "missing_statement_payments" | "multiple_payment_months" | "incomplete_statement";
   ledger_month: string;
   payment_months?: string[];
   statement_month: string;
+  month_boundary_eligible?: boolean;
+  month_boundary_accepted?: boolean;
   ledger_row_id: string;
   ledger_row_name: string;
   ledger_amount: number | null;
@@ -150,6 +152,7 @@ export interface FinanceStatementLink {
   row_id: string;
   month: string;
   statement_id: string;
+  allow_month_boundary?: boolean;
 }
 export interface FinanceCardTransaction {
   id: string;
