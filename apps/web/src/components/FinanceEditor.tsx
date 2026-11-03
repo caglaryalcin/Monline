@@ -20,6 +20,7 @@ import {
   financeRowTagValues,
   isCardPaid,
 } from "@/lib/finance";
+import { formatNumber, parseNumberInput } from "@/lib/numberFormat";
 import { cn } from "@/lib/utils";
 import { financeService } from "@/services/finance";
 
@@ -41,6 +42,35 @@ export type FinanceEditorState =
   | { type: "reference"; month: number; year?: number; field?: "usd" | "eur" | "minimum" };
 
 const financeSelectClass = "h-10 w-full rounded-md border border-input bg-background px-3 text-sm";
+
+function readAmountInput(raw: string): number | null {
+  const value = raw.trim();
+  if (!/^\+?[\p{Nd}\s.,'’\u066b\u066c]+$/u.test(value) || !/\p{Nd}/u.test(value))
+    return null;
+  let normalized = value.replace(/^\+/, "").replace(/[\s'’]/g, "");
+  for (let digit = 0; digit <= 9; digit++) {
+    const native = formatNumber(digit, { useGrouping: false });
+    if (native !== String(digit)) normalized = normalized.split(native).join(String(digit));
+  }
+  normalized = normalized.replace(/\u066b/g, ".").replace(/\u066c/g, ",");
+  if (
+    !/^\d+(?:[.,]\d{1,2})?$/.test(normalized) &&
+    !/^\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?$/.test(normalized) &&
+    !/^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$/.test(normalized) &&
+    !/^\d{1,2}(?:,\d{2})+,\d{3}(?:\.\d{1,2})?$/.test(normalized)
+  )
+    return null;
+  const amount = parseNumberInput(value);
+  return amount >= 0 &&
+    amount <= 1e12 &&
+    Math.abs(amount * 100 - Math.round(amount * 100)) < 0.00001
+    ? amount
+    : null;
+}
+
+function formatAmountInput(amount: number) {
+  return formatNumber(amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 export function FinanceEditor({
   editor,
@@ -65,9 +95,22 @@ export function FinanceEditor({
   money: (value: number) => string;
   monthName: (index: number, short?: boolean) => string;
 }) {
+  const referenceYear = editor.type === "reference" ? (editor.year ?? year) : year;
+  const month =
+    "month" in editor ? `${referenceYear}-${String(editor.month).padStart(2, "0")}` : `${year}-01`;
+  const entries =
+    editor.type === "cell"
+      ? data.finance_entries
+          .filter((item) => item.row_id === editor.row.id && item.date.startsWith(month))
+          .sort((a, b) => a.date.localeCompare(b.date))
+      : [];
   const initialEntry =
     editor.type === "cell"
-      ? data.finance_entries.find((item) => item.id === editor.entryId)
+      ? editor.entryId
+        ? entries.find((item) => item.id === editor.entryId)
+        : entries.length === 1
+          ? entries[0]
+          : undefined
       : undefined;
   const [entry, setEntry] = useState<FinanceEntry | null>(initialEntry || null);
   const [paymentTag, setPaymentTag] = useState<FinanceEntry["payment_tag"]>(
@@ -113,16 +156,7 @@ export function FinanceEditor({
   const [confirmDelete, setConfirmDelete] = useState(
     editor.type === "row" && !!editor.confirmDelete,
   );
-  const referenceYear = editor.type === "reference" ? (editor.year ?? year) : year;
-  const month =
-    "month" in editor ? `${referenceYear}-${String(editor.month).padStart(2, "0")}` : `${year}-01`;
   const reference = data.finance_benchmarks.find((item) => item.month === month);
-  const entries =
-    editor.type === "cell"
-      ? data.finance_entries
-          .filter((item) => item.row_id === editor.row.id && item.date.startsWith(month))
-          .sort((a, b) => a.date.localeCompare(b.date))
-      : [];
   const title =
     editor.type === "row"
       ? editor.row?.id
@@ -170,15 +204,32 @@ export function FinanceEditor({
       <Input
         id={`finance-${name}`}
         name={name}
-        type={type}
+        type={name === "amount" ? "text" : type}
+        inputMode={name === "amount" ? "decimal" : undefined}
         className={type === "number" ? "text-right tabular-nums" : undefined}
-        defaultValue={value}
+        defaultValue={
+          name === "amount" && typeof value === "number" ? formatAmountInput(value) : value
+        }
         placeholder={
           name === "name"
             ? label(rowKind === "expense" ? "expense_name" : "income_name")
             : undefined
         }
         {...extra}
+        onInput={
+          name === "amount" ? (event) => event.currentTarget.setCustomValidity("") : undefined
+        }
+        onBlur={
+          name === "amount"
+            ? (event) => {
+                const input = event.currentTarget;
+                if (!input.value.trim()) return;
+                const amount = readAmountInput(input.value);
+                input.setCustomValidity(amount === null ? label("quick_invalid") : "");
+                if (amount !== null) input.value = formatAmountInput(amount);
+              }
+            : undefined
+        }
       />,
     );
   const remove = (collection: keyof FinanceData, id: string) => {
@@ -200,7 +251,14 @@ export function FinanceEditor({
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const value = (key: string) => String(form.get(key) ?? "");
-    const number = (key: string) => Number(value(key));
+    const amount = form.has("amount") ? readAmountInput(value("amount")) : null;
+    if (form.has("amount") && amount === null) {
+      const input = event.currentTarget.elements.namedItem("amount") as HTMLInputElement;
+      input.setCustomValidity(label("quick_invalid"));
+      input.reportValidity();
+      return;
+    }
+    const number = (key: string) => (key === "amount" ? amount! : Number(value(key)));
     if (editor.type === "row") {
       const row = editor.row;
       const saveRow = (values: Partial<FinanceRow>) =>

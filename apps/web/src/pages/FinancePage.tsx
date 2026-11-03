@@ -230,6 +230,7 @@ export function FinancePage() {
   const refresh = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: key }),
+      queryClient.invalidateQueries({ queryKey: ["finance-card-payment-check", yearOwner] }),
       queryClient.invalidateQueries({ queryKey: spendingKey(yearOwner) }),
       queryClient.invalidateQueries({ queryKey: ["budget"] }),
     ]);

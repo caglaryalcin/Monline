@@ -279,7 +279,7 @@ function spendingData(data, { trackingOnly = false } = {}) {
       payment_tag: entry.payment_tag || "",
       card_name: paymentCard?.name || "",
       settled_date: entry.settled_date || "",
-      ...(statement && statement.period === entry.date.slice(0, 7)
+      ...(statement
         ? {
             statement_id: statement.id,
             statement_period: statement.period,

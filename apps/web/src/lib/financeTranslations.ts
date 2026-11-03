@@ -199,13 +199,13 @@ export const financeTranslations = {
     finance_card_payment_loading: "Kartenzahlung wird verglichen",
     finance_card_payment_check_error: "Die Kartenzahlung konnte nicht verglichen werden.",
     finance_link_statement_help:
-      "Die Kartenzahlungen der Abrechnung werden anhand ihres Zahlungsdatums mit dem passenden Tabellenmonat verglichen. Erstattungen werden getrennt berücksichtigt.",
+      "Du kannst eine Abrechnung aus einem anderen Monat wählen, zum Beispiel Februar für Januar. Kartenzahlungen werden anhand ihres Zahlungsdatums mit dem passenden Tabellenmonat verglichen; Erstattungen werden getrennt berücksichtigt.",
     finance_uploaded_statement: "Hochgeladene Abrechnung",
     finance_choose_statement: "Abrechnung wählen",
     finance_unlink_statement: "Zuordnung entfernen",
     finance_statement_already_linked: "Bereits zugeordnet",
-    finance_no_statement_for_month:
-      "Für diesen Monat gibt es noch keine Abrechnung. Lade sie zuerst unter Abrechnungen hoch und speichere sie.",
+    finance_no_statements_to_link:
+      "Es gibt noch keine gespeicherte Abrechnung. Lade sie zuerst unter Abrechnungen hoch und speichere sie.",
     finance_open_statements: "Abrechnungen öffnen",
     finance_statement_link_conflict:
       "Diese Abrechnung oder dieser Kartenmonat ist bereits zugeordnet. Aktualisiere die Seite und prüfe die Zuordnung.",
@@ -623,13 +623,13 @@ export const financeTranslations = {
     finance_card_payment_loading: "Comparing card payment",
     finance_card_payment_check_error: "The card payment could not be compared.",
     finance_link_statement_help:
-      "Statement card payments are compared with the ledger month of their payment date. Refunds are accounted for separately.",
+      "You can choose a statement from another month, such as February for January. Card payments are compared with the ledger month of their payment dates; refunds are handled separately.",
     finance_uploaded_statement: "Uploaded statement",
     finance_choose_statement: "Choose a statement",
     finance_unlink_statement: "Remove match",
     finance_statement_already_linked: "Already matched",
-    finance_no_statement_for_month:
-      "No saved statement for this month. Upload and save it on the Statements page first.",
+    finance_no_statements_to_link:
+      "There are no saved statements. Upload and save one on the Statements page first.",
     finance_open_statements: "Open statements",
     finance_statement_link_conflict:
       "This statement or card month is already matched. Refresh the page and check the match.",
@@ -1043,13 +1043,13 @@ export const financeTranslations = {
     finance_card_payment_loading: "Kart ödemesi karşılaştırılıyor",
     finance_card_payment_check_error: "Kart ödemesi karşılaştırılamadı.",
     finance_link_statement_help:
-      "Ekstredeki kart ödemeleri, ödeme tarihinin ait olduğu Gelir/Gider ayıyla karşılaştırılır. İadeler ayrı tutulur.",
+      "Başka bir ayın ekstresini seçebilirsin; örneğin Ocak için Şubat ekstresi. Kart ödemeleri ödeme tarihinin ait olduğu Gelir/Gider ayıyla karşılaştırılır; iadeler ayrı tutulur.",
     finance_uploaded_statement: "Yüklenen ekstre",
     finance_choose_statement: "Ekstre seç",
     finance_unlink_statement: "Eşleştirmeyi kaldır",
     finance_statement_already_linked: "Zaten eşleştirilmiş",
-    finance_no_statement_for_month:
-      "Bu ay için kayıtlı ekstre yok. Önce Ekstreler sayfasından yükleyip kaydet.",
+    finance_no_statements_to_link:
+      "Henüz kayıtlı ekstre yok. Önce Ekstreler sayfasından yükleyip kaydet.",
     finance_open_statements: "Ekstreleri aç",
     finance_statement_link_conflict:
       "Bu ekstre veya kartın bu ayı zaten eşleştirilmiş. Sayfayı yenileyip eşleştirmeyi kontrol et.",

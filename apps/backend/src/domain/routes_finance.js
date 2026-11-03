@@ -172,14 +172,12 @@ function check(record) {
   if (record.collection().name === "finance_statement_links") {
     const owner = record.getString("user");
     const row = owned("finance_rows", values.row_id, owner);
-    const statement = owned("bank_statements", values.statement_id, owner);
+    owned("bank_statements", values.statement_id, owner);
     if (
       row.getString("kind") !== "expense" ||
       row.getString("expense_type") !== "credit_card"
     )
       throw new BadRequestError("finance_invalid_statement_link");
-    if (statement.getString("period") !== values.month)
-      throw new BadRequestError("finance_statement_period_mismatch");
     if (
       own("finance_statement_links", owner).some(
         (link) =>

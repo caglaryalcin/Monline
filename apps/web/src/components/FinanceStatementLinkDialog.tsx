@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import client from "@/lib/client";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import type { FinanceRow, FinanceStatementLink } from "@/lib/finance";
+import { resolveLocale } from "@/lib/locale";
 import { spendingKey } from "@/lib/spending";
 import { type SavedStatement, STATEMENT_BANKS } from "@/lib/statements";
 import { financeService } from "@/services/finance";
@@ -35,21 +36,34 @@ export function FinanceStatementLinkDialog({
   links: FinanceStatementLink[];
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const label = (key: string) => t(`finance_${key}`);
   const current = links.find((link) => link.row_id === row.id && link.month === month);
   const [selected, setSelected] = useState(current?.statement_id || "");
   const queryClient = useQueryClient();
   const archive = useQuery({
-    queryKey: ["bank-statements", userId, "link", month],
+    queryKey: ["bank-statements", userId, "link", "all-periods"],
     queryFn: () =>
       client
         .collection("bank_statements")
         .getFullList<Pick<SavedStatement, "id" | "bank" | "period" | "file_name">>({
-          filter: `period = "${month}"`,
-          sort: "bank,-created",
+          sort: "-period,bank,-created",
           fields: "id,bank,period,file_name",
         }),
+    enabled: !!userId,
+    staleTime: 0,
+  });
+  const nextMonth = new Date(`${month}-01T12:00:00Z`);
+  nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
+  const nextPeriod = nextMonth.toISOString().slice(0, 7);
+  const periodRank = (period: string) => (period === nextPeriod ? 0 : period === month ? 1 : 2);
+  const statements = [...(archive.data ?? [])].sort(
+    (a, b) => periodRank(a.period) - periodRank(b.period),
+  );
+  const periodFormatter = new Intl.DateTimeFormat(resolveLocale(i18n), {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
   });
   const mutation = useMutation({
     mutationFn: async (
@@ -73,6 +87,8 @@ export function FinanceStatementLinkDialog({
     queryKey: ["finance-card-payment-check", userId, row.id, selected],
     queryFn: () => financeService.checkCardPayment(row.id, selected),
     enabled: !!selected,
+    staleTime: 0,
+    gcTime: 0,
   });
   const error =
     mutation.error instanceof Error ? mutation.error.message.replace(/^finance_/, "") : "error";
@@ -106,13 +122,14 @@ export function FinanceStatementLinkDialog({
               }}
             >
               <option value="">{label("choose_statement")}</option>
-              {archive.data?.map((saved) => {
+              {statements.map((saved) => {
                 const used = links.some(
                   (link) => link.statement_id === saved.id && link.id !== current?.id,
                 );
                 return (
                   <option key={saved.id} value={saved.id} disabled={used}>
                     {saved.bank ? STATEMENT_BANKS[saved.bank] : t("statement_auto_bank")} ·{" "}
+                    {periodFormatter.format(new Date(`${saved.period}-01T12:00:00Z`))} ·{" "}
                     {saved.file_name}
                     {used ? ` · ${label("statement_already_linked")}` : ""}
                   </option>
@@ -123,10 +140,12 @@ export function FinanceStatementLinkDialog({
           {archive.isPending && (
             <Loader2 aria-label={t("loading")} className="h-4 w-4 animate-spin" />
           )}
-          {selected && comparison.isPending && (
+          {selected && comparison.isFetching && (
             <Loader2 className="h-4 w-4 animate-spin" aria-label={label("card_payment_loading")} />
           )}
-          {selected && comparison.data && <FinanceCardPaymentComparison check={comparison.data} />}
+          {selected && !comparison.isFetching && !comparison.isError && comparison.data && (
+            <FinanceCardPaymentComparison check={comparison.data} />
+          )}
           {selected && comparison.isError && (
             <p role="alert" className="text-sm text-destructive">
               {label("card_payment_check_error")}
@@ -138,14 +157,13 @@ export function FinanceStatementLinkDialog({
             </p>
           )}
           {archive.data?.length === 0 && (
-            <p className="text-sm text-muted-foreground">{label("no_statement_for_month")}</p>
+            <p className="text-sm text-muted-foreground">{label("no_statements_to_link")}</p>
           )}
           {mutation.isError && (
             <p role="alert" className="text-sm text-destructive">
               {label(
                 [
                   "statement_link_conflict",
-                  "statement_period_mismatch",
                   "invalid_statement_link",
                 ].includes(error)
                   ? error
