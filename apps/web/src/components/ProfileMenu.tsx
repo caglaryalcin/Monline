@@ -33,9 +33,9 @@ export function ProfileMenu() {
           type="button"
           aria-label={t("profile_menu")}
           title={t("profile_menu")}
-          className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-border bg-card p-[5px] text-left transition-colors data-[state=open]:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring xl:pr-3"
+          className="header-profile-trigger flex h-11 shrink-0 items-center gap-2 rounded-xl border border-border bg-card p-[5px] text-left transition-colors data-[state=open]:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring xl:pr-3"
         >
-          <Avatar className="h-8 w-8 rounded-[10px]">
+          <Avatar className="header-profile-avatar h-8 w-8 rounded-[10px]">
             <AvatarImage
               src={user ? (usersService.avatarUrl(user) ?? undefined) : undefined}
               alt=""
@@ -45,7 +45,7 @@ export function ProfileMenu() {
               {initials}
             </AvatarFallback>
           </Avatar>
-          <span className="hidden min-w-0 max-w-[150px] xl:grid">
+          <span className="header-profile-details hidden min-w-0 max-w-[150px] xl:grid">
             <span className="truncate text-xs font-semibold leading-4">{name}</span>
             <span className="truncate text-[10px] leading-4 text-muted-foreground">
               {user?.email}

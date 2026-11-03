@@ -40,6 +40,14 @@ const baseNavItems = [
   { key: "bank_statements", path: "/statements" as const, icon: FileText },
 ];
 
+const COMPACT_HEADER_PATHS = new Set([
+  "/finance",
+  "/subscriptions",
+  "/debt",
+  "/calendar",
+  "/statistics",
+]);
+
 export function Layout() {
   const { t, i18n } = useTranslation();
   const today = useLocalToday();
@@ -223,65 +231,75 @@ export function Layout() {
 
       {/* Main content */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden relative">
-        <header className="flex h-[var(--monline-header-height)] shrink-0 items-center justify-between border-b border-border bg-background px-4 md:px-8 lg:px-10">
-          <div className="flex shrink-0 items-center gap-2 lg:hidden">
-            <Button
-              variant="ghost"
-              size="icon"
-              ref={menuButton}
-              onClick={() => setSidebarOpen(true)}
-              aria-label={t("open_menu")}
-              aria-controls="monline-sidebar"
-              aria-expanded={sidebarOpen}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-            <Link
-              to="/dashboard"
-              aria-label={t("go_home")}
-              onClick={() => setSidebarOpen(false)}
-              className="rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
-            >
-              <LogoIcon className="h-7 w-7 sm:hidden" />
-              <LogoWithName className="hidden h-7 w-auto sm:inline-flex" />
-            </Link>
-          </div>
-          <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-            <Link
-              to="/subscriptions"
-              className="flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/50"
-              aria-label={`${t("active_subscriptions")}: ${summary.data?.count ?? "—"}`}
-              title={t("active_subscriptions")}
-            >
-              <span
-                className="header-subscription-heartbeat h-2 w-2 shrink-0 rounded-full"
-                aria-hidden="true"
-              />
-              <span className="hidden sm:inline">{t("active_subscriptions")}</span>
-              <span className="font-semibold tabular-nums text-foreground">
-                {summary.data?.count ?? "—"}
-              </span>
-            </Link>
-            <Link
-              to="/debt"
-              search={{ tab: "loans" }}
-              className="flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/50"
-              aria-label={`${t("spending_section_loans")}: ${activeLoanCount ?? "—"}`}
-              title={t("loans_active")}
-            >
-              <Landmark className="h-4 w-4 shrink-0 text-purple-500 dark:text-purple-400" aria-hidden="true" />
-              <span className="hidden sm:inline">{t("spending_section_loans")}</span>
-              <span className="font-semibold tabular-nums text-foreground">{activeLoanCount ?? "—"}</span>
-            </Link>
-            <time
-              dateTime={today}
-              className="hidden h-11 items-center gap-2 whitespace-nowrap rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground md:flex"
-            >
-              <Calendar className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>{todayLabel}</span>
-            </time>
-            <ThemeToggle />
-            <ProfileMenu />
+        <header
+          className={cn(
+            "monline-main-header relative h-[var(--monline-header-height)] shrink-0",
+            COMPACT_HEADER_PATHS.has(pathname) && "monline-main-header--compact",
+          )}
+        >
+          <div className="monline-main-header__content flex h-full items-center justify-between border-b border-border bg-background px-4 md:px-8 lg:px-10">
+            <div className="flex shrink-0 items-center gap-2 lg:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                ref={menuButton}
+                onClick={() => setSidebarOpen(true)}
+                aria-label={t("open_menu")}
+                aria-controls="monline-sidebar"
+                aria-expanded={sidebarOpen}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              <Link
+                to="/dashboard"
+                aria-label={t("go_home")}
+                onClick={() => setSidebarOpen(false)}
+                className="monline-main-header__brand rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <LogoIcon className="monline-main-header__brand-icon h-7 w-7 sm:hidden" />
+                <LogoWithName className="monline-main-header__brand-name hidden h-7 w-auto sm:inline-flex" />
+              </Link>
+            </div>
+            <div className="monline-main-header__actions ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+              <Link
+                to="/subscriptions"
+                className="monline-main-header__stat flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/50"
+                aria-label={`${t("active_subscriptions")}: ${summary.data?.count ?? "—"}`}
+                title={t("active_subscriptions")}
+              >
+                <CreditCard className="monline-main-header__subscription-icon hidden h-4 w-4 shrink-0" aria-hidden="true" />
+                <span
+                  className="header-subscription-heartbeat h-2 w-2 shrink-0 rounded-full"
+                  aria-hidden="true"
+                />
+                <span className="monline-main-header__label hidden sm:inline">{t("active_subscriptions")}</span>
+                <span className="monline-main-header__label font-semibold tabular-nums text-foreground">
+                  {summary.data?.count ?? "—"}
+                </span>
+              </Link>
+              <Link
+                to="/debt"
+                search={{ tab: "loans" }}
+                className="monline-main-header__stat flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/50"
+                aria-label={`${t("spending_section_loans")}: ${activeLoanCount ?? "—"}`}
+                title={t("loans_active")}
+              >
+                <Landmark className="h-4 w-4 shrink-0 text-purple-500 dark:text-purple-400" aria-hidden="true" />
+                <span className="monline-main-header__label hidden sm:inline">{t("spending_section_loans")}</span>
+                <span className="monline-main-header__label font-semibold tabular-nums text-foreground">{activeLoanCount ?? "—"}</span>
+              </Link>
+              <time
+                dateTime={today}
+                title={todayLabel}
+                aria-label={todayLabel}
+                className="monline-main-header__stat hidden h-11 items-center gap-2 whitespace-nowrap rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground md:flex"
+              >
+                <Calendar className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="monline-main-header__label">{todayLabel}</span>
+              </time>
+              <ThemeToggle />
+              <ProfileMenu />
+            </div>
           </div>
         </header>
 

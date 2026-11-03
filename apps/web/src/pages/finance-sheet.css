@@ -592,6 +592,10 @@
 .finance-sheet__settled {
   color: #bfbfbf;
 }
+:root:not(.dark) .finance-workbook :is(.finance-sheet__received, .finance-sheet__settled) {
+  font-weight: 600;
+  text-shadow: 0 0 0.35px currentColor;
+}
 .dark .finance-sheet__expected {
   color: #93c5fd;
 }
