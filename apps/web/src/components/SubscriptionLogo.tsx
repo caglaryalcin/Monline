@@ -2,7 +2,11 @@ import { useState } from "react";
 
 import { useMerchantLogo } from "@/contexts/MerchantLogosContext";
 import { findLogoService } from "@/lib/logoServices";
-import { automaticLogoUrls, isLegacyWorkspaceLogo, isRenderableLogoSize } from "@/lib/subscriptionLogo";
+import {
+  automaticLogoUrls,
+  isLegacyWorkspaceLogo,
+  isRenderableLogoSize,
+} from "@/lib/subscriptionLogo";
 import { cn } from "@/lib/utils";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Subscription } from "@/types";
@@ -10,16 +14,18 @@ import type { Subscription } from "@/types";
 function LogoImage({
   sources,
   name,
+  serviceName,
   className,
   vectorPreview,
 }: {
   sources: string[];
   name: string;
+  serviceName?: string;
   className?: string;
   vectorPreview?: string;
 }) {
   const [failed, setFailed] = useState(0);
-  const advance = () => setFailed((index) => index === failed ? index + 1 : index);
+  const advance = () => setFailed((index) => (index === failed ? index + 1 : index));
   return failed < sources.length ? (
     <img
       key={sources[failed]}
@@ -29,11 +35,16 @@ function LogoImage({
         className,
         sources[failed]?.startsWith("/assets/logos/merchants/") &&
           (/-white\.svg$/i.test(sources[failed]) ? "bg-slate-900" : "bg-white"),
-        findLogoService(name)?.iconSlug === "hbo" && "dark:brightness-0 dark:invert",
+        findLogoService(serviceName || name)?.iconSlug === "hbo" && "dark:brightness-0 dark:invert",
       )}
       loading="lazy"
       referrerPolicy="no-referrer"
-      style={{ objectFit: /\.svg(?:[?#]|$)/i.test(sources[failed]) || sources[failed] === vectorPreview ? "contain" : "scale-down" }}
+      style={{
+        objectFit:
+          /\.svg(?:[?#]|$)/i.test(sources[failed]) || sources[failed] === vectorPreview
+            ? "contain"
+            : "scale-down",
+      }}
       onError={advance}
       onLoad={(event) => {
         const { naturalWidth, naturalHeight } = event.currentTarget;
@@ -62,13 +73,14 @@ export function SubscriptionLogo({
   className = "h-full w-full object-contain p-1",
 }: {
   sub: Pick<Subscription, "name" | "url"> &
-    Partial<Pick<Subscription, "id" | "logo" | "standalone_payment_id">>;
+    Partial<Pick<Subscription, "id" | "logo" | "standalone_payment_id" | "brand_name">>;
   previewUrl?: string | null;
   previewContentType?: string;
   className?: string;
   month?: string;
   rowId?: string;
 }) {
+  const serviceName = sub.brand_name?.trim() || sub.name;
   const saved =
     sub.logo && sub.id
       ? subscriptionsService.logoUrl({
@@ -77,11 +89,11 @@ export function SubscriptionLogo({
           standalone_payment_id: sub.standalone_payment_id,
         })
       : null;
-  const choice = useMerchantLogo(sub.name, { month, rowId });
+  const choice = useMerchantLogo(serviceName, { month, rowId });
   const automatic = automaticLogoUrls(
     choice ? { name: choice.provider_name, url: `https://${choice.domain}` } : sub,
   );
-  const legacyWorkspace = isLegacyWorkspaceLogo({ name: sub.name, logo: sub.logo });
+  const legacyWorkspace = isLegacyWorkspaceLogo({ name: serviceName, logo: sub.logo });
   const sources = [
     ...new Set([
       ...(previewUrl ? [previewUrl] : []),
@@ -95,6 +107,7 @@ export function SubscriptionLogo({
       key={JSON.stringify(sources)}
       sources={sources}
       name={sub.name}
+      serviceName={serviceName}
       className={className}
       vectorPreview={previewContentType?.includes("svg") ? previewUrl || undefined : undefined}
     />

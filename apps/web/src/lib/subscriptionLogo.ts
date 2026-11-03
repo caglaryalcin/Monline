@@ -29,7 +29,10 @@ export function prepareLogoBlob(blob: Blob, signal?: AbortSignal): Promise<Blob>
     const onAbort = () => finish(undefined, new DOMException("Cancelled", "AbortError"));
     image.onload = () => {
       const { naturalWidth: width, naturalHeight: height } = image;
-      if (!isRenderableLogoSize(width, height)) { finish(); return; }
+      if (!isRenderableLogoSize(width, height)) {
+        finish();
+        return;
+      }
       const type = blob.type.toLowerCase().split(";")[0];
       if (["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"].includes(type)) {
         finish(blob);
@@ -40,7 +43,10 @@ export function prepareLogoBlob(blob: Blob, signal?: AbortSignal): Promise<Blob>
         canvas.width = width;
         canvas.height = height;
         const context = canvas.getContext("2d");
-        if (!context) { finish(); return; }
+        if (!context) {
+          finish();
+          return;
+        }
         context.drawImage(image, 0, 0);
         canvas.toBlob((png) => finish(png || undefined), "image/png");
       } catch {
@@ -53,13 +59,17 @@ export function prepareLogoBlob(blob: Blob, signal?: AbortSignal): Promise<Blob>
   });
 }
 
-export function automaticLogoUrls(sub: Pick<Subscription, "name" | "url">): string[] {
-  const service = findLogoService(sub.name);
+export function automaticLogoUrls(
+  sub: Pick<Subscription, "name" | "url"> & Pick<Partial<Subscription>, "brand_name">,
+): string[] {
+  const brand = sub.brand_name?.trim();
+  const lookupName = brand || sub.name;
+  const service = findLogoService(lookupName);
   // Bundled brand artwork also works with an old website, a billing-page URL
   // or a brand's alternate domain, without relying on remote favicon sizes.
   const namedLogo = service?.logoUrl ? [service.logoUrl] : [];
   let domain = "";
-  if (sub.url) {
+  if (sub.url && !brand) {
     try {
       const url = new URL(sub.url.includes("://") ? sub.url : `https://${sub.url}`);
       if (["https:", "http:"].includes(url.protocol))
@@ -68,7 +78,7 @@ export function automaticLogoUrls(sub: Pick<Subscription, "name" | "url">): stri
       /* Try a known service name instead. */
     }
   }
-  if (!domain) domain = service?.domain ?? publicLogoDomain(sub.name);
+  if (!domain) domain = service?.domain ?? publicLogoDomain(lookupName);
   // Do not send local NAS addresses, credentials, paths, or query strings to a favicon service.
   if (!publicLogoDomain(domain)) return namedLogo;
   const localLogo = [service, findLogoService(domain)].find(

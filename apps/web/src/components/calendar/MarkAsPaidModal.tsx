@@ -6,8 +6,11 @@ import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useLogoSearch } from "@/hooks/useLogoSearch";
+import { compressImage } from "@/lib/image";
 import { editablePaymentNotes } from "@/lib/paymentNotes";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import { toast } from "@/lib/toast";
@@ -43,9 +46,20 @@ export function MarkAsPaidModal({
   const dueDate = toDateStr(date);
   const alreadyPaid = !!existingRecord?.paid_at;
   const editing = mode === "edit" || alreadyPaid;
+  const standalone = !!sub.standalone_payment_id;
+  const [paymentName, setPaymentName] = useState(existingRecord?.name || sub.name);
+  const [brandName, setBrandName] = useState(existingRecord?.brand_name ?? sub.brand_name ?? "");
+  const brandChanged =
+    brandName.trim() !== (existingRecord?.brand_name ?? sub.brand_name ?? "").trim();
+  const logoSearch = useLogoSearch(
+    standalone && brandChanged ? brandName.trim() || paymentName : "",
+    !standalone || !brandChanged,
+  );
 
   const [amount, setAmount] = useState(
-    existingRecord?.amount != null ? String(existingRecord.amount) : String(subscriptionAmount(sub, dueDate)),
+    existingRecord?.amount != null
+      ? String(existingRecord.amount)
+      : String(subscriptionAmount(sub, dueDate)),
   );
   const [notes, setNotes] = useState(editablePaymentNotes(existingRecord?.notes));
   const [proofFile, setProofFile] = useState<File | null>(null);
@@ -54,21 +68,38 @@ export function MarkAsPaidModal({
 
   const mut = useMutation({
     mutationFn: async () => {
+      if (standalone && !paymentName.trim()) throw new Error(t("required"));
       const data: Record<string, unknown> = {
         subscription_id: sub.standalone_payment_id ? "" : sub.id,
         user: userId,
         due_date: dueDate,
         paid_at: editing ? (existingRecord?.paid_at ?? "") : new Date().toISOString(),
         auto_paid: editing ? (existingRecord?.auto_paid ?? false) : false,
-        amount: Number.isFinite(parseFloat(amount)) ? parseFloat(amount) : subscriptionAmount(sub, dueDate),
+        amount: Number.isFinite(parseFloat(amount))
+          ? parseFloat(amount)
+          : subscriptionAmount(sub, dueDate),
         notes,
-        name: existingRecord?.name || sub.name,
+        name: standalone ? paymentName.trim() : existingRecord?.name || sub.name,
+        brand_name: standalone
+          ? brandName.trim()
+          : (existingRecord?.brand_name ?? sub.brand_name ?? ""),
         currency: existingRecord?.currency || sub.currency,
         category: existingRecord?.category || sub.category || "",
         payment_method: existingRecord?.payment_method || sub.payment_method || "",
         payer: existingRecord?.payer || sub.payer || "",
       };
       if (proofFile) data.proof = proofFile;
+      if (standalone) {
+        if (brandChanged) data.logo = "";
+        const logoFile = await logoSearch.resolveLogoFile(brandName.trim() || paymentName);
+        if (logoFile) {
+          try {
+            data.logo = await compressImage(logoFile, { maxSize: 256 });
+          } catch {
+            data.logo = brandChanged ? "" : undefined;
+          }
+        }
+      }
 
       let recordId = existingRecord?.id ?? sub.standalone_payment_id;
 
@@ -106,7 +137,20 @@ export function MarkAsPaidModal({
         <DialogHeader className="border-b bg-card/70 backdrop-blur px-6 py-5">
           <DialogTitle className="flex items-center gap-4">
             <div className="h-12 w-12 shrink-0 rounded-2xl overflow-hidden border bg-background p-1.5">
-              <SubscriptionLogo sub={sub} className="h-full w-full object-contain" />
+              <SubscriptionLogo
+                sub={
+                  standalone
+                    ? {
+                        ...sub,
+                        name: paymentName,
+                        brand_name: brandName,
+                        logo: brandChanged ? undefined : sub.logo,
+                      }
+                    : sub
+                }
+                previewUrl={standalone ? logoSearch.logoPreview || logoSearch.logoUrl : undefined}
+                className="h-full w-full object-contain"
+              />
             </div>
 
             <div className="min-w-0 flex-1">
@@ -119,14 +163,44 @@ export function MarkAsPaidModal({
             </div>
 
             <Badge variant="outline" className="shrink-0">
-              {formatPrice(existingRecord?.amount ?? subscriptionAmount(sub, dueDate), cur?.symbol ?? "$", {
-                currencyCode: cur?.code,
-              })}
+              {formatPrice(
+                existingRecord?.amount ?? subscriptionAmount(sub, dueDate),
+                cur?.symbol ?? "$",
+                {
+                  currencyCode: cur?.code,
+                },
+              )}
             </Badge>
           </DialogTitle>
         </DialogHeader>
 
         <div className="p-6 space-y-5">
+          {standalone && (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="paid-name">{t("brand_display_name")}</Label>
+                <Input
+                  id="paid-name"
+                  value={paymentName}
+                  maxLength={200}
+                  onChange={(event) => setPaymentName(event.target.value)}
+                  disabled={mut.isPending}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="paid-brand">{t("brand_name_label")}</Label>
+                <Input
+                  id="paid-brand"
+                  value={brandName}
+                  maxLength={120}
+                  placeholder={t("brand_name_placeholder")}
+                  onChange={(event) => setBrandName(event.target.value)}
+                  disabled={mut.isPending}
+                />
+                <p className="text-xs text-muted-foreground">{t("brand_name_help")}</p>
+              </div>
+            </div>
+          )}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border bg-card p-4 space-y-4">
               <div className="space-y-1.5">

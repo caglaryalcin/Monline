@@ -24,6 +24,7 @@ function paymentBody(data: FormData | Partial<PaymentRecord>) {
 export interface HistoricalPaymentInput {
   subscription_id?: string;
   name?: string;
+  brand_name?: string;
   currency?: string;
   category?: string;
   payment_method?: string;

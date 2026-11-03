@@ -908,6 +908,14 @@
         "max": 0
       },
       {
+        "name": "brand_name",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 120
+      },
+      {
         "name": "price",
         "type": "number",
         "hidden": false,
@@ -1191,7 +1199,7 @@
         "required": false
       }
     ],
-    "sql": "CREATE TABLE \"subscriptions\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"price\" REAL NOT NULL DEFAULT 0, \"trial_months\" INTEGER NOT NULL DEFAULT 0, \"trial_duration\" INTEGER NOT NULL DEFAULT 0, \"trial_unit\" TEXT NOT NULL DEFAULT '', \"trial_start_date\" TEXT NOT NULL DEFAULT '', \"frequency\" REAL NOT NULL DEFAULT 0, \"next_payment\" TEXT NOT NULL DEFAULT '', \"auto_renew\" INTEGER NOT NULL DEFAULT 0, \"start_date\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"url\" TEXT NOT NULL DEFAULT '', \"notify\" INTEGER NOT NULL DEFAULT 0, \"notify_days_before\" REAL NOT NULL DEFAULT 0, \"inactive\" INTEGER NOT NULL DEFAULT 0, \"cancellation_date\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"cycle\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"replacement_subscription\" TEXT NOT NULL DEFAULT '', \"auto_mark_paid\" INTEGER NOT NULL DEFAULT 0, \"record_type\" TEXT NOT NULL DEFAULT '', \"end_date\" TEXT NOT NULL DEFAULT '', \"payment_limit\" REAL NOT NULL DEFAULT 0, \"payments_completed\" REAL NOT NULL DEFAULT 0, \"statement_imported\" INTEGER NOT NULL DEFAULT 0, \"billing_anchor_day\" REAL NOT NULL DEFAULT 0, \"calendar_history_recovery_passes\" REAL NOT NULL DEFAULT 0, \"calendar_projection_hidden\" INTEGER NOT NULL DEFAULT 0, \"calendar_projection_from\" TEXT NOT NULL DEFAULT '', `sharing` JSON DEFAULT NULL, \"notification_reminders\" JSON DEFAULT NULL, \"price_changes\" JSON DEFAULT NULL)"
+    "sql": "CREATE TABLE \"subscriptions\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"brand_name\" TEXT NOT NULL DEFAULT '', \"price\" REAL NOT NULL DEFAULT 0, \"trial_months\" INTEGER NOT NULL DEFAULT 0, \"trial_duration\" INTEGER NOT NULL DEFAULT 0, \"trial_unit\" TEXT NOT NULL DEFAULT '', \"trial_start_date\" TEXT NOT NULL DEFAULT '', \"frequency\" REAL NOT NULL DEFAULT 0, \"next_payment\" TEXT NOT NULL DEFAULT '', \"auto_renew\" INTEGER NOT NULL DEFAULT 0, \"start_date\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"url\" TEXT NOT NULL DEFAULT '', \"notify\" INTEGER NOT NULL DEFAULT 0, \"notify_days_before\" REAL NOT NULL DEFAULT 0, \"inactive\" INTEGER NOT NULL DEFAULT 0, \"cancellation_date\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"user\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"cycle\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"replacement_subscription\" TEXT NOT NULL DEFAULT '', \"auto_mark_paid\" INTEGER NOT NULL DEFAULT 0, \"record_type\" TEXT NOT NULL DEFAULT '', \"end_date\" TEXT NOT NULL DEFAULT '', \"payment_limit\" REAL NOT NULL DEFAULT 0, \"payments_completed\" REAL NOT NULL DEFAULT 0, \"statement_imported\" INTEGER NOT NULL DEFAULT 0, \"billing_anchor_day\" REAL NOT NULL DEFAULT 0, \"calendar_history_recovery_passes\" REAL NOT NULL DEFAULT 0, \"calendar_projection_hidden\" INTEGER NOT NULL DEFAULT 0, \"calendar_projection_from\" TEXT NOT NULL DEFAULT '', `sharing` JSON DEFAULT NULL, \"notification_reminders\" JSON DEFAULT NULL, \"price_changes\" JSON DEFAULT NULL)"
   },
   {
     "name": "notifications_config",
@@ -1669,6 +1677,14 @@
         "max": 200
       },
       {
+        "name": "brand_name",
+        "type": "text",
+        "hidden": false,
+        "required": false,
+        "min": 0,
+        "max": 120
+      },
+      {
         "name": "currency",
         "type": "relation",
         "hidden": false,
@@ -1728,7 +1744,7 @@
         "max": 10
       }
     ],
-    "sql": "CREATE TABLE \"payment_records\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"subscription_id\" TEXT NOT NULL DEFAULT '', \"due_date\" TEXT NOT NULL DEFAULT '', \"paid_at\" TEXT NOT NULL DEFAULT '', \"auto_paid\" INTEGER NOT NULL DEFAULT 0, \"amount\" REAL NOT NULL DEFAULT 0, \"notes\" TEXT NOT NULL DEFAULT '', \"proof\" TEXT NOT NULL DEFAULT '', \"statement_sources\" TEXT DEFAULT 'null', \"name\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '', \"scheduled_date\" TEXT NOT NULL DEFAULT '')"
+    "sql": "CREATE TABLE \"payment_records\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"subscription_id\" TEXT NOT NULL DEFAULT '', \"due_date\" TEXT NOT NULL DEFAULT '', \"paid_at\" TEXT NOT NULL DEFAULT '', \"auto_paid\" INTEGER NOT NULL DEFAULT 0, \"amount\" REAL NOT NULL DEFAULT 0, \"notes\" TEXT NOT NULL DEFAULT '', \"proof\" TEXT NOT NULL DEFAULT '', \"statement_sources\" TEXT DEFAULT 'null', \"name\" TEXT NOT NULL DEFAULT '', \"brand_name\" TEXT NOT NULL DEFAULT '', \"currency\" TEXT NOT NULL DEFAULT '', \"logo\" TEXT NOT NULL DEFAULT '', \"category\" TEXT NOT NULL DEFAULT '', \"payment_method\" TEXT NOT NULL DEFAULT '', \"payer\" TEXT NOT NULL DEFAULT '', \"scheduled_date\" TEXT NOT NULL DEFAULT '')"
   },
   {
     "name": "api_keys",

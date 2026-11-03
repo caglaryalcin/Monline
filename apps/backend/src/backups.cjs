@@ -29,6 +29,7 @@ const V2_COLLECTIONS = new Set([
 const MIGRATED_COLUMNS = {
   users: ["disabled", "show_currency_code", "number_locale"],
   payment_records: [
+    "brand_name",
     "scheduled_date",
     "statement_sources",
     "name",
@@ -39,6 +40,7 @@ const MIGRATED_COLUMNS = {
     "payer",
   ],
   subscriptions: [
+    "brand_name",
     "sharing",
     "notification_reminders",
     "statement_imported",

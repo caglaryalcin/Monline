@@ -8,6 +8,7 @@ export interface SubscriptionPaymentTotal {
   amount: number;
   count: number;
   nextDate?: string;
+  dates?: string[];
 }
 export interface MonthlyPaymentTotal {
   name: string;
@@ -23,11 +24,13 @@ export function addPaymentToMonth(
   subscription: Subscription,
   amount: number,
   nextDate?: string,
+  paymentDate?: string,
 ) {
   const detail = month.subscriptions.find((item) => item.subscription.id === subscription.id);
   if (detail) {
     detail.amount += amount;
     detail.count++;
+    if (paymentDate) (detail.dates ??= []).push(paymentDate);
     if (nextDate && (!detail.nextDate || nextDate < detail.nextDate)) detail.nextDate = nextDate;
   } else
     month.subscriptions.push({
@@ -35,6 +38,7 @@ export function addPaymentToMonth(
       amount,
       count: 1,
       ...(nextDate ? { nextDate } : {}),
+      ...(paymentDate ? { dates: [paymentDate] } : {}),
     });
   month.total += amount;
   month.count++;
@@ -84,7 +88,7 @@ export function buildPaymentStatistics(
       month.unpricedCount++;
       continue;
     }
-    addPaymentToMonth(month, payment.subscription, payment.amount);
+    addPaymentToMonth(month, payment.subscription, payment.amount, undefined, toDateStr(date));
   }
   // A recurring cycle alone does not authorize future renewals. Keep dated
   // one-time charges, but only project recurring subscriptions that renew.
@@ -112,13 +116,14 @@ export function buildPaymentStatistics(
         entry.status === "paid"
       )
         continue;
-      addPaymentToMonth(month, entry.subscription, entry.amount, entry.date);
+      addPaymentToMonth(month, entry.subscription, entry.amount, entry.date, entry.date);
     }
   }
   for (const month of [...paid, ...upcoming]) {
     month.total = Number(month.total.toFixed(2));
     month.subscriptions.forEach((item) => {
       item.amount = Number(item.amount.toFixed(2));
+      item.dates?.sort();
     });
     month.subscriptions.sort((a, b) =>
       a.nextDate && b.nextDate

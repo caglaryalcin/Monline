@@ -34,7 +34,7 @@ function saveScheduledPayment(
   record.set("paid_at", markPaid ? new Date().toISOString() : "");
   record.set("auto_paid", markPaid);
   if (details.notes) record.set("notes", details.notes);
-  for (const key of ["name", "currency", "category", "payment_method", "payer"])
+  for (const key of ["name", "brand_name", "currency", "category", "payment_method", "payer"])
     record.set(key, subscription.get(key));
   app.save(record);
   return true;

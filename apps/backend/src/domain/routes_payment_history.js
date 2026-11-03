@@ -96,6 +96,9 @@ routerAdd("POST", "/api/payments/history", (e) => {
       const record = new Record(tx.findCollectionByNameOrId("payment_records"));
       record.set("user", e.auth.id);
       record.set("name", body.name.trim());
+      if (body.brand_name != null && (typeof body.brand_name !== "string" || body.brand_name.trim().length > 120))
+        throw new BadRequestError("historical_invalid_brand");
+      record.set("brand_name", String(body.brand_name || "").trim());
       record.set("currency", currency.id);
       for (const [key, collection] of Object.entries({
         category: "categories",
@@ -170,6 +173,7 @@ routerAdd("POST", "/api/payments/history", (e) => {
       matches[0] || new Record(tx.findCollectionByNameOrId("payment_records"));
     record.set("user", e.auth.id);
     record.set("subscription_id", sub.id);
+    record.set("brand_name", sub.getString("brand_name"));
     for (const key of Object.keys(values)) record.set(key, values[key]);
     if (proof) record.set("proof", files.fileFromMultipart(proof));
     tx.save(record);

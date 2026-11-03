@@ -587,6 +587,7 @@ function registerSharingApi(app, repository, auth) {
             "id",
             "user",
             "name",
+            "brand_name",
             "logo",
             "price",
             "trial_months",
