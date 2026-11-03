@@ -42,6 +42,7 @@ const FIELDS = {
   household: ["name", "is_main"],
   subscriptions: [
     "name",
+    "brand_name",
     "price",
     "price_changes",
     "trial_months",
@@ -80,6 +81,7 @@ const FIELDS = {
   ],
   payment_records: [
     "name",
+    "brand_name",
     "currency",
     "logo",
     "category",

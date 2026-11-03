@@ -129,6 +129,9 @@ class Repository {
       this.connection.exec(
         entry.sql.replace(/^CREATE TABLE /, "CREATE TABLE IF NOT EXISTS "),
       );
+      if (["subscriptions", "payment_records"].includes(entry.name) &&
+          !this.connection.prepare("PRAGMA table_info(" + identifier(entry.name) + ")").all().some(column => column.name === "brand_name"))
+        this.connection.exec("ALTER TABLE " + identifier(entry.name) + " ADD COLUMN brand_name TEXT NOT NULL DEFAULT ''");
       if (
         entry.name === "payment_records" &&
         !this.connection
@@ -735,6 +738,12 @@ class Repository {
         throw new BadRequestError("historical_invalid_name");
       if (!record.getString("currency"))
         throw new BadRequestError("historical_invalid_currency");
+    }
+    if (["subscriptions", "payment_records"].includes(collection.name)) {
+      const brand = record.get("brand_name");
+      if (brand != null && (typeof brand !== "string" || brand.trim().length > 120))
+        throw new BadRequestError("historical_invalid_brand");
+      record.set("brand_name", String(brand || "").trim());
     }
     for (const field of collection.fields) {
       const value = record.get(field.name);

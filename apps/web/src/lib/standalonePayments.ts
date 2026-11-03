@@ -18,6 +18,7 @@ export function withStandalonePayments(
         id: record.id,
         standalone_payment_id: record.id,
         name: record.name!,
+        brand_name: record.brand_name,
         logo: record.logo,
         category: record.category,
         payment_method: record.payment_method,

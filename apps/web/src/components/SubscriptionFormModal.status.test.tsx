@@ -77,7 +77,7 @@ describe("new subscription status switches", () => {
       expect(autoRenew).toBeChecked();
       expect(paused).not.toBeChecked();
       if (inactive) await userEvent.click(paused);
-      fireEvent.change(screen.getByLabelText(/name/), { target: { value: "Status test" } });
+      fireEvent.change(screen.getByLabelText(/^brand_display_name/), { target: { value: "Status test" } });
       fireEvent.change(screen.getByRole("textbox", { name: /^price\s*\*$/ }), {
         target: { value: "25" },
       });

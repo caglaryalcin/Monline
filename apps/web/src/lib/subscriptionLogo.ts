@@ -1,14 +1,18 @@
 import { findLogoService } from "@/lib/logoServices";
 import type { Subscription } from "@/types";
 
-export function automaticLogoUrls(sub: Pick<Subscription, "name" | "url">): string[] {
-  const service = findLogoService(sub.name);
+export function automaticLogoUrls(
+  sub: Pick<Subscription, "name" | "url"> & Pick<Partial<Subscription>, "brand_name">,
+): string[] {
+  const brand = sub.brand_name?.trim();
+  const lookupName = brand || sub.name;
+  const service = findLogoService(lookupName);
   // Older Workspace records can still point to google.com. The local brand
   // asset does not depend on that URL and never discloses a private hostname.
   const workspaceLogo =
     service?.iconSlug === "googleworkspace" && service.logoUrl ? [service.logoUrl] : [];
   let domain = "";
-  if (sub.url) {
+  if (sub.url && !brand) {
     try {
       const url = new URL(sub.url.includes("://") ? sub.url : `https://${sub.url}`);
       if (["https:", "http:"].includes(url.protocol))
@@ -17,7 +21,7 @@ export function automaticLogoUrls(sub: Pick<Subscription, "name" | "url">): stri
       /* Try a known service name instead. */
     }
   }
-  if (!domain) domain = service?.domain ?? publicLogoDomain(sub.name);
+  if (!domain) domain = service?.domain ?? publicLogoDomain(lookupName);
   // Do not send local NAS addresses, credentials, paths, or query strings to a favicon service.
   if (!publicLogoDomain(domain)) return workspaceLogo;
   return [

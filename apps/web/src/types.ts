@@ -43,6 +43,7 @@ export interface PaymentRecord {
   subscription_id: string;
   /** Name and currency for a payment without a subscription. */
   name?: string;
+  brand_name?: string;
   currency?: string;
   logo?: string;
   category?: string;
@@ -135,6 +136,7 @@ export interface Subscription {
   /** Present only on the display model of an independent payment. */
   standalone_payment_id?: string;
   name: string;
+  brand_name?: string;
   logo?: string;
   price: number;
   trial_months?: number;

@@ -9,10 +9,12 @@ import type { Subscription } from "@/types";
 function LogoImage({
   sources,
   name,
+  serviceName,
   className,
 }: {
   sources: string[];
   name: string;
+  serviceName?: string;
   className?: string;
 }) {
   const [failed, setFailed] = useState(0);
@@ -22,7 +24,7 @@ function LogoImage({
       alt={name}
       className={cn(
         className,
-        findLogoService(name)?.iconSlug === "hbo" && "dark:brightness-0 dark:invert",
+        findLogoService(serviceName || name)?.iconSlug === "hbo" && "dark:brightness-0 dark:invert",
       )}
       loading="lazy"
       referrerPolicy="no-referrer"
@@ -47,10 +49,11 @@ export function SubscriptionLogo({
   className = "h-full w-full object-contain p-1",
 }: {
   sub: Pick<Subscription, "name" | "url"> &
-    Partial<Pick<Subscription, "id" | "logo" | "standalone_payment_id">>;
+    Partial<Pick<Subscription, "id" | "logo" | "standalone_payment_id" | "brand_name">>;
   previewUrl?: string | null;
   className?: string;
 }) {
+  const serviceName = sub.brand_name?.trim() || sub.name;
   const saved =
     sub.logo && sub.id
       ? subscriptionsService.logoUrl({
@@ -60,7 +63,7 @@ export function SubscriptionLogo({
         })
       : null;
   const automatic = automaticLogoUrls(sub);
-  const legacyWorkspace = isLegacyWorkspaceLogo({ name: sub.name, logo: sub.logo });
+  const legacyWorkspace = isLegacyWorkspaceLogo({ name: serviceName, logo: sub.logo });
   const sources = [
     ...new Set([
       ...(previewUrl ? [previewUrl] : []),
@@ -74,6 +77,7 @@ export function SubscriptionLogo({
       key={JSON.stringify(sources)}
       sources={sources}
       name={sub.name}
+      serviceName={serviceName}
       className={className}
     />
   );

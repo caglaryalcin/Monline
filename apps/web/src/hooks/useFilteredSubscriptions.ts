@@ -32,7 +32,11 @@ export function useFilteredSubscriptions({
 
     if (searchTerm) {
       const query = searchTerm.toLowerCase();
-      result = result.filter((subscription) => subscription.name.toLowerCase().includes(query));
+      result = result.filter(
+        (subscription) =>
+          subscription.name.toLowerCase().includes(query) ||
+          (subscription.brand_name ?? "").toLowerCase().includes(query),
+      );
     }
 
     if (filters.state === "active") {

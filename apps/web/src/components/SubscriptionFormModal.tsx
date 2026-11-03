@@ -146,7 +146,12 @@ export function SubscriptionFormModal({
     watch("trial_unit") === "month" &&
     Number(watch("trial_duration")) === sub.trial_months;
   const watchedName = watch("name");
-  const logo = useLogoSearch(watchedName || "", !!sub?.logo);
+  const watchedBrand = watch("brand_name");
+  const brandChanged = (watchedBrand?.trim() || "") !== (sub?.brand_name?.trim() || "");
+  const logo = useLogoSearch(
+    watchedBrand?.trim() || watchedName || "",
+    !!sub?.logo && !brandChanged,
+  );
   const watchedEndMode = watch("end_mode");
   // New subscriptions are always expenses. Preserve the type of legacy income
   // records when editing so an unrelated change never converts their history.
@@ -207,6 +212,7 @@ export function SubscriptionFormModal({
       const body: Record<string, unknown> = {
         record_type: isCredit ? "credit" : "expense",
         name: data.name,
+        brand_name: data.brand_name?.trim() || "",
         price: data.price,
         price_changes: isCredit
           ? []
@@ -276,7 +282,7 @@ export function SubscriptionFormModal({
       };
 
       let result: Subscription;
-      let logoToUpload = await logo.resolveLogoFile(data.name);
+      let logoToUpload = await logo.resolveLogoFile(data.brand_name?.trim() || data.name);
 
       if (!logoToUpload && logo.logoUrl) {
         try {
@@ -305,6 +311,8 @@ export function SubscriptionFormModal({
           logoToUpload = null;
         }
       }
+
+      if (!logoToUpload && brandChanged) body.logo = "";
 
       if (logoToUpload) {
         const formData = new FormData();
@@ -367,15 +375,21 @@ export function SubscriptionFormModal({
           <div className="relative z-10 shrink-0 space-y-4 bg-background">
             {/* Name */}
             <div className="space-y-2">
-              <Label htmlFor="subscription-name">{t("name")} *</Label>
+              <Label htmlFor="subscription-name">{t("brand_display_name")} *</Label>
               <div className="relative">
                 <span
                   className="pointer-events-none absolute left-1.5 top-1.5 flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border bg-background"
                   aria-hidden="true"
                 >
-                  {watchedName?.trim() || logo.logoPreview || sub?.logo ? (
+                  {watchedBrand?.trim() || watchedName?.trim() || logo.logoPreview || sub?.logo ? (
                     <SubscriptionLogo
-                      sub={{ name: watchedName || "", url: sub?.url, id: sub?.id, logo: sub?.logo }}
+                      sub={{
+                        name: watchedName || "",
+                        brand_name: watchedBrand,
+                        url: sub?.url,
+                        id: sub?.id,
+                        logo: brandChanged ? undefined : sub?.logo,
+                      }}
                       previewUrl={logo.logoPreview || logo.logoUrl}
                       className="h-full w-full object-contain p-1.5"
                     />
@@ -396,6 +410,18 @@ export function SubscriptionFormModal({
 
           <div className="-ml-1 min-h-0 space-y-4 overflow-y-auto overscroll-contain py-1 pl-1 pr-4 [scroll-padding-block:0.25rem] [scrollbar-gutter:stable]">
             {/* Logo section */}
+            <div className="space-y-2">
+              <Label htmlFor="subscription-brand">{t("brand_name_label")}</Label>
+              <Input
+                id="subscription-brand"
+                maxLength={120}
+                placeholder={t("brand_name_placeholder")}
+                {...register("brand_name")}
+                {...invalidProps("brand_name")}
+              />
+              <p className="text-xs text-muted-foreground">{t("brand_name_help")}</p>
+              {renderError("brand_name")}
+            </div>
             <SubscriptionLogoSection {...logo} />
 
             {/* Price + Currency */}

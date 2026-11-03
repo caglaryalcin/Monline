@@ -106,6 +106,12 @@ const SERVICES: [string, string, string?, string?][] = [
   ["soundcloud.com", "SoundCloud|SoundCloud Go", "soundcloud"],
   ["audible.com", "Audible"],
   ["storytel.com", "Storytel"],
+  [
+    "thalia.de",
+    "Thalia|Thalia Buchhandlung|Thalia Bücher|Thalia Bücher GmbH|Thalia Hörbuch-Abo|Thalia Hör-Flat|Thalia Lese-Flat",
+    "thalia",
+    "/assets/logos/thalia.svg",
+  ],
   ["discord.com", "Discord|Discord Nitro", "discord"],
   ["patreon.com", "Patreon"],
   ["substack.com", "Substack"],
@@ -228,12 +234,12 @@ export function findLogoService(name: string): LogoService | undefined {
   const normalized = normalizeLogoName(name);
   const exact = byName.get(normalized);
   if (exact) return exact;
-  // Match plan labels without guessing arbitrary company.com addresses or
+  // Match plan labels and storage capacities without guessing company.com addresses or
   // matching part of a different company name (e.g. Kick vs Kickstarter).
   let candidate = normalized;
   for (let step = 0; step < 3; step++) {
     const withoutPlan = candidate.replace(
-      /(?:premium|professional|pro|plus|business|personal|family|individual|student|ultimate|teams|team|enterprise|standard|advanced|starter|basic|hobby|duo|extra|essential|deluxe|monthly|yearly|annual|aylik|yillik|aboneligi|abonelik|subscription|uyelik)$/,
+      /(?:premium|professional|pro|plus|business|personal|family|individual|student|ultimate|teams|team|enterprise|standard|advanced|starter|basic|hobby|duo|extra|essential|deluxe|monthly|yearly|annual|aylik|yillik|aboneligi|abonelik|subscription|uyelik|\d+(?:gb|tb))$/,
       "",
     );
     if (withoutPlan === candidate) return undefined;

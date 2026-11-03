@@ -73,11 +73,12 @@ export function HistoricalPaymentDialog({
   const options = subscriptions.filter(isExpense).sort((a, b) => a.name.localeCompare(b.name));
   const [subscriptionId, setSubscriptionId] = useState(options[0]?.id ?? "");
   const [name, setName] = useState("");
+  const [brandName, setBrandName] = useState("");
   const [currencyId, setCurrencyId] = useState(
     (currencies.find((item) => item.is_main) ?? currencies[0])?.id ?? "",
   );
   const standalone = !subscriptionId;
-  const logo = useLogoSearch(standalone ? name : "", !standalone);
+  const logo = useLogoSearch(standalone ? brandName.trim() || name : "", !standalone);
   const [categoryId, setCategoryId] = useState("");
   const [paymentMethodId, setPaymentMethodId] = useState(
     paymentMethods.find((item) => item.is_main)?.id ?? "",
@@ -92,7 +93,9 @@ export function HistoricalPaymentDialog({
     initialDate && initialDate >= range.min && initialDate <= range.max ? initialDate : range.max;
   const [paidDate, setPaidDate] = useState(initial);
   const [dueDate, setDueDate] = useState(initial);
-  const [amount, setAmount] = useState(options[0] ? String(subscriptionAmount(options[0], initial)) : "");
+  const [amount, setAmount] = useState(
+    options[0] ? String(subscriptionAmount(options[0], initial)) : "",
+  );
   const [notes, setNotes] = useState("");
   const [proofFile, setProofFile] = useState<File | null>(null);
   const subscription = options.find((sub) => sub.id === subscriptionId);
@@ -113,6 +116,7 @@ export function HistoricalPaymentDialog({
         ...(standalone
           ? {
               name: name.trim(),
+              brand_name: brandName.trim(),
               currency: currencyId,
               ...(categoryId ? { category: categoryId } : {}),
               ...(paymentMethodId ? { payment_method: paymentMethodId } : {}),
@@ -126,7 +130,7 @@ export function HistoricalPaymentDialog({
         amount: Number(amount),
         notes: notes.trim(),
       };
-      let logoFile = standalone ? await logo.resolveLogoFile(name) : null;
+      let logoFile = standalone ? await logo.resolveLogoFile(brandName.trim() || name) : null;
       if (logoFile) {
         try {
           logoFile = await compressImage(logoFile, { maxSize: 256 });
@@ -166,6 +170,7 @@ export function HistoricalPaymentDialog({
         "historical_invalid_amount",
         "historical_invalid_notes",
         "historical_invalid_name",
+        "historical_invalid_brand",
         "historical_invalid_currency",
         "historical_invalid_logo",
         "historical_invalid_details",
@@ -253,10 +258,10 @@ export function HistoricalPaymentDialog({
               <>
                 <p className="text-sm text-muted-foreground">{t("historical_standalone_hint")}</p>
                 <div className="space-y-2">
-                  <Label htmlFor="historical-name">{t("historical_name")}</Label>
+                  <Label htmlFor="historical-name">{t("brand_display_name")}</Label>
                   <div className="flex items-center gap-3">
                     <SubscriptionLogo
-                      sub={{ name }}
+                      sub={{ name, brand_name: brandName }}
                       previewUrl={logo.logoPreview || logo.logoUrl}
                       className="h-11 w-11 shrink-0 rounded-xl border object-contain p-1.5"
                     />
@@ -271,6 +276,17 @@ export function HistoricalPaymentDialog({
                       }}
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="historical-brand">{t("brand_name_label")}</Label>
+                  <Input
+                    id="historical-brand"
+                    maxLength={120}
+                    placeholder={t("brand_name_placeholder")}
+                    value={brandName}
+                    onChange={(event) => setBrandName(event.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">{t("brand_name_help")}</p>
                 </div>
                 <SubscriptionLogoSection {...logo} />
                 <div className="space-y-2">

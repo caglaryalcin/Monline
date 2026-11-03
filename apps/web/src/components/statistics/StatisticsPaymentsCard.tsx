@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { STATISTICS_COLORS } from "@/components/statistics/constants";
+import { StatisticsPaymentDates } from "@/components/statistics/StatisticsPaymentDates";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemedSelect } from "@/components/ui/themed-select";
@@ -252,13 +253,18 @@ export function StatisticsPaymentsCard({
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold">{item.subscription.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {mode === "upcoming" && item.nextDate && (
+                            {mode === "upcoming" && item.nextDate && !item.dates?.length && (
                               <span>
                                 {t("next_payment")}: {formatDate(item.nextDate, language)} ·{" "}
                               </span>
                             )}
                             {t("payments_count", { count: item.count })}
                           </p>
+                          <StatisticsPaymentDates
+                            dates={item.dates}
+                            language={language}
+                            upcoming={mode === "upcoming"}
+                          />
                         </div>
                         <span className="text-sm font-semibold tabular-nums">
                           {formatValue(item.amount)}

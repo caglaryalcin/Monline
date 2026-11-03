@@ -2342,4 +2342,23 @@ describe("SubscriptionFormModal", () => {
       expect(editing ? mocks.updateSubscription : mocks.createSubscription).toHaveBeenCalled(),
     );
   });
+  it("#23 saves a separate brand without changing the display name and prefills both on edit", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Offline fixture")));
+    const subscription = getSubscription({ name: "Youtube testasd", brand_name: "YouTube" });
+    const props = { userId: "user-1", currencies: [getCurrency()], categories: [getCategory()], household: [getHousehold()], paymentMethods: [getPaymentMethod()], onClose: vi.fn(), onSaved: vi.fn() };
+    const { rerender } = render(<SubscriptionFormModal sub={subscription} {...props} />);
+    expect(screen.getByLabelText("brand_name_label")).toHaveValue("YouTube");
+    expect(document.querySelector('input[name="name"]')).toHaveValue("Youtube testasd");
+    expect(screen.getByAltText("Youtube testasd")).toHaveAttribute("src", "https://icon.horse/icon/youtube.com");
+    fireEvent.change(screen.getByLabelText("brand_name_label"), { target: { value: " Twitch " } });
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    await waitFor(() => expect(mocks.updateSubscription).toHaveBeenCalled());
+    const body = mocks.updateSubscription.mock.calls[0][1];
+    expect(body.name).toBe("Youtube testasd");
+    expect(body.brand_name).toBe("Twitch");
+    rerender(<SubscriptionFormModal sub={{ ...subscription, brand_name: "Twitch" }} {...props} />);
+    await waitFor(() => expect(screen.getByLabelText("brand_name_label")).toHaveValue("Twitch"));
+    expect(document.querySelector('input[name="name"]')).toHaveValue("Youtube testasd");
+  });
+
 });

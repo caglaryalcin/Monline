@@ -337,6 +337,12 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
       const rec = new Record(subsCol);
       rec.set("user", userId);
       rec.set("name", name);
+      if (!isWallos && sub.brand_name != null && (typeof sub.brand_name !== "string" || sub.brand_name.trim().length > 120)) {
+        results.skipped++;
+        results.errors.push({ index: i, name, reason: "Invalid brand/service" });
+        continue;
+      }
+      rec.set("brand_name", !isWallos && sub.brand_name ? sub.brand_name.trim() : "");
       rec.set("price", price);
       if (!isWallos) {
         rec.set("price_changes", sub.price_changes ?? []);
@@ -423,6 +429,7 @@ routerAdd("POST", "/api/subscription/clone", (e) => {
   // not produce a dead clone.
   const fieldsToCopy = [
     "name",
+    "brand_name",
     "price",
     "price_changes",
     "trial_months",
@@ -627,6 +634,7 @@ routerAdd("GET", "/api/subscriptions/export", (e) => {
     } catch (_) {}
     exported.push({
       name: sub.get("name"),
+      brand_name: sub.getString("brand_name"),
       record_type: recordTypes.normalizeRecordType(sub.get("record_type")),
       price: sub.get("price"),
       price_changes: sub.get("price_changes"),

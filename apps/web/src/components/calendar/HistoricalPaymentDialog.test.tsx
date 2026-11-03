@@ -117,7 +117,7 @@ describe("HistoricalPaymentDialog", () => {
     mocks.createHistorical.mockResolvedValue(record);
     const { onSaved, invalidate } = setup([], []);
     expect(screen.getByRole("button", { name: "historical_save" })).toBeEnabled();
-    fireEvent.change(screen.getByLabelText("historical_name"), {
+    fireEvent.change(screen.getByLabelText("brand_display_name"), {
       target: { value: " Old service " },
     });
     fireEvent.change(screen.getByLabelText("amount (EUR)"), { target: { value: "18.5" } });
@@ -142,7 +142,7 @@ describe("HistoricalPaymentDialog", () => {
     Element.prototype.scrollIntoView = () => {};
     await userEvent.click(screen.getByRole("combobox"));
     await userEvent.click(screen.getByRole("option", { name: "historical_standalone" }));
-    expect(screen.getByLabelText("historical_name")).toBeVisible();
+    expect(screen.getByLabelText("brand_display_name")).toBeVisible();
     expect(screen.getByLabelText("currency")).toHaveTextContent("EUR");
   });
 
@@ -151,7 +151,7 @@ describe("HistoricalPaymentDialog", () => {
     const { onSaved } = setup([], []);
     Element.prototype.hasPointerCapture = () => false;
     Element.prototype.scrollIntoView = () => {};
-    fireEvent.change(screen.getByLabelText("historical_name"), {
+    fireEvent.change(screen.getByLabelText("brand_display_name"), {
       target: { value: "Old service" },
     });
     fireEvent.change(screen.getByLabelText("amount (EUR)"), { target: { value: "23.5" } });

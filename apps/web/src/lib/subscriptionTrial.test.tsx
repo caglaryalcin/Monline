@@ -99,7 +99,7 @@ it.each([
   await userEvent.click(screen.getByRole("checkbox",{name:"Free trial"}));
   await userEvent.click(screen.getByRole("combobox", { name: "Trial length" }));
   await userEvent.click(screen.getByRole("option", { name: label }));
-  fireEvent.change(screen.getByLabelText(/^Name/),{target:{value:"YouTube Premium"}});
+  fireEvent.change(screen.getByLabelText(/^Display name/),{target:{value:"YouTube Premium"}});
   fireEvent.change(screen.getByLabelText(/Price after trial/),{target:{value:"200"}});
   await userEvent.click(screen.getByRole("combobox",{name:/Category/}));
   await userEvent.click(screen.getByRole("option",{name:"AI"}));

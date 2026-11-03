@@ -192,6 +192,7 @@ function validateDatabase(file) {
                   "payment_account",
                   "statement_sources",
                   "scheduled_date",
+                  "brand_name",
                   "name",
                   "currency",
                   "logo",
@@ -202,6 +203,7 @@ function validateDatabase(file) {
               (entry.name === "subscriptions" &&
                 [
                   "payment_account",
+                  "brand_name",
                   "sharing",
                   "notification_reminders",
                   "statement_imported",

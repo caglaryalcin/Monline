@@ -53,6 +53,7 @@ function saveScheduledPayment(
   if (details.notes) record.set("notes", details.notes);
   for (const key of [
     "name",
+    "brand_name",
     "currency",
     "category",
     "payment_method",
