@@ -1,3 +1,4 @@
+import { type BudgetPeriod, budgetPeriodBounds } from "@/lib/budgetPeriod";
 import type { DashboardPaymentGroup } from "@/lib/dashboardYear";
 import type { FinanceRow } from "@/lib/finance";
 import type { MonthlyBudgetEntry } from "@/lib/monthlyBudget";
@@ -20,7 +21,9 @@ export function monthlyBillPayments(
   group: DashboardPaymentGroup,
   today: string,
   currencies: Currency[],
+  months: BudgetPeriod = 1,
 ) {
+  const { from, until } = budgetPeriodBounds(today, months);
   const main = currencies.find((currency) => currency.is_main);
   let unpriced = 0;
   const entries: DashboardMonthlyEntry[] = [];
@@ -29,7 +32,7 @@ export function monthlyBillPayments(
     [false, group.upcoming],
   ] as const) {
     items.forEach((item, index) => {
-      if (!item.date.startsWith(today.slice(0, 7))) return;
+      if (item.date < from || item.date >= until) return;
       const currency = currencies.find((currency) => currency.code === item.currency);
       const rate =
         item.currency === (main?.code ?? "TRY")

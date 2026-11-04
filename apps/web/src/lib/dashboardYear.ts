@@ -4,6 +4,7 @@ import {
   parseLocalDate,
   toDateStr,
 } from "@/components/calendar/types";
+import { type BudgetPeriod, budgetPeriodBounds } from "@/lib/budgetPeriod";
 import { type FinanceData, percentChange, salaryAnalysis } from "@/lib/finance";
 import { recordedPayments } from "@/lib/recordedPayments";
 import { isCredit } from "@/lib/recordTypes";
@@ -44,6 +45,7 @@ interface DashboardYearInput {
   statements?: DashboardStatement[];
   today: string;
   year?: number;
+  periodMonths?: BudgetPeriod;
 }
 
 /** Minimums replace plans; months without a statement use the paid YTD mean. */
@@ -165,15 +167,22 @@ export function dashboardYearPayments({
   statements = [],
   today,
   year: selectedYear,
+  periodMonths,
 }: DashboardYearInput) {
   const year = String(selectedYear ?? Number(today.slice(0, 4))),
     currentMonth = today.slice(0, 7);
-  const inYear = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date) && date.startsWith(`${year}-`);
-  const inPeriod = (date: string) => inYear(date) && date.slice(0, 7) <= currentMonth;
+  const bounds = periodMonths ? budgetPeriodBounds(today, periodMonths) : null;
+  const inYear = (date: string) => /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+    (bounds ? date >= bounds.from && date < bounds.until : date.startsWith(`${year}-`));
+  const inPeriod = (date: string) => inYear(date) && (!!bounds || date.slice(0, 7) <= currentMonth);
   const inFuture = (date: string) =>
-    inYear(date) && date.slice(0, 7) >= currentMonth && year === today.slice(0, 4);
-  const futureMonths =
-    year === today.slice(0, 4)
+    inYear(date) && date.slice(0, 7) >= currentMonth && (!!bounds || year === today.slice(0, 4));
+  const futureMonths = periodMonths
+    ? Array.from({ length: periodMonths }, (_, offset) => {
+        const month = new Date(Number(year), Number(today.slice(5, 7)) - 1 + offset, 1);
+        return month.getFullYear() + "-" + String(month.getMonth() + 1).padStart(2, "0");
+      })
+    : year === today.slice(0, 4)
       ? Array.from(
           { length: 13 - Number(today.slice(5, 7)) },
           (_, index) => `${year}-${String(Number(today.slice(5, 7)) + index).padStart(2, "0")}`,
@@ -265,8 +274,18 @@ export function dashboardYearPayments({
     name: string,
     providerRowId?: string,
   ) => {
-    for (const item of forecastFixedBill(entries, currency, futureMonths, currentMonth))
-      add("bills", { ...item, name, providerRowId, labelKey: "dashboard_month_estimated" }, true);
+    for (const item of forecastFixedBill(entries, currency, futureMonths, currentMonth)) {
+      let displayName = name;
+      if (periodMonths && providerRowId) {
+        const sameMonth = (candidate: PaymentItem) => candidate.providerRowId === providerRowId && candidate.date.slice(0, 7) === item.date.slice(0, 7);
+        // Future-year forks may already contain the actual bill. Never add an estimate over it.
+        if (groups.bills.some(sameMonth) || upcoming.bills.some((candidate) => sameMonth(candidate) && candidate.amount > 0)) continue;
+        const version = finance.finance_rows.find((row) => (row.origin_row || row.id) === providerRowId && row.year === Number(item.date.slice(0, 4)));
+        if (version && (version.is_deleted || version.is_loan || version.expense_type === "credit_card" || !["internet", "mobile"].includes(version.bill_type || ""))) continue;
+        displayName = version?.name || name;
+      }
+      add("bills", { ...item, name: displayName, providerRowId, labelKey: "dashboard_month_estimated" }, true);
+    }
   };
   for (const row of rows.values()) {
     if (

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { BudgetOverviewCard } from "@/components/dashboard/BudgetOverviewCard";
-import type { BudgetPeriod } from "@/lib/budgetPeriod";
+import { type BudgetPeriod, budgetPeriodBounds } from "@/lib/budgetPeriod";
 import { monthlyBillPayments, monthlyLoanPayments } from "@/lib/dashboardMonthlyPayments";
 import type { DashboardPaymentGroup } from "@/lib/dashboardYear";
 import type { FinanceRow } from "@/lib/finance";
@@ -53,10 +53,11 @@ export function DashboardPaymentSidebar({
   const online = entries.filter((entry) =>
     ["online", "other"].includes(subscriptionSection(entry.subscription)),
   );
-  const bills = monthlyBillPayments(data.bills, today, data.currencies);
+  const { from, until } = budgetPeriodBounds(today, periodMonths);
+  const bills = monthlyBillPayments(data.bills, today, data.currencies, periodMonths);
   const billEntries = [
     ...bills.entries,
-    ...entries.filter((entry) => entry.date.startsWith(today.slice(0, 7)) && subscriptionSection(entry.subscription) === "bills"),
+    ...entries.filter((entry) => entry.date >= from && entry.date < until && subscriptionSection(entry.subscription) === "bills"),
   ].sort((a, b) => a.date.localeCompare(b.date));
   const loans = monthlyLoanPayments(data.loans, today, data.currencies, data.financeRows);
   return (
@@ -97,14 +98,14 @@ export function DashboardPaymentSidebar({
         section === "online"
           ? isLoading
           : section === "bills"
-            ? data.billsLoading
+            ? data.billsLoading || isLoading
             : data.loansLoading
       }
       hasError={
         section === "online"
           ? hasError
           : section === "bills"
-            ? data.billsError || bills.unpriced > 0
+            ? data.billsError || hasError || data.bills.unpriced > 0 || bills.unpriced > 0
             : data.loansError || loans.unpriced > 0
       }
     />

@@ -44,3 +44,13 @@ export function budgetPeriodLabel(today: string, months: BudgetPeriod, language:
   const first = format.format(new Date(year, month - 1, 1));
   return months === 1 ? first : `${first} - ${format.format(new Date(year, month + months - 2, 1))}`;
 }
+
+/** Calendar-month bounds, including a range that crosses New Year. */
+export function budgetPeriodBounds(today: string, months: BudgetPeriod) {
+  const [year, month] = today.split("-").map(Number);
+  const end = new Date(year, month - 1 + months, 1);
+  return {
+    from: today.slice(0, 7) + "-01",
+    until: end.getFullYear() + "-" + String(end.getMonth() + 1).padStart(2, "0") + "-01",
+  };
+}

@@ -1,4 +1,8 @@
 {
+  "budget_period_bills_1": "E havi számlák",
+  "budget_period_bills_3": "A 3 hónapos időszak számlái",
+  "budget_period_bills_6": "A 6 hónapos időszak számlái",
+  "budget_period_bills_12": "Az 1 éves időszak számlái",
   "transfer_incompatible_backup": "A biztonsági mentés olyan rekordokat tartalmaz, amelyeket ez a verzió nem támogat. Az adatvesztés elkerülésére semmit nem importáltunk. Használjon kompatibilis verziót.",
   "transfer_invalid_scoped_backup": "Válasszon egy erről az oldalról exportált, érvényes Monline JSON-fájlt. Az átvitel típusának egyeznie kell, és minden logót és mellékletet tartalmaznia kell.",
   "installments_transfer": "Részletek importálása / exportálása",

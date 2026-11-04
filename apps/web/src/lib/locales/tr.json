@@ -1,4 +1,8 @@
 {
+  "budget_period_bills_1": "Bu ayın faturaları",
+  "budget_period_bills_3": "3 aylık dönemin faturaları",
+  "budget_period_bills_6": "6 aylık dönemin faturaları",
+  "budget_period_bills_12": "1 yıllık dönemin faturaları",
   "transfer_incompatible_backup": "Bu yedekte bu sürümün desteklemediği kayıtlar var. Veri kaybını önlemek için içe aktarma yapılmadı. Yedeği uyumlu sürümde geri yükleyin.",
   "transfer_invalid_scoped_backup": "Bu sayfadan dışa aktarılmış geçerli bir Monline JSON dosyası seçin. Dosya türü uyumlu olmalı; logolar ve ekler eksiksiz bulunmalıdır.",
   "installments_transfer": "Taksitleri içe / dışa aktar",

@@ -1,4 +1,8 @@
 {
+  "budget_period_bills_1": "This month's bills",
+  "budget_period_bills_3": "Bills for the 3-month period",
+  "budget_period_bills_6": "Bills for the 6-month period",
+  "budget_period_bills_12": "Bills for the 1-year period",
   "transfer_incompatible_backup": "This backup contains records that this version does not support. Nothing was imported to avoid data loss. Restore it using a compatible version.",
   "transfer_invalid_scoped_backup": "Choose a valid Monline JSON file exported from this page. The transfer type must match and all logos and attachments must be included.",
   "installments_transfer": "Import / export installments",

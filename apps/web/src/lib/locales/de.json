@@ -1,4 +1,8 @@
 {
+  "budget_period_bills_1": "Rechnungen dieses Monats",
+  "budget_period_bills_3": "Rechnungen für 3 Monate",
+  "budget_period_bills_6": "Rechnungen für 6 Monate",
+  "budget_period_bills_12": "Rechnungen für 1 Jahr",
   "transfer_incompatible_backup": "Diese Sicherung enthält Datensätze, die diese Version nicht unterstützt. Zum Schutz vor Datenverlust wurde nichts importiert. Verwenden Sie eine kompatible Version.",
   "transfer_invalid_scoped_backup": "Wählen Sie eine gültige Monline-JSON-Datei, die auf dieser Seite exportiert wurde. Der Übertragungstyp muss passen; Logos und Anhänge müssen vollständig sein.",
   "installments_transfer": "Raten importieren / exportieren",

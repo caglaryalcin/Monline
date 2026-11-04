@@ -79,6 +79,7 @@ export function DashboardPage() {
     <div className="space-y-8">
       <QuickPaymentDialog target={quickPayments.target} pending={quickPayments.pending} onClose={quickPayments.close} onConfirm={quickPayments.confirm} />
       <DashboardYearOverview
+        periodMonths={periodMonths}
         key={userId}
         userId={userId}
         today={today}

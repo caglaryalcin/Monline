@@ -9,6 +9,7 @@ import { YearHistoryCard } from "@/components/dashboard/YearHistoryCard";
 import { PageLoading } from "@/components/PageLoading";
 import { Button } from "@/components/ui/button";
 import { ThemedSelect } from "@/components/ui/themed-select";
+import type { BudgetPeriod } from "@/lib/budgetPeriod";
 import client from "@/lib/client";
 import {
   dashboardPaymentHistory,
@@ -57,9 +58,11 @@ export function DashboardYearOverview({
   userId,
   today,
   sidebar,
+  periodMonths = 1,
 }: {
   userId: string;
   today: string;
+  periodMonths?: BudgetPeriod;
   sidebar?: ReactNode | ((data: DashboardSidebarData) => ReactNode);
 }) {
   const { t, i18n } = useTranslation();
@@ -135,6 +138,11 @@ export function DashboardYearOverview({
       today,
     ],
   );
+  const billPayments = useMemo(() => dashboardYearPayments({
+    finance: finance.data ?? EMPTY_FINANCE,
+    spending: spending.data ?? EMPTY_SPENDING,
+    subscriptions: [], currencies: currencies.data ?? [], records: [], today, periodMonths,
+  }).bills, [finance.data, spending.data, currencies.data, today, periodMonths]);
   const historyPayments = useMemo(
     () =>
       historyYear === year
@@ -438,7 +446,7 @@ export function DashboardYearOverview({
           <div className="min-w-0 xl:col-span-4">
             {typeof sidebar === "function"
               ? sidebar({
-                  bills: payments.bills,
+                  bills: billPayments,
                   loans: spending.data?.loans ?? [],
                   financeRows: finance.data?.finance_rows ?? [],
                   currencies: currencies.data ?? [],

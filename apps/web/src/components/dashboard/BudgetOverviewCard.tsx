@@ -43,7 +43,7 @@ export function BudgetOverviewCard({
 }: BudgetOverviewCardProps) {
   const { t, i18n } = useTranslation();
   const today = useLocalToday();
-  const months = section === "online" ? periodMonths : 1;
+  const months = section === "loans" ? 1 : periodMonths;
   const language = resolveLocale(i18n);
   const month = budgetPeriodLabel(today, months, language);
   const dateLabel = (date: string) =>
@@ -73,7 +73,7 @@ export function BudgetOverviewCard({
     <Card className="monline-budget-card flex flex-col overflow-hidden rounded-3xl border shadow-sm">
       <CardHeader className="shrink-0 border-b bg-muted/30 pb-4 pt-4">
         <div className="flex flex-wrap items-center gap-2">
-          {onPeriodChange && section === "online" && <BudgetPeriodSelect value={periodMonths} onChange={onPeriodChange} />}
+          {onPeriodChange && section !== "loans" && <BudgetPeriodSelect value={periodMonths} onChange={onPeriodChange} />}
           {controls}
         </div>
       </CardHeader>
@@ -144,14 +144,15 @@ export function BudgetOverviewCard({
               </div>
             )}
             <div className="flex min-h-0 flex-col gap-3 xl:flex-1">
-              <div className="flex shrink-0 items-center justify-between gap-2 border-t pt-4">
+              <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t pt-4">
                 <h3 className="text-sm font-semibold">
                   {t(
                     section === "online"
                       ? (months > 1 ? `budget_period_subscriptions_${months}` : "budget_month_subscriptions")
-                      : "dashboard_month_payments",
+                      : section === "bills" ? `budget_period_bills_${months}` : "dashboard_month_payments",
                   )}
                 </h3>
+                {section === "bills" && <span className="ml-auto text-xs capitalize text-muted-foreground">{month}</span>}
                 <span className="rounded-md bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
                   {entries.length}
                 </span>
@@ -162,7 +163,7 @@ export function BudgetOverviewCard({
                   aria-label={t(
                     section === "online"
                       ? (months > 1 ? `budget_period_subscriptions_${months}` : "budget_month_subscriptions")
-                      : "dashboard_month_payments",
+                      : section === "bills" ? `budget_period_bills_${months}` : "dashboard_month_payments",
                   )}
                 >
                   {entries.map((entry) => (
@@ -210,7 +211,7 @@ export function BudgetOverviewCard({
                                 : undefined
                             }
                           >
-                            {entry.monthOnly ? month : dateLabel(entry.date)}
+                            {entry.monthOnly ? budgetPeriodLabel(entry.date, 1, language) : dateLabel(entry.date)}
                           </time>
                           <span aria-hidden="true">·</span>
                           {entry.status === "paid" ? (
@@ -265,7 +266,7 @@ export function BudgetOverviewCard({
                 <div className="flex flex-col items-center gap-2 py-5 text-center text-sm text-muted-foreground">
                   <ReceiptText className="h-6 w-6" aria-hidden="true" />
                   {t(
-                    section === "online" ? (months > 1 ? "budget_period_empty" : "budget_month_empty") : "dashboard_month_payments_empty",
+                    section === "online" ? (months > 1 ? "budget_period_empty" : "budget_month_empty") : section === "bills" && months > 1 ? "budget_period_empty" : "dashboard_month_payments_empty",
                   )}
                 </div>
               )}
