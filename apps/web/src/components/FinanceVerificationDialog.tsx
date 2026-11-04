@@ -75,7 +75,7 @@ export function FinanceVerificationDialog({
   );
   return (
     <Dialog open onOpenChange={dialogDismissHandler(onClose, mutation.isPending)}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="finance-workbook__dialog sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {row.name} · {monthLabel} · {label("verify_cell")}

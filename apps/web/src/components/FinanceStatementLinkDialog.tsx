@@ -95,7 +95,7 @@ export function FinanceStatementLinkDialog({
     mutation.error instanceof Error ? mutation.error.message.replace(/^finance_/, "") : "error";
   return (
     <Dialog open onOpenChange={dialogDismissHandler(onClose, mutation.isPending)}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="finance-workbook__dialog sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>
             {label("link_statement")} · {row.name} · {monthLabel}
@@ -125,7 +125,7 @@ export function FinanceStatementLinkDialog({
             <Label htmlFor="finance-statement-source">{label("statement_payment_source")}</Label>
             <select
               id="finance-statement-source"
-              className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
+              className="h-11 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm"
               value={selected}
               disabled={archive.isPending || archive.isError || mutation.isPending}
               onChange={(event) => {

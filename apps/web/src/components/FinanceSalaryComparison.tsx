@@ -257,7 +257,7 @@ export function FinanceSalaryComparison({
     }
   };
   return (
-    <div className="space-y-4">
+    <div className="finance-salary-comparison min-w-0 space-y-4">
       {!availableYears.length ? (
         <section className="space-y-4 rounded-2xl border border-dashed bg-card/30 p-6 sm:p-8">
           <Wallet className="h-8 w-8 text-muted-foreground" aria-hidden="true" />

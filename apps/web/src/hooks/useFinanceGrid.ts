@@ -833,6 +833,28 @@ export function useFinanceGrid({
     },
     context,
     closeContext: () => setContext(null),
+    openCellContext: (row: FinanceRow, month: number, position: { x: number; y: number }) => {
+      if (busy) return;
+      selectCell(point(row.id, month - 1), false);
+      setEnabled(true);
+      setContext({ ...position, row, month });
+    },
+    editSelected: () => {
+      if (busy || !selection || selectionPoints(selection).length !== 1) return;
+      const row = rows[selection.focus.row];
+      if (!row) return;
+      setContext(null);
+      if (selection.focus.col === -1) onEditRow(row);
+      else onEdit(row, selection.focus.col + 1);
+    },
+    openSelectedContext: (position: { x: number; y: number }) => {
+      if (busy || !selection) return;
+      const row = rows[selection.focus.row];
+      if (!row) return;
+      setContext(selection.focus.col === -1
+        ? { ...position, row, scope: "row" }
+        : { ...position, row, month: selection.focus.col + 1 });
+    },
     selectedRows: selection && enabled && selectionColumns(selection).includes(-1)
       ? selectionRows(selection).filter((row) => selectionContains(selection, { row, col: -1 })).map((index) => rows[index]).filter(Boolean)
       : [],

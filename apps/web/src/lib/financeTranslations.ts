@@ -1,5 +1,10 @@
 export const financeTranslations = {
   de: {
+    finance_monthly_view: "Monatsübersicht",
+    finance_ledger_view: "Tabellenansicht",
+    finance_previous_month: "Vorheriger Monat",
+    finance_next_month: "Nächster Monat",
+    finance_cell_actions: "Zellenaktionen",
     finance_salary_rates: "Kurse",
     finance_salary_period_change: "Gehaltsänderung im Zeitraum",
     finance_salary_chart_select: "Gehaltsdiagramm auswählen",
@@ -441,6 +446,11 @@ export const financeTranslations = {
     finance_salary_plan_done: "{{count}} Gehaltspläne erstellt.",
   },
   en: {
+    finance_monthly_view: "Monthly view",
+    finance_ledger_view: "Ledger view",
+    finance_previous_month: "Previous month",
+    finance_next_month: "Next month",
+    finance_cell_actions: "Cell actions",
     finance_salary_rates: "Rates",
     finance_salary_period_change: "Salary change over the period",
     finance_salary_chart_select: "Select salary chart",
@@ -877,6 +887,11 @@ export const financeTranslations = {
     finance_salary_plan_done: "Created {{count}} salary plans.",
   },
   tr: {
+    finance_monthly_view: "Aylık görünüm",
+    finance_ledger_view: "Tablo görünümü",
+    finance_previous_month: "Önceki ay",
+    finance_next_month: "Sonraki ay",
+    finance_cell_actions: "Hücre işlemleri",
     finance_salary_rates: "Kurlar",
     finance_salary_period_change: "Dönem maaş değişimi",
     finance_salary_chart_select: "Maaş grafiği seç",

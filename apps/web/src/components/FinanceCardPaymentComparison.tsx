@@ -61,7 +61,7 @@ export function FinanceCardPaymentComparison({
           {t("finance_card_payment_statement_period", { month: monthName(check.statement_month) })}
         </p>
       )}
-      <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2">
+      <dl className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-2 break-words">
         <dt>
           {t("finance_card_payment_ledger")}
           <span className="block text-[11px] text-muted-foreground">{check.ledger_row_name}</span>

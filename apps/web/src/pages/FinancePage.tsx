@@ -11,6 +11,8 @@ import {
   Eye,
   EyeOff,
   Lightbulb,
+  MoreHorizontal,
+  Pencil,
   Plus,
   Redo2,
   RefreshCw,
@@ -25,6 +27,7 @@ import { toast } from "sonner";
 import { FinanceCardStatement } from "@/components/FinanceCardStatement";
 import { FinanceCellTag } from "@/components/FinanceCellTag";
 import { FinanceEditor, type FinanceEditorState as Editor } from "@/components/FinanceEditor";
+import { FinanceMobileLedger } from "@/components/FinanceMobileLedger";
 import { FinanceQuickAmount } from "@/components/FinanceQuickAmount";
 import { FinanceQuickName } from "@/components/FinanceQuickName";
 import { createFinanceQuickSavers } from "@/components/financeQuickSaves";
@@ -150,6 +153,8 @@ export function FinancePage() {
     }
   };
   const [sheet, setSheet] = useState("ledger");
+  const [mobileView, setMobileView] = useState<"monthly" | "annual">("monthly");
+  const [mobileMonth, setMobileMonth] = useState(() => Number(today.slice(5, 7)));
   const [summaryTrace, setSummaryTrace] = useState<SummaryTrace | null>(null);
   useEffect(() => setSummaryTrace(null), [year, sheet]);
   useEffect(() => {
@@ -544,6 +549,33 @@ export function FinancePage() {
             <ChevronRight className="h-3.5 w-3.5" />
           </button>
         </div>
+        {sheet === "ledger" && grid.enabled && grid.selection && (
+          <div className="finance-workbook__touch-actions">
+            <Button
+              size="icon"
+              variant="outline"
+              aria-label={label("edit")}
+              title={label("edit")}
+              disabled={grid.busy || grid.count !== 1 || !!grid.quickEdit || !!grid.quickName}
+              onClick={grid.editSelected}
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              aria-label={label("cell_actions")}
+              title={label("cell_actions")}
+              disabled={grid.busy || !!grid.quickEdit || !!grid.quickName}
+              onClick={(event) => {
+                const bounds = event.currentTarget.getBoundingClientRect();
+                grid.openSelectedContext({ x: bounds.left, y: bounds.top });
+              }}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
         <div
           className="finance-workbook__decimals"
           role="group"
@@ -649,6 +681,7 @@ export function FinancePage() {
   return (
     <div
       className="finance-workbook"
+      data-mobile-ledger-view={mobileView}
       lang={language}
       style={
         {
@@ -658,10 +691,32 @@ export function FinancePage() {
     >
       <Tabs value={sheet} onValueChange={setSheet} className="finance-workbook__sheets">
         <TabsContent value="ledger" className="finance-workbook__ledger">
+          <FinanceMobileLedger
+            view={mobileView}
+            onViewChange={(view) => { grid.clearSelection(); setMobileView(view); }}
+            year={year}
+            month={mobileMonth}
+            onMonthChange={(nextYear, month) => { grid.clearSelection(); setYear(nextYear); setMobileMonth(month); }}
+            monthLabel={monthName(mobileMonth - 1)}
+            rows={displayedRows}
+            entries={data.finance_entries}
+            summary={months[mobileMonth - 1]}
+            openingEntries={openingDeficitEntries}
+            editableOpening={year === firstFinanceYear}
+            onSaveOpening={(amount) => run(() => financeService.setOpeningDeficit(year, amount, sumEntries(openingDeficitEntries)), false)}
+            links={data.finance_statement_links}
+            checks={data.card_payment_checks}
+            pending={history.busy || mutate.isPending || !!grid.quickEdit || !!grid.quickName}
+            label={label}
+            money={sheetMoney}
+            onEdit={(row, month) => setEditor({ type: "cell", row, month })}
+            onAdd={(kind) => setEditor({ type: "row", kind })}
+            onMenu={grid.openCellContext}
+          />
           <div
             ref={grid.containerRef}
             {...grid.containerProps}
-            className="finance-sheet__scroll"
+            className="finance-sheet__scroll finance-workbook__annual"
             role="region"
             aria-label={label("ledger")}
             tabIndex={0}
@@ -928,6 +983,7 @@ export function FinancePage() {
             />
           </DropdownMenuTrigger>
           <DropdownMenuContent
+            className="finance-workbook__context-menu max-w-[calc(100vw-1.5rem)]"
             align="start"
             sideOffset={0}
             onCloseAutoFocus={(event) => event.preventDefault()}
@@ -1407,7 +1463,7 @@ export function FinancePage() {
         open={!!statement}
         onOpenChange={dialogDismissHandler(() => setStatement(null), history.busy)}
       >
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+        <DialogContent className="finance-workbook__dialog max-h-[90dvh] max-w-4xl overflow-y-auto">
           {statement && data.finance_rows.find((row) => row.id === statement.rowId) && (
             <FinanceCardStatement
               key={`${statement.rowId}-${year}-${statement.month}`}
@@ -1447,7 +1503,7 @@ export function FinancePage() {
         }, mutate.isPending)}
       >
         <DialogContent
-          className="max-h-[90dvh] overflow-y-auto sm:max-w-xl"
+          className="finance-workbook__dialog max-h-[90dvh] overflow-y-auto sm:max-w-xl"
           onOpenAutoFocus={(event) => {
             if (editor?.type === "reference" && editor.field) {
               const target = document.getElementById(`finance-${editor.field}`);

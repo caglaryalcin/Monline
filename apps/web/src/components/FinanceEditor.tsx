@@ -28,6 +28,7 @@ export type FinanceEditorState =
   | {
       type: "row";
       row?: FinanceRow;
+      kind?: "income" | "expense";
       focusNotes?: boolean;
       confirmDelete?: boolean;
       position?: {
@@ -117,7 +118,7 @@ export function FinanceEditor({
     initialEntry?.payment_tag || "",
   );
   const [rowKind, setRowKind] = useState(
-    editor.type === "row" ? editor.row?.kind || editor.position?.kind || "expense" : "expense",
+    editor.type === "row" ? editor.row?.kind || editor.position?.kind || editor.kind || "expense" : "expense",
   );
   const [rowTag, setRowTag] = useState<ExpenseRowTag>(
     editor.type === "row" && editor.row?.kind === "expense"
@@ -180,7 +181,7 @@ export function FinanceEditor({
             ? "reference_help"
             : "currency";
   const field = (name: string, input: React.ReactNode) => (
-    <div className="space-y-1.5">
+    <div className="min-w-0 space-y-1.5">
       <Label htmlFor={`finance-${name}`}>
         {label(
           name === "name" && editor.type === "row"
@@ -379,9 +380,9 @@ export function FinanceEditor({
             entries.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between gap-3 rounded-xl border p-3 text-sm"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm"
               >
-                <div>
+                <div className="min-w-0 flex-1 basis-40 break-words">
                   <p
                     className={cn(
                       "font-medium",
@@ -427,7 +428,7 @@ export function FinanceEditor({
                     </p>
                   )}
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex shrink-0 flex-wrap items-center gap-1">
                   {item.status === "planned" && (
                     <Button
                       type="button"
@@ -596,7 +597,7 @@ export function FinanceEditor({
                   </Button>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                 {input("amount", "number", entry?.amount, {
                   min: 0,
                   max: 1e12,
@@ -652,7 +653,7 @@ export function FinanceEditor({
           )}
           {editor.type === "plan" && (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                 {field(
                   "from",
                   <select
@@ -684,7 +685,7 @@ export function FinanceEditor({
                   </select>,
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                 {input("day", "number", 1, { min: 1, max: 31, required: true })}
                 {input("amount", "number", undefined, {
                   min: 0,
