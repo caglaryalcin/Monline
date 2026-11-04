@@ -289,7 +289,7 @@ function computeSpendTotal(options) {
       segment.frequency,
       anchorDay,
     );
-    var next = trialHelpers.nextTrialPaymentDate(config.trial, date, anchorDay) || limits.dateOnly(advanced && advanced.toISOString());
+    var next = trialHelpers.nextTrialPaymentDate(config.trial, date, anchorDay, segment.cycleName) || limits.dateOnly(advanced && advanced.toISOString());
     if (!next || next <= date) break;
     if (segment.cycleName === "Daily" || segment.cycleName === "Weekly")
       anchorDay = Number(next.slice(8, 10));

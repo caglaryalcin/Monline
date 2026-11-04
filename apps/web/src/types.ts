@@ -226,7 +226,7 @@ export interface Household {
 
 export interface Cycle {
   id: string;
-  name: "Daily" | "Weekly" | "Monthly" | "Quarterly" | "Half-Yearly" | "Yearly" | "One-Time";
+  name: "Daily" | "Weekly" | "Monthly" | "Last-Weekday" | "Quarterly" | "Half-Yearly" | "Yearly" | "One-Time";
 }
 
 export interface Frequency {

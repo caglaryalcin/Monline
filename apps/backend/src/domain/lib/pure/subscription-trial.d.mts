@@ -14,4 +14,4 @@ export const TRIAL_LIMITS: Record<"day" | "week" | "month" | "year", number>;
 export function trialEndDate(subscription: TrialSubscription): string;
 export function isTrialDate(subscription: TrialSubscription, date: string): boolean;
 export function subscriptionAmount(subscription: TrialSubscription, date: string): number;
-export function nextTrialPaymentDate(subscription: TrialSubscription, date: string, anchorDay?: number): string;
+export function nextTrialPaymentDate(subscription: TrialSubscription, date: string, anchorDay?: number, cycleName?: string): string;

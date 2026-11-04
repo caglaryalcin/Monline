@@ -34,6 +34,7 @@ function projectedOccurrence(app, sub, date) {
       "Daily",
       "Weekly",
       "Monthly",
+      "Last-Weekday",
       "Quarterly",
       "Half-Yearly",
       "Yearly",
@@ -49,7 +50,7 @@ function projectedOccurrence(app, sub, date) {
     if (!occurrenceIsAllowed(cursor, end, index, sub.getFloat("payment_limit")))
       return false;
     if (cursor === date) return true;
-    const trial = nextTrialPaymentDate(sub, cursor, anchor);
+    const trial = nextTrialPaymentDate(sub, cursor, anchor, cycle);
     const next = trial || advanceDate(
       new Date(cursor + "T12:00:00Z"),
       cycle,
@@ -159,7 +160,7 @@ function calendarNextPayment(app, sub) {
         !Number.isInteger(frequency) || frequency < 1) return "";
     const anchor = sub.getFloat("billing_anchor_day") || Number(date.slice(8, 10));
     for (let guard = 0; date < projectionFrom && guard < 5000; guard++) {
-      const next = nextTrialPaymentDate(sub, date, anchor) || advanceDate(new Date(date + "T12:00:00Z"), cycle, frequency, anchor).toISOString().slice(0, 10);
+      const next = nextTrialPaymentDate(sub, date, anchor, cycle) || advanceDate(new Date(date + "T12:00:00Z"), cycle, frequency, anchor).toISOString().slice(0, 10);
       if (next <= date) return "";
       date = next;
     }

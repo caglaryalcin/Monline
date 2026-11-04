@@ -211,6 +211,7 @@ function importStatement(app, owner, statement, body, now = new Date()) {
             "Daily",
             "Weekly",
             "Monthly",
+            "Last-Weekday",
             "Quarterly",
             "Half-Yearly",
             "Yearly",

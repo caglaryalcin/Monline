@@ -165,7 +165,7 @@ function prepareInitialPayment(app, subscription, input, now = new Date()) {
     .findRecordById("cycles", subscription.getString("cycle"))
     .getString("name");
   const next =
-    nextTrialPaymentDate(subscription, date) ||
+    nextTrialPaymentDate(subscription, date, undefined, cycle) ||
     require("./pure/subscription-start.js").nextPaymentDate(
       date,
       cycle,
@@ -232,6 +232,7 @@ function prepareInitialPayment(app, subscription, input, now = new Date()) {
           subscription,
           current.toISOString().slice(0, 10),
           day,
+          name,
         );
         return trial
           ? new Date(trial + "T00:00:00Z")

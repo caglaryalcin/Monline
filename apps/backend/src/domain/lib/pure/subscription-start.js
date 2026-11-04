@@ -8,7 +8,7 @@ function shiftPaymentDate(nextPayment, cycle, frequency, direction) {
     frequency < 1
   )
     return "";
-  const months = { Monthly: 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
+  const months = { Monthly: 1, "Last-Weekday": 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
   if (months[cycle]) {
     return require("../date-helpers.js")
       .advanceDate(date, cycle, direction * frequency)

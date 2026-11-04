@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { CreditCard } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
@@ -43,6 +43,7 @@ import {
 } from "@/lib/billingPeriods";
 import { displayDateInput } from "@/lib/dateInput";
 import { compressImage } from "@/lib/image";
+import { lastWeekdayOfMonth } from "@/lib/lastWeekday";
 import { ONE_TIME_CYCLE } from "@/lib/recordTypes";
 import { automaticStartDate, nextPaymentDate } from "@/lib/subscriptionStartDate";
 import { toast } from "@/lib/toast";
@@ -175,6 +176,19 @@ export function SubscriptionFormModal({
   const watchedCycle = watch("cycle");
   const watchedFrequency = Number(watch("frequency"));
   const watchedCycleName = cycles.find((cycle) => cycle.id === watchedCycle)?.name;
+  const watchedNextPayment = watch("next_payment");
+  useEffect(() => {
+    if (watchedCycleName !== "Last-Weekday" || watchedTrial || !watchedNextPayment) return;
+    let normalized = lastWeekdayOfMonth(watchedNextPayment);
+    if (isPaid && normalized > localToday()) {
+      const previous = new Date(watchedNextPayment + "T12:00:00Z");
+      previous.setUTCDate(1);
+      previous.setUTCDate(0);
+      normalized = lastWeekdayOfMonth(previous.toISOString().slice(0, 10));
+    }
+    if (normalized && normalized !== watchedNextPayment)
+      setValue("next_payment", normalized, { shouldDirty: true, shouldValidate: true });
+  }, [watchedCycleName, isPaid, watchedNextPayment, watchedTrial, setValue]);
   const customPeriodLabel =
     watchedCycleName && Number.isInteger(watchedFrequency) && watchedFrequency >= 1
       ? formatBillingPeriod(t, watchedCycleName, watchedFrequency)
@@ -592,13 +606,13 @@ export function SubscriptionFormModal({
             {!isCredit ? (
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label>{t("billing_period")}</Label>
+                  <Label htmlFor="subscription-billing-period">{t("billing_period")}</Label>
                   <Controller
                     name="billing_preset"
                     control={control}
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={handlePresetChange}>
-                        <SelectTrigger {...invalidProps(errors.cycle ? "cycle" : "frequency")}>
+                        <SelectTrigger id="subscription-billing-period" {...invalidProps(errors.cycle ? "cycle" : "frequency")}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -719,6 +733,9 @@ export function SubscriptionFormModal({
                     )}
                   />
                   {renderError("next_payment")}
+                  {watchedCycleName === "Last-Weekday" && (
+                    <p className="text-xs leading-relaxed text-muted-foreground">{t("billing_last_weekday_hint")}</p>
+                  )}
                 </div>
               </div>
               {!sub && !isCredit && (

@@ -21,7 +21,7 @@ function advanceDate(
   anchorDay = date.getUTCDate(),
 ) {
   const result = new Date(date.getTime());
-  const months = { Monthly: 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
+  const months = { Monthly: 1, "Last-Weekday": 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
   if (typeof months[cycleName] === "number") {
     result.setUTCDate(1);
     result.setUTCMonth(result.getUTCMonth() + frequency * months[cycleName]);
@@ -29,6 +29,8 @@ function advanceDate(
     lastDay.setUTCMonth(lastDay.getUTCMonth() + 1);
     lastDay.setUTCDate(0);
     result.setUTCDate(Math.min(anchorDay, lastDay.getUTCDate()));
+    if (cycleName === "Last-Weekday")
+      result.setUTCDate(Number(require("./pure/last-weekday.mjs").lastWeekdayOfMonth(result.toISOString().slice(0, 10)).slice(8, 10)));
     return result;
   }
   switch (cycleName) {
@@ -84,6 +86,7 @@ function getPricePerMonth(price, cycleName, frequency, exchangeRate) {
     case "Weekly":
       return (converted / f) * (52 / 12);
     case "Monthly":
+    case "Last-Weekday":
       return converted / f;
     case "Quarterly":
       // Price is charged every (frequency * 3) months

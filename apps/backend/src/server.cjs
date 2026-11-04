@@ -236,6 +236,18 @@ function seed(repository) {
         }
       }
     }
+    if (!repository.findRecordsByFilter("cycles", "name = {:name}", "", 1, 0, { name: "Last-Weekday" }).length) {
+      const cycle = new DataRecord(repository.findCollectionByNameOrId("cycles"));
+      cycle.set("name", "Last-Weekday");
+      repository.save(cycle);
+      for (let value = 1; value <= 12; value++) {
+        const frequency = new DataRecord(repository.findCollectionByNameOrId("frequencies"));
+        frequency.set("cycle", cycle.id);
+        frequency.set("value", value);
+        frequency.set("name", `Last-Weekday × ${value}`);
+        repository.save(frequency);
+      }
+    }
     if (!repository.countRecords("admin_settings")) {
       const settings = new DataRecord(
         repository.findCollectionByNameOrId("admin_settings"),

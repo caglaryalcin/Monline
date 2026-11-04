@@ -1,4 +1,5 @@
 import { subscriptionPrice } from "./subscription-prices.mjs";
+import { lastWeekdayOfMonth, weekdayBillingOnOrAfter } from "./last-weekday.mjs";
 
 function field(subscription, key) {
   return typeof subscription?.get === "function" ? subscription.get(key) : subscription?.[key];
@@ -43,15 +44,19 @@ export function subscriptionAmount(subscription, date) {
   return isTrialDate(subscription, date) ? 0 : subscriptionPrice(subscription, date);
 }
 /** Legacy trials keep monthly occurrences; flexible trials resume on their exact end date. */
-export function nextTrialPaymentDate(subscription, value, anchorDay) {
+export function nextTrialPaymentDate(subscription, value, anchorDay, cycleName) {
   const day = dateOnly(value);
   if (!isTrialDate(subscription, day)) return "";
-  if (Number(field(subscription, "trial_duration") || 0) > 0) return trialEndDate(subscription);
+  if (Number(field(subscription, "trial_duration") || 0) > 0) {
+    const end = trialEndDate(subscription);
+    return cycleName === "Last-Weekday" ? weekdayBillingOnOrAfter(end) : end;
+  }
   const date = new Date(day + "T12:00:00Z");
   const anchor = Number(anchorDay || field(subscription, "billing_anchor_day")) || Number(day.slice(8, 10));
   date.setUTCDate(1);
   date.setUTCMonth(date.getUTCMonth() + 1);
   const last = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
   date.setUTCDate(Math.min(anchor, last));
+  if (cycleName === "Last-Weekday") return lastWeekdayOfMonth(date.toISOString().slice(0, 10));
   return date.toISOString().slice(0, 10);
 }

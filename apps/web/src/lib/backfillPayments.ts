@@ -1,3 +1,4 @@
+import { lastWeekdayOfMonth, weekdayBillingOnOrAfter } from "@/lib/lastWeekday";
 import { trialEndDate } from "@/lib/subscriptionTrial";
 
 import type { TrialSubscription } from "../../../backend/src/domain/lib/pure/subscription-trial.mjs";
@@ -51,7 +52,7 @@ export function backfillDates({
   limit?: number;
   trial?: TrialSubscription;
 }): string[] {
-  const months: Record<string, number> = { Monthly: 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
+  const months: Record<string, number> = { Monthly: 1, "Last-Weekday": 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
   if (
     !validDate(start) ||
     !validDate(anchorDate) ||
@@ -71,8 +72,9 @@ export function backfillDates({
     const cutoff = end && end < until ? end : until;
     const initial = trialStart >= start && trialStart <= cutoff ? [trialStart] : [];
     if (initial.length && limit === 1) return initial;
+    const paidStart = cycle === "Last-Weekday" ? weekdayBillingOnOrAfter(trialEnd) : trialEnd;
     const dates = initial.concat(backfillDates({
-      start: start > trialEnd ? start : trialEnd, anchorDate: trialEnd,
+      start: start > paidStart ? start : paidStart, anchorDate: paidStart,
       billingAnchorDay: Number(trialEnd.slice(8, 10)), until, cycle, frequency, end,
       limit: limit ? limit - initial.length : 0,
     }));
@@ -109,6 +111,7 @@ export function backfillDates({
       last.setUTCMonth(last.getUTCMonth() + 1);
       last.setUTCDate(0);
       target.setUTCDate(Math.min(dayOfMonth, last.getUTCDate()));
+      if (cycle === "Last-Weekday") target.setUTCDate(Number(lastWeekdayOfMonth(target.toISOString().slice(0, 10)).slice(8, 10)));
       date = target;
     } else {
       date = new Date(anchor.getTime());

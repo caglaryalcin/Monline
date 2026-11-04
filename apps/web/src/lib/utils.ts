@@ -102,6 +102,7 @@ export function toMonthly(price: number, cycleName: string, frequency: number): 
     case "Weekly":
       return (price / f) * (52 / 12);
     case "Monthly":
+    case "Last-Weekday":
       return price / f;
     case "Quarterly":
       return price / (f * 3);

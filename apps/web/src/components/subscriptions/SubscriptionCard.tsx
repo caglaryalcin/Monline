@@ -98,9 +98,20 @@ function SubscriptionActions({
           : null
       : null;
   const displayedPeriod = priceDisplay === "billing" ? savedPeriod : priceDisplay;
-  const nextPeriod = displayedPeriod === "monthly" ? "yearly" : "monthly";
-  const priceActionLabel = t(nextPeriod === "monthly" ? "show_monthly" : "show_yearly");
-  const changePeriod = (period: "monthly" | "yearly") =>
+  const nextPeriod =
+    savedPeriod === null && priceDisplay === "yearly"
+      ? "billing"
+      : displayedPeriod === "monthly"
+        ? "yearly"
+        : "monthly";
+  const priceActionLabel = t(
+    nextPeriod === "billing"
+      ? "show_billing_period"
+      : nextPeriod === "monthly"
+        ? "show_monthly"
+        : "show_yearly",
+  );
+  const changePeriod = (period: SubscriptionPriceDisplay) =>
     onPriceDisplayChange(period === savedPeriod ? "billing" : period);
   const finiteSchedule = (sub.payment_limit ?? 0) > 0 || !!sub.end_date;
   const automationButton = (setting: SubscriptionAutomationSetting) => {
