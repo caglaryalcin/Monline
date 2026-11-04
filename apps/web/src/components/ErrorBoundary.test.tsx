@@ -54,7 +54,7 @@ describe("ErrorBoundary", () => {
     );
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    // After reset, boundary re-renders children — Bomb still throws, so error UI re-appears.
+    // After reset, boundary re-renders children - Bomb still throws, so error UI re-appears.
     // The important thing is the reset method was invoked without crashing.
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
   });

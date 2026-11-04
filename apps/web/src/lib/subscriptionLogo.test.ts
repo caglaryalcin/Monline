@@ -1,6 +1,16 @@
-import { automaticLogoUrls, isLegacyWorkspaceLogo } from "./subscriptionLogo";
+import { automaticLogoUrls, isLegacyWorkspaceLogo } from "@/lib/subscriptionLogo";
 
 describe("automatic subscription icons", () => {
+  it.each(["SimpleLogin", "Simple Login", "SimpleLogin Premium", "simplelogin.io", "app.simplelogin.io"])("uses bundled SimpleLogin artwork for %s without a saved file", (name) => {
+    expect(automaticLogoUrls({ name, url: "" })[0]).toBe("/assets/logos/simplelogin.svg");
+  });
+  it.each(["https://app.simplelogin.io/dashboard/", "https://nas.local"])("keeps bundled SimpleLogin artwork first for old URL %s", (url) => {
+    expect(automaticLogoUrls({ name: "SimpleLogin", url })[0]).toBe("/assets/logos/simplelogin.svg");
+  });
+  it("does not use the SimpleLogin logo for a different Proton service or a custom name", () => {
+    for (const name of ["Proton", "Proton Pass", "Simple", "Unknown service"])
+      expect(automaticLogoUrls({ name, url: "" })).not.toContain("/assets/logos/simplelogin.svg");
+  });
   it.each([
     "https://google.com",
     "https://www.google.com/workspace",
@@ -17,15 +27,17 @@ describe("automatic subscription icons", () => {
     "logo-googleworkspace.png",
     "logo.webp",
     "logo_workspace_google_com_abcdefghij.webp",
+    "caaf58baa3509ac9_b9219b254aed17a7_logo-google.webp",
+    "1111111111111111_caaf58baa3509ac9_b9219b254aed17a7_logo-google.webp",
   ])("recognizes the legacy automatic Workspace filename %s", (logo) => {
     expect(isLegacyWorkspaceLogo({ name: "Google Workspace", logo })).toBe(true);
     expect(isLegacyWorkspaceLogo({ name: "Google One", logo })).toBe(false);
   });
-  it("keeps custom uploaded Workspace filenames intact", () => {
+  it.each(["0123456789abcdef_custom-company-logo.webp", "caaf58baa3509ac9_b9219b254aed17a7_custom-company-logo.webp"])("keeps custom uploaded Workspace filename %s intact", (logo) => {
     expect(
       isLegacyWorkspaceLogo({
         name: "Google Workspace",
-        logo: "0123456789abcdef_custom-company-logo.webp",
+        logo,
       }),
     ).toBe(false);
   });

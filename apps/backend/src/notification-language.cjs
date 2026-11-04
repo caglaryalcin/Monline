@@ -68,8 +68,8 @@ function reminderContext(context) {
       const due = sub.cancellation_date || sub.next_payment || "";
       const date = dateLabel(due, language);
       return cancellation
-        ? `• **${sub.name}** — ${copy.cancels}: ${date}`
-        : `• **${sub.name}** — ${amountLabel(sub, language)} (${copy.due}: ${date})`;
+        ? `• **${sub.name}** - ${copy.cancels}: ${date}`
+        : `• **${sub.name}** - ${amountLabel(sub, language)} (${copy.due}: ${date})`;
     })
     .join("\n");
   const intro = phrase(

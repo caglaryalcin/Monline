@@ -8,7 +8,7 @@ function normalizeWeekdaySchedule(event) {
   const date = event.record.getString("next_payment").slice(0, 10);
   const cycle = event.app.findRecordById("cycles", event.record.getString("cycle")).getString("name");
   if (cycle !== "Last-Weekday" || require("./lib/pure/subscription-trial.mjs").isTrialDate(event.record, date)) return;
-  const normalized = lastWeekdayOfMonth(date);
+  const normalized = lastWeekdayOfMonth(date, event.record.get("billing_calendar"));
   if (normalized) event.record.set("next_payment", normalized);
 }
 
@@ -49,6 +49,7 @@ onRecordCreate((e) => {
           e.record.getString("next_payment").slice(0, 10),
           cycle.getString("name"),
           Number(e.record.get("frequency")) || 1,
+          e.record.get("billing_calendar"),
         ),
       );
   }

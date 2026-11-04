@@ -3,7 +3,8 @@ WORKDIR /app/web
 COPY apps/web/package.json apps/web/bun.lock ./
 RUN bun install --frozen-lockfile
 COPY apps/web/ .
-COPY apps/backend/src/domain/lib/pure/subscription-trial.mjs apps/backend/src/domain/lib/pure/subscription-trial.d.mts apps/backend/src/domain/lib/pure/subscription-prices.mjs apps/backend/src/domain/lib/pure/subscription-prices.d.mts apps/backend/src/domain/lib/pure/last-weekday.mjs apps/backend/src/domain/lib/pure/last-weekday.d.mts /app/backend/src/domain/lib/pure/
+COPY apps/backend/src/domain/lib/pure/ /app/backend/src/domain/lib/pure/
+RUN ln -s /app/web/node_modules /app/backend/node_modules
 RUN bun run build
 
 FROM --platform=$BUILDPLATFORM oven/bun:1.4.3-alpine AS server-dependencies

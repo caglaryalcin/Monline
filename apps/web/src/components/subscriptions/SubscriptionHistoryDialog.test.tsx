@@ -212,7 +212,7 @@ describe("SubscriptionHistoryDialog", () => {
     renderDialog(getSubscription({ record_type: "credit" }));
 
     expect(await screen.findByText("total_received")).toBeInTheDocument();
-    // No start date to report — only the payment count is captioned.
+    // No start date to report - only the payment count is captioned.
     expect(screen.getByText("history_payments:8")).toBeInTheDocument();
     expect(screen.getByText("date(2026-01-01) · history_backfilled")).toBeInTheDocument();
   });

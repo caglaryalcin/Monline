@@ -14,14 +14,14 @@ export const subscriptionsService = {
       expand: FULL_EXPAND,
     }),
 
-  /** Only active subscriptions — used by dashboard summary. */
+  /** Only active subscriptions - used by dashboard summary. */
   listActive: (userId: string) =>
     client.collection("subscriptions").getFullList<Subscription>({
       filter: client.filter("user = {:userId} && inactive = false", { userId }),
       expand: "currency,cycle",
     }),
 
-  /** Only active subscriptions with full expand — used by statistics. */
+  /** Only active subscriptions with full expand - used by statistics. */
   listActiveExpanded: (userId: string) =>
     client.collection("subscriptions").getFullList<Subscription>({
       filter: client.filter("user = {:userId} && inactive = false", { userId }),

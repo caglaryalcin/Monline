@@ -19,6 +19,7 @@ function* iterateBackfillDates({
   end = "",
   limit = 0,
   trial,
+  calendar = trial?.get ? trial.get("billing_calendar") : trial?.billing_calendar,
 }) {
   const months = { Monthly: 1, "Last-Weekday": 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
   if (
@@ -42,11 +43,12 @@ function* iterateBackfillDates({
     const includeStart = trialStart >= start && trialStart <= cutoff;
     if (includeStart) yield trialStart;
     if (includeStart && limit === 1) return;
-    const paidStart = cycle === "Last-Weekday" ? require("./last-weekday.mjs").weekdayBillingOnOrAfter(trialEnd) : trialEnd;
+    const paidStart = cycle === "Last-Weekday" ? require("./last-weekday.mjs").weekdayBillingOnOrAfter(trialEnd, calendar) : trialEnd;
     yield* iterateBackfillDates({
       start: start > paidStart ? start : paidStart, anchorDate: paidStart,
       billingAnchorDay: Number(trialEnd.slice(8, 10)), until, cycle, frequency, end,
       limit: limit ? limit - Number(includeStart) : 0,
+      calendar,
     });
     return;
   }
@@ -84,7 +86,7 @@ function* iterateBackfillDates({
       last.setUTCMonth(last.getUTCMonth() + 1);
       last.setUTCDate(0);
       target.setUTCDate(Math.min(dayOfMonth, last.getUTCDate()));
-      if (cycle === "Last-Weekday") target.setUTCDate(Number(require("./last-weekday.mjs").lastWeekdayOfMonth(target.toISOString().slice(0, 10)).slice(8, 10)));
+      if (cycle === "Last-Weekday") target.setUTCDate(Number(require("./last-weekday.mjs").lastWeekdayOfMonth(target.toISOString().slice(0, 10), calendar).slice(8, 10)));
       date = target;
     } else {
       date = new Date(anchor.getTime());

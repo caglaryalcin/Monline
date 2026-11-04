@@ -7,12 +7,15 @@ import { BudgetOverviewCard } from "@/components/dashboard/BudgetOverviewCard";
 import { CostHistoryCard } from "@/components/dashboard/CostHistoryCard";
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
 import { useDashboardDerivedData } from "@/components/dashboard/useDashboardDerivedData";
+import { QuickPaymentDialog } from "@/components/QuickPaymentDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { useMonthlyBudgetData } from "@/hooks/useMonthlyBudgetData";
 import { usePaidTotals } from "@/hooks/usePaidTotals";
+import { useQuickPayments } from "@/hooks/useQuickPayments";
 import { useSummaryData } from "@/hooks/useSummaryData";
 import { useYearlyCosts } from "@/hooks/useYearlyCosts";
+import type { BudgetPeriod } from "@/lib/budgetPeriod";
 import { queryKeys } from "@/lib/queryKeys";
 import { currentMonthKey } from "@/lib/recordTypes";
 import { toast } from "@/lib/toast";
@@ -24,6 +27,8 @@ export function DashboardPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const userId = user?.id ?? "";
+  const quickPayments = useQuickPayments();
+  const [periodMonths, setPeriodMonths] = useState<BudgetPeriod>(1);
   const today = useLocalToday();
   const currentYear = Number(today.slice(0, 4));
   const [selectedYear, setSelectedYear] = useState(currentYear);
@@ -31,7 +36,7 @@ export function DashboardPage() {
 
   const summary = useSummaryData(userId);
   const paid = usePaidTotals(userId, selectedYear);
-  const monthlyBudget = useMonthlyBudgetData(userId, !!user?.payment_tracking, true, selectedYear);
+  const monthlyBudget = useMonthlyBudgetData(userId, !!user?.payment_tracking, true, selectedYear, periodMonths);
   const yearlyCosts = useYearlyCosts(userId);
   const lastSnapshot = useRef("");
 
@@ -79,13 +84,14 @@ export function DashboardPage() {
 
   return (
     <div className="animate-in slide-in-from-bottom-4 space-y-8 fade-in duration-500">
+      <QuickPaymentDialog target={quickPayments.target} pending={quickPayments.pending} onClose={quickPayments.close} onConfirm={quickPayments.confirm} />
       <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
         <div className="flex min-w-0 flex-col gap-6 xl:col-span-8">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
             <SummaryCard
               title={t("total_weekly")}
               year={selectedYear}
-              value={paid.data ? formatValue(paid.data.averageWeekly) : "—"}
+              value={paid.data ? formatValue(paid.data.averageWeekly) : "-"}
               icon={<TrendingUp className="h-6 w-6" />}
               loading={paid.isLoading}
               accent="var(--chart-2)"
@@ -93,7 +99,7 @@ export function DashboardPage() {
             <SummaryCard
               title={t("total_monthly")}
               year={selectedYear}
-              value={paid.data ? formatValue(paid.data.averageMonthly) : "—"}
+              value={paid.data ? formatValue(paid.data.averageMonthly) : "-"}
               icon={<DollarSign className="h-6 w-6" />}
               loading={paid.isLoading}
               accent="var(--chart-3)"
@@ -101,14 +107,14 @@ export function DashboardPage() {
             <SummaryCard
               title={t("total_yearly")}
               year={selectedYear}
-              value={paid.data ? formatValue(paid.data.totalYearly) : "—"}
+              value={paid.data ? formatValue(paid.data.totalYearly) : "-"}
               icon={<Calendar className="h-6 w-6" />}
               loading={paid.isLoading}
               accent="var(--chart-4)"
             />
             <SummaryCard
               title={t("next_month_cost")}
-              value={summaryData ? formatValue(summaryData.nextMonthTotal) : "—"}
+              value={summaryData ? formatValue(summaryData.nextMonthTotal) : "-"}
               icon={<CalendarClock className="h-6 w-6" />}
               loading={summary.isLoading}
               accent="var(--chart-1)"
@@ -133,9 +139,12 @@ export function DashboardPage() {
         </div>
         <div className="min-w-0 xl:col-span-4">
           <BudgetOverviewCard
+            quickPayments={quickPayments.actions}
+            periodMonths={periodMonths}
+            onPeriodChange={setPeriodMonths}
             budget={budget}
             entries={monthlyBudget.entries}
-            totalCredits={totalCredits}
+            totalCredits={monthlyBudget.periodCredits ?? totalCredits}
             isLoading={monthlyBudget.isLoading || summary.isLoading}
             hasError={monthlyBudget.hasError || summary.isError}
             formatValue={formatValue}

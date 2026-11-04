@@ -98,7 +98,7 @@ describe("DeleteAccountTab", () => {
     expect(screen.getByTestId("message-dialog")).toHaveAttribute("data-type", "success");
   });
 
-  // Line 89: catch block — error dialog shown when deletion fails
+  // Line 89: catch block - error dialog shown when deletion fails
   it("shows error dialog when deletion fails (line 89 catch block)", async () => {
     mockDeleteUser.mockRejectedValueOnce(new Error("fail"));
     render(<DeleteAccountTab />);
@@ -140,7 +140,7 @@ describe("DeleteAccountTab", () => {
     expect(mockLogout).not.toHaveBeenCalled();
   });
 
-  // Line 20: if (confirmText !== user?.email) return — guard when email doesn't match
+  // Line 20: if (confirmText !== user?.email) return - guard when email doesn't match
   it("does not call usersService.delete when confirmText does not match email (lines 20 guard)", async () => {
     render(<DeleteAccountTab />);
     const input = screen.getByPlaceholderText("confirm_email_placeholder");
@@ -172,7 +172,7 @@ describe("DeleteAccountTab", () => {
     const button = screen.getByText("permanently_delete_account");
     expect(button).not.toBeDisabled();
 
-    // Now change the input to a wrong value — button re-disables but internal
+    // Now change the input to a wrong value - button re-disables but internal
     // confirmText state is wrong. We then force-enable the button via removeAttribute
     // and click, exercising the if(confirmText !== user?.email) return path.
     fireEvent.change(input, { target: { value: "different@email.com" } });
@@ -186,7 +186,7 @@ describe("DeleteAccountTab", () => {
     expect(mockDeleteUser).not.toHaveBeenCalled();
   });
 
-  // Line 20: user?.email is undefined (user is null) — confirmText !== undefined always true → early return
+  // Line 20: user?.email is undefined (user is null) - confirmText !== undefined always true → early return
   it("early-returns when user is null so user?.email is undefined (line 20 user null branch)", async () => {
     currentAuthUser = null;
     render(<DeleteAccountTab />);
@@ -228,7 +228,7 @@ describe("DeleteAccountTab", () => {
     expect(screen.queryByTestId("message-dialog")).not.toBeInTheDocument();
   });
 
-  // Lines 22-24: if (user?.id) false branch — user exists but has no id
+  // Lines 22-24: if (user?.id) false branch - user exists but has no id
   it("does not call usersService.delete when user has no id (if (user?.id) false branch)", async () => {
     // Set user with empty id but valid email
     currentAuthUser = { id: "", email: "user@test.com" };
@@ -236,7 +236,7 @@ describe("DeleteAccountTab", () => {
     render(<DeleteAccountTab />);
     const input = screen.getByPlaceholderText("confirm_email_placeholder");
 
-    // Type the correct email — confirmText matches user?.email so button enables
+    // Type the correct email - confirmText matches user?.email so button enables
     fireEvent.change(input, { target: { value: "user@test.com" } });
 
     // Button should be enabled since confirmText === user?.email
@@ -252,7 +252,7 @@ describe("DeleteAccountTab", () => {
     expect(screen.queryByTestId("message-dialog")).not.toBeInTheDocument();
   });
 
-  // Line 89: isDeleting ? "deleting" : "permanently_delete_account" — true branch
+  // Line 89: isDeleting ? "deleting" : "permanently_delete_account" - true branch
   it("shows 'deleting' text while account deletion is in progress (line 89 isDeleting true branch)", async () => {
     let resolveDelete!: (val: unknown) => void;
     mockDeleteUser.mockImplementation(
@@ -266,7 +266,7 @@ describe("DeleteAccountTab", () => {
     const input = screen.getByPlaceholderText("confirm_email_placeholder");
     fireEvent.change(input, { target: { value: "user@test.com" } });
 
-    // Click without awaiting the promise — setIsDeleting(true) fires before the await
+    // Click without awaiting the promise - setIsDeleting(true) fires before the await
     fireEvent.click(screen.getByText("permanently_delete_account"));
 
     await waitFor(() => expect(screen.getByText("deleting")).toBeInTheDocument());
@@ -277,7 +277,7 @@ describe("DeleteAccountTab", () => {
     });
   });
 
-  // MessageDialog: dialog?.type ?? "success" — covers the ?? "success" fallback
+  // MessageDialog: dialog?.type ?? "success" - covers the ?? "success" fallback
   // This fires when dialog is null but MessageDialog still receives type prop
   it("MessageDialog type defaults to 'success' via ?? operator when dialog is null", () => {
     render(<DeleteAccountTab />);
@@ -299,7 +299,7 @@ describe("DeleteAccountTab", () => {
     expect(lastProps.description).toBe("");
   });
 
-  // onClose: dialog?.type === "success" — false branch (error dialog closed, no logout)
+  // onClose: dialog?.type === "success" - false branch (error dialog closed, no logout)
   it("onClose: does not call logout when dialog type is 'error' (dialog?.type === 'success' false branch)", async () => {
     mockDeleteUser.mockRejectedValueOnce(new Error("server error"));
     render(<DeleteAccountTab />);

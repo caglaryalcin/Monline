@@ -2,7 +2,7 @@ import { lastWeekdayOfMonth } from "@/lib/lastWeekday";
 import { isCredit } from "@/lib/recordTypes";
 import { paymentOwnerId } from "@/lib/standalonePayments";
 import { automaticLogoUrls } from "@/lib/subscriptionLogo";
-import { nextTrialPaymentDate } from "@/lib/subscriptionTrial";
+import { isTrialDate, nextTrialPaymentDate } from "@/lib/subscriptionTrial";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Currency, Cycle, PaymentRecord, Subscription } from "@/types";
 
@@ -124,9 +124,17 @@ export function getOccurrencesInMonth(
       )
       .map((record) => record.scheduled_date),
   );
-  return projectedDatesInMonth(sub, year, month, cycles).filter(
-    (date) => !moved.has(toDateStr(date)),
-  );
+  const cycleName = sub.expand?.cycle?.name ?? cycles.find((cycle) => cycle.id === sub.cycle)?.name;
+  return projectedDatesInMonth(sub, year, month, cycles).filter((date) => {
+    const day = toDateStr(date);
+    if (moved.has(day)) return false;
+    // A saved occurrence keeps its date when the owner's holiday preferences change.
+    return cycleName !== "Last-Weekday" || isTrialDate(sub, day) || !records.some((record) => {
+      const origin = record.scheduled_date || toDateOnly(record.due_date);
+      return record.subscription_id === sub.id && origin !== day &&
+        origin.slice(0, 7) === day.slice(0, 7) && !isTrialDate(sub, origin);
+    });
+  });
 }
 
 function projectedDatesInMonth(
@@ -209,7 +217,7 @@ function projectedDatesInMonth(
     const mo = ((targetMonth % 12) + 12) % 12;
     const daysInTarget = new Date(yr, mo + 1, 0).getDate();
     const target = new Date(yr, mo, Math.min(originalDay, daysInTarget));
-    if (cycleName === "Last-Weekday") target.setDate(Number(lastWeekdayOfMonth(toDateStr(target)).slice(8, 10)));
+    if (cycleName === "Last-Weekday") target.setDate(Number(lastWeekdayOfMonth(toDateStr(target), sub.billing_calendar).slice(8, 10)));
     return target;
   };
 
@@ -238,7 +246,7 @@ function projectedDatesInMonth(
   // so their history stays on the calendar (the bounds below already stop the
   // projection at the final occurrence). A merely paused schedule still has
   // payments ahead of it and must not project them, so "has a bound" is not
-  // enough — the bound has to have been reached. Both checks mirror the backend
+  // enough - the bound has to have been reached. Both checks mirror the backend
   // completion rules in src/domain/lib/pure/subscription-limits.js so the calendar
   // and the cron agree on when a schedule is done.
   if (sub.inactive) {

@@ -27,7 +27,12 @@ async function sendTelegram(botToken, chatId, message) {
     },
     body: JSON.stringify({
       chat_id: chatId,
-      text: message,
+      // Keep Telegram's existing Markdown syntax and accept shared **bold** templates.
+      // Escapes and code spans/blocks remain literal.
+      text: String(message).replace(
+        /\\[\s\S]|```[\s\S]*?```|`[^`\n]*`|\*\*([^\n]+?)\*\*/g,
+        (match, bold) => bold === undefined ? match : `*${bold}*`,
+      ),
       parse_mode: "Markdown",
     }),
   });
@@ -154,6 +159,7 @@ async function dispatchToAllProviders(
   }
   const cache = {};
   const language = notifConfig.getString("language") || "en";
+  const confirmedUserName = notifConfig.getString("confirmed_user_name");
   const selectedTemplates =
     require("../../notification-language.cjs").templatesForLanguage(
       {
@@ -174,6 +180,7 @@ async function dispatchToAllProviders(
           subscriptions: subsData,
           url,
           user_name: notifConfig.getString("user_name"),
+          confirmed_user_name: confirmedUserName,
           user_email: notifConfig.getString("user_email"),
           ...context,
           language,

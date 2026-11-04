@@ -32,11 +32,13 @@ export function ScopedTransferActions({
   const queryClient = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const running = useRef(false);
   const [selected, setSelected] = useState<ScopedBackup | null>(null);
   const [error, setError] = useState("");
   const label = t(scope === "calendar" ? "calendar_transfer" : "subscriptions_transfer");
-  const run = async (action: () => Promise<void>) => {
-    if (busy) return;
+  const run = async (action: () => Promise<void>, mode: "import" | "export" = "import") => {
+    if (running.current) return;
+    running.current = true;
     setBusy(true);
     setError("");
     try {
@@ -45,10 +47,12 @@ export function ScopedTransferActions({
       const key =
         err instanceof Error && err.message.startsWith("transfer_")
           ? err.message
-          : "transfer_import_failed";
-      setError(t(key));
-      toast.error(t(key));
+          : mode === "export" ? "transfer_export_failed" : "transfer_import_failed";
+      const message = t(key === "transfer_invalid_backup" ? "transfer_invalid_scoped_backup" : key);
+      setError(message);
+      toast.error(message);
     } finally {
+      running.current = false;
       setBusy(false);
     }
   };
@@ -74,7 +78,7 @@ export function ScopedTransferActions({
         aria-label={`${label}: ${t("import")}`}
         disabled={busy}
         onClick={() => input.current?.click()}
-        className="h-[42px] rounded-xl"
+        className={compact ? "h-11 w-11 rounded-xl" : "h-11 rounded-xl"}
       >
         <Upload className={compact ? "h-4 w-4" : "mr-2 h-4 w-4"} />
         {!compact && t("import")}
@@ -86,45 +90,41 @@ export function ScopedTransferActions({
         title={`${label}: ${t("export")}`}
         aria-label={`${label}: ${t("export")}`}
         disabled={busy}
-        onClick={() => void run(async () => exportBackup(() => {}, scope))}
-        className="h-[42px] rounded-xl"
+        onClick={() => void run(async () => exportBackup(() => {}, scope), "export")}
+        className={compact ? "h-11 w-11 rounded-xl" : "h-11 rounded-xl"}
       >
         <Download className={compact ? "h-4 w-4" : "mr-2 h-4 w-4"} />
         {!compact && t("export")}
       </Button>
-      <Dialog
-        open={!!selected}
-        onOpenChange={(open) => {
-          if (!open && !busy) setSelected(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{label}</DialogTitle>
-            <DialogDescription>
-              {t(scope === "calendar" ? "calendar_transfer_hint" : "subscriptions_transfer_hint")}
-            </DialogDescription>
-          </DialogHeader>
-          <p className="text-sm">
-            {t("transfer_record_count", {
-              count:
-                selected?.backup.data[scope === "calendar" ? "payment_records" : "subscriptions"]
-                  .length ?? 0,
-            })}
-          </p>
-          {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
+      {error && !selected && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {selected && (
+        <Dialog open onOpenChange={(open) => { if (!open && !running.current) setSelected(null); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{label}</DialogTitle>
+              <DialogDescription>
+                {t(scope === "calendar" ? "calendar_transfer_hint" : "subscriptions_transfer_hint")}
+              </DialogDescription>
+            </DialogHeader>
+            <p className="text-sm">
+              {t("transfer_record_count", {
+                count:
+                  selected.backup.data[scope === "calendar" ? "payment_records" : "subscriptions"]
+                    .length,
+              })}
             </p>
-          )}
-          <DialogFooter>
-            <Button variant="outline" disabled={busy} onClick={() => setSelected(null)}>
-              {t("cancel")}
-            </Button>
-            <Button
-              disabled={busy}
-              onClick={() => {
-                if (selected)
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+            <DialogFooter>
+              <Button variant="outline" disabled={busy} onClick={() => setSelected(null)}>
+                {t("cancel")}
+              </Button>
+              <Button
+                disabled={busy}
+                onClick={() => {
                   void run(async () => {
                     const result = await importScopedData(selected);
                     await queryClient.invalidateQueries();
@@ -136,13 +136,14 @@ export function ScopedTransferActions({
                       }),
                     );
                   });
-              }}
-            >
-              {t(busy ? "saving" : "import")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                }}
+              >
+                {t(busy ? "saving" : "import")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 }

@@ -14,7 +14,7 @@ const queryClient = new QueryClient({
         const status = error && typeof error === "object" && "status" in error ? error.status : 0;
         return attempt < 1 && ![400, 401, 403, 404].includes(Number(status));
       },
-      staleTime: 5 * 60_000, // 5 minutes — data is stable; no need to refetch every 30s
+      staleTime: 5 * 60_000, // 5 minutes - data is stable; no need to refetch every 30s
       refetchOnWindowFocus: true, // Refresh stale data when returning to a long-open tab.
     },
   },

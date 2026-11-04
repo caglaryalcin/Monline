@@ -588,7 +588,7 @@ describe("CalendarMonthCard", () => {
       />,
     );
 
-    // The day badge sums the $20 expense only — the $500 credit is income, so
+    // The day badge sums the $20 expense only - the $500 credit is income, so
     // it never inflates what the day appears to cost.
     expect(screen.queryByText("520.00 $")).not.toBeInTheDocument();
     // Both the day badge and the expense row read "20.00 $".

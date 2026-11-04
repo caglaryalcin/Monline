@@ -12,7 +12,6 @@ export const TRANSFER_COLLECTIONS = [
   "payment_methods",
   "household",
   "notifications_config",
-  "fixer_settings",
   "notification_log",
   "bank_statements",
 ] as const;
@@ -24,6 +23,8 @@ interface BackupFile {
   field: string;
   name: string;
   base64?: string;
+  sourceCollection?: "subscriptions";
+  sourceRecordId?: string;
 }
 export interface AccountBackup {
   format: "monline-account-backup";
@@ -79,7 +80,7 @@ export async function exportBackup(
   // Sequential reads bound memory and avoid flooding the NAS or file storage.
   for (const [index, file] of backup.files.entries()) {
     const url = client.files.getURL(
-      { collectionId: file.collection, id: file.recordId } as Parameters<
+      { collectionId: file.sourceCollection || file.collection, id: file.sourceRecordId || file.recordId } as Parameters<
         typeof client.files.getURL
       >[0],
       file.name,
@@ -120,26 +121,56 @@ export async function exportInstanceBackup(password: string) {
   downloadBlob(blob, `monline-backup-${new Date().toISOString().slice(0, 10)}.tar.gz`);
 }
 
-export async function readImportFile(file: File): Promise<AccountBackup> {
+async function parseImportFile(file: File): Promise<unknown> {
   if (file.size > MAX_BYTES) throw new Error("transfer_too_large");
-  let parsed;
-  try {
-    parsed = JSON.parse(await file.text());
-  } catch {
+  try { return JSON.parse(await file.text()); }
+  catch { throw new Error("transfer_invalid_backup"); }
+}
+
+function validateAccountBackup(value: unknown): AccountBackup {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("transfer_invalid_backup");
+  const parsed = value as AccountBackup;
+  if (parsed.format !== "monline-account-backup" || parsed.version !== 1 ||
+      !parsed.profile || typeof parsed.profile !== "object" || Array.isArray(parsed.profile) ||
+      !parsed.data || typeof parsed.data !== "object" || Array.isArray(parsed.data) ||
+      !Array.isArray(parsed.files) || !Array.isArray(parsed.cycles)) throw new Error("transfer_invalid_backup");
+  // Older account exports predate statement support.
+  if (parsed.data.bank_statements === undefined) parsed.data.bank_statements = [];
+  if (!TRANSFER_COLLECTIONS.every((name) => Array.isArray(parsed.data[name]))) throw new Error("transfer_invalid_backup");
+  const fileTables: Record<string, { rows: TransferRecord[]; fields: string[] }> = {
+    users: { rows: [{ ...parsed.profile, id: parsed.accountId }], fields: ["avatar"] },
+    subscriptions: { rows: parsed.data.subscriptions, fields: ["logo"] },
+    payment_methods: { rows: parsed.data.payment_methods, fields: ["icon"] },
+    payment_records: { rows: parsed.data.payment_records, fields: ["proof", "logo"] },
+  };
+  const attachments = new Set<string>();
+  if (Object.values(parsed.data).some((rows) => !Array.isArray(rows) || rows.some((row) => !row || typeof row !== "object" || Array.isArray(row))))
     throw new Error("transfer_invalid_backup");
+  let attachmentBytes = 0;
+  for (const file of parsed.files) {
+    if (!file || typeof file.collection !== "string" || typeof file.recordId !== "string" ||
+        typeof file.field !== "string" || typeof file.name !== "string" || !file.name ||
+        typeof file.base64 !== "string" || file.base64.length % 4 ||
+        !/^[A-Za-z0-9+/]*={0,2}$/.test(file.base64))
+      throw new Error("transfer_invalid_backup");
+    const table = Object.prototype.hasOwnProperty.call(fileTables, file.collection) ? fileTables[file.collection] : undefined;
+    const row = table?.rows.find((record) => record.id === file.recordId);
+    const key = JSON.stringify([file.collection, file.recordId, file.field]);
+    if (!table?.fields.includes(file.field) || !row || row[file.field] !== file.name || attachments.has(key) || [...file.name].some((char) => char === "/" || char === "\\" || char.charCodeAt(0) < 32))
+      throw new Error("transfer_invalid_backup");
+    attachments.add(key);
+    attachmentBytes += file.base64.length * 0.75;
+    if (attachmentBytes > 64 * 1024 * 1024 || file.base64.length > 16 * 1024 * 1024) throw new Error("transfer_too_large");
   }
-  // Backups made before statement support have no such dataset.
-  if (parsed?.data && parsed.data.bank_statements === undefined) parsed.data.bank_statements = [];
-  if (
-    parsed?.format !== "monline-account-backup" ||
-    parsed.version !== 1 ||
-    !parsed.profile ||
-    !Array.isArray(parsed.files) ||
-    !Array.isArray(parsed.cycles) ||
-    !TRANSFER_COLLECTIONS.every((name) => Array.isArray(parsed.data?.[name]))
-  )
-    throw new Error("transfer_invalid_backup");
-  return parsed as AccountBackup;
+  for (const [collection, table] of Object.entries(fileTables))
+    for (const row of table.rows)
+      for (const field of table.fields)
+        if (row[field] && !attachments.has(JSON.stringify([collection, row.id, field]))) throw new Error("transfer_invalid_backup");
+  return parsed;
+}
+
+export async function readImportFile(file: File): Promise<AccountBackup> {
+  return validateAccountBackup(await parseImportFile(file));
 }
 
 export async function importData(backup: AccountBackup): Promise<ImportResult> {
@@ -151,23 +182,10 @@ export async function importData(backup: AccountBackup): Promise<ImportResult> {
 }
 
 export async function readScopedImport(file: File, scope: TransferScope): Promise<ScopedBackup> {
-  if (file.size > MAX_BYTES) throw new Error("transfer_too_large");
-  let parsed;
-  try {
-    parsed = JSON.parse(await file.text());
-  } catch {
+  const parsed = await parseImportFile(file) as ScopedBackup | null;
+  if (!parsed || parsed.format !== "monline-scoped-backup" || parsed.version !== 1 || parsed.scope !== scope || !parsed.backup)
     throw new Error("transfer_invalid_backup");
-  }
-  if (
-    parsed?.format !== "monline-scoped-backup" ||
-    parsed.version !== 1 ||
-    parsed.scope !== scope ||
-    !parsed.backup
-  )
-    throw new Error("transfer_invalid_backup");
-  const backup = await readImportFile(
-    new File([JSON.stringify(parsed.backup)], "backup.json", { type: "application/json" }),
-  );
+  const backup = validateAccountBackup(parsed.backup);
   return { ...parsed, backup };
 }
 export const importScopedData = (data: ScopedBackup) =>

@@ -77,7 +77,7 @@ export function CostHistoryTooltip({
               ))}
             </ul>
           ) : (
-            <p className="text-muted-foreground">—</p>
+            <p className="text-muted-foreground">-</p>
           )}
         </section>
       ))}

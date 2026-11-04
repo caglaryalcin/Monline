@@ -108,7 +108,7 @@ export function StatisticsPage() {
   const periodLabel =
     categories.from === categories.to
       ? historyMonth(categories.to, language, true)
-      : `${historyMonth(categories.from, language)} — ${historyMonth(categories.to, language)}`;
+      : `${historyMonth(categories.from, language)} - ${historyMonth(categories.to, language)}`;
 
   const loading = subscriptionsQuery.isPending || currenciesQuery.isPending;
   const error = subscriptionsQuery.isError || currenciesQuery.isError;

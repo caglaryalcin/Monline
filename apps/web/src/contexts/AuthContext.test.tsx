@@ -437,7 +437,7 @@ describe("AuthContext", () => {
     // Wait for bootstrap to complete and populate isAdminRef
     await waitFor(() => expect(screen.getByTestId("admin").textContent).toBe("true"));
 
-    // Now call login — isAdminRef is already set so fetchIsAdmin should NOT be called again
+    // Now call login - isAdminRef is already set so fetchIsAdmin should NOT be called again
     const callCount = mockApiGet.mock.calls.length;
     await act(async () => {
       screen.getByRole("button", { name: "Login" }).click();

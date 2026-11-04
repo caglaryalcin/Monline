@@ -1,4 +1,5 @@
 export interface TrialSubscription {
+  billing_calendar?: import("./business-calendar.mjs").BusinessCalendar;
   price?: unknown;
   price_changes?: import("./subscription-prices.mjs").SubscriptionPriceChange[] | null;
   trial_months?: number;

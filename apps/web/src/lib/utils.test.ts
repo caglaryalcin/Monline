@@ -153,7 +153,7 @@ describe("formatPrice", () => {
   });
 
   it("falls back gracefully on invalid locale", () => {
-    // Invalid locale should not throw — fallback uses toFixed(2)
+    // Invalid locale should not throw - fallback uses toFixed(2)
     const result = formatPrice(5.5, "X", "invalid-locale-xyz");
     expect(result).toContain("X");
   });
@@ -324,7 +324,7 @@ describe("sanitizeHref", () => {
   });
 
   it("returns null for relative paths", () => {
-    // Relative paths aren't valid absolute URLs — rejected for safety
+    // Relative paths aren't valid absolute URLs - rejected for safety
     expect(sanitizeHref("/relative/path")).toBeNull();
   });
 });
@@ -354,7 +354,7 @@ describe("getColorForSub", () => {
     expect(getColorForSub(makeSub("abc"), 0)).toBeTruthy();
   });
 
-  it("is deterministic — same id and index always returns same color", () => {
+  it("is deterministic - same id and index always returns same color", () => {
     const sub = makeSub("abc");
     expect(getColorForSub(sub, 0)).toBe(getColorForSub(sub, 0));
   });

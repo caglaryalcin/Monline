@@ -36,6 +36,9 @@ export interface HistoricalPaymentInput {
 }
 
 export const paymentRecordsService = {
+  quickPay: (subscriptionId: string, data: { due_date: string; expected_amount: number; expected_currency: string; utc_offset_minutes: number }) =>
+    client.send<{ payment_id: string }>(`/api/subscriptions/${encodeURIComponent(subscriptionId)}/quick-pay`, { method: "POST", body: data }),
+
   move: (data: {
     payment_id?: string;
     subscription_id?: string;

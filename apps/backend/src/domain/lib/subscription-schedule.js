@@ -39,7 +39,7 @@ function advanceSubscription(app, subscriptionId, today, advance = true) {
       inactive: sub.get("inactive"),
       advanceDate: (date, cycle, frequency, day) => {
         const trial = require("./pure/subscription-trial.mjs").nextTrialPaymentDate(sub, date.toISOString().slice(0, 10), day, cycle);
-        return trial ? new Date(trial + "T00:00:00Z") : advanceDate(date, cycle, frequency, day);
+        return trial ? new Date(trial + "T00:00:00Z") : advanceDate(date, cycle, frequency, day, sub.get("billing_calendar"));
       },
       onOccurrence: (date) => {
         if (!start || date >= start)

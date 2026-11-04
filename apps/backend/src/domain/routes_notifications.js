@@ -26,7 +26,7 @@ const providerFields = {
   serverchan: ["serverchan_send_key"],
 };
 // ================================================================
-// ROUTE: POST /api/notifications/test — send a test notification
+// ROUTE: POST /api/notifications/test - send a test notification
 // ================================================================
 routerAdd("POST", "/api/notifications/test", async (e) => {
   if (!e.auth)
@@ -148,18 +148,7 @@ routerAdd("POST", "/api/notifications/test", async (e) => {
           return e.json(400, {
             error: "Token or Chat ID not configured",
           });
-        await httpClient.send({
-          url: "https://api.telegram.org/bot" + token + "/sendMessage",
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: message,
-            parse_mode: "Markdown",
-          }),
-        });
+        await require(domainPath + "/lib/notifications.js").sendTelegram(token, chatId, message);
         break;
       }
       case "gotify": {

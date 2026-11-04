@@ -473,7 +473,7 @@ describe("TwoFactorTab", () => {
     fireEvent.click(screen.getByText("regenerate"));
     await waitFor(() => expect(screen.getByTestId("backup-codes-grid")).toBeInTheDocument());
 
-    // Now delete 2FA — handleDelete sets setNewBackup(null) so grid disappears
+    // Now delete 2FA - handleDelete sets setNewBackup(null) so grid disappears
     fireEvent.click(screen.getByText("delete_2fa_setup"));
     fireEvent.click(screen.getByTestId("otp-confirm"));
     await waitFor(() => expect(totpDelete).toHaveBeenCalled());
@@ -495,7 +495,7 @@ describe("TwoFactorTab", () => {
     expect(screen.getAllByTestId("otp-dialog")).toHaveLength(1);
   });
 
-  // Line 99: if (user?.id) clearTrustedDevice — true branch (user.id is set)
+  // Line 99: if (user?.id) clearTrustedDevice - true branch (user.id is set)
   it("calls clearTrustedDevice with user id when disable succeeds (line 99 true branch)", async () => {
     const { clearTrustedDevice } = await import("@/components/settings/two-factor/helpers");
     useAuthMock.mockReturnValue(enabledUser);
@@ -507,10 +507,10 @@ describe("TwoFactorTab", () => {
     await waitFor(() => expect(clearTrustedDevice).toHaveBeenCalledWith("u1"));
   });
 
-  // Line 99: if (user?.id) — false branch (user.id is falsy / user is null)
+  // Line 99: if (user?.id) - false branch (user.id is falsy / user is null)
   it("does NOT call clearTrustedDevice when user.id is falsy during disable (line 99 false branch)", async () => {
     const { clearTrustedDevice } = await import("@/components/settings/two-factor/helpers");
-    // Use a user with no id — totp_enabled=true so the switch shows, but user?.id is falsy
+    // Use a user with no id - totp_enabled=true so the switch shows, but user?.id is falsy
     useAuthMock.mockReturnValue({
       user: { id: "", totp_enabled: true, totp_configured: true },
       refreshUser,
@@ -525,7 +525,7 @@ describe("TwoFactorTab", () => {
     expect(clearTrustedDevice).not.toHaveBeenCalled();
   });
 
-  // Line 114: if (user?.id) clearTrustedDevice — true branch (user.id is set)
+  // Line 114: if (user?.id) clearTrustedDevice - true branch (user.id is set)
   it("calls clearTrustedDevice with user id when delete succeeds (line 114 true branch)", async () => {
     const { clearTrustedDevice } = await import("@/components/settings/two-factor/helpers");
     useAuthMock.mockReturnValue(enabledUser);
@@ -536,7 +536,7 @@ describe("TwoFactorTab", () => {
     await waitFor(() => expect(clearTrustedDevice).toHaveBeenCalledWith("u1"));
   });
 
-  // Line 114: if (user?.id) — false branch (user.id is falsy)
+  // Line 114: if (user?.id) - false branch (user.id is falsy)
   it("does NOT call clearTrustedDevice when user.id is falsy during delete (line 114 false branch)", async () => {
     const { clearTrustedDevice } = await import("@/components/settings/two-factor/helpers");
     useAuthMock.mockReturnValue({
@@ -576,16 +576,16 @@ describe("TwoFactorTab", () => {
     expect(screen.getByText("enable_2fa")).toBeInTheDocument();
   });
 
-  // Line 65: verifyAndEnable — setupData is null → early return (no totpVerify call)
+  // Line 65: verifyAndEnable - setupData is null → early return (no totpVerify call)
   it("verifyAndEnable returns early when setupData is null (line 65 false branch)", async () => {
     render(<TwoFactorTab />);
-    // Don't start setup — just verify the verify button isn't accessible
+    // Don't start setup - just verify the verify button isn't accessible
     expect(screen.queryByText("verify")).not.toBeInTheDocument();
     expect(totpVerify).not.toHaveBeenCalled();
   });
 
-  // Line 123: state ternary — isEnabled=false, isConfigured=false → "not_configured"
-  it("renders not_configured state — enable button shown, no switch (line 123 not_configured branch)", () => {
+  // Line 123: state ternary - isEnabled=false, isConfigured=false → "not_configured"
+  it("renders not_configured state - enable button shown, no switch (line 123 not_configured branch)", () => {
     useAuthMock.mockReturnValue(notConfiguredUser);
     render(<TwoFactorTab />);
     expect(screen.getByText("enable_2fa")).toBeInTheDocument();

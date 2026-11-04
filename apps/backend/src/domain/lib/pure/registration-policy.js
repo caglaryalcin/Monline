@@ -10,7 +10,7 @@
  * `disable_login` counts too: an instance in lockdown that still accepted
  * signups would hand out accounts nobody can log into.
  *
- * The very first account is always allowed regardless of the settings —
+ * The very first account is always allowed regardless of the settings -
  * otherwise a fresh instance whose defaults happen to be off could never be
  * bootstrapped, locking the owner out of their own deployment. That
  * anti-lockout guarantee outranks every other rule here, lockdown included.

@@ -26,7 +26,7 @@ routerAdd("GET", "/api/calendar/ical", function (e) {
     });
   }
 
-  // Resolve via the new multi-key system (inlined — Node.js scoping)
+  // Resolve via the new multi-key system (inlined - Node.js scoping)
   if (!userId) {
     try {
       var keyHash = security.sha256(rawKey);

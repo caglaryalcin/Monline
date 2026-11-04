@@ -179,7 +179,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
               <button
                 type="button"
                 disabled={disabled}
-                aria-label={`${label}: ${selected ? format(selected, "dd/MM/yyyy") : "—"}`}
+                aria-label={`${label}: ${selected ? format(selected, "dd/MM/yyyy") : "-"}`}
                 className="absolute inset-y-0 right-0 flex w-9 items-center justify-center rounded-r-md text-muted-foreground focus-visible:outline focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <CalendarDays className="h-4 w-4" aria-hidden="true" />

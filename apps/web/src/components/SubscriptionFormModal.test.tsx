@@ -788,9 +788,10 @@ describe("SubscriptionFormModal", () => {
       />,
     );
 
-    // Only presets whose cycle exists are offered (no Weekly/Quarterly here).
+    // Quarterly and half-yearly use the available Monthly cycle; Weekly is absent.
     expect(screen.queryByTestId("select-item-weekly")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("select-item-quarterly")).not.toBeInTheDocument();
+    expect(screen.getByTestId("select-item-quarterly")).toBeInTheDocument();
+    expect(screen.getByTestId("select-item-half_yearly")).toBeInTheDocument();
     expect(document.querySelector('input[name="frequency"]')).not.toBeInTheDocument();
 
     fireEvent.change(document.querySelector('input[name="name"]') as HTMLInputElement, {
@@ -1257,11 +1258,11 @@ describe("SubscriptionFormModal", () => {
 
     const logoInput = screen.getByPlaceholderText("search_logo...");
 
-    // Focus with short query — should not show results
+    // Focus with short query - should not show results
     fireEvent.focus(logoInput);
     expect(screen.queryByText("loading")).not.toBeInTheDocument();
 
-    // Focus with 2+ char query — should show results panel
+    // Focus with 2+ char query - should show results panel
     fireEvent.change(logoInput, { target: { value: "ne" } });
     fireEvent.focus(logoInput);
 
@@ -1287,7 +1288,7 @@ describe("SubscriptionFormModal", () => {
     const logoInput = screen.getByPlaceholderText("search_logo...");
     fireEvent.change(logoInput, { target: { value: "ne" } });
 
-    // Advance timer past debounce (350ms) — triggers the search
+    // Advance timer past debounce (350ms) - triggers the search
     await vi.advanceTimersByTimeAsync(400);
 
     // Simulate clicking outside logo search
@@ -1427,7 +1428,7 @@ describe("SubscriptionFormModal", () => {
     const logoInput = screen.getByPlaceholderText("search_logo...");
     fireEvent.change(logoInput, { target: { value: "spotify" } });
 
-    // Advance past debounce — triggers collectLogos which sets searching=true then false
+    // Advance past debounce - triggers collectLogos which sets searching=true then false
     await vi.advanceTimersByTimeAsync(400);
     // Flush the currently pending search work without recursively draining
     // timers scheduled by React's test environment.
@@ -1565,7 +1566,7 @@ describe("SubscriptionFormModal", () => {
     const resultButtons = document.querySelectorAll(".h-20.rounded.border");
     const firstImg = resultButtons[0].querySelector("img") as HTMLImageElement;
 
-    // Trigger the onError handler — should hide the image
+    // Trigger the onError handler - should hide the image
     fireEvent.error(firstImg);
     expect(firstImg.style.display).toBe("none");
 
@@ -1669,7 +1670,7 @@ describe("SubscriptionFormModal", () => {
   it("falls back to compact.com when domainSet is empty (lines 367-368)", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
-    // All fetches throw (clearbit included) — domainSet stays empty, compact fallback runs
+    // All fetches throw (clearbit included) - domainSet stays empty, compact fallback runs
     const fetchMock = vi.fn().mockRejectedValue(new Error("network"));
     vi.stubGlobal("fetch", fetchMock);
 
@@ -1841,7 +1842,7 @@ describe("SubscriptionFormModal", () => {
       { timeout: 5000 },
     );
 
-    // Select a second logo — this should revoke the first preview
+    // Select a second logo - this should revoke the first preview
     const btns2 = document.querySelectorAll(".h-20.rounded.border");
     fireEvent.click(btns2[0] as HTMLElement);
 
@@ -1854,13 +1855,13 @@ describe("SubscriptionFormModal", () => {
 
   // ── New tests targeting missing branch coverage ──────────────────────────────
 
-  // Line 694: logoPreview is null but logoUrl is set — preview image renders with logoUrl as src
+  // Line 694: logoPreview is null but logoUrl is set - preview image renders with logoUrl as src
   it("shows logo preview using logoUrl when logoPreview is null (line 694 branch)", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
     // Make fetch succeed so a logo result is returned and handleSelectLogo sets logoUrl
     // but we need logoFile=null and logoPreview from the search result
-    // Simplest: use a file upload then clear the file — but that clears logoUrl too.
+    // Simplest: use a file upload then clear the file - but that clears logoUrl too.
     // Instead, simulate a logo search result where the result has a previewUrl.
     // After clicking a logo result, logoPreview = result.previewUrl and logoUrl = result.source.
     // The preview container shows src={logoPreview || logoUrl}, so both branches are hit
@@ -1915,7 +1916,7 @@ describe("SubscriptionFormModal", () => {
       { timeout: 5000 },
     );
 
-    // Select the logo — sets logoPreview='blob:preview-1', logoUrl='http://logo.example.com/logo.png'
+    // Select the logo - sets logoPreview='blob:preview-1', logoUrl='http://logo.example.com/logo.png'
     const resultButtons = document.querySelectorAll(".h-20.rounded.border");
     fireEvent.click(resultButtons[0] as HTMLElement);
 
@@ -1926,7 +1927,7 @@ describe("SubscriptionFormModal", () => {
     });
 
     // Now upload a file (which sets a new logoPreview via createObjectURL) then clear the file
-    // to set logoPreview=null — at this point logoUrl was cleared by the file upload handler
+    // to set logoPreview=null - at this point logoUrl was cleared by the file upload handler
     // Actually: file upload handler also sets logoUrl="" and logoFile=file.
     // To get logoUrl-only: we need a path where logoUrl is set but logoPreview is null.
     // The logoUrl gets set only via handleSelectLogo. After selecting a logo from search,
@@ -1946,7 +1947,7 @@ describe("SubscriptionFormModal", () => {
     vi.unstubAllGlobals();
   });
 
-  // Lines 724-794: validation error display branches — trigger by submitting with empty required fields
+  // Lines 724-794: validation error display branches - trigger by submitting with empty required fields
   it("displays validation errors for required fields when submitted blank (lines 724-794)", async () => {
     // Override useQuery to return empty cycles so cycle field defaults to ""
     mocks.useQuery.mockReturnValue({ data: [] });
@@ -1968,7 +1969,7 @@ describe("SubscriptionFormModal", () => {
     const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: "" } });
 
-    // Submit — triggers Zod validation which populates errors.*
+    // Submit - triggers Zod validation which populates errors.*
     if (screen.queryByTestId("select-item-cat-1"))
       fireEvent.click(screen.getByTestId("select-item-cat-1"));
     fireEvent.click(screen.getByRole("button", { name: "save" }));
@@ -2004,14 +2005,14 @@ describe("SubscriptionFormModal", () => {
       ([opts]) => Array.isArray(opts.queryKey) && opts.queryKey[0] === "cycles",
     );
 
-    // The queryFn is the `fetchCycles` function — calling it exercises the branch
+    // The queryFn is the `fetchCycles` function - calling it exercises the branch
     if (cycleCall?.[0]?.queryFn) {
       // cyclesService.list is not separately mocked here; the call will attempt to run.
       // We just verify the queryFn is defined and callable (branch coverage for line 61).
       try {
         await cycleCall[0].queryFn();
       } catch {
-        // May throw since cyclesService is not mocked — that's fine, we exercised the branch
+        // May throw since cyclesService is not mocked - that's fine, we exercised the branch
       }
     }
 
@@ -2049,7 +2050,7 @@ describe("SubscriptionFormModal", () => {
   });
 
   it("defaults currency to first non-main currency when no currency is marked main (branch 192)", () => {
-    // Pass two currencies, neither marked main — currencies[0]?.id should be used as fallback
+    // Pass two currencies, neither marked main - currencies[0]?.id should be used as fallback
     const currencies = [
       getCurrency({ id: "cur-1", is_main: false }),
       getCurrency({ id: "cur-2", is_main: false }),
@@ -2274,7 +2275,7 @@ describe("SubscriptionFormModal", () => {
       { timeout: 5000 },
     );
 
-    // Select logo — logoPreview='blob:the-preview', logoUrl='https://some.source/logo.png'
+    // Select logo - logoPreview='blob:the-preview', logoUrl='https://some.source/logo.png'
     fireEvent.click(document.querySelectorAll(".h-20.rounded.border")[0] as HTMLElement);
 
     // Preview image should be visible with the previewUrl as src (left branch of ||)

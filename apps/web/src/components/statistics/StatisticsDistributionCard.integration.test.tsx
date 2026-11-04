@@ -125,7 +125,7 @@ it("shows changed period totals even when recurring categories keep the same per
       title="Categories"
       mainSymbol="$"
       year={2025}
-      periodLabel="January — December 2025"
+      periodLabel="January - December 2025"
       data={[
         { name: "Streaming", value: 60 },
         { name: "Music", value: 180 },
@@ -139,7 +139,7 @@ it("shows changed period totals even when recurring categories keep the same per
       title="Categories"
       mainSymbol="$"
       year={2026}
-      periodLabel="January — December 2026"
+      periodLabel="January - December 2026"
       data={[
         { name: "Streaming", value: 120 },
         { name: "Music", value: 360 },

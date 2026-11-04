@@ -329,7 +329,7 @@ describe("DayPanel", () => {
 
   it("renders an every-N label when sub.frequency matches no preset", () => {
     const entry = {
-      sub: getSubscription({ id: "sub-1", frequency: 3 }),
+      sub: getSubscription({ id: "sub-1", frequency: 5 }),
       date: new Date(2026, 2, 10),
     };
 

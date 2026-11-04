@@ -1,7 +1,7 @@
 const { Record, repository, routerAdd, security } = require("../runtime.cjs");
 const domainPath = __dirname;
 // ================================================================
-// GET /api/api-keys  — administrator-managed integration keys
+// GET /api/api-keys  - administrator-managed integration keys
 // ================================================================
 routerAdd("GET", "/api/api-keys", function (e) {
   try {
@@ -37,7 +37,7 @@ routerAdd("GET", "/api/api-keys", function (e) {
 });
 
 // ================================================================
-// POST /api/api-keys  — create a new API key (plain key returned once)
+// POST /api/api-keys  - create a new API key (plain key returned once)
 // ================================================================
 routerAdd("POST", "/api/api-keys", function (e) {
   try {
@@ -151,7 +151,7 @@ routerAdd("DELETE", "/api/api-keys/{id}", function (e) {
 });
 
 // ================================================================
-// PUT /api/api-keys/:id  — update API key name and permissions
+// PUT /api/api-keys/:id  - update API key name and permissions
 // ================================================================
 routerAdd("PUT", "/api/api-keys/{id}", function (e) {
   try {
@@ -2637,7 +2637,7 @@ routerAdd("POST", "/api/external/subscriptions/batch", function (e) {
         continue;
       }
 
-      // A save can still fail on rules this handler does not model — a blank
+      // A save can still fail on rules this handler does not model - a blank
       // required price, a relation id that does not resolve. Letting it reach
       // the outer catch would answer 500 and throw away both `created` and
       // `errors`, stranding the client with rows it cannot see.

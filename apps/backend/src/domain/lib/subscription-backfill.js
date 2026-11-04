@@ -170,6 +170,7 @@ function prepareInitialPayment(app, subscription, input, now = new Date()) {
       date,
       cycle,
       Number(subscription.get("frequency")),
+      subscription.get("billing_calendar"),
     );
   if (!next || next <= date)
     throw new BadRequestError("historical_invalid_date");
@@ -236,7 +237,7 @@ function prepareInitialPayment(app, subscription, input, now = new Date()) {
         );
         return trial
           ? new Date(trial + "T00:00:00Z")
-          : advanceDate(current, name, frequency, day);
+          : advanceDate(current, name, frequency, day, subscription.get("billing_calendar"));
       },
       onOccurrence: (due) => {
         if (due === date) return;

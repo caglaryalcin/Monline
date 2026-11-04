@@ -4,7 +4,7 @@ import {
   CUSTOM_BILLING_PRESET,
   findBillingPreset,
   formatBillingPeriod,
-} from "./billingPeriods";
+} from "@/lib/billingPeriods";
 
 const t = (key: string, options?: Record<string, unknown>) =>
   options?.count !== undefined ? `${key}:${options.count}` : key;
@@ -22,8 +22,10 @@ describe("billing period helpers", () => {
     expect(findBillingPreset("Yearly", 3)).toBe("triennial");
     expect(findBillingPreset("Weekly", 2)).toBe("biweekly");
     expect(findBillingPreset("Yearly", 5)).toBe(CUSTOM_BILLING_PRESET);
-    // Equivalent but not identical: kept as custom so saving does not rewrite the cycle.
-    expect(findBillingPreset("Monthly", 3)).toBe(CUSTOM_BILLING_PRESET);
+    expect(findBillingPreset("Monthly", 3)).toBe("quarterly");
+    expect(findBillingPreset("Monthly", 6)).toBe("half_yearly");
+    expect(findBillingPreset("Quarterly", 1)).toBe("quarterly");
+    expect(findBillingPreset("Half-Yearly", 1)).toBe("half_yearly");
     expect(findBillingPreset(undefined, 1)).toBe(CUSTOM_BILLING_PRESET);
   });
 
@@ -35,6 +37,8 @@ describe("billing period helpers", () => {
     expect(presets.map((preset) => [preset.id, preset.cycleId])).toEqual([
       ["monthly", "m"],
       ["bimonthly", "m"],
+      ["quarterly", "m"],
+      ["half_yearly", "m"],
       ["yearly", "y"],
       ["biennial", "y"],
       ["triennial", "y"],

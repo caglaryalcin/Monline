@@ -73,7 +73,7 @@ cronAdd("sendNotifications", "0 * * * *", async () => {
         configs[0],
       );
 
-    // Parse reminders array — default to [{days:3, hour:8}] if absent
+    // Parse reminders array - default to [{days:3, hour:8}] if absent
     let reminders = [
       {
         days: 3,

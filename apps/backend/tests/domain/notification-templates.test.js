@@ -50,7 +50,7 @@ it.each(LANGUAGES)(
 );
 it("uses Turkish dates, currency and reminder wording", () => {
   const result = renderNotification({}, "email", context("tr"));
-  expect(result.title).toBe("Monline — Yaklaşan ödemeler");
+  expect(result.title).toBe("Monline - Yaklaşan ödemeler");
   expect(result.message).toContain("01.11.2026");
   expect(result.message).toContain("1.234,50");
   expect(result.message).toContain("3 gün");

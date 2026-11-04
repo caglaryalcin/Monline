@@ -152,7 +152,7 @@ export function sanitizeHref(url: string | null | undefined): string | null {
       return url;
     }
   } catch {
-    // Not a valid absolute URL — could be relative or malformed; reject
+    // Not a valid absolute URL - could be relative or malformed; reject
   }
   return null;
 }
@@ -169,7 +169,7 @@ export function sanitizeImageSrc(src: string | null | undefined): string | null 
       return parsed.href;
     }
   } catch {
-    // Unparseable — reject
+    // Unparseable - reject
   }
   return null;
 }

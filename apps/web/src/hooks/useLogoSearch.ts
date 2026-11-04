@@ -101,7 +101,7 @@ export function useLogoSearch(automaticName = "", hasSavedLogo = false) {
             /* v8 ignore next */
             if (tooSmall) return null;
           } catch {
-            // Cannot check dimensions — accept
+            // Cannot check dimensions - accept
           }
         }
 

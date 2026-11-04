@@ -29,7 +29,7 @@ export interface OIDCAuthorization {
 }
 
 export const oidcService = {
-  /** Public endpoint — tells the login page whether an SSO provider is ready. */
+  /** Public endpoint - tells the login page whether an SSO provider is ready. */
   getConfig: async (): Promise<OIDCConfig> => {
     const response = await api.get<OIDCConfigResponse>("/api/auth/oidc/config", {
       cache: "no-store",

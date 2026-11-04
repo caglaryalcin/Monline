@@ -8,6 +8,7 @@ import type {
   SubscriptionPriceDisplay,
 } from "@/components/subscriptions/subscriptionsPage.types";
 import { Separator } from "@/components/ui/separator";
+import type { QuickPaymentActions } from "@/lib/quickPayment";
 import { cn } from "@/lib/utils";
 import type { Currency, Subscription } from "@/types";
 
@@ -69,6 +70,7 @@ function SubscriptionsEmptyState() {
 }
 
 interface SubscriptionsGridProps {
+  quickPayments?: QuickPaymentActions;
   onShare?: (subscription: Subscription) => void;
   isLoading: boolean;
   subscriptions: Subscription[];
@@ -95,6 +97,7 @@ interface SubscriptionsGridProps {
 }
 
 export function SubscriptionsGrid({
+  quickPayments,
   onShare,
   isLoading,
   subscriptions,
@@ -137,6 +140,7 @@ export function SubscriptionsGrid({
             <Separator className="!my-4 w-60 max-w-full" />
           )}
         <SubscriptionCard
+          quickPayments={quickPayments}
           onShare={onShare ? () => onShare(subscription) : undefined}
           sub={subscription}
           layout={layout}

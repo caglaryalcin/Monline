@@ -128,7 +128,7 @@ describe("ApiKeyFormDialog", () => {
     expect(onSubmit).toHaveBeenCalledWith("My Key", ["subscriptions:read"]);
   });
 
-  // Line 108: guard — does not call onSubmit when name is empty (even if button click forced)
+  // Line 108: guard - does not call onSubmit when name is empty (even if button click forced)
   it("does not call onSubmit when name is empty (line 108 guard)", () => {
     const onSubmit = vi.fn();
     render(
@@ -149,7 +149,7 @@ describe("ApiKeyFormDialog", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  // Line 108: guard — does not call onSubmit when permissions are empty
+  // Line 108: guard - does not call onSubmit when permissions are empty
   it("does not call onSubmit when permissions are empty (line 108 guard)", () => {
     const onSubmit = vi.fn();
     render(
@@ -165,7 +165,7 @@ describe("ApiKeyFormDialog", () => {
     );
     const nameInput = screen.getByPlaceholderText("api_key_name_placeholder");
     fireEvent.change(nameInput, { target: { value: "My Key" } });
-    // No permissions selected — submit is disabled but also handleSubmit guard fires
+    // No permissions selected - submit is disabled but also handleSubmit guard fires
     fireEvent.keyDown(nameInput, { key: "Enter" });
     expect(onSubmit).not.toHaveBeenCalled();
   });

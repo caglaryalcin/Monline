@@ -243,7 +243,7 @@ describe("SubDetailDialog", () => {
     mocks.daysUntil.mockReturnValue(5);
     render(
       <SubDetailDialog
-        sub={getSubscription({ frequency: 3 })}
+        sub={getSubscription({ frequency: 5 })}
         date={new Date("2026-03-10T00:00:00Z")}
         currencies={[getCurrency()]}
         mainCurrency={getCurrency()}
@@ -255,7 +255,7 @@ describe("SubDetailDialog", () => {
         t={(key) => key}
       />,
     );
-    // Monthly × 3 matches no preset, so it gets the "every N months" label
+    // Monthly × 5 matches no preset, so it gets the "every N months" label
     expect(screen.getByText("billing_every_n_months")).toBeInTheDocument();
   });
 

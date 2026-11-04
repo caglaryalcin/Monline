@@ -49,7 +49,7 @@ export function nextTrialPaymentDate(subscription, value, anchorDay, cycleName) 
   if (!isTrialDate(subscription, day)) return "";
   if (Number(field(subscription, "trial_duration") || 0) > 0) {
     const end = trialEndDate(subscription);
-    return cycleName === "Last-Weekday" ? weekdayBillingOnOrAfter(end) : end;
+    return cycleName === "Last-Weekday" ? weekdayBillingOnOrAfter(end, field(subscription, "billing_calendar")) : end;
   }
   const date = new Date(day + "T12:00:00Z");
   const anchor = Number(anchorDay || field(subscription, "billing_anchor_day")) || Number(day.slice(8, 10));
@@ -57,6 +57,6 @@ export function nextTrialPaymentDate(subscription, value, anchorDay, cycleName) 
   date.setUTCMonth(date.getUTCMonth() + 1);
   const last = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
   date.setUTCDate(Math.min(anchor, last));
-  if (cycleName === "Last-Weekday") return lastWeekdayOfMonth(date.toISOString().slice(0, 10));
+  if (cycleName === "Last-Weekday") return lastWeekdayOfMonth(date.toISOString().slice(0, 10), field(subscription, "billing_calendar"));
   return date.toISOString().slice(0, 10);
 }

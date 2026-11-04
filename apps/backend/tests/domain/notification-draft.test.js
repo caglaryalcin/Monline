@@ -162,7 +162,7 @@ it.each([
       Buffer.from(testRequest.headers.Title.slice(10, -2), "base64").toString(
         "utf8",
       ),
-    ).toBe("🔔 Monline — Test Notification");
+    ).toBe("🔔 Monline - Test Notification");
     await dispatchToAllProviders(
       {},
       {

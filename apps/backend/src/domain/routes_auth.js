@@ -7,7 +7,7 @@ const {
 const domainPath = __dirname;
 
 // ================================================================
-// ROUTE: GET /api/auth/bootstrap-status — public, reveals only whether
+// ROUTE: GET /api/auth/bootstrap-status - public, reveals only whether
 // at least one user exists so the login page can redirect first-run setups.
 // ================================================================
 routerAdd("GET", "/api/auth/bootstrap-status", (e) => {
@@ -23,7 +23,7 @@ routerAdd("GET", "/api/auth/bootstrap-status", (e) => {
 });
 
 // ================================================================
-// ROUTE: GET /api/auth/is-admin — authenticated, returns only whether
+// ROUTE: GET /api/auth/is-admin - authenticated, returns only whether
 // the current user is the first registered user.
 // ================================================================
 routerAdd("GET", "/api/auth/is-admin", (e) => {
@@ -46,7 +46,7 @@ routerAdd("GET", "/api/auth/is-admin", (e) => {
 });
 
 // ================================================================
-// ROUTE: TOTP Setup — generate secret + backup codes (not saved yet)
+// ROUTE: TOTP Setup - generate secret + backup codes (not saved yet)
 // ================================================================
 routerAdd("POST", "/api/auth/totp/setup", function (e) {
   var totpLib = require(domainPath + "/lib/totp.js");
@@ -75,7 +75,7 @@ routerAdd("POST", "/api/auth/totp/setup", function (e) {
 });
 
 // ================================================================
-// ROUTE: TOTP Verify — confirm code, then persist and enable 2FA
+// ROUTE: TOTP Verify - confirm code, then persist and enable 2FA
 // ================================================================
 routerAdd("POST", "/api/auth/totp/verify", function (e) {
   var totpLib = require(domainPath + "/lib/totp.js");
@@ -113,7 +113,7 @@ routerAdd("POST", "/api/auth/totp/verify", function (e) {
 });
 
 // ================================================================
-// ROUTE: TOTP Disable — verify current code (or backup), then disable
+// ROUTE: TOTP Disable - verify current code (or backup), then disable
 // ================================================================
 routerAdd("POST", "/api/auth/totp/disable", function (e) {
   var totpLib = require(domainPath + "/lib/totp.js");
@@ -154,7 +154,7 @@ routerAdd("POST", "/api/auth/totp/disable", function (e) {
 });
 
 // ================================================================
-// ROUTE: TOTP Re-enable — verify code, flip totp_enabled back on
+// ROUTE: TOTP Re-enable - verify code, flip totp_enabled back on
 // ================================================================
 routerAdd("POST", "/api/auth/totp/reenable", function (e) {
   var totpLib = require(domainPath + "/lib/totp.js");
@@ -184,7 +184,7 @@ routerAdd("POST", "/api/auth/totp/reenable", function (e) {
 });
 
 // ================================================================
-// ROUTE: TOTP Delete — verify code/backup then wipe all TOTP data
+// ROUTE: TOTP Delete - verify code/backup then wipe all TOTP data
 // ================================================================
 routerAdd("POST", "/api/auth/totp/delete", function (e) {
   var totpLib = require(domainPath + "/lib/totp.js");
@@ -247,12 +247,12 @@ routerAdd("POST", "/api/auth/totp/regenerate_backup", function (e) {
 });
 
 // ================================================================
-// ROUTE: TOTP Login Challenge — issued after password auth succeeds.
+// ROUTE: TOTP Login Challenge - issued after password auth succeeds.
 // Stores only a short-lived hashed challenge server-side.
 // ================================================================
 
 // ================================================================
-// ROUTE: TOTP Login Verify — consumes a challenge and returns a final
+// ROUTE: TOTP Login Verify - consumes a challenge and returns a final
 // Monline auth token only after the second factor succeeds.
 // ================================================================
 routerAdd("POST", "/api/auth/totp/login-verify", function (e) {

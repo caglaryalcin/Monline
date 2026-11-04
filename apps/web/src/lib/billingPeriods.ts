@@ -16,8 +16,8 @@ export const BILLING_PRESETS = [
   { id: "monthly", cycle: "Monthly", frequency: 1 },
   { id: "last_weekday", cycle: "Last-Weekday", frequency: 1 },
   { id: "bimonthly", cycle: "Monthly", frequency: 2 },
-  { id: "quarterly", cycle: "Quarterly", frequency: 1 },
-  { id: "half_yearly", cycle: "Half-Yearly", frequency: 1 },
+  { id: "quarterly", cycle: "Monthly", frequency: 3 },
+  { id: "half_yearly", cycle: "Monthly", frequency: 6 },
   { id: "yearly", cycle: "Yearly", frequency: 1 },
   { id: "biennial", cycle: "Yearly", frequency: 2 },
   { id: "triennial", cycle: "Yearly", frequency: 3 },
@@ -72,8 +72,12 @@ export function findBillingPreset(
   cycleName: string | undefined,
   frequency: number,
 ): BillingPresetId | typeof CUSTOM_BILLING_PRESET {
+  // Older imports may use dedicated quarterly/half-yearly cycles. Keep their
+  // preset labels while new records use the Monthly cycle available on every install.
+  const normalizedCycle = cycleName === "Quarterly" || cycleName === "Half-Yearly" ? "Monthly" : cycleName;
+  const normalizedFrequency = frequency * (cycleName === "Quarterly" ? 3 : cycleName === "Half-Yearly" ? 6 : 1);
   const match = BILLING_PRESETS.find(
-    (preset) => preset.cycle === cycleName && preset.frequency === frequency,
+    (preset) => preset.cycle === normalizedCycle && preset.frequency === normalizedFrequency,
   );
   return match?.id ?? CUSTOM_BILLING_PRESET;
 }

@@ -1,6 +1,6 @@
 /**
  * Compresses and converts an image to WebP using the Canvas API.
- * Always stays below 5 MB — the Monline default file size limit.
+ * Always stays below 5 MB - the Monline default file size limit.
  */
 export async function compressImage(
   file: File,

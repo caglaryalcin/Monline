@@ -240,7 +240,7 @@ describe("RegisterPage", () => {
 
     // The default currency value from the form is "USD" (from defaultValues).
     // The currency update only runs when data.currency !== "EUR".
-    // We need data.currency to be "EUR" — but our mock Select doesn't call onValueChange.
+    // We need data.currency to be "EUR" - but our mock Select doesn't call onValueChange.
     // To hit the EUR branch, we need to ensure the currency field value is "EUR".
     // Since the default is "USD" (from i18n mock language="en"), let's make this test
     // target the branch where `preferred` is not found (listCurrencies returns no USD match).

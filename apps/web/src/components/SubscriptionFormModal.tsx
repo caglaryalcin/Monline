@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { CreditCard } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
@@ -97,6 +97,9 @@ export function SubscriptionFormModal({
     ),
   ];
   const { user: authUser } = useAuth();
+  const billingCalendar = useMemo(() => sub?.billing_calendar ?? {
+    country: authUser?.country || "", region: authUser?.region || "",
+  }, [sub?.billing_calendar, authUser?.country, authUser?.region]);
   const sharedPayers = useQuery({
     queryKey: sharingKeys.payers(userId, sub?.id ?? ""),
     queryFn: () => sharingService.payers(sub!.id),
@@ -179,16 +182,16 @@ export function SubscriptionFormModal({
   const watchedNextPayment = watch("next_payment");
   useEffect(() => {
     if (watchedCycleName !== "Last-Weekday" || watchedTrial || !watchedNextPayment) return;
-    let normalized = lastWeekdayOfMonth(watchedNextPayment);
+    let normalized = lastWeekdayOfMonth(watchedNextPayment, billingCalendar);
     if (isPaid && normalized > localToday()) {
       const previous = new Date(watchedNextPayment + "T12:00:00Z");
       previous.setUTCDate(1);
       previous.setUTCDate(0);
-      normalized = lastWeekdayOfMonth(previous.toISOString().slice(0, 10));
+      normalized = lastWeekdayOfMonth(previous.toISOString().slice(0, 10), billingCalendar);
     }
     if (normalized && normalized !== watchedNextPayment)
       setValue("next_payment", normalized, { shouldDirty: true, shouldValidate: true });
-  }, [watchedCycleName, isPaid, watchedNextPayment, watchedTrial, setValue]);
+  }, [watchedCycleName, isPaid, watchedNextPayment, watchedTrial, setValue, billingCalendar]);
   const customPeriodLabel =
     watchedCycleName && Number.isInteger(watchedFrequency) && watchedFrequency >= 1
       ? formatBillingPeriod(t, watchedCycleName, watchedFrequency)
@@ -251,6 +254,7 @@ export function SubscriptionFormModal({
                       data.next_payment,
                       watchedCycleName || "Monthly",
                       parseInt(data.frequency),
+                      billingCalendar,
                     ),
             }
           : {}),
@@ -274,7 +278,7 @@ export function SubscriptionFormModal({
         end_date: !isCredit && data.end_mode === "date" ? data.end_date : "",
         payment_limit: !isCredit && data.end_mode === "payments" ? parseInt(data.payment_limit) : 0,
         // The cron counts elapsed payments for date-bounded schedules too, so an
-        // unrelated edit must not reset that tally — only dropping the schedule
+        // unrelated edit must not reset that tally - only dropping the schedule
         // entirely does.
         payments_completed:
           isCredit || data.end_mode === "never" ? 0 : parseInt(data.payments_completed) || 0,
@@ -734,7 +738,7 @@ export function SubscriptionFormModal({
                   />
                   {renderError("next_payment")}
                   {watchedCycleName === "Last-Weekday" && (
-                    <p className="text-xs leading-relaxed text-muted-foreground">{t("billing_last_weekday_hint")}</p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">{t(billingCalendar.country ? "billing_last_workday_holiday_hint" : "billing_last_weekday_hint")}</p>
                   )}
                 </div>
               </div>
@@ -747,6 +751,7 @@ export function SubscriptionFormModal({
                             watch("next_payment"),
                             watchedCycleName || "Monthly",
                             watchedFrequency,
+                            billingCalendar,
                           ),
                         ),
                       })
@@ -1123,6 +1128,7 @@ export function SubscriptionFormModal({
 
             {!sub && !isCredit && !isPaid && (
               <BackfillPaymentsEditor
+                calendar={billingCalendar}
                 start={
                   watchedTrial
                     ? watch("next_payment")
@@ -1130,6 +1136,7 @@ export function SubscriptionFormModal({
                         watch("next_payment"),
                         watchedCycleName || "Monthly",
                         watchedFrequency,
+                        billingCalendar,
                       )
                 }
                 anchorDate={watch("next_payment")}

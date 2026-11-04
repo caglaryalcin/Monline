@@ -87,7 +87,7 @@ vi.mock("@/lib/i18n", () => ({
 }));
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { resolvedLanguage: "en" } }),
 }));
 
 vi.mock("@/components/settings/profile/ProfileAvatarCard", () => ({
@@ -219,7 +219,7 @@ describe("ProfileTab", () => {
     await waitFor(() => expect(screen.getByTestId("avatar-preview")).toHaveTextContent("none"));
   });
 
-  // Branch 4: if (user) → false (user is null) — the entire useEffect body is skipped
+  // Branch 4: if (user) → false (user is null) - the entire useEffect body is skipped
   it("does not call avatarUrl when user is null (line 49 if(user) false branch)", async () => {
     currentAuthUser = null;
     avatarUrl.mockReturnValue(null);
@@ -347,7 +347,7 @@ describe("ProfileTab", () => {
     expect(formData.get("budget")).toBe("0");
   });
 
-  // onSubmit: if (data.oldPwd && data.newPwd) false branch — no password fields appended
+  // onSubmit: if (data.oldPwd && data.newPwd) false branch - no password fields appended
   it("does not include password fields in FormData when oldPwd is empty", async () => {
     renderComponent();
 
@@ -359,7 +359,7 @@ describe("ProfileTab", () => {
     expect(formData.get("password")).toBeNull();
   });
 
-  // onSubmit: if (avatarFile) false branch — no avatar appended
+  // onSubmit: if (avatarFile) false branch - no avatar appended
   it("does not include avatar in FormData when no file selected", async () => {
     renderComponent();
 

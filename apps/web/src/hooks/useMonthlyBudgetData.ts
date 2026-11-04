@@ -2,8 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { useLocalToday } from "@/hooks/useLocalToday";
+import { type BudgetPeriod,buildBudgetPeriod } from "@/lib/budgetPeriod";
 import { costHistoryPayments } from "@/lib/costHistoryPayments";
-import { buildMonthlyBudget } from "@/lib/monthlyBudget";
 import { queryKeys } from "@/lib/queryKeys";
 import { recordedPayments } from "@/lib/recordedPayments";
 import { currenciesService } from "@/services/currencies";
@@ -15,6 +15,7 @@ export function useMonthlyBudgetData(
   paymentTracking: boolean,
   enabled = true,
   selectedYear?: number,
+  periodMonths: BudgetPeriod = 1,
 ) {
   const options = { enabled: !!userId && enabled };
   const subscriptions = useQuery({
@@ -52,17 +53,14 @@ export function useMonthlyBudgetData(
       now,
     );
   }, [subscriptions.data, currencies.data, records.data, historyYear, year, month, day]);
-  const entries = useMemo(
-    () =>
-      buildMonthlyBudget(
-        subscriptions.data ?? [],
-        currencies.data ?? [],
-        records.data ?? [],
-        paymentTracking,
-        new Date(year, month - 1, day),
-      ),
-    [subscriptions.data, currencies.data, records.data, paymentTracking, year, month, day],
+  const period = useMemo(
+    () => buildBudgetPeriod(
+      subscriptions.data ?? [], currencies.data ?? [], records.data ?? [], paymentTracking,
+      new Date(year, month - 1, day), periodMonths,
+    ),
+    [subscriptions.data, currencies.data, records.data, paymentTracking, year, month, day, periodMonths],
   );
+  const entries = period.entries;
   const paymentCosts = useMemo(() => {
     const totals = new Map<string, { year: number; month: number; total: number }>();
     // A paused subscription still has real paid history. Share conversion and
@@ -84,6 +82,7 @@ export function useMonthlyBudgetData(
   }, [subscriptions.data, currencies.data, records.data]);
   return {
     entries,
+    periodCredits: period.credits,
     paymentCosts,
     paymentDetails: historyPayments.details,
     paymentForecasts: historyPayments.forecasts,

@@ -37,21 +37,21 @@ export function CalendarOverview({
           icon={<RefreshCw className="h-5 w-5" />}
           iconClass="bg-primary/20 text-primary"
           label={t("subscriptions")}
-          value={hasError ? "—" : String(count)}
+          value={hasError ? "-" : String(count)}
           loading={loading}
         />
         <StatCard
           icon={<TrendingUp className="h-5 w-5" />}
           iconClass="bg-blue-500/20 text-blue-500"
           label={t("total")}
-          value={hasError ? "—" : formatPrice(total, currencySymbol, priceOptions)}
+          value={hasError ? "-" : formatPrice(total, currencySymbol, priceOptions)}
           loading={loading}
         />
         <StatCard
           icon={<Clock className="h-5 w-5" />}
           iconClass="bg-amber-500/20 text-amber-500"
           label={t("due")}
-          value={hasError ? "—" : formatPrice(due, currencySymbol, priceOptions)}
+          value={hasError ? "-" : formatPrice(due, currencySymbol, priceOptions)}
           loading={loading}
         />
         <StatCard
@@ -59,7 +59,7 @@ export function CalendarOverview({
           iconClass="bg-destructive/20 text-destructive"
           label={t("budget_overrun")}
           value={
-            hasError ? "—" : formatPrice(Math.max(0, budgetOverrun), currencySymbol, priceOptions)
+            hasError ? "-" : formatPrice(Math.max(0, budgetOverrun), currencySymbol, priceOptions)
           }
           loading={loading}
         />
@@ -67,7 +67,7 @@ export function CalendarOverview({
           icon={<CircleAlert className="h-5 w-5" />}
           iconClass="bg-red-500/20 text-red-600 dark:text-red-400"
           label={t("subscription_payments_awaiting")}
-          value={hasError ? "—" : formatPrice(awaitingConfirmation, currencySymbol, priceOptions)}
+          value={hasError ? "-" : formatPrice(awaitingConfirmation, currencySymbol, priceOptions)}
           loading={loading}
         />
       </div>

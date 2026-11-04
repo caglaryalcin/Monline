@@ -52,6 +52,8 @@ function effective(repository, owner, preferences) {
   const get = key => {
     if (["email_to", "user_email"].includes(key)) return user.getString("email");
     if (key === "user_name") return user.getString("name");
+    if (key === "confirmed_user_name")
+      return require("./notification-templates.cjs").confirmedUserName(repository, owner);
     if (key === "language") return user.getString("language") || "en";
     if (key === "smtp") return { ...repository.settings().smtp,
       senderAddress: repository.settings().meta.senderAddress || "noreply@monline.app",

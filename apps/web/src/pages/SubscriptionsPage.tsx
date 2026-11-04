@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { QuickPaymentDialog } from "@/components/QuickPaymentDialog";
 import { ScopedTransferActions } from "@/components/ScopedTransferActions";
 import { SubscriptionFormModal } from "@/components/SubscriptionFormModal";
 import { SharedSubscriptions } from "@/components/subscriptions/SharedSubscriptions";
@@ -20,6 +21,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFilteredSubscriptions } from "@/hooks/useFilteredSubscriptions";
 import { usePersistentDisclosure } from "@/hooks/usePersistentDisclosure";
+import { useQuickPayments } from "@/hooks/useQuickPayments";
 import { useSubscriptionSort } from "@/hooks/useSubscriptionSort";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
@@ -36,6 +38,7 @@ export function SubscriptionsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const userId = user?.id ?? "";
+  const quickPayments = useQuickPayments();
 
   const [searchTerm, setSearchTerm] = useState("");
   const { sort, sortDir, setSort, toggleSortDir, isSaving: sortSaving } = useSubscriptionSort();
@@ -295,6 +298,7 @@ export function SubscriptionsPage() {
       ) : null}
 
       <SubscriptionsGrid
+              quickPayments={quickPayments.actions}
         onShare={setSharingSubscription}
         isLoading={isLoading}
         subscriptions={filteredSubscriptions}
@@ -371,6 +375,7 @@ export function SubscriptionsPage() {
         />
       ) : null}
 
+      <QuickPaymentDialog target={quickPayments.target} pending={quickPayments.pending} onClose={quickPayments.close} onConfirm={quickPayments.confirm} />
       <ConfirmDialog
         open={!!deleteId}
         confirmOnEnter

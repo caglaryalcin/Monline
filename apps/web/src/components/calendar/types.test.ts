@@ -217,7 +217,7 @@ describe("calendar types helpers", () => {
       cancellation_date: "2026-03-21",
     });
 
-    // March would hold the 1st, 11th, 21st and 31st — the 31st is after the end.
+    // March would hold the 1st, 11th, 21st and 31st - the 31st is after the end.
     expect(getOccurrencesInMonth(cancelled, 2026, 3, cycles).map((date) => date.getDate())).toEqual(
       [1, 11, 21],
     );

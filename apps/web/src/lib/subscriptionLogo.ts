@@ -7,10 +7,9 @@ export function automaticLogoUrls(
   const brand = sub.brand_name?.trim();
   const lookupName = brand || sub.name;
   const service = findLogoService(lookupName);
-  // Older Workspace records can still point to google.com. The local brand
-  // asset does not depend on that URL and never discloses a private hostname.
-  const workspaceLogo =
-    service?.iconSlug === "googleworkspace" && service.logoUrl ? [service.logoUrl] : [];
+  // Bundled brand artwork also works with an old website, a billing-page URL
+  // or a brand's alternate domain, without relying on remote favicon sizes.
+  const namedLogo = service?.logoUrl ? [service.logoUrl] : [];
   let domain = "";
   if (sub.url && !brand) {
     try {
@@ -23,21 +22,22 @@ export function automaticLogoUrls(
   }
   if (!domain) domain = service?.domain ?? publicLogoDomain(lookupName);
   // Do not send local NAS addresses, credentials, paths, or query strings to a favicon service.
-  if (!publicLogoDomain(domain)) return workspaceLogo;
+  if (!publicLogoDomain(domain)) return namedLogo;
+  const localLogo = [service, findLogoService(domain)].find(
+    (candidate) => candidate?.domain === domain && candidate.logoUrl,
+  )?.logoUrl;
   return [
-    ...workspaceLogo,
-    ...(domain === service?.domain && service.logoUrl && !workspaceLogo.length
-      ? [service.logoUrl]
-      : []),
+    ...namedLogo,
+    ...(localLogo && !namedLogo.length ? [localLogo] : []),
     `https://icon.horse/icon/${encodeURIComponent(domain)}`,
     `https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`,
   ];
 }
 
-/** Names produced by the old automatic search and its generic logo fallback. */
+/** Legacy automatic filenames can acquire another storage prefix on each import. */
 export function isLegacyWorkspaceLogo(sub: Pick<Subscription, "name" | "logo">): boolean {
   if (findLogoService(sub.name)?.iconSlug !== "googleworkspace" || !sub.logo) return false;
-  return /^(?:[a-f0-9]{16}_)?logo(?:[-_](?:workspace[._-]google[._-]com|googleworkspace|google))?(?:_[a-z0-9]{10,})?\.(?:webp|png|svg|ico|jpe?g)$/i.test(
+  return /^(?:[a-f0-9]{16}_)*logo(?:[-_](?:workspace[._-]google[._-]com|googleworkspace|google))?(?:_[a-z0-9]{10,})?\.(?:webp|png|svg|ico|jpe?g)$/i.test(
     sub.logo,
   );
 }

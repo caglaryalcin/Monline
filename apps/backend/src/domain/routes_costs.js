@@ -1,7 +1,7 @@
 const { Record, repository, routerAdd } = require("../runtime.cjs");
 const domainPath = __dirname;
 // ================================================================
-// ROUTE: POST /api/costs/snapshot — calculate & upsert current month cost
+// ROUTE: POST /api/costs/snapshot - calculate & upsert current month cost
 // Called by the dashboard when the current month's subscription total changes.
 routerAdd("POST", "/api/costs/snapshot", (e) => {
   const dateHelpers = require(domainPath + "/lib/date-helpers.js");

@@ -56,6 +56,29 @@ it("rejects an incompatible file without importing it", async () => {
     screen.getByLabelText("calendar_transfer: import", { selector: "input" }),
     new File(["{}"], "wrong.json", { type: "application/json" }),
   );
-  await waitFor(() => expect(mocks.error).toHaveBeenCalledWith("transfer_invalid_backup"));
+  await waitFor(() => expect(mocks.error).toHaveBeenCalledWith("transfer_invalid_scoped_backup"));
   expect(mocks.importScopedData).not.toHaveBeenCalled();
+});
+
+it("keeps export failures visible and allows a later retry", async () => {
+  mocks.exportBackup.mockRejectedValueOnce(new Error("network unavailable")).mockResolvedValueOnce(undefined);
+  const { Wrapper } = createQueryClientWrapper();
+  render(<ScopedTransferActions scope="subscriptions" />, { wrapper: Wrapper });
+  await userEvent.click(screen.getByRole("button", { name: "subscriptions_transfer: export" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("transfer_export_failed");
+  expect(mocks.error).toHaveBeenCalledWith("transfer_export_failed");
+  await userEvent.click(screen.getByRole("button", { name: "subscriptions_transfer: export" }));
+  await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+  expect(mocks.exportBackup).toHaveBeenCalledTimes(2);
+});
+
+it("canceling an import never sends its payload", async () => {
+  mocks.readScopedImport.mockResolvedValue({ format: "monline-scoped-backup", version: 1, scope: "subscriptions", backup: { data: { subscriptions: [{ id: "sub" }] } } });
+  const { Wrapper } = createQueryClientWrapper();
+  render(<ScopedTransferActions scope="subscriptions" />, { wrapper: Wrapper });
+  await userEvent.upload(screen.getByLabelText("subscriptions_transfer: import", { selector: "input" }), new File(["{}"], "scope.json", { type: "application/json" }));
+  await screen.findByRole("dialog");
+  await userEvent.click(screen.getByRole("button", { name: "cancel" }));
+  expect(mocks.importScopedData).not.toHaveBeenCalled();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });

@@ -276,7 +276,7 @@ describe("OtpDialog", () => {
   });
 
   // Line 77: onOpenChange(false) → calls handleClose() → calls onClose
-  it("calls onClose via onOpenChange(false) — exercises line 77 if(!isOpen) branch", () => {
+  it("calls onClose via onOpenChange(false) - exercises line 77 if(!isOpen) branch", () => {
     const onClose = vi.fn();
     render(
       <OtpDialog
@@ -293,7 +293,7 @@ describe("OtpDialog", () => {
     expect(capturedOnOpenChange).not.toBeNull();
 
     // Calling onOpenChange(false) simulates the dialog being closed externally
-    // (e.g. Escape key, backdrop click in Radix) — this should invoke handleClose()
+    // (e.g. Escape key, backdrop click in Radix) - this should invoke handleClose()
     act(() => {
       capturedOnOpenChange!(false);
     });
@@ -302,7 +302,7 @@ describe("OtpDialog", () => {
   });
 
   // Line 77: onOpenChange(true) → condition `if (!isOpen)` is false → handleClose NOT called
-  it("does not call onClose via onOpenChange(true) — exercises line 77 else branch", () => {
+  it("does not call onClose via onOpenChange(true) - exercises line 77 else branch", () => {
     const onClose = vi.fn();
     render(
       <OtpDialog
@@ -321,7 +321,7 @@ describe("OtpDialog", () => {
       capturedOnOpenChange!(true);
     });
 
-    // onOpenChange(true) means dialog is opening — handleClose should NOT be called
+    // onOpenChange(true) means dialog is opening - handleClose should NOT be called
     expect(onClose).not.toHaveBeenCalled();
   });
 

@@ -45,6 +45,11 @@ class DataRecord {
     return this._collection;
   }
   get(name) {
+    if (name === "billing_calendar" && this._collection.name === "subscriptions") {
+      if (!this._values.user) return {};
+      const owner = this._collection.repository.findRecordById("users", this._values.user);
+      return { country: owner.getString("country"), region: owner.getString("region") };
+    }
     const value = this._values[name];
     const field = this._collection.fields.find((f) => f.name === name);
     if (field?.type === "json" && typeof value === "string") {
@@ -106,6 +111,7 @@ class DataRecord {
         continue;
       result[field.name] = this.get(field.name);
     }
+    if (this._collection.name === "subscriptions") result.billing_calendar = this.get("billing_calendar");
     return result;
   }
   toJSON() {
@@ -212,6 +218,9 @@ class Repository {
       );
     if (!this.connection.prepare('PRAGMA table_info("users")').all().some(column => column.name === "number_locale"))
       this.connection.exec("ALTER TABLE users ADD COLUMN number_locale TEXT NOT NULL DEFAULT ''");
+    for (const field of ["country", "region"])
+      if (!this.connection.prepare('PRAGMA table_info("users")').all().some(column => column.name === field))
+        this.connection.exec('ALTER TABLE users ADD COLUMN ' + identifier(field) + " TEXT NOT NULL DEFAULT ''");
     for (const name of [
       "name",
       "currency",
@@ -554,6 +563,15 @@ class Repository {
     return this.runInTransaction(() => {
       const collection = record.collection(),
         isNew = !record._original;
+      if (collection.name === "users") {
+        try {
+          const calendar = require("./domain/lib/pure/business-calendar.mjs").normalizeBusinessCalendar({
+            country: record.getString("country"), region: record.getString("region"),
+          });
+          record.set("country", calendar.country);
+          record.set("region", calendar.region);
+        } catch { throw new BadRequestError("holiday_calendar_invalid"); }
+      }
       if (collection.name === "users" && record.getString("number_locale")) {
         try {
           const locale = Intl.getCanonicalLocales(record.getString("number_locale").replace(/_/g, "-"))[0];
@@ -713,6 +731,9 @@ class Repository {
         this.connection
           .prepare("DELETE FROM monline_sessions WHERE user_id=?")
           .run(record.id);
+      if (!isNew && collection.name === "users" && record.get("__monline_restore") !== true &&
+          ["country", "region"].some(field => record.getString(field) !== record.original().getString(field)))
+        require("./domain/lib/user-business-calendar.js").rescheduleBusinessCalendar(this, record, record.original());
       // Reload SQL defaults without losing transient import flags.
       Object.assign(
         record._values,

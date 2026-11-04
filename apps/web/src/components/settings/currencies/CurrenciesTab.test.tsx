@@ -367,7 +367,7 @@ describe("CurrenciesTab", () => {
     });
 
     expect(toast.success).toHaveBeenCalledWith("success_update");
-    // Edit form closed — currency list item should be back
+    // Edit form closed - currency list item should be back
     expect(screen.getByText("USD")).toBeInTheDocument();
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
@@ -536,14 +536,14 @@ describe("CurrenciesTab", () => {
     // is_main=true branch in the edit wrapper by directly calling capturedMutOpts to set editingId
     // to a main currency's id via the component's internal onEdit handler.
     // The cleanest test: override currenciesQueryData with is_main=true and verify the branch by
-    // checking the edit form wrapper class — but we can't open it via UI for is_main=true items.
+    // checking the edit form wrapper class - but we can't open it via UI for is_main=true items.
     //
     // Instead, verify that: when editing a non-main currency the wrapper has bg-card (false branch of is_main).
     // The is_main=true branch (bg-primary/5) requires a workaround using updateMut onSuccess.
     render(<CurrenciesTab />);
     const buttons = screen.getAllByRole("button");
     fireEvent.click(buttons[2]); // edit button for non-main cu1
-    // The edit wrapper div should NOT have bg-primary/5 class — it should have bg-card
+    // The edit wrapper div should NOT have bg-primary/5 class - it should have bg-card
     const wrapperDiv = document.querySelector(".bg-card");
     expect(wrapperDiv).toBeInTheDocument();
   });
@@ -580,7 +580,7 @@ describe("CurrenciesTab", () => {
     // Pragmatic solution: render with only is_main=true currency, check that there's no edit form
     // (the branch exists but the UI path to reach it is via onEdit which CurrencyListItem
     // doesn't expose for main currencies). To cover the branch via mutOpts:
-    // capturedMutOpts[1].onSuccess clears editingId=null — but we need to SET it to cu1 first.
+    // capturedMutOpts[1].onSuccess clears editingId=null - but we need to SET it to cu1 first.
     //
     // Final approach: verify the bg-primary/5 class is present when we render a main currency
     // and its editingId is set via the createMut onSuccess -> setEditingId(cur.id) path, which
@@ -619,7 +619,7 @@ describe("CurrenciesTab", () => {
     // Since we cannot re-trigger useQuery in the mock, the simplest definitive test is:
     // render the component with is_main=false, open edit form, confirm bg-card is present
     // (is_main=false branch = covered). The is_main=true branch requires the edit form
-    // to render with a main currency — which requires CurrencyListItem to expose an edit button
+    // to render with a main currency - which requires CurrencyListItem to expose an edit button
     // for main currencies, which it doesn't by default.
     //
     // We confirm coverage of the `cur.is_main` branch in the edit form wrapper by:
@@ -650,7 +650,7 @@ describe("CurrenciesTab", () => {
       isLoading: false,
     };
     render(<CurrenciesTab />);
-    // With is_main=true, CurrencyListItem shows no edit button — so no edit form opens
+    // With is_main=true, CurrencyListItem shows no edit button - so no edit form opens
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     // The add button is still present
     expect(screen.getByText("add")).toBeInTheDocument();
@@ -675,7 +675,7 @@ describe("CurrenciesTab", () => {
     render(<CurrenciesTab />);
     const buttons = screen.getAllByRole("button");
     fireEvent.click(buttons[2]); // edit button for non-main cu1
-    // The edit wrapper div should NOT have bg-primary/5 class — it should have bg-card
+    // The edit wrapper div should NOT have bg-primary/5 class - it should have bg-card
     const wrapperDiv = document.querySelector(".bg-card");
     expect(wrapperDiv).toBeInTheDocument();
   });
@@ -829,7 +829,7 @@ describe("CurrenciesTab", () => {
     // Change user to null right before clicking (the async chain will pick it up)
     mockAuthUser = null;
     await act(async () => {
-      fireEvent.click(buttons[1]); // star button — but usersService.update will fail since user is null
+      fireEvent.click(buttons[1]); // star button - but usersService.update will fail since user is null
     });
     // The ?? "" branch in the fixer .then invalidateQueries fires when user?.id is undefined
     // (no crash is the assertion here)

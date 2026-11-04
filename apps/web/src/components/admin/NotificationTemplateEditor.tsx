@@ -2,6 +2,7 @@ import { Eye, GripVertical, RotateCcw } from "lucide-react";
 import { type DragEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { NotificationEmailPreview } from "@/components/admin/NotificationEmailPreview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,6 +59,8 @@ export function NotificationTemplateEditor({
     null,
   );
   const [loading, setLoading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewRefresh, setPreviewRefresh] = useState(0);
   const inputs = useRef<Partial<Record<TemplateField, TemplateInput | null>>>({});
   const activeField = useRef<TemplateField>("message");
   const [dropField, setDropField] = useState<TemplateField | null>(null);
@@ -74,13 +77,12 @@ export function NotificationTemplateEditor({
   const fields = templates[event] ?? {};
   const fallback = defaults?.[event] ?? { title: "{{title}}", message: "{{message}}", html: "" };
   const update = (field: keyof NotificationTemplate, value: string) => {
-    setPreview(null);
     onChange({ ...templates, [event]: { ...fields, [field]: value } });
   };
   const insertVariable = (variable: string) => {
     const field = inputs.current[activeField.current] ? activeField.current : "message";
     const input = inputs.current[field];
-    if (!input || disabled || loading) return;
+    if (!input || disabled) return;
     const token = `{{${variable}}}`;
     const start = input.selectionStart ?? input.value.length;
     const end = input.selectionEnd ?? start;
@@ -97,11 +99,11 @@ export function NotificationTemplateEditor({
       activeField.current = field;
     },
     onDragEnter: (event: DragEvent<TemplateInput>) => {
-      if (!disabled && !loading && event.dataTransfer.types.includes(variableDragType))
+      if (!disabled && event.dataTransfer.types.includes(variableDragType))
         setDropField(field);
     },
     onDragOver: (event: DragEvent<TemplateInput>) => {
-      if (!disabled && !loading && event.dataTransfer.types.includes(variableDragType)) {
+      if (!disabled && event.dataTransfer.types.includes(variableDragType)) {
         // Native text dropping places the variable at the pointer's caret position.
         event.dataTransfer.dropEffect = "copy";
       }
@@ -111,28 +113,44 @@ export function NotificationTemplateEditor({
   });
   const dropClass = (field: TemplateField) =>
     dropField === field ? "border-primary ring-2 ring-primary/30" : "";
-  const showPreview = async () => {
+  const previewTemplates = JSON.stringify({ [providerId]: templates });
+  useEffect(() => {
+    if (!previewOpen || disabled) {
+      setLoading(false);
+      return;
+    }
+    let current = true;
     setLoading(true);
-    try {
-      setPreview(
-        await notificationsService.previewTemplate(
+    const timeout = window.setTimeout(async () => {
+      try {
+        const result = await notificationsService.previewTemplate(
           providerId,
           event,
-          { [providerId]: templates },
+          JSON.parse(previewTemplates),
           language,
-        ),
-      );
-    } catch (error) {
-      toast.error(
-        t(error instanceof Error ? error.message : "error", { defaultValue: t("error") }),
-      );
-    } finally {
-      setLoading(false);
-    }
+        );
+        if (current) setPreview(result);
+      } catch (error) {
+        if (current)
+          toast.error(
+            t(error instanceof Error ? error.message : "error", { defaultValue: t("error") }),
+          );
+      } finally {
+        if (current) setLoading(false);
+      }
+    }, 300);
+    return () => {
+      current = false;
+      window.clearTimeout(timeout);
+    };
+  }, [previewOpen, previewRefresh, previewTemplates, providerId, event, language, disabled, t]);
+  const showPreview = () => {
+    setPreviewOpen(true);
+    setPreviewRefresh((value) => value + 1);
   };
   const prefix = `notification-template-${providerId}-${event}`;
   return (
-    <fieldset disabled={disabled || loading} className="min-w-0 space-y-3">
+    <fieldset disabled={disabled} className="min-w-0 space-y-3">
       <legend className="mb-2 text-sm font-medium">{t("notification_template")}</legend>
       <p className="text-xs leading-relaxed text-muted-foreground">
         {t("notification_template_language_hint", {
@@ -153,7 +171,6 @@ export function NotificationTemplateEditor({
             aria-pressed={value === event}
             className="h-8 rounded-lg text-xs"
             onClick={() => {
-              setPreview(null);
               onEventChange(value);
             }}
           >
@@ -246,8 +263,8 @@ export function NotificationTemplateEditor({
             <button
               key={variable}
               type="button"
-              draggable={!disabled && !loading}
-              disabled={disabled || loading}
+              draggable={!disabled}
+              disabled={disabled}
               onDragStart={(event) => {
                 event.dataTransfer.effectAllowed = "copy";
                 event.dataTransfer.setData(variableDragType, variable);
@@ -277,7 +294,6 @@ export function NotificationTemplateEditor({
           size="sm"
           className={`h-8 gap-1.5 rounded-lg text-xs ${providerId === "email" ? "self-end" : ""}`}
           onClick={() => {
-            setPreview(null);
             onChange({ ...templates, [event]: {} });
           }}
         >
@@ -294,29 +310,23 @@ export function NotificationTemplateEditor({
               : "h-8 gap-1.5 rounded-lg text-xs"
           }
           onClick={showPreview}
+          disabled={loading}
         >
           <Eye className="h-3.5 w-3.5" />
           {t(loading ? "loading" : "notification_template_preview")}
         </Button>
       </div>
       {preview && (
-        <div className="space-y-2 rounded-xl border bg-background p-3">
-          <p className="text-xs text-muted-foreground">{t("notification_template_preview_hint")}</p>
-          <p className="break-words text-sm font-medium">{preview.title}</p>
-          {providerId === "email" ? (
-            <iframe
-              title={t("notification_template_preview")}
-              sandbox=""
-              referrerPolicy="no-referrer"
-              srcDoc={preview.html}
-              className="h-[320px] w-full rounded-lg border bg-white"
-            />
-          ) : (
+        providerId === "email" ? (
+          <NotificationEmailPreview title={preview.title} html={preview.html} loading={loading} />
+        ) : (
+          <div aria-busy={loading} className="space-y-2 rounded-xl border bg-background p-3">
+            <p className="break-words text-sm font-medium">{preview.title}</p>
             <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words text-xs">
               {preview.message}
             </pre>
-          )}
-        </div>
+          </div>
+        )
       )}
     </fieldset>
   );

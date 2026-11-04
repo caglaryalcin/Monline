@@ -244,7 +244,7 @@ export function Layout() {
             <Link
               to="/subscriptions"
               className="flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/50"
-              aria-label={`${t("active_subscriptions")}: ${summary.data?.count ?? "—"}`}
+              aria-label={`${t("active_subscriptions")}: ${summary.data?.count ?? "-"}`}
               title={t("active_subscriptions")}
             >
               <span
@@ -253,7 +253,7 @@ export function Layout() {
               />
               <span className="hidden sm:inline">{t("active_subscriptions")}</span>
               <span className="font-semibold tabular-nums text-foreground">
-                {summary.data?.count ?? "—"}
+                {summary.data?.count ?? "-"}
               </span>
             </Link>
             <time

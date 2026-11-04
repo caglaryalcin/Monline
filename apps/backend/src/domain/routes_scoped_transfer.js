@@ -30,7 +30,7 @@ for (const scope of ["calendar", "subscriptions"]) {
         );
       } catch (error) {
         return e.json(400, {
-          error: ["transfer_invalid_backup", "transfer_too_large"].includes(
+          error: ["transfer_invalid_backup", "transfer_too_large", "transfer_incompatible_backup"].includes(
             error.message,
           )
             ? error.message

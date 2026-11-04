@@ -573,7 +573,7 @@ function StatementWorkspace({ userId }: { userId: string }) {
               </CardTitle>
               <p className="break-all text-sm text-muted-foreground">
                 {metadata.file_name} ·{" "}
-                {/^20\d{2}-(0[1-9]|1[0-2])$/.test(period) ? monthLabel(period) : "—"}
+                {/^20\d{2}-(0[1-9]|1[0-2])$/.test(period) ? monthLabel(period) : "-"}
               </p>
             </div>
             <div className="flex items-center gap-2">

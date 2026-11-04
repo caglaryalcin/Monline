@@ -200,7 +200,7 @@ describe("FixerTab", () => {
     expect(mockToastSuccess).toHaveBeenCalledWith("success_update");
   });
 
-  // Whether a key is stored is server state, read back through the query —
+  // Whether a key is stored is server state, read back through the query -
   // the component keeps no local copy of it. So onSuccess does not flip a
   // flag; it drops the local edits and asks the server again.
   it("saveMut onSuccess clears the typed key and refetches the stored state", () => {
@@ -243,7 +243,7 @@ describe("FixerTab", () => {
     // => apiKeyConfigured stays true, hint remains visible
     settingsData = { id: "f1", api_key_configured: true, provider: "fixer" };
     render(<FixerTab />);
-    // Don't enter a key, don't click remove — apiKey="" and removeStoredApiKey=false
+    // Don't enter a key, don't click remove - apiKey="" and removeStoredApiKey=false
     act(() => {
       latestSaveOpts().onSuccess?.();
     });
@@ -353,7 +353,7 @@ describe("FixerTab", () => {
 
   it("saveMut mutationFn includes empty api_key when no new key and no settings id and not configured", async () => {
     const { fixerService } = await import("@/services/fixer");
-    // No settings — settings?.id is falsy, apiKeyConfigured is false
+    // No settings - settings?.id is falsy, apiKeyConfigured is false
     settingsData = undefined;
     render(<FixerTab />);
     // No key entered, no remove clicked → third branch: !settings?.id || !apiKeyConfigured

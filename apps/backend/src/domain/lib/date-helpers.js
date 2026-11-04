@@ -19,6 +19,7 @@ function advanceDate(
   cycleName,
   frequency,
   anchorDay = date.getUTCDate(),
+  calendar,
 ) {
   const result = new Date(date.getTime());
   const months = { Monthly: 1, "Last-Weekday": 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
@@ -30,7 +31,7 @@ function advanceDate(
     lastDay.setUTCDate(0);
     result.setUTCDate(Math.min(anchorDay, lastDay.getUTCDate()));
     if (cycleName === "Last-Weekday")
-      result.setUTCDate(Number(require("./pure/last-weekday.mjs").lastWeekdayOfMonth(result.toISOString().slice(0, 10)).slice(8, 10)));
+      result.setUTCDate(Number(require("./pure/last-weekday.mjs").lastWeekdayOfMonth(result.toISOString().slice(0, 10), calendar).slice(8, 10)));
     return result;
   }
   switch (cycleName) {

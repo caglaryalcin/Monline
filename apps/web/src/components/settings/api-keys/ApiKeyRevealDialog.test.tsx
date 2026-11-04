@@ -89,7 +89,7 @@ describe("ApiKeyRevealDialog", () => {
     Object.assign(navigator, {
       clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
     });
-    // Render with null — dialog is closed but the component still mounts
+    // Render with null - dialog is closed but the component still mounts
     render(<ApiKeyRevealDialog created={null} onClose={vi.fn()} />);
     // Clipboard should not be called since the dialog is not open / created is null
     expect(navigator.clipboard.writeText).not.toHaveBeenCalled();

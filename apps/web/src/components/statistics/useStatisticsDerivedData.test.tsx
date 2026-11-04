@@ -228,7 +228,7 @@ describe("useStatisticsDerivedData", () => {
     // No main currency → mainSymbol defaults to "$"
     expect(result.current.mainCode).toBeUndefined();
     expect(result.current.mainSymbol).toBe("$");
-    // mainRate defaults to 1 — price is unchanged
+    // mainRate defaults to 1 - price is unchanged
     expect(result.current.totalMonthly).toBeCloseTo(10, 5);
   });
 

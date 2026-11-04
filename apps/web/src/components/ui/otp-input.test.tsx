@@ -127,7 +127,7 @@ describe("OtpInput", () => {
     const onChange = vi.fn();
     render(<OtpInput value="123456" onChange={onChange} />);
     const inputs = screen.getAllByRole("textbox");
-    // A key that is none of Backspace / ArrowLeft / ArrowRight — all branches are false
+    // A key that is none of Backspace / ArrowLeft / ArrowRight - all branches are false
     fireEvent.keyDown(inputs[2], { key: "Tab" });
     expect(onChange).not.toHaveBeenCalled();
   });

@@ -1,4 +1,4 @@
-const { nextTrialPaymentDate } = require("./pure/subscription-trial.mjs");
+const { isTrialDate, nextTrialPaymentDate } = require("./pure/subscription-trial.mjs");
 const { DataRecord } = require("../../storage.cjs");
 const {
   BadRequestError,
@@ -28,6 +28,18 @@ function projectedOccurrence(app, sub, date) {
     .findRecordById("cycles", sub.getString("cycle"))
     .getString("name");
   const frequency = sub.getFloat("frequency");
+  if (cycle === "Last-Weekday" && !isTrialDate(sub, date)) {
+    const first = date.slice(0, 7) + "-01";
+    const end = new Date(first + "T12:00:00Z");
+    end.setUTCMonth(end.getUTCMonth() + 1);
+    const saved = app.findRecordsByFilter("payment_records",
+      "subscription_id = {:id} && ((due_date >= {:first} && due_date < {:end}) || (scheduled_date >= {:first} && scheduled_date < {:end}))",
+      "", 0, 0, { id: sub.id, first, end: end.toISOString().slice(0, 10) });
+    if (saved.some((record) => {
+      const origin = record.getString("scheduled_date") || record.getString("due_date").slice(0, 10);
+      return origin !== date && origin.slice(0, 7) === date.slice(0, 7) && !isTrialDate(sub, origin);
+    })) return false;
+  }
   if (cycle === "One-Time") return date === cursor;
   if (
     ![
@@ -56,6 +68,7 @@ function projectedOccurrence(app, sub, date) {
       cycle,
       frequency,
       anchor,
+      sub.get("billing_calendar"),
     )
       .toISOString()
       .slice(0, 10);
@@ -160,7 +173,7 @@ function calendarNextPayment(app, sub) {
         !Number.isInteger(frequency) || frequency < 1) return "";
     const anchor = sub.getFloat("billing_anchor_day") || Number(date.slice(8, 10));
     for (let guard = 0; date < projectionFrom && guard < 5000; guard++) {
-      const next = nextTrialPaymentDate(sub, date, anchor, cycle) || advanceDate(new Date(date + "T12:00:00Z"), cycle, frequency, anchor).toISOString().slice(0, 10);
+      const next = nextTrialPaymentDate(sub, date, anchor, cycle) || advanceDate(new Date(date + "T12:00:00Z"), cycle, frequency, anchor, sub.get("billing_calendar")).toISOString().slice(0, 10);
       if (next <= date) return "";
       date = next;
     }

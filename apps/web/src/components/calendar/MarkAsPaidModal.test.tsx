@@ -321,7 +321,7 @@ describe("MarkAsPaidModal", () => {
       subscription_id: "sub-1",
       user: "user-1",
       due_date: "2026-03-20",
-      // no amount field — existingRecord.amount is undefined (nullish)
+      // no amount field - existingRecord.amount is undefined (nullish)
     });
 
     // The amount input should be pre-filled with sub.price (49.9)

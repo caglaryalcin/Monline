@@ -308,7 +308,7 @@ function createAuth(repository) {
             name: smtp.meta.senderName,
           },
           to: [{ address: email }],
-          subject: "Monline — Reset password",
+          subject: "Monline - Reset password",
           text: `Reset your password within 30 minutes: ${base}/api/auth/reset?token=${encodeURIComponent(token)}`,
         });
       }
@@ -386,7 +386,7 @@ function createAuth(repository) {
     await repository.newMailClient().send({
       from: { address: smtp.meta.senderAddress, name: smtp.meta.senderName },
       to: [{ address: user.getString("email") }],
-      subject: "Monline — Verify email",
+      subject: "Monline - Verify email",
       text: `${publicUrl(req)}/api/auth/verify-email?token=${encodeURIComponent(token)}`,
     });
   }

@@ -226,7 +226,7 @@ describe("DashboardPage", () => {
     const { Wrapper } = createQueryClientWrapper();
     render(<DashboardPage />, { wrapper: Wrapper });
 
-    expect(screen.getAllByText((text) => text.includes("total_monthly:—")).length).toBeGreaterThan(
+    expect(screen.getAllByText((text) => text.includes("total_monthly:-")).length).toBeGreaterThan(
       0,
     );
   });

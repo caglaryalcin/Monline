@@ -4,6 +4,8 @@ const PROFILE = [
   "name",
   "language",
   "number_locale",
+  "country",
+  "region",
   "main_currency",
   "dark_theme_mode",
   "color_theme",
@@ -216,27 +218,9 @@ function exportAccount(app, userId) {
   return backup;
 }
 function fromBase64(value) {
-  if (
-    typeof value !== "string" ||
-    value.length % 4 ||
-    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
-      value,
-    )
-  )
+  if (typeof value !== "string" || value.length % 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value))
     throw new Error("transfer_invalid_backup");
-  const alphabet =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  const bytes = [];
-  for (let i = 0; i < value.length; i += 4) {
-    const a = alphabet.indexOf(value[i]),
-      b = alphabet.indexOf(value[i + 1]);
-    const c = alphabet.indexOf(value[i + 2]),
-      d = alphabet.indexOf(value[i + 3]);
-    bytes.push((a << 2) | (b >> 4));
-    if (c >= 0) bytes.push(((b & 15) << 4) | (c >> 2));
-    if (d >= 0) bytes.push(((c & 3) << 6) | d);
-  }
-  return bytes;
+  return Buffer.from(value, "base64");
 }
 function validateBackup(backup) {
   if (
@@ -252,7 +236,12 @@ function validateBackup(backup) {
   )
     throw new Error("transfer_invalid_backup");
   if (backup.data.payment_accounts === undefined) backup.data.payment_accounts = [];
+  // Legacy personal exchange settings were replaced by global integrations.
+  // Accept their old dataset without restoring or replacing global credentials.
+  if (Object.entries(backup.data).some(([name, rows]) => !Object.hasOwn(FIELDS, name) && !(name === "fixer_settings" && Array.isArray(rows)) && (!Array.isArray(rows) || rows.length)))
+    throw new Error("transfer_incompatible_backup");
   let count = 0;
+  if (backup.data.payment_accounts === undefined) backup.data.payment_accounts = [];
   if (backup.data.bank_statements === undefined)
     backup.data.bank_statements = [];
   for (const name of Object.keys(FIELDS)) {
@@ -416,6 +405,8 @@ function importAccount(
           ["notifications_config", "fixer_settings"].includes(name)
         )
           record = existing[0];
+        if (!record && name === "payment_records" && row.subscription_id)
+          record = matchingPayment(row);
         if (!record && name === "yearly_costs")
           record = existing.find(
             (entry) =>
@@ -456,6 +447,13 @@ function importAccount(
           ? value
           : security.sha256(userId + ":subscriptions:" + value).slice(0, 15))
       );
+    }
+    function matchingPayment(row) {
+      const day = String(row.due_date || "").slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+      return tx.findRecordsByFilter("payment_records",
+        "user = {:owner} && subscription_id = {:subscription} && due_date >= {:day} && due_date < {:until}",
+        "-paid_at,id", 1, 0, { owner: userId, subscription: subscriptionId(row.subscription_id), day, until: day + "~" })[0] || null;
     }
     function setFields(record, row, name, fields) {
       for (const field of fields) {
@@ -505,19 +503,8 @@ function importAccount(
           continue;
         }
         if (!record && name === "payment_records" && row.subscription_id) {
-          const duplicates = tx.findRecordsByFilter(
-            name,
-            "user = {:owner} && subscription_id = {:subscription} && due_date = {:due}",
-            "",
-            1,
-            0,
-            {
-              owner: userId,
-              subscription: subscriptionId(row.subscription_id),
-              due: row.due_date,
-            },
-          );
-          if (duplicates.length) {
+          const duplicate = matchingPayment(row);
+          if (duplicate) {
             summary.skipped++;
             result.skipped++;
             continue;
@@ -611,6 +598,7 @@ function importAccount(
         "users",
         PROFILE,
       );
+      account.set("__monline_restore", true);
       tx.save(account);
       const mainId = account.getString("main_currency");
       if (mainId)

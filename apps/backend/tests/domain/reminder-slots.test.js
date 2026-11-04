@@ -87,7 +87,7 @@ describe("src/domain/lib/pure/reminder-slots.js", () => {
 
   it("coerces null slots to {days:0, hour:0} because Number(null) === 0 (finite)", () => {
     // null && null.days short-circuits to null; Number(null) = 0 which is finite,
-    // so null slots are NOT dropped — they become {days:0, hour:0}.
+    // so null slots are NOT dropped - they become {days:0, hour:0}.
     expect(normalizeReminderSlots([null, { days: 2, hour: 10 }])).toEqual([
       { days: 0, hour: 0 },
       { days: 2, hour: 10 },

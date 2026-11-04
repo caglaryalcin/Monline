@@ -503,7 +503,7 @@ describe("PaymentMethodsTab", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "edit" })); // edit button
 
-    // method has icon, so hasUploadedIcon is true initially — clear button visible
+    // method has icon, so hasUploadedIcon is true initially - clear button visible
     expect(screen.getByTestId("icon-picker-clear")).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId("icon-picker-clear"));
@@ -679,7 +679,7 @@ describe("PaymentMethodsTab", () => {
     const uploadBtn = screen.getByTestId("icon-picker-upload");
     fireEvent.click(uploadBtn);
 
-    // Second upload — editIconPreview is now "blob:fake-url" (truthy), so revoke fires
+    // Second upload - editIconPreview is now "blob:fake-url" (truthy), so revoke fires
     fireEvent.click(uploadBtn);
 
     // URL.revokeObjectURL should have been called with the previous preview URL
@@ -697,7 +697,7 @@ describe("PaymentMethodsTab", () => {
     const uploadBtn = screen.getByTestId("icon-picker-upload");
     fireEvent.click(uploadBtn);
 
-    // Clear — editIconPreview is "blob:fake-url" (truthy) → revoke fires
+    // Clear - editIconPreview is "blob:fake-url" (truthy) → revoke fires
     const clearBtn = screen.getByTestId("icon-picker-clear");
     fireEvent.click(clearBtn);
 
@@ -705,7 +705,7 @@ describe("PaymentMethodsTab", () => {
   });
 
   it("edit form onClear: does NOT revoke when editIconPreview is null (line 347 false branch)", () => {
-    // method has icon but no local preview uploaded — editIconPreview is null
+    // method has icon but no local preview uploaded - editIconPreview is null
     mockUseQueryData = {
       data: [{ id: "pm1", name: "Visa", icon: "visa.png", user: "u1", order: 0 }],
       isLoading: false,
@@ -743,7 +743,7 @@ describe("PaymentMethodsTab", () => {
     render(<PaymentMethodsTab />);
     fireEvent.click(screen.getByText("add"));
 
-    // No upload — newIconPreview is null
+    // No upload - newIconPreview is null
     const formButtons = screen.getAllByRole("button");
     fireEvent.click(formButtons[1]); // cancel button
 
@@ -772,7 +772,7 @@ describe("PaymentMethodsTab", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "edit" })); // edit button
 
-    // No upload — editIconPreview is null
+    // No upload - editIconPreview is null
     const formButtons = screen.getAllByRole("button");
     fireEvent.click(formButtons[2]); // cancel button
 
@@ -788,7 +788,7 @@ describe("PaymentMethodsTab", () => {
     // First upload sets newIconPreview = "blob:fake-url"
     fireEvent.click(screen.getByTestId("icon-picker-upload"));
 
-    // Second upload — newIconPreview is "blob:fake-url" → revoke fires
+    // Second upload - newIconPreview is "blob:fake-url" → revoke fires
     fireEvent.click(screen.getByTestId("icon-picker-upload"));
 
     expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:fake-url");

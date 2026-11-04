@@ -168,7 +168,7 @@ describe("route component rendering", () => {
     expect(screen.getByText("layout")).toBeInTheDocument();
   });
 
-  it("renders password-reset page via router (covers PasswordResetPage lazy callback — line 23)", async () => {
+  it("renders password-reset page via router (covers PasswordResetPage lazy callback - line 23)", async () => {
     window.history.pushState({}, "", "/password-reset");
     const router = createAppRouter(makeContext({ user: null }));
     await router.load();
@@ -178,7 +178,7 @@ describe("route component rendering", () => {
   });
 
   // Line 20: lazy import of TotpPage
-  it("renders totp page via router (covers TotpPage lazy import — line 20)", async () => {
+  it("renders totp page via router (covers TotpPage lazy import - line 20)", async () => {
     window.history.pushState({}, "", "/totp");
     const router = createAppRouter(makeContext({ user: null }));
     await router.load();
