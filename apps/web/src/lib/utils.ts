@@ -75,7 +75,7 @@ function numberFormatter(locale: string, options: Intl.NumberFormatOptions): Int
 
 /** Multipliers always use a leading lowercase x and a decimal point. */
 export function formatMultiplier(value: number): string {
-  if (!Number.isFinite(value)) return "—";
+  if (!Number.isFinite(value)) return "-";
   const rounded = Math.round(value * 100) / 100;
   return `x${rounded.toFixed(Number.isInteger(rounded) ? 0 : 2)}`;
 }
@@ -171,6 +171,7 @@ export function toMonthly(price: number, cycleName: string, frequency: number): 
     case "Weekly":
       return (price / f) * (52 / 12);
     case "Monthly":
+    case "Last-Weekday":
       return price / f;
     case "Quarterly":
       return price / (f * 3);
@@ -220,7 +221,7 @@ export function sanitizeHref(url: string | null | undefined): string | null {
       return url;
     }
   } catch {
-    // Not a valid absolute URL — could be relative or malformed; reject
+    // Not a valid absolute URL - could be relative or malformed; reject
   }
   return null;
 }
@@ -237,7 +238,7 @@ export function sanitizeImageSrc(src: string | null | undefined): string | null 
       return parsed.href;
     }
   } catch {
-    // Unparseable — reject
+    // Unparseable - reject
   }
   return null;
 }

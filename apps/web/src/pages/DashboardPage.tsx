@@ -1,15 +1,18 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DashboardPaymentSidebar } from "@/components/dashboard/DashboardPaymentSidebar";
 import { DashboardYearOverview } from "@/components/dashboard/DashboardYearOverview";
 import { useDashboardDerivedData } from "@/components/dashboard/useDashboardDerivedData";
+import { QuickPaymentDialog } from "@/components/QuickPaymentDialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { useMonthlyBudgetData } from "@/hooks/useMonthlyBudgetData";
+import { useQuickPayments } from "@/hooks/useQuickPayments";
 import { useSummaryData } from "@/hooks/useSummaryData";
 import { useYearlyCosts } from "@/hooks/useYearlyCosts";
+import type { BudgetPeriod } from "@/lib/budgetPeriod";
 import { queryKeys } from "@/lib/queryKeys";
 import { currentMonthKey } from "@/lib/recordTypes";
 import { toast } from "@/lib/toast";
@@ -21,10 +24,12 @@ export function DashboardPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const userId = user?.id ?? "";
+  const quickPayments = useQuickPayments();
+  const [periodMonths, setPeriodMonths] = useState<BudgetPeriod>(1);
   const today = useLocalToday();
 
   const summary = useSummaryData(userId);
-  const monthlyBudget = useMonthlyBudgetData(userId, !!user?.payment_tracking);
+  const monthlyBudget = useMonthlyBudgetData(userId, !!user?.payment_tracking, true, periodMonths);
   const yearlyCosts = useYearlyCosts(userId);
   const lastSnapshot = useRef("");
 
@@ -72,17 +77,21 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <QuickPaymentDialog target={quickPayments.target} pending={quickPayments.pending} onClose={quickPayments.close} onConfirm={quickPayments.confirm} />
       <DashboardYearOverview
         key={userId}
         userId={userId}
         today={today}
         sidebar={(data) => (
           <DashboardPaymentSidebar
+            quickPayments={quickPayments.actions}
+            periodMonths={periodMonths}
+            onPeriodChange={setPeriodMonths}
             data={data}
             today={today}
             budget={budget}
             entries={monthlyBudget.entries}
-            totalCredits={totalCredits}
+            totalCredits={monthlyBudget.periodCredits ?? totalCredits}
             isLoading={monthlyBudget.isLoading || summary.isLoading}
             hasError={monthlyBudget.hasError || summary.isError}
             formatValue={formatValue}

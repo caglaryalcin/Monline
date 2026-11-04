@@ -92,10 +92,10 @@ export function automaticLogoUrls(
   ];
 }
 
-/** Names produced by the old automatic search and its generic logo fallback. */
+/** Legacy automatic filenames can acquire another storage prefix on each import. */
 export function isLegacyWorkspaceLogo(sub: Pick<Subscription, "name" | "logo">): boolean {
   if (findLogoService(sub.name)?.iconSlug !== "googleworkspace" || !sub.logo) return false;
-  return /^(?:[a-f0-9]{16}_)?logo(?:[-_](?:workspace[._-]google[._-]com|googleworkspace|google))?(?:_[a-z0-9]{10,})?\.(?:webp|png|svg|ico|jpe?g)$/i.test(
+  return /^(?:[a-f0-9]{16}_)*logo(?:[-_](?:workspace[._-]google[._-]com|googleworkspace|google))?(?:_[a-z0-9]{10,})?\.(?:webp|png|svg|ico|jpe?g)$/i.test(
     sub.logo,
   );
 }

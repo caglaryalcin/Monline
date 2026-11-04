@@ -8,6 +8,8 @@ export interface User {
   avatar?: string;
   language?: string;
   number_locale?: string;
+  country?: string;
+  region?: string;
   main_currency?: string;
   totp_enabled?: boolean;
   totp_configured?: boolean;
@@ -124,6 +126,8 @@ export interface SubscriptionHistory {
 }
 
 export interface Subscription {
+  /** Read-only holiday preferences of the subscription owner. */
+  billing_calendar?: { country?: string; region?: string };
   is_shared?: boolean;
   calendar_projection_hidden?: boolean;
   /** Only project scheduled dates on or after this history-clearing boundary. */
@@ -223,7 +227,7 @@ export interface Household {
 
 export interface Cycle {
   id: string;
-  name: "Daily" | "Weekly" | "Monthly" | "Quarterly" | "Half-Yearly" | "Yearly" | "One-Time";
+  name: "Daily" | "Weekly" | "Monthly" | "Last-Weekday" | "Quarterly" | "Half-Yearly" | "Yearly" | "One-Time";
 }
 
 export interface Frequency {

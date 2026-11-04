@@ -81,7 +81,7 @@ async function performRequest<T = void>(
     throw new Error(`HTTP ${res.status} (${contentType ?? "unknown"}) ${snippet}`);
   }
 
-  // 204 No Content — nothing to parse
+  // 204 No Content - nothing to parse
   if (res.status === 204) return undefined as T;
 
   if (!isJsonResponse(contentType)) {
@@ -130,7 +130,7 @@ export const api = {
     request<T>(path, { method: "DELETE", ...init }),
 
   /**
-   * Multipart/form-data upload — omits `Content-Type` so the browser sets
+   * Multipart/form-data upload - omits `Content-Type` so the browser sets
    * the boundary automatically.
    */
   postForm: <T = void>(path: string, body: FormData, init?: RequestOptions): Promise<T> =>

@@ -68,7 +68,7 @@ export function StatementSavedRow({
         )}
       </td>
       <td className="whitespace-nowrap p-3 text-right align-top tabular-nums">
-        {Number.isFinite(row.amount) ? money(row.amount, row.currency) : "—"}
+        {Number.isFinite(row.amount) ? money(row.amount, row.currency) : "-"}
       </td>
       <td className="p-3 align-top">{row.currency}</td>
       <td className="p-3 align-top">{t(`statement_category_${row.category || "other"}`)}</td>

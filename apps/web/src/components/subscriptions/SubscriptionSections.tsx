@@ -3,6 +3,7 @@ import { Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { QuickPaymentDialog } from "@/components/QuickPaymentDialog";
 import { ScopedTransferActions } from "@/components/ScopedTransferActions";
 import { SubscriptionFormModal } from "@/components/SubscriptionFormModal";
 import { LoansSection } from "@/components/subscriptions/LoansSection";
@@ -27,6 +28,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFilteredSubscriptions } from "@/hooks/useFilteredSubscriptions";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { usePersistentDisclosure } from "@/hooks/usePersistentDisclosure";
+import { useQuickPayments } from "@/hooks/useQuickPayments";
 import { useSubscriptionSort } from "@/hooks/useSubscriptionSort";
 import { installmentSchedule } from "@/lib/installmentSchedule";
 import { queryKeys } from "@/lib/queryKeys";
@@ -62,6 +64,7 @@ export function SubscriptionSections({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const userId = user?.id ?? "";
+  const quickPayments = useQuickPayments();
   const today = useLocalToday();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -428,6 +431,7 @@ export function SubscriptionSections({
           (section !== "installments" && section !== "bills")) && (
           <div className="space-y-3">
             <SubscriptionsGrid
+              quickPayments={quickPayments.actions}
               onShare={setSharingSubscription}
               isLoading={isLoading}
               subscriptions={filteredSubscriptions}
@@ -525,6 +529,7 @@ export function SubscriptionSections({
         />
       ) : null}
 
+      <QuickPaymentDialog target={quickPayments.target} pending={quickPayments.pending} onClose={quickPayments.close} onConfirm={quickPayments.confirm} />
       <ConfirmDialog
         open={!!deleteId}
         confirmOnEnter

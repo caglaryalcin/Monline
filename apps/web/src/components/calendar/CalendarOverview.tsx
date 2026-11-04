@@ -69,7 +69,7 @@ export function CalendarOverview({
           }
           value={
             hasError || remainingBudget === null
-              ? "—"
+              ? "-"
               : formatPrice(remainingBudget, currencySymbol, priceOptions)
           }
           loading={loading}
@@ -86,7 +86,7 @@ export function CalendarOverview({
               </InfoButton>
             </span>
           }
-          value={incomeError || incomeTotal === null ? "—" : formatPrice(incomeTotal, currencySymbol, priceOptions)}
+          value={incomeError || incomeTotal === null ? "-" : formatPrice(incomeTotal, currencySymbol, priceOptions)}
           loading={loading || financeLoading}
         />
         <StatCard
@@ -101,7 +101,7 @@ export function CalendarOverview({
               </InfoButton>
             </span>
           }
-          value={hasError || expenseError ? "—" : formatPrice(expenseTotal, currencySymbol, priceOptions)}
+          value={hasError || expenseError ? "-" : formatPrice(expenseTotal, currencySymbol, priceOptions)}
           loading={loading || financeLoading}
         />
       </div>

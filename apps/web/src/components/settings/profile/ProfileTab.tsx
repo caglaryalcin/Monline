@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -13,6 +13,7 @@ import {
 } from "@/components/settings/profile/profile.schema";
 import { ProfileAvatarCard } from "@/components/settings/profile/ProfileAvatarCard";
 import { ProfileBudgetCard } from "@/components/settings/profile/ProfileBudgetCard";
+import { ProfileLocationFields } from "@/components/settings/profile/ProfileLocationFields";
 import { Button } from "@/components/ui/button";
 import { InfoButton } from "@/components/ui/info-button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ import type { Currency } from "@/types";
 
 export function ProfileTab() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { user, refreshUser, isAdmin } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -79,6 +81,7 @@ export function ProfileTab() {
     reset,
     watch,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(schema),
@@ -88,6 +91,8 @@ export function ProfileTab() {
       oldPwd: "",
       language: user?.language || i18n.resolvedLanguage || "en",
       number_locale: user?.number_locale || "",
+      country: user?.country || "",
+      region: user?.region || "",
     },
   });
 
@@ -106,17 +111,21 @@ export function ProfileTab() {
       fd.set("email", data.email);
       fd.set("language", data.language);
       fd.set("number_locale", data.number_locale || "");
+      fd.set("country", data.country || "");
+      fd.set("region", data.region || "");
       fd.set("budget", String(budget || 0));
       if (emailChanged) fd.set("oldPassword", data.oldPwd);
       if (avatarFile) fd.set("avatar", avatarFile);
       await usersService.update(user!.id, fd);
       i18n.changeLanguage(data.language);
       await refreshUser();
+      if ((data.country || "") !== (user.country || "") || (data.region || "") !== (user.region || ""))
+        await queryClient.invalidateQueries();
       setAvatarFile(null);
       toast.success(t("saved"));
       reset({ ...data, oldPwd: "" });
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : String(e));
+      toast.error(e instanceof Error ? t(e.message, { defaultValue: e.message }) : String(e));
     }
   };
 
@@ -203,6 +212,13 @@ export function ProfileTab() {
 
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">{t("preferences")}</h3>
+            <ProfileLocationFields
+              country={watch("country") || ""}
+              region={watch("region") || ""}
+              onCountryChange={(value) => setValue("country", value, { shouldDirty: true })}
+              onRegionChange={(value) => setValue("region", value, { shouldDirty: true })}
+              disabled={isSubmitting}
+            />
             <div className="grid gap-2">
               <Label htmlFor="profile-language">{t("language")}</Label>
               <Controller

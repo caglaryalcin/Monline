@@ -35,7 +35,6 @@ const HTML = `<!doctype html>
 <html lang="{{language}}"><head><meta charset="utf-8"></head>
 <body style="margin:0;background:#f5f4ef;font-family:Arial,sans-serif;color:#303529">
   <main style="max-width:560px;margin:24px auto;padding:28px;background:#fff;border:1px solid #dfe3d9;border-radius:16px">
-    <p style="font-weight:bold;font-size:24px">Monline</p>
     <h1 style="font-size:20px">{{title}}</h1>
     <p style="line-height:1.7">{{message}}</p>
     <p><a href="{{url}}" style="color:#303529">{{open_app}}</a></p>
@@ -100,7 +99,21 @@ function validateTemplates(value) {
   return result;
 }
 
+function confirmedUserName(repository, userId) {
+  if (!userId) return "";
+  const { isPersonConfirmed } = require("./people-invitations.cjs");
+  const people = repository.findRecordsByFilter(
+    "household", "user = {:owner} && account = {:owner}", "-is_main,id", 0, 0, { owner: userId },
+  );
+  const person = people.find((entry) => entry.getString("name").trim() && isPersonConfirmed(repository, entry));
+  return person?.getString("name").trim() || "";
+}
+
 function renderNotification(templates, channel, context) {
+  if (context.confirmed_user_name !== undefined) {
+    const name = context.confirmed_user_name || languageHelpers.copyFor(context.language).you;
+    context = { ...context, user_name: name, payer: context.sample ? name : context.payer || name };
+  }
   if (context.event) context = languageHelpers.reminderContext(context);
   else
     context = {
@@ -132,7 +145,7 @@ function renderNotification(templates, channel, context) {
       subscriptions
         .map(
           (sub) =>
-            `${sub.name} — ${sub.currency || ""}${sub.price ?? ""} (${sub.cancellation_date || sub.next_payment || ""})`,
+            `${sub.name} - ${sub.currency || ""}${sub.price ?? ""} (${sub.cancellation_date || sub.next_payment || ""})`,
         )
         .join("\n"),
   };
@@ -172,6 +185,8 @@ function sampleContext(repository, user, event = "payment") {
     date,
   );
   return languageHelpers.reminderContext({
+    sample: true,
+    confirmed_user_name: confirmedUserName(repository, user.id),
     event: cancellation ? "cancellation" : "payment",
     language,
     user_name: user.getString("name"),
@@ -208,6 +223,7 @@ function validateLocalizedTemplates(value) {
 }
 
 module.exports = {
+  confirmedUserName,
   defaults,
   validateTemplates,
   validateLocalizedTemplates,

@@ -109,7 +109,7 @@ export function StatisticsPage() {
   const mainCode = mainCurrency?.code,
     mainSymbol = mainCurrency?.symbol ?? "$";
   // Both category views cover the selected calendar year.
-  const periodLabel = `${historyMonth(categories.from, language)} — ${historyMonth(categories.to, language)}`;
+  const periodLabel = `${historyMonth(categories.from, language)} - ${historyMonth(categories.to, language)}`;
 
   const loading = subscriptionsQuery.isPending || currenciesQuery.isPending;
   const error = subscriptionsQuery.isError || currenciesQuery.isError;

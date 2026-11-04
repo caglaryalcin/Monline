@@ -14,7 +14,7 @@ export function FinanceCardPaymentComparison({
   const { t, i18n } = useTranslation();
   const locale = resolveLocale(i18n, "tr");
   const money = (amount: number | null) =>
-    amount === null ? "—" : formatCurrency(amount, "TRY", {});
+    amount === null ? "-" : formatCurrency(amount, "TRY", {});
   const monthName = (month: string) =>
     new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(
       new Date(`${month}-01T12:00:00Z`),

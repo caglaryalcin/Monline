@@ -1,4 +1,4 @@
-const { subscriptionAmount, nextTrialPaymentDate } = require("./subscription-trial.mjs");
+const { isTrialDate, subscriptionAmount, nextTrialPaymentDate } = require("./subscription-trial.mjs");
 const { spendingData, isBill } = require("./spending.js");
 const { rowsForYear } = require("./finance-years.js");
 const {
@@ -91,6 +91,7 @@ function budgetData(data, month, today) {
           "Daily",
           "Weekly",
           "Monthly",
+          "Last-Weekday",
           "Quarterly",
           "Half-Yearly",
           "Yearly",
@@ -115,7 +116,10 @@ function budgetData(data, month, today) {
             (record) =>
               record.subscription_id === sub.id &&
               (record.due_date.slice(0, 10) === date ||
-                record.scheduled_date === date),
+                record.scheduled_date === date ||
+                (cycle === "Last-Weekday" && !isTrialDate(sub, date) &&
+                  (record.scheduled_date || record.due_date).slice(0, 7) === date.slice(0, 7) &&
+                  !isTrialDate(sub, record.scheduled_date || record.due_date))),
           )
         ) {
           const card = rows.get(methods.get(sub.payment_method)?.finance_card);
@@ -136,11 +140,12 @@ function budgetData(data, month, today) {
             budget_category: subscriptionCategory(sub),
           });
         }
-        const next = nextTrialPaymentDate(sub, date, anchor) || advanceDate(
+        const next = nextTrialPaymentDate(sub, date, anchor, cycle) || advanceDate(
           new Date(`${date}T12:00:00Z`),
           cycle,
           frequency,
           anchor,
+          sub.billing_calendar,
         )
           .toISOString()
           .slice(0, 10);

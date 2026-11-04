@@ -127,7 +127,7 @@ export function CostHistoryCard({
           </CardTitle>
           {!classic && (
             <p className="text-xs text-muted-foreground">
-              {historyMonth(chartData[0].name, language)} —{" "}
+              {historyMonth(chartData[0].name, language)} -{" "}
               {historyMonth(chartData.at(-1)!.name, language)}
             </p>
           )}

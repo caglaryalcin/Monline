@@ -39,7 +39,7 @@ function restoreReactivatedMonth(app, subscription, today) {
   let dates;
   if (cycle === "One-Time") dates = next >= beginning && next <= last && (!end || next <= end) ? [next] : [];
   else {
-    if (!["Daily", "Weekly", "Monthly", "Quarterly", "Half-Yearly", "Yearly"].includes(cycle)) return 0;
+    if (!["Daily", "Weekly", "Monthly", "Last-Weekday", "Quarterly", "Half-Yearly", "Yearly"].includes(cycle)) return 0;
     dates = [...iterateBackfillDates({
       trial: subscription,
       start: beginning, anchorDate: next, until: last, end, cycle, frequency,

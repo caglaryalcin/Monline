@@ -20,7 +20,7 @@ export const statementTranslations = {
     statement_duplicates_rules: "Benzerlik neye göre bulunuyor?",
     statement_duplicates_help:
       "Aynı gün, aynı firma ve para birimindeki kayıtlar karşılaştırılır. Yakın tutar sınırı TL için 5 TL, diğer para birimleri için 0,01 birimdir. Hiçbir kayıt otomatik silinmez veya birleştirilmez. Farklı taksitler ayrı ödemeler olabilir. Geri dönerek istemediğin satırların seçimini kaldırabilirsin.",
-    statement_duplicates_possible_duplicate: "Olası mükerrer kayıt — kontrol et",
+    statement_duplicates_possible_duplicate: "Olası mükerrer kayıt - kontrol et",
     statement_duplicates_installment_continuation: "Aynı alışverişin farklı taksiti olabilir",
     statement_duplicates_new: "Yüklenecek kayıt",
     statement_duplicates_source_statement: "Kayıtlı PDF ekstresi",
@@ -332,7 +332,7 @@ export const statementTranslations = {
     statement_duplicates_record_count: "Comparing {{count}} separate records",
     statement_duplicates_review_heading: "These payments may be recorded twice.",
     statement_duplicates_legitimate_help: "If you really made this purchase {{count}} times on the same day,",
-    statement_duplicates_legitimate_action: "no review is needed — save!",
+    statement_duplicates_legitimate_action: "no review is needed - save!",
     statement_duplicates_installment_count: "Possible other installments: {{count}}",
     statement_duplicates_installment_help: "These installments belong to different months. No action is needed; selected records will be saved normally.",
     statement_duplicates_compared_records: "Similar record",
@@ -344,7 +344,7 @@ export const statementTranslations = {
     statement_duplicates_rules: "How are similar transactions found?",
     statement_duplicates_help:
       "Records with the same date, merchant and currency are compared. The tolerance is TRY 5 or 0.01 for other currencies. Nothing is deleted or merged automatically. Different installments can be separate payments. Go back to deselect unwanted rows.",
-    statement_duplicates_possible_duplicate: "Possible duplicate — review",
+    statement_duplicates_possible_duplicate: "Possible duplicate - review",
     statement_duplicates_installment_continuation:
       "May be another installment of the same purchase",
     statement_duplicates_new: "Incoming record",
@@ -674,7 +674,7 @@ export const statementTranslations = {
     statement_duplicates_rules: "Wie werden ähnliche Umsätze gefunden?",
     statement_duplicates_help:
       "Verglichen werden Datum, Händler und Währung. Die Toleranz beträgt 5 TRY bzw. 0,01 in anderen Währungen. Es wird nichts automatisch gelöscht oder zusammengeführt. Unterschiedliche Raten können separate Zahlungen sein. Zurückgehen, um unerwünschte Zeilen abzuwählen.",
-    statement_duplicates_possible_duplicate: "Mögliches Duplikat — prüfen",
+    statement_duplicates_possible_duplicate: "Mögliches Duplikat - prüfen",
     statement_duplicates_installment_continuation:
       "Möglicherweise eine weitere Rate desselben Kaufs",
     statement_duplicates_new: "Neuer Eintrag",

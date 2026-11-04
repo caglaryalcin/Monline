@@ -1,9 +1,12 @@
+import { type BusinessCalendar, lastWeekdayOfMonth } from "@/lib/lastWeekday";
+
 /** Shift by one billing period, clamping to the target month's last day. */
 function shiftPaymentDate(
   nextPayment: string,
   cycle: string,
   frequency: number,
   direction: number,
+  calendar?: BusinessCalendar,
 ): string {
   const date = new Date(nextPayment + "T00:00:00.000Z");
   if (
@@ -14,7 +17,7 @@ function shiftPaymentDate(
     frequency < 1
   )
     return "";
-  const months: Record<string, number> = { Monthly: 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
+  const months: Record<string, number> = { Monthly: 1, "Last-Weekday": 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
   if (months[cycle]) {
     const day = date.getUTCDate();
     date.setUTCDate(1);
@@ -23,16 +26,17 @@ function shiftPaymentDate(
     last.setUTCMonth(last.getUTCMonth() + 1);
     last.setUTCDate(0);
     date.setUTCDate(Math.min(day, last.getUTCDate()));
+    if (cycle === "Last-Weekday") date.setUTCDate(Number(lastWeekdayOfMonth(date.toISOString().slice(0, 10), calendar).slice(8, 10)));
   } else if (cycle === "Daily" || cycle === "Weekly") {
     date.setUTCDate(date.getUTCDate() + direction * frequency * (cycle === "Weekly" ? 7 : 1));
   } else if (cycle !== "One-Time") return "";
   return Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : "";
 }
 
-export function automaticStartDate(date: string, cycle: string, frequency = 1) {
-  return shiftPaymentDate(date, cycle, frequency, -1);
+export function automaticStartDate(date: string, cycle: string, frequency = 1, calendar?: BusinessCalendar) {
+  return shiftPaymentDate(date, cycle, frequency, -1, calendar);
 }
 
-export function nextPaymentDate(date: string, cycle: string, frequency = 1) {
-  return shiftPaymentDate(date, cycle, frequency, 1);
+export function nextPaymentDate(date: string, cycle: string, frequency = 1, calendar?: BusinessCalendar) {
+  return shiftPaymentDate(date, cycle, frequency, 1, calendar);
 }

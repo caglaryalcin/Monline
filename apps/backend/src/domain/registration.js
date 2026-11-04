@@ -7,7 +7,7 @@ const {
 const domainPath = __dirname;
 
 // ================================================================
-// ROUTE: GET /api/auth/registration-status — public.
+// ROUTE: GET /api/auth/registration-status - public.
 // Reveals only whether a signup would be accepted. The thresholds
 // themselves stay admin-only; a caller learns nothing it could not
 // already discover by attempting to register.

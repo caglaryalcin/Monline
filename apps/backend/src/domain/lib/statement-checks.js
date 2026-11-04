@@ -46,7 +46,7 @@ function sourceAmountSafe(row) {
   )
     return false;
   if (
-    /[‐‑‒–—﹣－＋]\s*\d[\d., \u00a0\u202f\u2007]*\s*(?:TRY|TL|₺|USD|EUR|GBP)\s*$/i.test(
+    /[‐‑‒–\u2014﹣－＋]\s*\d[\d., \u00a0\u202f\u2007]*\s*(?:TRY|TL|₺|USD|EUR|GBP)\s*$/i.test(
       source,
     )
   )

@@ -8,7 +8,7 @@ import type {
  * Turns the raw change log into rows the history dialog can render directly.
  *
  * The dialog stays a rendering concern: which values a given event type puts
- * on screen — and whether a price moved up or down — is decided here.
+ * on screen - and whether a price moved up or down - is decided here.
  */
 
 const LABEL_KEYS: Record<SubscriptionHistoryEventType, string> = {
@@ -47,7 +47,7 @@ export function cycleLabel(cycle: string, frequency: number): string {
 /**
  * Percentage a price moved, to one decimal.
  *
- * Returns null when there is nothing to compare against — a subscription that
+ * Returns null when there is nothing to compare against - a subscription that
  * used to be free has no meaningful percentage increase.
  */
 export function priceChangePercent(
@@ -108,7 +108,7 @@ function toEntry(event: SubscriptionHistoryEvent): HistoryEntry | null {
 }
 
 /**
- * Newest change first — a history is read from what just happened backwards.
+ * Newest change first - a history is read from what just happened backwards.
  * Events sharing an effective date (one save can change price and cycle at
  * once) keep the order the backend wrote them in.
  */

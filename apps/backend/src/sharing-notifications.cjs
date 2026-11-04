@@ -72,8 +72,8 @@ function subscriptionSharedMessage({
     to,
     locale,
     subject: tr
-      ? "Monline — Sizinle bir abonelik paylaşıldı"
-      : "Monline — A subscription was shared with you",
+      ? "Monline - Sizinle bir abonelik paylaşıldı"
+      : "Monline - A subscription was shared with you",
     text: `${body}\n\n${hint}${url ? `\n\n${linkLabel}: ${url}` : ""}`,
     bodyHtml: `<p style="margin:0 0 16px">${escapeHtml(body)}</p><p style="margin:0">${hint}</p>${link}`,
     logoAlt: tr ? "Monline logosu" : "Monline logo",

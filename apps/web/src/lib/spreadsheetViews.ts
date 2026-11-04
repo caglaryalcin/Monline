@@ -355,7 +355,7 @@ export function buildReaderViews(book: SpreadsheetWorkbook, index: LedgerIndex) 
                 year: "numeric",
                 timeZone: "UTC",
               }).format(new Date(`${month}-01T12:00:00Z`))
-            : "—";
+            : "-";
         title(
           loanSheet,
           top + 2,

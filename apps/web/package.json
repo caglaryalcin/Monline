@@ -2,7 +2,7 @@
   "name": "monline",
   "description": "Web application for the Monline self-hosted subscription tracker.",
   "private": true,
-  "version": "2.0.0-beta.28",
+  "version": "2.0.0-beta.29",
   "packageManager": "bun@1.4.3",
   "license": "GPL-3.0-only",
   "author": {
@@ -54,6 +54,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.4.0",
+    "date-holidays": "3.38.0",
     "framer-motion": "^12.43.0",
     "i18next": "^23.16.8",
     "i18next-browser-languagedetector": "^8.2.1",

@@ -105,7 +105,7 @@ export function StatementOverview({
                         key === "balance" && "font-bold",
                       )}
                     >
-                      {summary[key] === undefined ? "—" : money(summary[key])}
+                      {summary[key] === undefined ? "-" : money(summary[key])}
                     </dd>
                   </dl>
                 </Fragment>

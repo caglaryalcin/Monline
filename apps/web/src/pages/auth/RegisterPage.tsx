@@ -197,7 +197,7 @@ export function RegisterPage() {
                     <SelectContent>
                       {COMMON_CURRENCIES.map((c) => (
                         <SelectItem key={c.code} value={c.code}>
-                          {c.symbol} — {c.name}
+                          {c.symbol} - {c.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

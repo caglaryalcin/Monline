@@ -60,7 +60,7 @@ export function cleanStatementText(text: string, controlGlyphs = hasStatementCon
     cleaned
       // Some text layers repeat the initial Ö (for example, a control glyph plus
       // a Unicode glyph). Repair only the known bank-payment descriptor.
-      .replace(/(^|\s)(?:[oö]\s*)*deme\s*[-–—:]\s*Enpara\.com(?=\s|$)/gi, "$1Ödeme - Enpara.com")
+      .replace(/(^|\s)(?:[oö]\s*)*deme\s*[-–\u2014:]\s*Enpara\.com(?=\s|$)/gi, "$1Ödeme - Enpara.com")
       .replace(/\b(Enpara\.com\s+Cep)\s+(?:ubesi|subesi|şubesi)\b/gi, "$1 Şubesi")
       .normalize("NFC")
   );

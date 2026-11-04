@@ -7,6 +7,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { backfillDates, type BackfillSelection, localToday } from "@/lib/backfillPayments";
+import type { BusinessCalendar } from "@/lib/lastWeekday";
 import { resolveLocale } from "@/lib/locale";
 import { numberFormatter } from "@/lib/numberFormat";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
@@ -14,6 +15,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 import type { Currency } from "@/types";
 
 interface Props {
+  calendar?: BusinessCalendar;
   start: string;
   anchorDate?: string;
   billingAnchorDay?: number;
@@ -47,6 +49,7 @@ interface Draft {
 const EMPTY_DRAFT: Draft = { signature: "", amounts: {}, excluded: [], confirmed: false };
 
 export function BackfillPaymentsEditor({
+  calendar,
   start,
   anchorDate = start,
   billingAnchorDay,
@@ -78,6 +81,7 @@ export function BackfillPaymentsEditor({
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const today = localToday();
   const signature = JSON.stringify([
+    calendar,
     rangeStart,
     anchorDate,
     billingAnchorDay,
@@ -99,6 +103,7 @@ export function BackfillPaymentsEditor({
     try {
       return {
         dates: backfillDates({
+          calendar,
           trial: { trial_duration: trialDuration, trial_unit: trialUnit, trial_start_date: trialStartDate },
           start: rangeStart,
           anchorDate,
@@ -114,7 +119,7 @@ export function BackfillPaymentsEditor({
     } catch (error) {
       return { dates: [], error: (error as Error).message };
     }
-  }, [rangeStart, anchorDate, billingAnchorDay, cycle, frequency, end, limit, today, excludeDates, trialDuration, trialUnit, trialStartDate]);
+  }, [calendar, rangeStart, anchorDate, billingAnchorDay, cycle, frequency, end, limit, today, excludeDates, trialDuration, trialUnit, trialStartDate]);
   const rows = useMemo(
     () =>
       schedule.dates.map((date) => ({

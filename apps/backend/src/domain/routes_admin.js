@@ -8,7 +8,7 @@ const {
 const domainPath = __dirname;
 const { smtpTestMessage } = require("../email-templates.cjs");
 // ================================================================
-// ROUTE: Admin — SMTP Settings (GET)
+// ROUTE: Admin - SMTP Settings (GET)
 // ================================================================
 routerAdd("GET", "/api/admin/smtp", (e) => {
   if (!e.auth) throw new ForbiddenError("Authentication required");
@@ -33,13 +33,13 @@ routerAdd("GET", "/api/admin/smtp", (e) => {
     localName: s.smtp.localName || "",
     senderAddress: s.meta.senderAddress || "",
     senderName: s.meta.senderName || "",
-    // Never expose the password — let the frontend know if one is set
+    // Never expose the password - let the frontend know if one is set
     hasPassword: s.smtp.password !== "",
   });
 });
 
 // ================================================================
-// ROUTE: Admin — SMTP Settings (POST)
+// ROUTE: Admin - SMTP Settings (POST)
 // ================================================================
 routerAdd("POST", "/api/admin/smtp", (e) => {
   if (!e.auth) throw new ForbiddenError("Authentication required");
@@ -85,7 +85,7 @@ routerAdd("POST", "/api/admin/smtp", (e) => {
 });
 
 // ================================================================
-// ROUTE: Admin — SMTP Test
+// ROUTE: Admin - SMTP Test
 // ================================================================
 routerAdd("POST", "/api/admin/smtp/test", async (e) => {
   if (!e.auth) throw new ForbiddenError("Authentication required");
@@ -129,7 +129,7 @@ routerAdd("POST", "/api/admin/smtp/test", async (e) => {
 });
 
 // ================================================================
-// ROUTE: Admin — Delete Unused Logos
+// ROUTE: Admin - Delete Unused Logos
 // ================================================================
 routerAdd("POST", "/api/admin/deleteunusedlogos", (e) => {
   if (!e.auth) throw new ForbiddenError("Authentication required");
@@ -153,7 +153,7 @@ routerAdd("POST", "/api/admin/deleteunusedlogos", (e) => {
 });
 
 // ================================================================
-// ROUTE: Admin Settings — GET
+// ROUTE: Admin Settings - GET
 // ================================================================
 routerAdd("GET", "/api/admin/settings", (e) => {
   if (!e.auth) throw new ForbiddenError("Authentication required");
@@ -187,7 +187,7 @@ routerAdd("GET", "/api/admin/settings", (e) => {
 });
 
 // ================================================================
-// ROUTE: Admin Settings — PATCH
+// ROUTE: Admin Settings - PATCH
 // ================================================================
 routerAdd("PATCH", "/api/admin/settings", (e) => {
   if (!e.auth) throw new ForbiddenError("Authentication required");

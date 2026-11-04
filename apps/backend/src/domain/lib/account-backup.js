@@ -4,6 +4,8 @@ const PROFILE = [
   "name",
   "language",
   "number_locale",
+  "country",
+  "region",
   "main_currency",
   "dark_theme_mode",
   "color_theme",
@@ -787,6 +789,7 @@ function importAccount(
         "users",
         PROFILE,
       );
+      account.set("__monline_restore", true);
       tx.save(account);
       const mainId = account.getString("main_currency");
       if (mainId)

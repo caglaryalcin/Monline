@@ -2,7 +2,7 @@ import type { Subscription } from "@/types";
 
 /**
  * Reserved for credits. A credit is always a single dated payout, and an
- * expense on this cycle has no recurring monthly equivalent — `toMonthly`
+ * expense on this cycle has no recurring monthly equivalent - `toMonthly`
  * would fall through to its default branch and bill it every month forever.
  * The backend enforces the pairing on every write path.
  */

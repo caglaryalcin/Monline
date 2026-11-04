@@ -369,7 +369,7 @@ export function HistoricalPaymentDialog({
                 <div>
                   <p className="text-sm font-semibold">{subscription.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {t("historical_currency", { currency: currency?.code ?? "—" })}
+                    {t("historical_currency", { currency: currency?.code ?? "-" })}
                   </p>
                 </div>
               </div>

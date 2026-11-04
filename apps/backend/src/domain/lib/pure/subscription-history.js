@@ -121,7 +121,7 @@ function byEffectiveDate(a, b) {
  *
  * `fallback` supplies the current subscription state, used when the log has no
  * timeline events at all (a subscription created before the log existed and
- * never backfilled) — the only price we can honestly attribute to the past is
+ * never backfilled) - the only price we can honestly attribute to the past is
  * the one it has now.
  */
 function buildPriceTimeline(events, fallback) {
@@ -242,7 +242,7 @@ function isPausedOn(ranges, date) {
  * This is an estimate and is labelled as one in the UI: it assumes the
  * subscription was actually paid on schedule. Monline only records real payments
  * when payment tracking is enabled, so for everyone else this is the only
- * number available — and for a subscription that never changed price it is
+ * number available - and for a subscription that never changed price it is
  * exactly `price × elapsed cycles`.
  *
  * A cycle that cannot advance (One-Time, or an unrecognised name) charges once
@@ -289,7 +289,7 @@ function computeSpendTotal(options) {
       segment.frequency,
       anchorDay,
     );
-    var next = trialHelpers.nextTrialPaymentDate(config.trial, date, anchorDay) || limits.dateOnly(advanced && advanced.toISOString());
+    var next = trialHelpers.nextTrialPaymentDate(config.trial, date, anchorDay, segment.cycleName) || limits.dateOnly(advanced && advanced.toISOString());
     if (!next || next <= date) break;
     if (segment.cycleName === "Daily" || segment.cycleName === "Weekly")
       anchorDay = Number(next.slice(8, 10));

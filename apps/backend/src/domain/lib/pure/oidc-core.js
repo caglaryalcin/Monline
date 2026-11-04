@@ -1,5 +1,5 @@
 /**
- * Pure OIDC helpers — no Monline globals, no network access.
+ * Pure OIDC helpers - no Monline globals, no network access.
  *
  * Everything that can be reasoned about without a running provider lives here
  * so it can be unit tested: discovery URL building, scope normalization,
@@ -66,7 +66,7 @@ function encodeFormBody(params) {
 
 /**
  * Reads the endpoints the login flow needs out of the discovery document,
- * plus the issuer the provider declares for itself — that value, not the URL
+ * plus the issuer the provider declares for itself - that value, not the URL
  * the admin typed, is what an ID token must be signed by.
  */
 function extractDiscoveryEndpoints(document) {

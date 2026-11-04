@@ -1,5 +1,5 @@
 /**
- * Centralized constants — single source of truth for magic strings.
+ * Centralized constants - single source of truth for magic strings.
  * Import from here instead of hardcoding values across the codebase.
  */
 

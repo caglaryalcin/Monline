@@ -3,6 +3,7 @@ import {
   ArrowLeftRight,
   Calendar,
   CalendarCheck,
+  CheckCheck,
   Copy,
   Edit,
   ExternalLink,
@@ -32,6 +33,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { localToday } from "@/lib/backfillPayments";
 import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
+import type { QuickPaymentActions } from "@/lib/quickPayment";
 import { isCredit } from "@/lib/recordTypes";
 import { automaticStartDate } from "@/lib/subscriptionStartDate";
 import { isTrialDate, subscriptionAmount } from "@/lib/subscriptionTrial";
@@ -55,6 +57,7 @@ interface EditableSubscriptionActions {
 }
 
 interface SubscriptionActionsProps extends Partial<EditableSubscriptionActions> {
+  quickPayments?: QuickPaymentActions;
   onSharedEdit?: () => void;
   readOnly?: boolean;
   onShare?: () => void;
@@ -71,6 +74,7 @@ interface SubscriptionActionsProps extends Partial<EditableSubscriptionActions> 
 }
 
 function SubscriptionActions({
+  quickPayments,
   onSharedEdit,
   readOnly,
   onShare,
@@ -102,9 +106,20 @@ function SubscriptionActions({
           : null
       : null;
   const displayedPeriod = priceDisplay === "billing" ? savedPeriod : priceDisplay;
-  const nextPeriod = displayedPeriod === "monthly" ? "yearly" : "monthly";
-  const priceActionLabel = t(nextPeriod === "monthly" ? "show_monthly" : "show_yearly");
-  const changePeriod = (period: "monthly" | "yearly") =>
+  const nextPeriod =
+    savedPeriod === null && priceDisplay === "yearly"
+      ? "billing"
+      : displayedPeriod === "monthly"
+        ? "yearly"
+        : "monthly";
+  const priceActionLabel = t(
+    nextPeriod === "billing"
+      ? "show_billing_period"
+      : nextPeriod === "monthly"
+        ? "show_monthly"
+        : "show_yearly",
+  );
+  const changePeriod = (period: SubscriptionPriceDisplay) =>
     onPriceDisplayChange(period === savedPeriod ? "billing" : period);
   const finiteSchedule = (sub.payment_limit ?? 0) > 0 || !!sub.end_date;
   const automationButton = (setting: SubscriptionAutomationSetting) => {
@@ -180,6 +195,13 @@ function SubscriptionActions({
         className,
       )}
     >
+      {quickPayments?.canPay(sub) && (
+        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-full text-green-700 dark:text-green-400"
+          aria-label={t("quick_payment_button", { name: sub.name })} title={t("mark_as_paid")}
+          onClick={() => quickPayments.select(sub)}>
+          <CheckCheck className="h-3.5 w-3.5" />
+        </Button>
+      )}
       {!credit && onToggleAutomation && (
         <>
           {cycleName !== "One-Time" && automationButton("auto_renew")}
@@ -264,8 +286,8 @@ function SubscriptionActions({
       >
         <History className="h-3.5 w-3.5" />
       </Button>
-      {/* Renewing an inactive subscription is a no-op on the backend — it
-          refuses to advance a paused or finished schedule — so offering the
+      {/* Renewing an inactive subscription is a no-op on the backend - it
+          refuses to advance a paused or finished schedule - so offering the
           action here would just be a button that does nothing. */}
       {!sub.inactive && !credit && (
         <TooltipProvider delayDuration={250}>
@@ -310,6 +332,7 @@ function SubscriptionActions({
 // ── SubscriptionCard ──────────────────────────────────────────────────────────
 
 export function SubscriptionCard({
+  quickPayments,
   onSharedEdit,
   readOnly,
   onShare,
@@ -337,6 +360,7 @@ export function SubscriptionCard({
   automationPendingSetting,
   showAutoMarkPaid = true,
 }: {
+  quickPayments?: QuickPaymentActions;
   onSharedEdit?: () => void;
   readOnly?: boolean;
   onShare?: () => void;
@@ -421,7 +445,7 @@ export function SubscriptionCard({
   ) : null;
   const days = daysUntil(sub.next_payment);
   const nextPaymentDay = sub.next_payment?.slice(0, 10) || "";
-  const periodStart = automaticStartDate(nextPaymentDay, cycleName, sub.frequency || 1);
+  const periodStart = automaticStartDate(nextPaymentDay, cycleName, sub.frequency || 1, sub.billing_calendar);
   const progress = showProgress ? subscriptionProgress(periodStart, nextPaymentDay) : 0;
   const remainingLabel =
     days > 0
@@ -539,6 +563,8 @@ export function SubscriptionCard({
           </div>
 
           <SubscriptionActions
+
+            quickPayments={quickPayments}
             onSharedEdit={onSharedEdit}
             readOnly={readOnly}
             onShare={onShare}
@@ -714,6 +740,8 @@ export function SubscriptionCard({
         </div>
 
         <SubscriptionActions
+
+          quickPayments={quickPayments}
           onSharedEdit={onSharedEdit}
           readOnly={readOnly}
           onShare={onShare}

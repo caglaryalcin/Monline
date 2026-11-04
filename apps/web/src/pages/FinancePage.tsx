@@ -2130,13 +2130,13 @@ function FinanceSection({
                       aria-label={`${label("previous_month_deficit")} · ${monthName(0)} · ${label("edit")}`}
                       onClick={() => setEditingOpening(true)}
                     >
-                      {month.carryover > 0 ? money(month.carryover) : "—"}
+                      {month.carryover > 0 ? money(month.carryover) : "-"}
                     </button>
                   )
                 ) : month.carryover > 0 ? (
                   money(month.carryover)
                 ) : (
-                  "—"
+                  "-"
                 )}
               </td>
             );

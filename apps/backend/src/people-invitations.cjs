@@ -149,7 +149,7 @@ function requestDetails(requests, tr) {
     ...subscriptions.map(
       (sub) =>
         sub.name +
-        " — " +
+        " - " +
         (sub.permission === "edit"
           ? tr
             ? "Düzenleyebilir"
@@ -207,11 +207,11 @@ function invitationMessage({ from, to, senderName, language, url, requests }) {
     locale: tr ? "tr" : "en",
     subject: hasSharing
       ? tr
-        ? "Monline — Paylaşım daveti"
-        : "Monline — Sharing invitation"
+        ? "Monline - Paylaşım daveti"
+        : "Monline - Sharing invitation"
       : tr
-        ? "Monline — Kişi listesine ekleme isteği"
-        : "Monline — People list invitation",
+        ? "Monline - Kişi listesine ekleme isteği"
+        : "Monline - People list invitation",
     text: body + details.text + "\n\n" + label + ": " + url + "\n\n" + hint,
     bodyHtml:
       '<p style="margin:0 0 20px">' +

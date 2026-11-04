@@ -6,7 +6,7 @@ const {
 } = require("../runtime.cjs");
 const domainPath = __dirname;
 /**
- * Monline — User Onboarding Hook
+ * Monline - User Onboarding Hook
  *
  * After a new user is created, generates default per-user data:
  * - 14 default subscription categories

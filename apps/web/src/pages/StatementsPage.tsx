@@ -285,7 +285,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
   const money = (amount: number, currency: string) => formatCurrency(amount, currency, {});
   const monthLabel = (value: string) => {
     const date = new Date(`${value}-15T12:00:00`);
-    if (!Number.isFinite(date.getTime())) return "—";
+    if (!Number.isFinite(date.getTime())) return "-";
     return new Intl.DateTimeFormat(i18n.language.replace("_", "-"), {
       month: "long",
       year: "numeric",
@@ -818,7 +818,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
               </CardTitle>
               <p className="break-all text-sm text-muted-foreground">
                 {metadata.file_name} ·{" "}
-                {/^20\d{2}-(0[1-9]|1[0-2])$/.test(period) ? monthLabel(period) : "—"}
+                {/^20\d{2}-(0[1-9]|1[0-2])$/.test(period) ? monthLabel(period) : "-"}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -1330,7 +1330,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
                           Number.isFinite(row.amount) ? (
                             `−${money(row.amount, row.currency)}`
                           ) : (
-                            "—"
+                            "-"
                           )
                         ) : (
                           <Input

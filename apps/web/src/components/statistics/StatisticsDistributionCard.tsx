@@ -315,7 +315,7 @@ export function StatisticsDistributionCard({
                             {formatPrice(item.value, mainSymbol, { currencyCode: mainCode })}
                           </td>
                           <td className="px-3 py-2.5 text-right tabular-nums">
-                            {item.count ?? "—"}
+                            {item.count ?? "-"}
                           </td>
                           <td className="py-2.5 text-right tabular-nums">{percent(item.share)}</td>
                         </tr>
@@ -332,7 +332,7 @@ export function StatisticsDistributionCard({
                                 {formatPrice(detail.value, mainSymbol, { currencyCode: mainCode })}
                               </td>
                               <td className="px-3 py-2 text-right tabular-nums">
-                                {detail.count ?? "—"}
+                                {detail.count ?? "-"}
                               </td>
                               <td className="py-2 text-right tabular-nums">
                                 {percent(total > 0 ? detail.value / total : 0)}

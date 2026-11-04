@@ -151,10 +151,11 @@ function prepareInitialPayment(app, subscription, input, now = new Date()) {
   const cycle = app
     .findRecordById("cycles", subscription.getString("cycle"))
     .getString("name");
-  const next = nextTrialPaymentDate(subscription, date) || require("./pure/subscription-start.js").nextPaymentDate(
+  const next = nextTrialPaymentDate(subscription, date, undefined, cycle) || require("./pure/subscription-start.js").nextPaymentDate(
     date,
     cycle,
     Number(subscription.get("frequency")),
+    subscription.get("billing_calendar"),
   );
   if (!next || next <= date)
     throw new BadRequestError("historical_invalid_date");

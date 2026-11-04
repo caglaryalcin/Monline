@@ -142,7 +142,7 @@ export function InstallmentStatisticsDetails({
                         </span>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="font-medium tabular-nums">{row.progress || "—"}</span>
+                        <span className="font-medium tabular-nums">{row.progress || "-"}</span>
                         <span
                           className="mt-2 block h-1.5 w-24 overflow-hidden rounded-full bg-muted"
                           aria-hidden="true"

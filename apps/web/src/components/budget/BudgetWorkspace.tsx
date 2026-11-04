@@ -130,12 +130,12 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
               ["budget_cash_out", amounts(data.cash), "budget_cash_out_help"],
               [
                 "budget_actual_expenses",
-                data.review_required ? "—" : amounts(data.expenses),
+                data.review_required ? "-" : amounts(data.expenses),
                 "budget_actual_expenses_help",
               ],
               [
                 "budget_available",
-                data.review_required ? "—" : money(available),
+                data.review_required ? "-" : money(available),
                 "budget_available_help",
               ],
             ].map(([label, value, help]) => (
@@ -216,7 +216,7 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
                           )}
                         </dt>
                         <dd className="mt-1 font-semibold tabular-nums">
-                          {data.review_required ? "—" : amounts(group.totals)}
+                          {data.review_required ? "-" : amounts(group.totals)}
                         </dd>
                       </div>
                     ))}

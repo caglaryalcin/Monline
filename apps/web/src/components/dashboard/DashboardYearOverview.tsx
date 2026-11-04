@@ -221,7 +221,7 @@ export function DashboardYearOverview({
     payments[key].totals.length
       ? payments[key].totals.map((total) => money(total.amount, total.currency)).join(" · ")
       : payments[key].unpriced
-        ? "—"
+        ? "-"
         : money(0);
   const onlineLoading = subscriptions.isPending || currencies.isPending || records.isPending;
   const onlineError = subscriptions.isError || currencies.isError || records.isError;
@@ -311,7 +311,7 @@ export function DashboardYearOverview({
             <SummaryCard
               title={t("dashboard_year_cards_paid")}
               year={year}
-              value={finance.isError ? "—" : formatTotals("cards")}
+              value={finance.isError ? "-" : formatTotals("cards")}
               icon={<CreditCard className="h-6 w-6" />}
               loading={finance.isPending}
               accent="var(--chart-2)"
@@ -319,7 +319,7 @@ export function DashboardYearOverview({
             <SummaryCard
               title={t("dashboard_year_online_paid")}
               year={year}
-              value={onlineError ? "—" : formatTotals("online")}
+              value={onlineError ? "-" : formatTotals("online")}
               icon={<Globe className="h-6 w-6" />}
               loading={onlineLoading}
               accent="var(--chart-3)"
@@ -327,7 +327,7 @@ export function DashboardYearOverview({
             <SummaryCard
               title={t("dashboard_year_loans_paid")}
               year={year}
-              value={finance.isError ? "—" : formatTotals("loans")}
+              value={finance.isError ? "-" : formatTotals("loans")}
               icon={<Landmark className="h-6 w-6" />}
               loading={finance.isPending}
               accent="var(--chart-2)"
@@ -337,7 +337,7 @@ export function DashboardYearOverview({
               year={year}
               value={
                 finance.isError || salary.change == null
-                  ? "—"
+                  ? "-"
                   : numberFormatter({
                       style: "percent",
                       maximumFractionDigits: 1,

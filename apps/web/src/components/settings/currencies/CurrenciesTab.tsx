@@ -113,7 +113,7 @@ export function CurrenciesTab() {
       });
       toast.success(t("success_update"));
 
-      // Rates are relative to the main currency — auto-refresh when base changes
+      // Rates are relative to the main currency - auto-refresh when base changes
       if (fixerSettings?.enabled && fixerSettings.api_key_configured) {
         fixerService
           .updateRates()

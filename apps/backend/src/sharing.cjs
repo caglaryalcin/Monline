@@ -600,6 +600,7 @@ function registerSharingApi(app, repository, auth) {
             "category",
             "payer",
             "frequency",
+            "billing_calendar",
             "next_payment",
             "start_date",
             "auto_renew",

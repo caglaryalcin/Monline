@@ -1104,7 +1104,7 @@ export const financeTranslations = {
     finance_link_statement_help:
       "Seçtiğin sütun, ödemeyi yaptığın aydır. Bu ödemenin göründüğü ekstreyi seç. Gerçek kart ödemeleri karşılaştırılır; iadeler ayrı tutulur.",
     finance_statement_same_month: "Önerilen: {{month}}",
-    finance_statement_other_months: "Diğer aylar — PDF’deki ödeme tarihini kontrol et",
+    finance_statement_other_months: "Diğer aylar - PDF’deki ödeme tarihini kontrol et",
     finance_statement_payment_source: "Ödemeyi gösteren ekstre",
     finance_statement_cycle_example: "29’unda kesilen ekstre için örnek: 29 {{previousMonth}} tarihinde kesilen borcu {{month}} ayında ödersin. Bu ödemeyi {{month}} ekstresinden doğrularsın.",
     finance_uploaded_statement: "Yüklenen ekstre",

@@ -521,7 +521,7 @@ export function SetupPage() {
                         className="flex flex-wrap justify-between gap-3 py-3 text-sm"
                       >
                         <dt className="text-muted-foreground">{label}</dt>
-                        <dd className="min-w-0 break-all font-medium">{value || "—"}</dd>
+                        <dd className="min-w-0 break-all font-medium">{value || "-"}</dd>
                       </div>
                     ))}
                   </dl>

@@ -264,7 +264,7 @@ export function Layout() {
               <Link
                 to="/subscriptions"
                 className="monline-main-header__stat flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/50"
-                aria-label={`${t("active_subscriptions")}: ${summary.data?.count ?? "—"}`}
+                aria-label={`${t("active_subscriptions")}: ${summary.data?.count ?? "-"}`}
                 title={t("active_subscriptions")}
               >
                 <span
@@ -273,19 +273,19 @@ export function Layout() {
                 />
                 <span className="monline-main-header__label hidden sm:inline">{t("active_subscriptions")}</span>
                 <span className="font-semibold tabular-nums text-foreground">
-                  {summary.data?.count ?? "—"}
+                  {summary.data?.count ?? "-"}
                 </span>
               </Link>
               <Link
                 to="/debt"
                 search={{ tab: "loans" }}
                 className="monline-main-header__stat flex h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 text-[13px] text-muted-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-foreground/50"
-                aria-label={`${t("spending_section_loans")}: ${activeLoanCount ?? "—"}`}
+                aria-label={`${t("spending_section_loans")}: ${activeLoanCount ?? "-"}`}
                 title={t("loans_active")}
               >
                 <Landmark className="h-4 w-4 shrink-0 text-purple-500 dark:text-purple-400" aria-hidden="true" />
                 <span className="monline-main-header__label hidden sm:inline">{t("spending_section_loans")}</span>
-                <span className="font-semibold tabular-nums text-foreground">{activeLoanCount ?? "—"}</span>
+                <span className="font-semibold tabular-nums text-foreground">{activeLoanCount ?? "-"}</span>
               </Link>
               <time
                 dateTime={today}

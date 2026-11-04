@@ -162,7 +162,7 @@ export function StatementCommitments({
                   <dt>{t("spending_purchase_total")}</dt>
                   <dd className="text-right tabular-nums">
                     {estimatedInstallmentTotal(plan) == null
-                      ? "—"
+                      ? "-"
                       : money(estimatedInstallmentTotal(plan)!, plan.currency)}
                   </dd>
                   <dt>{t("spending_installment_amount")}</dt>

@@ -24,6 +24,21 @@ function saveScheduledPayment(
     },
   );
   if (existing.length) return false;
+  const { isTrialDate } = require("./pure/subscription-trial.mjs");
+  const cycle = app.findRecordById("cycles", subscription.getString("cycle")).getString("name");
+  if (cycle === "Last-Weekday" && !isTrialDate(subscription, dueDate)) {
+    const month = dueDate.slice(0, 7);
+    const first = month + "-01";
+    const end = new Date(first + "T12:00:00Z");
+    end.setUTCMonth(end.getUTCMonth() + 1);
+    const saved = app.findRecordsByFilter("payment_records",
+      "subscription_id = {:id} && ((due_date >= {:first} && due_date < {:end}) || (scheduled_date >= {:first} && scheduled_date < {:end}))",
+      "", 0, 0, { id: subscription.id, first, end: end.toISOString().slice(0, 10) });
+    if (saved.some((record) => {
+      const origin = record.getString("scheduled_date") || record.getString("due_date").slice(0, 10);
+      return origin.slice(0, 7) === month && !isTrialDate(subscription, origin);
+    })) return false;
+  }
   const record = new DataRecord(
     app.findCollectionByNameOrId("payment_records"),
   );

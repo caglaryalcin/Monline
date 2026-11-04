@@ -185,3 +185,12 @@ routerAdd("POST", "/api/payments/history", (e) => {
     });
   return e.json(201, saved);
 });
+
+routerAdd("POST", "/api/subscriptions/{id}/quick-pay", (e) => {
+  if (!e.auth || e.auth.collection().name !== "users")
+    throw new UnauthorizedError("Authentication required");
+  const payment = require(domainPath + "/lib/quick-payment.js").quickPay(
+    repository, e.auth.id, e.request.pathValue("id"), e.requestInfo().body || {},
+  );
+  return e.json(200, { payment_id: payment.id });
+});

@@ -258,7 +258,7 @@ export function TwoFactorTab() {
         open={dialog === "disable"}
         onClose={() => setDialog(null)}
         title={t("confirm_disable_2fa")}
-        description="Enter your authenticator code to confirm. Your setup will be saved — you can re-enable later without re-scanning."
+        description="Enter your authenticator code to confirm. Your setup will be saved - you can re-enable later without re-scanning."
         confirmLabel={t("disable_2fa")}
         onConfirm={handleDisable}
       />

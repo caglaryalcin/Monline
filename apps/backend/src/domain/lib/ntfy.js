@@ -3,6 +3,7 @@ function ntfyRequest(serverUrl, topic, title, message, auth = {}) {
   const { username = "", password = "", token = "" } = auth;
   const headers = {
     "Content-Type": "text/plain; charset=utf-8",
+    Markdown: "yes",
     // Fetch rejects Unicode headers; ntfy supports RFC 2047 encoded titles.
     Title: /[^\x20-\x7e]/.test(title)
       ? "=?UTF-8?B?" + Buffer.from(title, "utf8").toString("base64") + "?="

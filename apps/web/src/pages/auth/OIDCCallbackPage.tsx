@@ -20,7 +20,7 @@ export function OIDCCallbackPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
-  // The provider redirects here only once — guard against the effect running
+  // The provider redirects here only once - guard against the effect running
   // twice (StrictMode) and consuming the stored state a second time.
   const startedRef = useRef(false);
 

@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { BudgetOverviewCard } from "@/components/dashboard/BudgetOverviewCard";
+import type { BudgetPeriod } from "@/lib/budgetPeriod";
 import { monthlyBillPayments, monthlyLoanPayments } from "@/lib/dashboardMonthlyPayments";
 import type { DashboardPaymentGroup } from "@/lib/dashboardYear";
 import type { FinanceRow } from "@/lib/finance";
 import type { MonthlyBudgetEntry } from "@/lib/monthlyBudget";
+import type { QuickPaymentActions } from "@/lib/quickPayment";
 import { type LoanSummary, subscriptionSection } from "@/lib/spending";
 import { cn } from "@/lib/utils";
 import type { Currency } from "@/types";
@@ -22,6 +24,9 @@ export interface DashboardSidebarData {
 }
 
 export function DashboardPaymentSidebar({
+  quickPayments,
+  periodMonths = 1,
+  onPeriodChange,
   data,
   today,
   budget,
@@ -31,6 +36,9 @@ export function DashboardPaymentSidebar({
   hasError,
   formatValue,
 }: {
+  quickPayments?: QuickPaymentActions;
+  periodMonths?: BudgetPeriod;
+  onPeriodChange?: (value: BudgetPeriod) => void;
   data: DashboardSidebarData;
   today: string;
   budget: number;
@@ -48,11 +56,14 @@ export function DashboardPaymentSidebar({
   const bills = monthlyBillPayments(data.bills, today, data.currencies);
   const billEntries = [
     ...bills.entries,
-    ...entries.filter((entry) => subscriptionSection(entry.subscription) === "bills"),
+    ...entries.filter((entry) => entry.date.startsWith(today.slice(0, 7)) && subscriptionSection(entry.subscription) === "bills"),
   ].sort((a, b) => a.date.localeCompare(b.date));
   const loans = monthlyLoanPayments(data.loans, today, data.currencies, data.financeRows);
   return (
     <BudgetOverviewCard
+      quickPayments={quickPayments}
+      periodMonths={periodMonths}
+      onPeriodChange={onPeriodChange}
       section={section}
       controls={
         <div

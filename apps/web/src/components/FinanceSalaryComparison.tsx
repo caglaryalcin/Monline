@@ -118,7 +118,7 @@ export function FinanceSalaryComparison({
     });
   const percent = (amount: number | null) =>
     amount == null
-      ? "—"
+      ? "-"
       : numberFormatter({
           style: "percent",
           maximumFractionDigits: 1,
@@ -525,7 +525,7 @@ export function FinanceSalaryComparison({
                               }
                             >
                               {!month ? (
-                                <span className="text-muted-foreground">—</span>
+                                <span className="text-muted-foreground">-</span>
                               ) : field === "salary" ? (
                                 <span
                                   className={cn(

@@ -81,6 +81,7 @@ const SERVICES: [string, string, string?, string?][] = [
   ["mullvad.net", "Mullvad|Mullvad VPN", "mullvad"],
   ["proton.me", "Proton|Proton Mail|Proton Drive|Proton Pass", "proton"],
   ["protonvpn.com", "Proton VPN|ProtonVPN", "protonvpn"],
+  ["simplelogin.io", "SimpleLogin|Simple Login|app.simplelogin.io", "simplelogin", "/assets/logos/simplelogin.svg"],
   ["adguard.com", "AdGuard|AdGuard VPN", "adguard"],
   ["norton.com", "Norton|Norton 360", "norton"],
   ["malwarebytes.com", "Malwarebytes"],

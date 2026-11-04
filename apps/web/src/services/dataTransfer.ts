@@ -12,7 +12,6 @@ export const TRANSFER_COLLECTIONS = [
   "payment_methods",
   "household",
   "notifications_config",
-  "fixer_settings",
   "notification_log",
   "bank_statements",
 ] as const;

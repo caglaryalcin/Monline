@@ -1,3 +1,4 @@
+import { type BusinessCalendar, lastWeekdayOfMonth, weekdayBillingOnOrAfter } from "@/lib/lastWeekday";
 import { trialEndDate } from "@/lib/subscriptionTrial";
 
 import type { TrialSubscription } from "../../../backend/src/domain/lib/pure/subscription-trial.mjs";
@@ -40,6 +41,7 @@ export function backfillDates({
   end = "",
   limit = 0,
   trial,
+  calendar = trial?.billing_calendar,
 }: {
   start: string;
   anchorDate?: string;
@@ -50,8 +52,9 @@ export function backfillDates({
   end?: string;
   limit?: number;
   trial?: TrialSubscription;
+  calendar?: BusinessCalendar;
 }): string[] {
-  const months: Record<string, number> = { Monthly: 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
+  const months: Record<string, number> = { Monthly: 1, "Last-Weekday": 1, Quarterly: 3, "Half-Yearly": 6, Yearly: 12 };
   if (
     !validDate(start) ||
     !validDate(anchorDate) ||
@@ -71,10 +74,12 @@ export function backfillDates({
     const cutoff = end && end < until ? end : until;
     const initial = trialStart >= start && trialStart <= cutoff ? [trialStart] : [];
     if (initial.length && limit === 1) return initial;
+    const paidStart = cycle === "Last-Weekday" ? weekdayBillingOnOrAfter(trialEnd, calendar) : trialEnd;
     const dates = initial.concat(backfillDates({
-      start: start > trialEnd ? start : trialEnd, anchorDate: trialEnd,
+      start: start > paidStart ? start : paidStart, anchorDate: paidStart,
       billingAnchorDay: Number(trialEnd.slice(8, 10)), until, cycle, frequency, end,
       limit: limit ? limit - initial.length : 0,
+      calendar,
     }));
     if (dates.length > MAX_BACKFILL_PAYMENTS) throw new Error("backfill_too_many");
     return dates;
@@ -110,6 +115,7 @@ export function backfillDates({
       last.setUTCMonth(last.getUTCMonth() + 1);
       last.setUTCDate(0);
       target.setUTCDate(Math.min(dayOfMonth, last.getUTCDate()));
+      if (cycle === "Last-Weekday") target.setUTCDate(Number(lastWeekdayOfMonth(target.toISOString().slice(0, 10), calendar).slice(8, 10)));
       date = target;
     } else {
       date = new Date(anchor.getTime());

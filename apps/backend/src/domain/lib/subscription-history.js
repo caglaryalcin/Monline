@@ -250,7 +250,7 @@ function buildHistoryResponse(app, subscription) {
       ? cancellationDate
       : todayStr;
   var estimated = historyMath.computeSpendTotal({
-    trial: { trial_months: subscription.get("trial_months"), trial_duration: subscription.get("trial_duration"), trial_unit: subscription.get("trial_unit"), trial_start_date: subscription.get("trial_start_date") },
+    trial: { billing_calendar: subscription.get("billing_calendar"), trial_months: subscription.get("trial_months"), trial_duration: subscription.get("trial_duration"), trial_unit: subscription.get("trial_unit"), trial_start_date: subscription.get("trial_start_date") },
     segments: segments,
     until: until,
     endDate: endDate,
@@ -258,7 +258,7 @@ function buildHistoryResponse(app, subscription) {
     // A subscription is not billed while it is paused, so those stretches are
     // skipped instead of being replayed as payments that never happened.
     pausedRanges: historyMath.buildPausedRanges(events),
-    advanceDate: historyDates.advanceDate,
+    advanceDate: (date, cycle, frequency, anchor) => historyDates.advanceDate(date, cycle, frequency, anchor, subscription.get("billing_calendar")),
   });
   var paid = historyMath.summarizePaidRecords(
     paidRecordsFor(app, subscription.id, subscription.get("user")),

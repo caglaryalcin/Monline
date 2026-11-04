@@ -52,6 +52,7 @@ export function StatementHistory({
   );
   return (
     <BackfillPaymentsEditor
+      calendar={subscription?.billing_calendar}
       idPrefix={id}
       start={sourceRows[0]?.date ?? ""}
       cycle={cycle?.name ?? "Monthly"}

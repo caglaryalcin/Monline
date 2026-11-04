@@ -84,7 +84,7 @@ export function statementAmountTokens(text: string) {
     // split numeric fragments such as "5. 28,45" must still be rejected.
     const merchantPunctuation = /(?:^|\s)\S*\p{L}\S*[.,/:](?:\s*[.,/:])*\s+$/u.test(prefix);
     const creditMarker = /^(?:a|alacak)(?:\s|$)/i.test(text.slice(end));
-    const unsupportedSign = /[‐‑‒–—﹣－＋]\s*$/.test(prefix);
+    const unsupportedSign = /[‐‑‒–\u2014﹣－＋]\s*$/.test(prefix);
     const percentage = /%\s*$/.test(prefix) || /^\s*%/.test(text.slice(end));
     const brokenBoundary =
       (/[.,/:]/.test(before) && !merchantPunctuation) ||

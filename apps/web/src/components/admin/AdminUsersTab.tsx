@@ -92,7 +92,7 @@ export function AdminUsersTab() {
       ? new Intl.DateTimeFormat(resolveLocale(i18n), {
           dateStyle: "medium",
         }).format(date)
-      : "—";
+      : "-";
   };
   if (!isAdmin) return <p role="alert">{t("admin_users_forbidden")}</p>;
   return (
@@ -130,7 +130,7 @@ export function AdminUsersTab() {
             className="flex items-center justify-between gap-2 rounded-xl border bg-card/60 px-3 py-2"
           >
             <p className="text-xs font-medium text-muted-foreground">{t(stat.label)}</p>
-            <p className="text-lg font-semibold tabular-nums">{stat.value ?? "—"}</p>
+            <p className="text-lg font-semibold tabular-nums">{stat.value ?? "-"}</p>
           </div>
         ))}
       </div>

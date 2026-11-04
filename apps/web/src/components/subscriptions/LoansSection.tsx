@@ -209,9 +209,9 @@ export function LoansSection({
           </div>
 
           <p className="text-left text-xs font-medium">
-            <span aria-label={t("loans_start")}>{start ? monthName(start) : "—"}</span>
+            <span aria-label={t("loans_start")}>{start ? monthName(start) : "-"}</span>
             {" / "}
-            <span aria-label={t("loans_end")}>{end ? monthName(end) : "—"}</span>
+            <span aria-label={t("loans_end")}>{end ? monthName(end) : "-"}</span>
           </p>
         </div>
 
