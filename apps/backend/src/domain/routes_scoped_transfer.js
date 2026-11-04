@@ -6,7 +6,7 @@ const {
 } = require("../runtime.cjs");
 const transfer = require("./lib/scoped-transfer.js");
 const { isStatementPayment } = require("./lib/pure/statement-tracking.js");
-for (const scope of ["calendar", "subscriptions"]) {
+for (const scope of ["calendar", "subscriptions", "installments"]) {
   routerAdd("GET", `/api/transfer/${scope}/export`, (e) => {
     if (!e.auth || e.auth.collection().name !== "users")
       throw new UnauthorizedError();
@@ -31,7 +31,7 @@ for (const scope of ["calendar", "subscriptions"]) {
         );
       } catch (error) {
         return e.json(400, {
-          error: ["transfer_invalid_backup", "transfer_too_large"].includes(
+          error: ["transfer_invalid_backup", "transfer_too_large", "transfer_incompatible_backup"].includes(
             error.message,
           )
             ? error.message

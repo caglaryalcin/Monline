@@ -1,4 +1,8 @@
 {
+  "transfer_incompatible_backup": "This backup contains records that this version does not support. Nothing was imported to avoid data loss. Restore it using a compatible version.",
+  "transfer_invalid_scoped_backup": "Choose a valid Monline JSON file exported from this page. The transfer type must match and all logos and attachments must be included.",
+  "installments_transfer": "Import / export installments",
+  "installments_transfer_hint": "Installment subscriptions, their history and logos, and source statements with their complete transaction contents are transferred. Card links, calendar payment records, the income/expense ledger, loans and account settings are not transferred. Existing records are skipped.",
   "quick_payment_title": "Have you made this payment?",
   "quick_payment_confirm": "The {{amount}} payment for {{name}}, due {{date}}, will be marked as paid.",
   "quick_payment_button": "{{name}}: Mark as paid",
@@ -1122,7 +1126,7 @@
   "payment_estimated_hint": "This entry was reconstructed from the billing schedule during an upgrade. Its amount is estimated until you verify it.",
   "calendar_transfer": "Calendar import / export",
   "subscriptions_transfer": "Subscription import / export",
-  "calendar_transfer_hint": "Import payment records from all dates, including receipts. Existing records are skipped; subscriptions and account settings are not imported.",
+  "calendar_transfer_hint": "Import payment records from all dates, including receipts. Existing records are skipped; subscriptions and account settings are not imported. Import subscriptions first to retain their payment links; payments whose subscriptions cannot be found are saved independently.",
   "subscriptions_transfer_hint": "Import subscriptions, their history and logos. Calendar payments and account settings are not imported. Existing records are skipped.",
   "transfer_record_count": "Records: {{count}}",
   "transfer_scope_result": "Imported: {{imported}}. Skipped: {{skipped}}.",

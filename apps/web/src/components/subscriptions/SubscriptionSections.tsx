@@ -357,7 +357,7 @@ export function SubscriptionSections({
               spending.data?.unmatched_installments.length
             )
           }
-          transferActions={<ScopedTransferActions scope="subscriptions" compact />}
+          transferActions={<ScopedTransferActions key={section === "installments" ? "installments" : "subscriptions"} scope={section === "installments" ? "installments" : "subscriptions"} compact />}
         />
       )}
 

@@ -1,4 +1,8 @@
 {
+  "transfer_incompatible_backup": "Bu yedekte bu sürümün desteklemediği kayıtlar var. Veri kaybını önlemek için içe aktarma yapılmadı. Yedeği uyumlu sürümde geri yükleyin.",
+  "transfer_invalid_scoped_backup": "Bu sayfadan dışa aktarılmış geçerli bir Monline JSON dosyası seçin. Dosya türü uyumlu olmalı; logolar ve ekler eksiksiz bulunmalıdır.",
+  "installments_transfer": "Taksitleri içe / dışa aktar",
+  "installments_transfer_hint": "Taksitli abonelikler, geçmişleri, logoları ve taksitlerin kaynak ekstreleri tam işlem içerikleriyle aktarılır. Kredi kartı eşleşmeleri, takvim ödeme kayıtları, Gelir/Gider tablosu, krediler ve hesap ayarları aktarılmaz. Mevcut kayıtlar atlanır.",
   "quick_payment_title": "Bu ödemeyi yaptınız mı?",
   "quick_payment_confirm": "{{name}} için {{date}} vadeli {{amount}} tutarındaki ödeme ödendi olarak işaretlenecek.",
   "quick_payment_button": "{{name}}: Ödendi olarak işaretle",
@@ -1122,7 +1126,7 @@
   "payment_estimated_hint": "Bu kayıt sürüm geçişinde ödeme planından tahmini olarak oluşturuldu. Tutarı ve ödeme durumunu kontrol edebilirsin.",
   "calendar_transfer": "Takvim içe / dışa aktar",
   "subscriptions_transfer": "Abonelikleri içe / dışa aktar",
-  "calendar_transfer_hint": "Tüm tarihlerdeki ödeme kayıtları ve belgeleri içe aktarılır. Mevcut kayıtlar atlanır; abonelikler ve hesap ayarları değiştirilmez.",
+  "calendar_transfer_hint": "Tüm tarihlerdeki ödeme kayıtları ve belgeleri içe aktarılır. Mevcut kayıtlar atlanır; abonelikler ve hesap ayarları değiştirilmez. Abonelik bağını korumak için önce abonelikleri aktarın; bulunamayan aboneliklerin ödemeleri bağımsız kaydedilir.",
   "subscriptions_transfer_hint": "Abonelikler, değişiklik geçmişleri ve logolar içe aktarılır. Takvim ödemeleri ve hesap ayarları aktarılmaz. Mevcut kayıtlar atlanır.",
   "transfer_record_count": "Kayıt sayısı: {{count}}",
   "transfer_scope_result": "İçe aktarılan: {{imported}}. Atlanan: {{skipped}}.",

@@ -33,11 +33,13 @@ export function ScopedTransferActions({
   const queryClient = useQueryClient();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const running = useRef(false);
   const [selected, setSelected] = useState<ScopedBackup | null>(null);
   const [error, setError] = useState("");
-  const label = t(scope === "calendar" ? "calendar_transfer" : "subscriptions_transfer");
-  const run = async (action: () => Promise<void>) => {
-    if (busy) return;
+  const label = t(scope === "calendar" ? "calendar_transfer" : scope === "installments" ? "installments_transfer" : "subscriptions_transfer");
+  const run = async (action: () => Promise<void>, mode: "import" | "export" = "import") => {
+    if (running.current) return;
+    running.current = true;
     setBusy(true);
     setError("");
     try {
@@ -46,10 +48,12 @@ export function ScopedTransferActions({
       const key =
         err instanceof Error && err.message.startsWith("transfer_")
           ? err.message
-          : "transfer_import_failed";
-      setError(t(key));
-      toast.error(t(key));
+          : mode === "export" ? "transfer_export_failed" : "transfer_import_failed";
+      const message = t(key === "transfer_invalid_backup" ? "transfer_invalid_scoped_backup" : key);
+      setError(message);
+      toast.error(message);
     } finally {
+      running.current = false;
       setBusy(false);
     }
   };
@@ -87,26 +91,27 @@ export function ScopedTransferActions({
         title={`${label}: ${t("export")}`}
         aria-label={`${label}: ${t("export")}`}
         disabled={busy}
-        onClick={() => void run(async () => exportBackup(() => {}, scope))}
+        onClick={() => void run(async () => exportBackup(() => {}, scope), "export")}
         className={compact ? "h-11 w-11 rounded-xl" : "h-11 rounded-xl"}
       >
         <Download className={compact ? "h-4 w-4" : "mr-2 h-4 w-4"} />
         {!compact && t("export")}
       </Button>
+      {error && !selected && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {selected && (
         <Dialog open onOpenChange={dialogDismissHandler(() => setSelected(null), busy)}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{label}</DialogTitle>
               <DialogDescription>
-                {t(scope === "calendar" ? "calendar_transfer_hint" : "subscriptions_transfer_hint")}
+                {t(scope === "calendar" ? "calendar_transfer_hint" : scope === "installments" ? "installments_transfer_hint" : "subscriptions_transfer_hint")}
               </DialogDescription>
             </DialogHeader>
             <p className="text-sm">
               {t("transfer_record_count", {
                 count:
-                  selected.backup.data[scope === "calendar" ? "payment_records" : "subscriptions"]
-                    .length,
+                  selected.backup.data[scope === "calendar" ? "payment_records" : "subscriptions"].length +
+                  (scope === "installments" ? selected.backup.data.bank_statements.length : 0),
               })}
             </p>
             {error && (

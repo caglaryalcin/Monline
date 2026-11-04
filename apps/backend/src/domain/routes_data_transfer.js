@@ -35,7 +35,7 @@ routerAdd(
       );
       return e.json(200, result);
     } catch (error) {
-      const key = ["transfer_invalid_backup", "transfer_too_large"].includes(
+      const key = ["transfer_invalid_backup", "transfer_too_large", "transfer_incompatible_backup"].includes(
         error.message,
       )
         ? error.message

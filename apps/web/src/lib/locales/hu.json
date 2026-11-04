@@ -1,4 +1,8 @@
 {
+  "transfer_incompatible_backup": "A biztonsági mentés olyan rekordokat tartalmaz, amelyeket ez a verzió nem támogat. Az adatvesztés elkerülésére semmit nem importáltunk. Használjon kompatibilis verziót.",
+  "transfer_invalid_scoped_backup": "Válasszon egy erről az oldalról exportált, érvényes Monline JSON-fájlt. Az átvitel típusának egyeznie kell, és minden logót és mellékletet tartalmaznia kell.",
+  "installments_transfer": "Részletek importálása / exportálása",
+  "installments_transfer_hint": "A részletfizetéses előfizetések, előzményeik és logóik, valamint a forráskivonatok teljes tranzakciótartalma kerül átvitelre. A kártyakapcsolatok, naptári fizetések, bevételek/kiadások, hitelek és fiókbeállítások nem kerülnek átvitelre. A meglévő rekordokat kihagyjuk.",
   "quick_payment_title": "Teljesítette ezt a fizetést?",
   "quick_payment_confirm": "A(z) {{name}} {{date}} napján esedékes, {{amount}} összegű fizetése fizetettként lesz megjelölve.",
   "quick_payment_button": "{{name}}: Megjelölés fizetettként",
@@ -1122,7 +1126,7 @@
   "payment_estimated_hint": "Ez a bejegyzés a számlázási ütemezésből lett rekonstruálva a frissítés során. Ennek összege becsült, amíg nem igazolja.",
   "calendar_transfer": "Naptár import / export",
   "subscriptions_transfer": "Előfizetés import / export",
-  "calendar_transfer_hint": "Importálja a fizetési rekordokat minden dátumról, beleértve a nyugtákat is. A meglévő rekordok kimaradnak; előfizetések és fiókbeállítások nem importálódnak.",
+  "calendar_transfer_hint": "Importálja a fizetési rekordokat minden dátumról, beleértve a nyugtákat is. A meglévő rekordok kimaradnak; előfizetések és fiókbeállítások nem importálódnak. Az előfizetéseket importálja először a fizetési kapcsolatok megőrzéséhez; a nem talált előfizetések fizetései önállóan kerülnek mentésre.",
   "subscriptions_transfer_hint": "Előfizetések importálása, előzményeik és logóik. A rendszer nem importálja a naptári kifizetéseket és a fiókbeállításokat. A meglévő rekordok kimaradnak.",
   "transfer_record_count": "Rekordok: {{count}}",
   "transfer_scope_result": "Importált: {{imported}}. Kihagyva: {{skipped}}.",

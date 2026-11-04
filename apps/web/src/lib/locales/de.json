@@ -1,4 +1,8 @@
 {
+  "transfer_incompatible_backup": "Diese Sicherung enthält Datensätze, die diese Version nicht unterstützt. Zum Schutz vor Datenverlust wurde nichts importiert. Verwenden Sie eine kompatible Version.",
+  "transfer_invalid_scoped_backup": "Wählen Sie eine gültige Monline-JSON-Datei, die auf dieser Seite exportiert wurde. Der Übertragungstyp muss passen; Logos und Anhänge müssen vollständig sein.",
+  "installments_transfer": "Raten importieren / exportieren",
+  "installments_transfer_hint": "Ratenabonnements mit Verlauf und Logos sowie die zugehörigen Abrechnungen mit allen Buchungen werden übertragen. Kartenverknüpfungen, Kalenderzahlungen, Einnahmen/Ausgaben, Kredite und Kontoeinstellungen werden nicht übertragen. Vorhandene Datensätze werden übersprungen.",
   "quick_payment_title": "Haben Sie diese Zahlung geleistet?",
   "quick_payment_confirm": "Die Zahlung über {{amount}} für {{name}}, fällig am {{date}}, wird als bezahlt markiert.",
   "quick_payment_button": "{{name}}: Als bezahlt markieren",
@@ -1122,7 +1126,7 @@
   "payment_estimated_hint": "Dieser Eintrag wurde bei einem Upgrade aus dem Zahlungsplan rekonstruiert. Bitte Betrag und Zahlungsstatus prüfen.",
   "calendar_transfer": "Kalender importieren / exportieren",
   "subscriptions_transfer": "Abonnements importieren / exportieren",
-  "calendar_transfer_hint": "Zahlungen aller Zeiträume samt Belegen importieren. Vorhandene Einträge werden übersprungen. Abonnements und Kontoeinstellungen bleiben erhalten.",
+  "calendar_transfer_hint": "Zahlungen aller Zeiträume samt Belegen importieren. Vorhandene Einträge werden übersprungen. Abonnements und Kontoeinstellungen bleiben erhalten. Importieren Sie zuerst die Abonnements, um Zahlungsverknüpfungen zu erhalten. Zahlungen ohne gefundenes Abonnement werden unabhängig gespeichert.",
   "subscriptions_transfer_hint": "Abonnements, Verlauf und Logos importieren. Kalenderzahlungen und Kontoeinstellungen werden nicht importiert. Vorhandene Einträge werden übersprungen.",
   "transfer_record_count": "Einträge: {{count}}",
   "transfer_scope_result": "Importiert: {{imported}}. Übersprungen: {{skipped}}.",
