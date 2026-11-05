@@ -28,7 +28,12 @@ export interface DashboardYearPoint {
   upcomingTotal?: number | null;
   salaryTag?: SalaryTag | "";
   payments?: { name: string; amount: number }[];
-  upcomingPayments?: { name?: string; labelKey?: string; amount: number }[];
+  upcomingPayments?: {
+    name?: string;
+    labelKey?: string;
+    amount: number;
+    estimatedAmount?: number;
+  }[];
 }
 interface YearHistorySeries {
   key: "value" | "usd" | "forecast";
@@ -243,7 +248,9 @@ export function YearHistoryCard({
                       : point?.paidTotal != null
                         ? [{ labelKey: "paid", amount: point.paidTotal }]
                         : [];
-                    const upcomingPayments = !point?.isForecast
+                    const upcomingPayments: NonNullable<
+                      DashboardYearPoint["upcomingPayments"]
+                    > = !point?.isForecast
                       ? []
                       : point.upcomingPayments?.length
                         ? point.upcomingPayments
@@ -305,11 +312,18 @@ export function YearHistoryCard({
                                           )}
                                         </span>
                                       </span>
-                                      <span
-                                        className="shrink-0 font-semibold tabular-nums"
-                                        style={{ color: group.color }}
-                                      >
-                                        {formatValue(payment.amount)}
+                                      <span className="shrink-0 text-right">
+                                        <span
+                                          className="font-semibold tabular-nums"
+                                          style={{ color: group.color }}
+                                        >
+                                          {formatValue(payment.amount)}
+                                        </span>
+                                        {payment.estimatedAmount != null && (
+                                          <span className="mt-0.5 block text-[10px] tabular-nums text-muted-foreground">
+                                            {formatValue(payment.estimatedAmount)}
+                                          </span>
+                                        )}
                                       </span>
                                     </li>
                                   ))}

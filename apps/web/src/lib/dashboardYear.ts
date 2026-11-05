@@ -438,9 +438,30 @@ export function dashboardPaymentHistory(
     const payments = group.items
       .filter((item) => item.date.startsWith(month) && item.currency === currency)
       .flatMap((item) => (item.name ? [{ name: item.name, amount: item.amount }] : []));
-    const upcomingPayments = group.upcoming
-      .filter((item) => item.date.startsWith(month) && item.currency === currency)
-      .map((item) => ({ name: item.name, labelKey: item.labelKey, amount: item.amount }));
+    const upcomingItems = group.upcoming.filter(
+      (item) => item.date.startsWith(month) && item.currency === currency,
+    );
+    const estimatedBills = upcomingItems.filter(
+      (item) => item.labelKey === "dashboard_month_estimated",
+    );
+    // Show a bill's recorded zero and estimate together without changing chart totals.
+    const upcomingPayments = upcomingItems
+      .filter(
+        (item) =>
+          item.amount !== 0 ||
+          !estimatedBills.some((estimate) =>
+            item.providerRowId || estimate.providerRowId
+              ? item.providerRowId === estimate.providerRowId
+              : item.name === estimate.name,
+          ),
+      )
+      .map((item) => ({
+        name: item.name,
+        labelKey: item.labelKey,
+        amount: item.labelKey === "dashboard_month_estimated" ? 0 : item.amount,
+        estimatedAmount:
+          item.labelKey === "dashboard_month_estimated" ? item.amount : undefined,
+      }));
     // An unfinished month has one expected total, rather than two competing
     // chart points. Keep the actual paid/pending amounts for the tooltip.
     return {
