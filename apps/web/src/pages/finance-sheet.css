@@ -207,7 +207,8 @@
   position: relative;
 }
 .finance-sheet__payment-tag,
-.finance-sheet__statement-link {
+.finance-sheet__statement-link,
+.finance-sheet__salary-tag {
   position: absolute;
   top: 2px;
   left: 2px;
@@ -241,13 +242,52 @@
 .finance-sheet__payment-tag:hover,
 .finance-sheet__payment-tag:focus-visible,
 .finance-sheet__statement-link:hover,
-.finance-sheet__statement-link:focus-visible {
+.finance-sheet__statement-link:focus-visible,
+.finance-sheet__salary-tag:hover,
+.finance-sheet__salary-tag:focus-visible {
   opacity: 1;
 }
 .finance-sheet__payment-tag:focus-visible,
-.finance-sheet__statement-link:focus-visible {
+.finance-sheet__statement-link:focus-visible,
+.finance-sheet__salary-tag:focus-visible {
   outline: 1px solid hsl(var(--ring));
   outline-offset: 1px;
+}
+.finance-salary-comparison__cell-tags {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.finance-salary-comparison .finance-salary-comparison__cell-tags > * {
+  position: static;
+  flex-shrink: 0;
+}
+.finance-salary-comparison__salary-cell:has(.finance-salary-comparison__cell-tags) {
+  padding-left: 20px;
+}
+.finance-salary-comparison__salary-cell:has(.finance-salary-comparison__cell-tags > :nth-child(2)) {
+  padding-left: 37px;
+}
+.finance-salary-comparison__table-scroll {
+  scrollbar-width: none;
+}
+.finance-salary-comparison__table-scroll::-webkit-scrollbar {
+  display: none;
+}
+.finance-salary-comparison__scrollbar {
+  height: 8px;
+  margin-top: 4px;
+  margin-inline: 1px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.finance-salary-comparison__scrollbar:focus-visible {
+  outline: 1px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 .finance-sheet__month-column {
   width: calc(96px + var(--finance-extra-width, 0px));
@@ -1025,7 +1065,8 @@
     gap: 4px;
   }
   .finance-sheet__payment-tag,
-  .finance-sheet__statement-link {
+  .finance-sheet__statement-link,
+  .finance-sheet__salary-tag {
     width: 24px;
     height: 24px;
   }
@@ -1125,5 +1166,12 @@
   }
   .finance-salary-comparison :is(button, select) {
     min-height: 40px;
+  }
+  .finance-salary-comparison .finance-sheet__salary-tag {
+    min-height: 0;
+  }
+  .finance-salary-comparison .finance-salary-comparison__salary-cell:has(.finance-salary-comparison__cell-tags) {
+    padding-top: 26px;
+    padding-left: 6px;
   }
 }

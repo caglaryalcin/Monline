@@ -72,8 +72,10 @@ export function FinanceSalaryComparison({
   const year = Math.min(selectedYear, currentYear);
   const automaticRequests = useRef(new Set<string>());
   const [allYears, setAllYears] = useState(false);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const scrollbarRef = useRef<HTMLDivElement>(null);
+  const [scrollMetrics, setScrollMetrics] = useState({ width: 0, overflow: false });
   const [comparisonVisibility, setComparisonVisibility] = useState({
-    salary: true,
     salary_usd_value: false,
     salary_eur_value: false,
     salary_minimum_multiple: false,
@@ -156,6 +158,31 @@ export function FinanceSalaryComparison({
       : analyses
   ).filter((month) => month.salary != null);
   const recordedByMonth = new Map(recorded.map((month) => [month.month, month]));
+  useEffect(() => {
+    const viewport = tableScrollRef.current;
+    const table = viewport?.firstElementChild;
+    if (!viewport || !table) return;
+    const update = () => {
+      const width = viewport.scrollWidth;
+      const overflow = width > viewport.clientWidth + 1;
+      setScrollMetrics((current) =>
+        current.width === width && current.overflow === overflow ? current : { width, overflow },
+      );
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(viewport);
+    observer.observe(table);
+    update();
+    return () => observer.disconnect();
+  }, [allYears, recorded.length]);
+  useEffect(() => {
+    if (scrollbarRef.current && tableScrollRef.current) {
+      scrollbarRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
+    }
+  }, [scrollMetrics]);
+  const syncScroll = (scrollLeft: number, target: HTMLDivElement | null) => {
+    if (target && target.scrollLeft !== scrollLeft) target.scrollLeft = scrollLeft;
+  };
   const summaryMonths =
     allYears || year === currentYear
       ? recorded.filter((month) => month.month <= today.slice(0, 7))
@@ -197,7 +224,9 @@ export function FinanceSalaryComparison({
     onFetchReferences(neededYearsKey.split(",").map(Number));
   }, [ownerId, loadingReferences, neededYearsKey, requestKey, onFetchReferences]);
   const noComparison = (
-    <span className="text-xs text-muted-foreground">{label("salary_no_comparison_data")}</span>
+    <span className="inline-block w-12 whitespace-normal break-words text-xs leading-tight text-muted-foreground">
+      {label("salary_no_comparison_data")}
+    </span>
   );
   const comparisonRows = [
     "salary",
@@ -205,7 +234,9 @@ export function FinanceSalaryComparison({
     "salary_eur_value",
     "salary_minimum_multiple",
   ] as const;
-  const visibleComparisonRows = comparisonRows.filter((field) => comparisonVisibility[field]);
+  const visibleComparisonRows = comparisonRows.filter(
+    (field) => field === "salary" || comparisonVisibility[field],
+  );
   const compactAllYears = allYears && visibleComparisonRows.length === comparisonRows.length;
   const referenceFieldFor = (
     field: (typeof comparisonRows)[number],
@@ -224,18 +255,10 @@ export function FinanceSalaryComparison({
     const taggedValue = (value: string) => (
       <span
         className={cn(
-          row.reference?.salary_tag ? "text-sm font-bold" : "text-[#bfbfbf]",
+          visibleComparisonRows.length <= 2 ? "text-[14px]" : "text-[12px]",
+          row.reference?.salary_tag ? "font-bold" : "text-[#bfbfbf]",
           row.reference?.salary_tag && SALARY_TAG_STYLES[row.reference.salary_tag].text,
         )}
-        style={
-          visibleComparisonRows.length === 1
-            ? {
-                fontSize: row.reference?.salary_tag
-                  ? "calc(0.875rem + 2px)"
-                  : "calc(0.75rem + 2px)",
-              }
-            : undefined
-        }
       >
         {value}
       </span>
@@ -245,7 +268,19 @@ export function FinanceSalaryComparison({
         return (
           <>
             {taggedValue(currency(row.salary!))}
-            {row.status !== "settled" && <FinanceSalaryStatus status={row.status} />}
+            {(row.reference?.salary_tag || (row.status && row.status !== "settled")) && (
+              <span className="finance-salary-comparison__cell-tags">
+                {row.reference?.salary_tag && (
+                  <FinanceSalaryTag
+                    tag={row.reference.salary_tag}
+                    variant="cell"
+                    ariaLabel={`${monthName(row.month)} ${row.month.slice(0, 4)} · ${label(`salary_tag_${row.reference.salary_tag}`)} · ${label("salary_tag_menu")}`}
+                    onClick={(event) => openSalaryTags(row.month, event)}
+                  />
+                )}
+                {row.status !== "settled" && <FinanceSalaryStatus status={row.status} />}
+              </span>
+            )}
           </>
         );
       case "salary_usd_value":
@@ -272,7 +307,7 @@ export function FinanceSalaryComparison({
           </Button>
         </section>
       ) : (
-        <>
+        <div className="min-w-0">
           <section className="overflow-hidden rounded-2xl border bg-card/30">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b p-4">
               <div className="space-y-1">
@@ -365,7 +400,7 @@ export function FinanceSalaryComparison({
               aria-label={label("salary_visible_columns")}
             >
               {comparisonRows.map((field) => {
-                const visible = comparisonVisibility[field];
+                const visible = field === "salary" || comparisonVisibility[field];
                 const Icon = visible ? Eye : EyeOff;
                 return (
                   <Button
@@ -374,21 +409,26 @@ export function FinanceSalaryComparison({
                     variant="outline"
                     size="sm"
                     aria-pressed={visible}
-                    disabled={visible && visibleComparisonRows.length === 1}
-                    aria-label={t(
-                      visible ? "finance_salary_hide_column" : "finance_salary_show_column",
-                      { name: label(field) },
-                    )}
+                    disabled={field === "salary"}
+                    aria-label={
+                      field === "salary"
+                        ? label(field)
+                        : t(
+                            visible ? "finance_salary_hide_column" : "finance_salary_show_column",
+                            { name: label(field) },
+                          )
+                    }
                     className={cn(
                       "gap-2 text-xs",
                       visible ? "border-primary/40 bg-primary/10" : "text-muted-foreground",
                     )}
-                    onClick={() =>
+                    onClick={() => {
+                      if (field === "salary") return;
                       setComparisonVisibility((current) => ({
                         ...current,
                         [field]: !current[field],
-                      }))
-                    }
+                      }));
+                    }}
                   >
                     <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                     {label(field)}
@@ -401,7 +441,11 @@ export function FinanceSalaryComparison({
                 {t("finance_salary_empty_year", { year })}
               </p>
             ) : allYears ? (
-              <div className="overflow-x-auto">
+              <div
+                ref={tableScrollRef}
+                className="finance-salary-comparison__table-scroll overflow-x-auto"
+                onScroll={(event) => syncScroll(event.currentTarget.scrollLeft, scrollbarRef.current)}
+              >
                 <table
                   className={cn(
                     "whitespace-nowrap text-xs tabular-nums",
@@ -453,19 +497,19 @@ export function FinanceSalaryComparison({
                               "border-r border-border/30 py-2 text-right font-medium last:border-r-0",
                               YEAR_GROUP_TONES[yearIndex % YEAR_GROUP_TONES.length].cell,
                               field === visibleComparisonRows.at(-1) && "border-r-2 border-border",
-                              compactAllYears
-                                ? "w-px px-1"
-                                : field === "salary_minimum_multiple"
-                                  ? "w-16 px-1"
+                              field !== "salary"
+                                ? "w-px px-0.5"
+                                : compactAllYears
+                                  ? "w-px px-1"
                                   : "px-3",
                               field === "salary_minimum_multiple" && "text-center",
                             )}
                           >
-                            {field === "salary_minimum_multiple" ? (
+                            {field !== "salary" ? (
                               <span
                                 className={cn(
-                                  "inline-block whitespace-normal break-words text-center leading-tight",
-                                  compactAllYears ? "w-10" : "w-14",
+                                  "inline-block w-min whitespace-normal leading-tight",
+                                  field === "salary_minimum_multiple" && "text-center",
                                 )}
                               >
                                 {label(field)}
@@ -508,11 +552,12 @@ export function FinanceSalaryComparison({
                                 "border-r border-border/30 py-2 text-right last:border-r-0",
                                 YEAR_GROUP_TONES[yearIndex % YEAR_GROUP_TONES.length].cell,
                                 field === visibleComparisonRows.at(-1) && "border-r-2 border-border",
-                                field === "salary" && "relative font-semibold",
-                                compactAllYears
-                                  ? "w-px px-1"
-                                  : field === "salary_minimum_multiple"
-                                    ? "w-16 px-1"
+                                field === "salary" &&
+                                  "finance-salary-comparison__salary-cell relative font-semibold",
+                                field !== "salary"
+                                  ? "w-px px-0.5"
+                                  : compactAllYears
+                                    ? "w-px px-1"
                                     : "px-3",
                                 field === "salary_minimum_multiple" && "text-center",
                               )}
@@ -526,24 +571,6 @@ export function FinanceSalaryComparison({
                             >
                               {!month ? (
                                 <span className="text-muted-foreground">-</span>
-                              ) : field === "salary" ? (
-                                <span
-                                  className={cn(
-                                    "inline-flex items-center",
-                                    compactAllYears ? "gap-1" : "gap-1.5",
-                                  )}
-                                >
-                                  {month.reference?.salary_tag && (
-                                    <button
-                                      type="button"
-                                      onClick={(event) => openSalaryTags(month.month, event)}
-                                      aria-label={`${monthName(month.month)} ${value} · ${label("salary_tag_menu")}`}
-                                    >
-                                      <FinanceSalaryTag tag={month.reference.salary_tag} />
-                                    </button>
-                                  )}
-                                  {comparisonValue(field, month)}
-                                </span>
                               ) : (
                                 comparisonValue(field, month)
                               )}
@@ -556,7 +583,11 @@ export function FinanceSalaryComparison({
                 </table>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div
+                ref={tableScrollRef}
+                className="finance-salary-comparison__table-scroll overflow-x-auto"
+                onScroll={(event) => syncScroll(event.currentTarget.scrollLeft, scrollbarRef.current)}
+              >
                 <table className="w-full whitespace-nowrap text-xs tabular-nums">
                   <caption className="sr-only">
                     {year} · {label("salary_monthly_comparison")}
@@ -583,9 +614,6 @@ export function FinanceSalaryComparison({
                             onClick={(event) => openSalaryTags(month.month, event)}
                           >
                             <span title={label("salary_tag_hint")}>{monthName(month.month)}</span>
-                            {month.reference?.salary_tag && (
-                              <FinanceSalaryTag tag={month.reference.salary_tag} />
-                            )}
                           </button>
                         </th>
                       ))}
@@ -608,7 +636,8 @@ export function FinanceSalaryComparison({
                             key={month.month}
                             className={cn(
                               "border-r border-border/50 px-1.5 py-2 text-right last:border-r-0",
-                              field === "salary" && "relative font-semibold",
+                              field === "salary" &&
+                                "finance-salary-comparison__salary-cell relative font-semibold",
                             )}
                             tabIndex={referenceFieldFor(field) ? 0 : undefined}
                             onContextMenu={(event) =>
@@ -625,7 +654,18 @@ export function FinanceSalaryComparison({
               </div>
             )}
           </section>
-        </>
+          <div
+            ref={scrollbarRef}
+            className="finance-salary-comparison__scrollbar"
+            hidden={!scrollMetrics.overflow}
+            tabIndex={0}
+            role="region"
+            aria-label={label("salary_monthly_comparison")}
+            onScroll={(event) => syncScroll(event.currentTarget.scrollLeft, tableScrollRef.current)}
+          >
+            <div style={{ width: scrollMetrics.width, height: 1 }} />
+          </div>
+        </div>
       )}
       <FinanceSalaryCharts
         data={data}
