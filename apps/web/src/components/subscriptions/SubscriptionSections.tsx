@@ -92,6 +92,7 @@ export function SubscriptionSections({
   );
   const [view, setView] = useState<"grid" | "list">("grid");
   const [month, setMonth] = useState(currentSpendingMonth);
+  const [billYear, setBillYear] = useState<number | undefined>();
   const spending = useQuery({
     queryKey: spendingKey(userId),
     queryFn: spendingService.get,
@@ -357,14 +358,32 @@ export function SubscriptionSections({
               spending.data?.unmatched_installments.length
             )
           }
-          transferActions={<ScopedTransferActions key={section === "installments" ? "installments" : "subscriptions"} scope={section === "installments" ? "installments" : "subscriptions"} compact />}
+          transferActions={
+            <ScopedTransferActions
+              key={section === "installments" ? "installments" : "subscriptions"}
+              scope={section === "installments" ? "installments" : "subscriptions"}
+              compact
+            />
+          }
         />
       )}
 
       {["installments", "bills"].includes(section) && (
         <SpendingMonthPicker
           month={month}
-          onChange={setMonth}
+          onChange={(value) => {
+            setBillYear(undefined);
+            setMonth(value);
+          }}
+          year={section === "bills" ? billYear : undefined}
+          onYearChange={
+            section === "bills"
+              ? (value) => {
+                  setBillYear(value);
+                  setMonth(`${value}-${month.slice(5)}`);
+                }
+              : undefined
+          }
           calendarPicker={section === "installments"}
           monthsLabel={section === "installments" ? t("spending_installment_months") : undefined}
           recordedMonths={
@@ -472,10 +491,12 @@ export function SubscriptionSections({
         )}
       {(section === "installments" || section === "bills") && !spending.isPending && (
         <StatementCommitments
+          key={`${section}:${section === "bills" && billYear ? billYear : month}`}
           data={spending.data ?? EMPTY_SPENDING}
           section={section}
           search={searchTerm}
           month={month}
+          year={section === "bills" ? billYear : undefined}
           layout={view}
         />
       )}
@@ -529,7 +550,12 @@ export function SubscriptionSections({
         />
       ) : null}
 
-      <QuickPaymentDialog target={quickPayments.target} pending={quickPayments.pending} onClose={quickPayments.close} onConfirm={quickPayments.confirm} />
+      <QuickPaymentDialog
+        target={quickPayments.target}
+        pending={quickPayments.pending}
+        onClose={quickPayments.close}
+        onConfirm={quickPayments.confirm}
+      />
       <ConfirmDialog
         open={!!deleteId}
         confirmOnEnter

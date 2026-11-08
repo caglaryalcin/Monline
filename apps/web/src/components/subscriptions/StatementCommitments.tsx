@@ -29,12 +29,14 @@ export function StatementCommitments({
   search,
   month = currentSpendingMonth(),
   layout = "grid",
+  year,
 }: {
   data: SpendingData;
   section: "installments" | "bills";
   search: string;
   month?: string;
   layout?: "grid" | "list";
+  year?: number;
 }) {
   const { t, i18n } = useTranslation();
   const currentMonth = useLocalToday().slice(0, 7);
@@ -60,7 +62,12 @@ export function StatementCommitments({
     ...data.events,
     ...(data.pending_bills ?? []).filter((bill) => !recordedIds.has(bill.id)),
   ]
-    .filter((event) => isBillRecord(event) && event.date.startsWith(month) && matches(event.name))
+    .filter(
+      (event) =>
+        isBillRecord(event) &&
+        event.date.startsWith(year ? `${year}-` : month) &&
+        matches(event.name),
+    )
     .sort((a, b) => b.date.localeCompare(a.date));
   const billIds = new Set(billCandidates.map((event) => event.id));
   const bills = billCandidates.filter(
@@ -96,7 +103,9 @@ export function StatementCommitments({
               {t(
                 section === "installments"
                   ? "spending_installments_month_total"
-                  : "spending_month_total",
+                  : year
+                    ? "spending_year_total"
+                    : "spending_month_total",
               )}
             </dt>
             <dd className="flex flex-wrap gap-3 font-semibold tabular-nums">

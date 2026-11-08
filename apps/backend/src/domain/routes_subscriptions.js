@@ -117,7 +117,12 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
   }
   function findCurrencyByCode(code) {
     if (!code) return "";
-    const key = code.toUpperCase();
+    if (
+      typeof code !== "string" ||
+      !/^[A-Z]{3}$/.test(code.trim().toUpperCase())
+    )
+      throw new Error("Invalid currency code");
+    const key = code.trim().toUpperCase();
     if (currencyByCodeCache[key] !== undefined) return currencyByCodeCache[key];
     try {
       const rows = repository.findRecordsByFilter(
@@ -131,10 +136,27 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
           c: key,
         },
       );
-      currencyByCodeCache[key] = rows.length > 0 ? rows[0].id : "";
+      currencyByCodeCache[key] =
+        rows.length > 0
+          ? rows[0].id
+          : findOrCreate(
+              "currencies",
+              "user = {:u} && code = {:c}",
+              { u: userId, c: key },
+              {
+                user: userId,
+                name: key,
+                code: key,
+                symbol: key,
+                rate: 0,
+                is_main: false,
+              },
+            );
+      if (!currencyByCodeCache[key])
+        throw new Error("Could not import currency");
       return currencyByCodeCache[key];
     } catch (_) {
-      return "";
+      throw new Error("Could not import currency " + key);
     }
   }
 
@@ -183,7 +205,9 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
       S$: "SGD",
       NZ$: "NZD",
     };
-    return findCurrencyByCode(symbolToCode[symbol] || "");
+    if (!symbolToCode[symbol])
+      throw new Error("Unknown currency symbol " + symbol);
+    return findCurrencyByCode(symbolToCode[symbol]);
   }
   function findCycleByName(name) {
     if (!name) return "";
@@ -337,12 +361,24 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
       const rec = new Record(subsCol);
       rec.set("user", userId);
       rec.set("name", name);
-      if (!isWallos && sub.brand_name != null && (typeof sub.brand_name !== "string" || sub.brand_name.trim().length > 120)) {
+      if (
+        !isWallos &&
+        sub.brand_name != null &&
+        (typeof sub.brand_name !== "string" ||
+          sub.brand_name.trim().length > 120)
+      ) {
         results.skipped++;
-        results.errors.push({ index: i, name, reason: "Invalid brand/service" });
+        results.errors.push({
+          index: i,
+          name,
+          reason: "Invalid brand/service",
+        });
         continue;
       }
-      rec.set("brand_name", !isWallos && sub.brand_name ? sub.brand_name.trim() : "");
+      rec.set(
+        "brand_name",
+        !isWallos && sub.brand_name ? sub.brand_name.trim() : "",
+      );
       rec.set("price", price);
       if (!isWallos) {
         rec.set("price_changes", sub.price_changes ?? []);

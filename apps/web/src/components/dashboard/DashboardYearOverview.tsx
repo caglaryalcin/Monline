@@ -80,7 +80,7 @@ export function DashboardYearOverview({
       /* The selection still works for this page visit. */
     }
   }, [userId, section]);
-  const [chosenCurrency, setChosenCurrency] = useState("TRY");
+  const [chosenCurrency, setChosenCurrency] = useState("");
   const [historyYear, setHistoryYear] = useState(year);
   const options = { enabled: !!userId };
   const finance = useQuery({
@@ -138,11 +138,19 @@ export function DashboardYearOverview({
       today,
     ],
   );
-  const billPayments = useMemo(() => dashboardYearPayments({
-    finance: finance.data ?? EMPTY_FINANCE,
-    spending: spending.data ?? EMPTY_SPENDING,
-    subscriptions: [], currencies: currencies.data ?? [], records: [], today, periodMonths,
-  }).bills, [finance.data, spending.data, currencies.data, today, periodMonths]);
+  const billPayments = useMemo(
+    () =>
+      dashboardYearPayments({
+        finance: finance.data ?? EMPTY_FINANCE,
+        spending: spending.data ?? EMPTY_SPENDING,
+        subscriptions: [],
+        currencies: currencies.data ?? [],
+        records: [],
+        today,
+        periodMonths,
+      }).bills,
+    [finance.data, spending.data, currencies.data, today, periodMonths],
+  );
   const historyPayments = useMemo(
     () =>
       historyYear === year
@@ -230,7 +238,7 @@ export function DashboardYearOverview({
       ? payments[key].totals.map((total) => money(total.amount, total.currency)).join(" · ")
       : payments[key].unpriced
         ? "-"
-        : money(0);
+        : money(0, currencies.data?.find((item) => item.is_main)?.code || "EUR");
   const onlineLoading = subscriptions.isPending || currencies.isPending || records.isPending;
   const onlineError = subscriptions.isError || currencies.isError || records.isError;
   const anyError = spending.isError || onlineError || finance.isError || statements.isError;
@@ -253,9 +261,12 @@ export function DashboardYearOverview({
       ),
     ),
   ].sort();
+  const preferredCurrency = currencies.data?.find((item) => item.is_main)?.code || "EUR";
   const currency = historyCurrencies.includes(chosenCurrency)
     ? chosenCurrency
-    : historyCurrencies[0] || "TRY";
+    : historyCurrencies.includes(preferredCurrency)
+      ? preferredCurrency
+      : historyCurrencies[0] || preferredCurrency;
   const history = dashboardPaymentHistory(historyPayments[section], historyYear, currency, today);
   const minimumWageText = wages.isFetching
     ? "…"

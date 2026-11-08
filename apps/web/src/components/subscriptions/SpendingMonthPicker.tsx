@@ -12,14 +12,19 @@ export function SpendingMonthPicker({
   recordedMonths,
   calendarPicker = false,
   monthsLabel,
+  year,
+  onYearChange,
 }: {
   month: string;
   onChange: (month: string) => void;
   recordedMonths: string[];
   calendarPicker?: boolean;
   monthsLabel?: string;
+  year?: number;
+  onYearChange?: (year: number) => void;
 }) {
   const { t, i18n } = useTranslation();
+  const currentYear = Number(currentSpendingMonth().slice(0, 4));
   const shift = (delta: number) => {
     const date = new Date(`${month}-01T12:00:00Z`);
     date.setUTCMonth(date.getUTCMonth() + delta);
@@ -67,6 +72,26 @@ export function SpendingMonthPicker({
         <Button size="sm" variant="outline" onClick={() => onChange(currentSpendingMonth())}>
           {t("spending_this_month")}
         </Button>
+        {onYearChange && (
+          <>
+            <Button
+              size="sm"
+              variant={year === currentYear ? "default" : "outline"}
+              aria-pressed={year === currentYear}
+              onClick={() => onYearChange(currentYear)}
+            >
+              {t("spending_this_year")}
+            </Button>
+            <Button
+              size="sm"
+              variant={year === currentYear - 1 ? "default" : "outline"}
+              aria-pressed={year === currentYear - 1}
+              onClick={() => onYearChange(currentYear - 1)}
+            >
+              {t("spending_last_year")}
+            </Button>
+          </>
+        )}
         {recordedMonths.length > 0 && (
           <select
             aria-label={monthsLabel ?? t("spending_recorded_months")}

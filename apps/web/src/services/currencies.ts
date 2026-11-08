@@ -1,7 +1,9 @@
+import { api } from "@/lib/api";
 import client from "@/lib/client";
 import type { Currency } from "@/types";
 
 export const currenciesService = {
+  setMain: (id: string) => api.put(`/api/currencies/${id}/main`, {}),
   list: (userId: string) =>
     client.collection("currencies").getFullList<Currency>({
       filter: client.filter("user = {:userId}", { userId }),

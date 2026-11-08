@@ -16,8 +16,10 @@ import {
 } from "@/lib/financialStatistics";
 import { resolveLocale } from "@/lib/locale";
 import { numberFormatter } from "@/lib/numberFormat";
+import { queryKeys } from "@/lib/queryKeys";
 import { EMPTY_SPENDING, spendingKey } from "@/lib/spending";
 import { cn, formatCurrency } from "@/lib/utils";
+import { currenciesService } from "@/services/currencies";
 import { spendingService } from "@/services/spending";
 
 export function FinancialStatistics({ section }: { section: FinancialStatisticsSection }) {
@@ -27,7 +29,12 @@ export function FinancialStatistics({ section }: { section: FinancialStatisticsS
   const locale = resolveLocale(i18n);
   const [year, setYear] = useState(Number(today.slice(0, 4)));
   const [chosenMonth, setChosenMonth] = useState("");
-  const [chosenCurrency, setChosenCurrency] = useState("TRY");
+  const [chosenCurrency, setChosenCurrency] = useState("");
+  const accountCurrencies = useQuery({
+    queryKey: queryKeys.currencies.all(user?.id || ""),
+    queryFn: () => currenciesService.list(user!.id),
+    enabled: !!user?.id,
+  });
   const [drilldown, setDrilldown] = useState({ key: "", name: "" });
   const query = useQuery({
     queryKey: spendingKey(user?.id || ""),
@@ -37,7 +44,12 @@ export function FinancialStatistics({ section }: { section: FinancialStatisticsS
   const data = query.data ?? EMPTY_SPENDING;
   const allRows = financialStatisticsRows(data, section);
   const currencies = [...new Set(allRows.map((row) => row.currency))].sort();
-  const currency = currencies.includes(chosenCurrency) ? chosenCurrency : currencies[0] || "TRY";
+  const preferredCurrency = accountCurrencies.data?.find((item) => item.is_main)?.code || "EUR";
+  const currency = currencies.includes(chosenCurrency)
+    ? chosenCurrency
+    : currencies.includes(preferredCurrency)
+      ? preferredCurrency
+      : currencies[0] || preferredCurrency;
   const sourceRows = allRows.filter((row) => row.currency === currency);
   const years = [
     ...new Set([

@@ -2813,25 +2813,7 @@ routerAdd("PUT", "/api/external/currencies/{id}/main", function (e) {
         error: "Forbidden",
       });
 
-    // Mark all other as not main
-    var all = repository.findRecordsByFilter(
-      "currencies",
-      "user = {:u}",
-      "",
-      0,
-      0,
-      {
-        u: userId,
-      },
-    );
-    for (var i = 0; i < all.length; i++) {
-      all[i].set("is_main", all[i].id === id);
-      repository.save(all[i]);
-    }
-    return e.json(200, {
-      success: true,
-      main_currency_id: id,
-    });
+    return e.json(200, require(domainPath + "/lib/currencies.js").setMainCurrency(repository, userId, id));
   } catch (err) {
     return e.json(500, {
       error: String(err),

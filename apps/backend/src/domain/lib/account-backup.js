@@ -186,8 +186,21 @@ const FIELDS = {
     "transactions",
     "created",
   ],
-  finance_statement_links: ["row_id", "month", "statement_id", "allow_month_boundary"],
-  merchant_logos: ["merchant_name", "provider_name", "domain", "row_id", "start_month", "scope", "updated_at"],
+  finance_statement_links: [
+    "row_id",
+    "month",
+    "statement_id",
+    "allow_month_boundary",
+  ],
+  merchant_logos: [
+    "merchant_name",
+    "provider_name",
+    "domain",
+    "row_id",
+    "start_month",
+    "scope",
+    "updated_at",
+  ],
   manual_bills: ["name", "date", "amount", "currency", "status", "notes"],
   budget_matches: [
     "target_type",
@@ -274,6 +287,12 @@ function exportAccount(app, userId) {
       backup.data[name] = rows.map((row) => values(row, FIELDS[name]));
       for (const row of rows) addFile(name, row);
     }
+    backup.currencyBase =
+      (
+        backup.data.currencies.find(
+          (row) => row.id === backup.profile.main_currency,
+        ) || backup.data.currencies.find((row) => row.is_main)
+      )?.code || "";
     backup.data.calendar_moves = backup.data.calendar_moves.filter((row) => {
       const ref = require("./calendar-placement.js").sourceReference(
         row.source,
@@ -290,7 +309,11 @@ function exportAccount(app, userId) {
   return backup;
 }
 function fromBase64(value) {
-  if (typeof value !== "string" || value.length % 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value))
+  if (
+    typeof value !== "string" ||
+    value.length % 4 ||
+    !/^[A-Za-z0-9+/]*={0,2}$/.test(value)
+  )
     throw new Error("transfer_invalid_backup");
   return Buffer.from(value, "base64");
 }
@@ -309,7 +332,14 @@ function validateBackup(backup) {
     throw new Error("transfer_invalid_backup");
   // Legacy personal exchange settings were replaced by global integrations.
   // Accept their old dataset without restoring or replacing global credentials.
-  if (Object.entries(backup.data).some(([name, rows]) => !Object.hasOwn(FIELDS, name) && !(name === "fixer_settings" && Array.isArray(rows)) && (!Array.isArray(rows) || rows.length)))
+  if (
+    Object.entries(backup.data).some(
+      ([name, rows]) =>
+        !Object.hasOwn(FIELDS, name) &&
+        !(name === "fixer_settings" && Array.isArray(rows)) &&
+        (!Array.isArray(rows) || rows.length),
+    )
+  )
     throw new Error("transfer_incompatible_backup");
   let count = 0;
   for (const name of require("./pure/finance.js").COLLECTIONS)
@@ -330,7 +360,10 @@ function validateBackup(backup) {
       ids.add(row.id);
       if (name === "subscriptions") {
         try {
-          row.price_changes = require("./pure/subscription-prices.mjs").validatePriceChanges(row.price_changes);
+          row.price_changes =
+            require("./pure/subscription-prices.mjs").validatePriceChanges(
+              row.price_changes,
+            );
           row.notification_reminders =
             require("./pure/subscription-reminders.js").validateSubscriptionReminders(
               row.notification_reminders,
@@ -447,6 +480,46 @@ function importAccount(
     collections: {},
   };
   app.runInTransaction((tx) => {
+    const targetCurrencies = own(tx, "currencies", userId);
+    const targetMainId = tx
+      .findRecordById("users", userId)
+      .getString("main_currency");
+    const targetMain =
+      targetCurrencies.find((row) => row.id === targetMainId) ||
+      targetCurrencies.find((row) => row.getBool("is_main"));
+    const sourceMain =
+      backup.data.currencies.find(
+        (row) => row.id === backup.profile.main_currency,
+      ) || backup.data.currencies.find((row) => row.is_main);
+    const sourceBase = backup.currencyBase || sourceMain?.code;
+    const restoringBase =
+      restoreSettings && !!backup.profile.main_currency && !!sourceMain;
+    const positive = (value) =>
+      typeof value === "number" && Number.isFinite(value) && value > 0
+        ? value
+        : 0;
+    let rateFactor =
+      !targetMain || sourceBase === targetMain.getString("code") ? 1 : 0;
+    if (!rateFactor && sourceBase)
+      rateFactor = positive(
+        targetCurrencies
+          .find((row) => row.getString("code") === sourceBase)
+          ?.get("rate"),
+      );
+    // Older scoped exports lack the base code. A shared currency can still establish it.
+    if (!rateFactor)
+      for (const source of backup.data.currencies) {
+        const target = targetCurrencies.find(
+          (row) => row.getString("code") === source.code,
+        );
+        const sourceRate = positive(source.rate);
+        const targetRate = positive(target?.get("rate"));
+        if (sourceRate && targetRate) {
+          rateFactor = targetRate / sourceRate;
+          break;
+        }
+      }
+    rateFactor = positive(rateFactor);
     const maps = Object.create(null);
     const records = Object.create(null);
     const created = Object.create(null);
@@ -531,8 +604,9 @@ function importAccount(
           record = existing.find(
             (entry) =>
               entry.getString("merchant_key") ===
-              require("./pure/merchant-logos.js").key(row.merchant_name) &&
-              entry.getString("row_id") === (row.row_id ? maps.finance_rows[row.row_id] : "") &&
+                require("./pure/merchant-logos.js").key(row.merchant_name) &&
+              entry.getString("row_id") ===
+                (row.row_id ? maps.finance_rows[row.row_id] : "") &&
               entry.getString("start_month") === (row.start_month || "") &&
               entry.getString("scope") === (row.scope || ""),
           );
@@ -570,9 +644,21 @@ function importAccount(
     function matchingPayment(row) {
       const day = String(row.due_date || "").slice(0, 10);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
-      return tx.findRecordsByFilter("payment_records",
-        "user = {:owner} && subscription_id = {:subscription} && due_date >= {:day} && due_date < {:until}",
-        "-paid_at,id", 1, 0, { owner: userId, subscription: subscriptionId(row.subscription_id), day, until: day + "~" })[0] || null;
+      return (
+        tx.findRecordsByFilter(
+          "payment_records",
+          "user = {:owner} && subscription_id = {:subscription} && due_date >= {:day} && due_date < {:until}",
+          "-paid_at,id",
+          1,
+          0,
+          {
+            owner: userId,
+            subscription: subscriptionId(row.subscription_id),
+            day,
+            until: day + "~",
+          },
+        )[0] || null
+      );
     }
     function setFields(record, row, name, fields) {
       for (const field of fields) {
@@ -699,13 +785,17 @@ function importAccount(
         }
         record.set(ownerField(name), userId);
         setFields(record, row, name, FIELDS[name]);
+        if (name === "currencies" && !restoringBase)
+          // Unknown cross-rates stay unavailable; never label an unconverted value as converted.
+          record.set("rate", positive(positive(row.rate) * rateFactor));
         if (
           ["currencies", "payment_methods", "household"].includes(name) &&
           !restoreSettings &&
           own(tx, name, userId).some((entry) => entry.getBool("is_main"))
         )
           record.set("is_main", false);
-        if (["subscriptions", "finance_rows"].includes(name)) record.set("__monline_restore", true);
+        if (["subscriptions", "finance_rows"].includes(name))
+          record.set("__monline_restore", true);
         if (name === "fixer_settings" && !record.getString("api_key"))
           record.set("enabled", false);
         tx.save(record);
@@ -776,6 +866,24 @@ function importAccount(
       account.set("__monline_restore", true);
       tx.save(account);
       const mainId = account.getString("main_currency");
+      if (restoringBase) {
+        const restoredRates = new Map(
+          backup.data.currencies.map((row) => [
+            maps.currencies[row.id],
+            positive(row.rate),
+          ]),
+        );
+        for (const currency of own(tx, "currencies", userId)) {
+          const old = targetCurrencies.find((row) => row.id === currency.id);
+          const rate = restoredRates.has(currency.id)
+            ? restoredRates.get(currency.id)
+            : rateFactor
+              ? positive(old?.get("rate")) / rateFactor
+              : 0;
+          currency.set("rate", currency.id === mainId ? 1 : positive(rate));
+          tx.save(currency);
+        }
+      }
       if (mainId)
         for (const currency of own(tx, "currencies", userId)) {
           currency.set("is_main", currency.id === mainId);

@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -13,11 +13,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
 import { isValidISODate } from "@/lib/dateInput";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { parseClipboardAmount } from "@/lib/financeClipboard";
+import { queryKeys } from "@/lib/queryKeys";
 import type { SpendingEvent } from "@/lib/spending";
 import { billsService } from "@/services/bills";
+import { currenciesService } from "@/services/currencies";
 
 export function ManualBillDialog({
   month,
@@ -31,10 +34,24 @@ export function ManualBillDialog({
   onSaved?: () => void;
 }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const currencyQuery = useQuery({
+    queryKey: queryKeys.currencies.all(user?.id || ""),
+    queryFn: () => currenciesService.list(user!.id),
+    enabled: !!user?.id,
+  });
+  const currencies = currencyQuery.data ?? [];
   const [name, setName] = useState(bill?.name || "");
   const [date, setDate] = useState(bill?.date || `${month}-01`);
   const [amount, setAmount] = useState(bill ? String(bill.amount) : "");
-  const [currency, setCurrency] = useState(bill?.currency || "TRY");
+  const [chosenCurrency, setCurrency] = useState(bill?.currency || "");
+  const currency = chosenCurrency || currencies.find((item) => item.is_main)?.code || "EUR";
+  const currencyCodes = [
+    ...new Set([
+      currency,
+      ...(currencies.length ? currencies.map((item) => item.code) : ["TRY", "USD", "EUR", "GBP"]),
+    ]),
+  ];
   const [status, setStatus] = useState<"planned" | "settled">(
     bill?.status === "settled" ? "settled" : "planned",
   );
@@ -53,7 +70,8 @@ export function ManualBillDialog({
     date >= "1970-01-01" &&
     date <= "2200-12-31" &&
     parsed != null &&
-    parsed > 0;
+    parsed > 0 &&
+    (!!bill || !user?.id || currencyQuery.isSuccess);
   const mutation = useMutation({
     mutationFn: () =>
       billsService.save(
@@ -67,10 +85,7 @@ export function ManualBillDialog({
     },
   });
   return (
-    <Dialog
-      open
-      onOpenChange={dialogDismissHandler(onClose, mutation.isPending)}
-    >
+    <Dialog open onOpenChange={dialogDismissHandler(onClose, mutation.isPending)}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t(bill ? "spending_edit_bill" : "spending_add_bill")}</DialogTitle>
@@ -127,7 +142,7 @@ export function ManualBillDialog({
                 disabled={mutation.isPending}
                 onChange={(event) => setCurrency(event.target.value)}
               >
-                {[...new Set(["TRY", "USD", "EUR", "GBP", currency])].map((code) => (
+                {currencyCodes.map((code) => (
                   <option key={code}>{code}</option>
                 ))}
               </select>

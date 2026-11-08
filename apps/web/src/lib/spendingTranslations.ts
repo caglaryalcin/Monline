@@ -171,6 +171,9 @@ export const spendingTranslations = {
     spending_previous_month: "Önceki ay",
     spending_next_month: "Sonraki ay",
     spending_this_month: "Bu ay",
+    spending_this_year: "Bu yıl",
+    spending_last_year: "Geçen yıl",
+    spending_year_total: "Yılın toplamı",
     spending_recorded_months: "Kayıtlı aylar",
     spending_month_help:
       "Taksitler ekstre dönemine, faturalar işlem tarihine göre gösterilir. Geçmiş bir ekstre güncel borç olarak gösterilmez.",
@@ -403,6 +406,9 @@ export const spendingTranslations = {
     spending_previous_month: "Previous month",
     spending_next_month: "Next month",
     spending_this_month: "This month",
+    spending_this_year: "This year",
+    spending_last_year: "Last year",
+    spending_year_total: "Yearly total",
     spending_recorded_months: "Recorded months",
     spending_month_help:
       "Installments follow their statement period; bills follow their transaction date. An old statement is not presented as current debt.",
@@ -637,6 +643,9 @@ export const spendingTranslations = {
     spending_previous_month: "Vorheriger Monat",
     spending_next_month: "Nächster Monat",
     spending_this_month: "Dieser Monat",
+    spending_this_year: "Dieses Jahr",
+    spending_last_year: "Letztes Jahr",
+    spending_year_total: "Jahressumme",
     spending_recorded_months: "Erfasste Monate",
     spending_month_help:
       "Raten werden nach Abrechnungsmonat, Rechnungen nach Buchungsdatum angezeigt. Alte Abrechnungen gelten nicht als aktuelle Schulden.",

@@ -15,12 +15,11 @@ import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { currenciesService } from "@/services/currencies";
 import { fixerService } from "@/services/fixer";
-import { usersService } from "@/services/users";
 import type { Currency } from "@/types";
 
 export function CurrenciesTab() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const userId = user?.id ?? "";
   const qc = useQueryClient();
 
@@ -101,13 +100,8 @@ export function CurrenciesTab() {
 
   const setMainCurrency = async (id: string) => {
     try {
-      const mains = currencies.filter((c) => c.is_main);
-      for (const cur of mains) {
-        await currenciesService.update(cur.id, { is_main: false });
-      }
-      await currenciesService.update(id, { is_main: true });
-      // Keep user.main_currency in sync so backend rate normalization uses correct base
-      await usersService.update(user!.id, { main_currency: id });
+      await currenciesService.setMain(id);
+      await refreshUser();
       qc.invalidateQueries({
         queryKey: queryKeys.currencies.all(userId),
       });

@@ -31,6 +31,7 @@ export interface AccountBackup {
   version: 1;
   exportedAt: string;
   accountId: string;
+  currencyBase?: string;
   profile: TransferRecord;
   data: Record<TransferCollection, TransferRecord[]>;
   cycles: { id: string; name: string }[];
