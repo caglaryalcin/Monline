@@ -149,7 +149,7 @@ export const spendingTranslations = {
     loans_status_planned: "Ödenmedi",
     loans_open_finance: "Gelir/Gider’e git",
     spending_installments_info:
-      "Ekstrelerdeki taksitler ve kalan taksitlerin bu aydan bitiş ayına kadar ödeme planı gösterilir. Ekstre olmayan aylarda tutarlar son ekstreye göre tahminidir; yeni ekstre gelince kayıtlı taksit esas alınır.",
+      "Seçilen ayın ekstre taksitleri gösterilir. Ekstresi olmayan aylar son ekstreye göre tahmin edilir.",
     spending_bills_info:
       "Gelir/Gider’de fatura etiketi verdiğin ödemeler ve elle eklediğin faturalar burada görünür. Ekstre işlemleri bu listeye eklenmez.",
     spending_credit_card_source: "Kredi kartı ekstresi",
@@ -386,7 +386,7 @@ export const spendingTranslations = {
     loans_status_planned: "Unpaid",
     loans_open_finance: "Go to Income & Expenses",
     spending_installments_info:
-      "Shows recorded installments and the remaining payment schedule from this month through the final installment. Months without a statement are estimated; a new statement takes precedence over estimates.",
+      "Shows statement installments for the selected month. Months without a statement are estimated from the latest statement.",
     spending_bills_info:
       "Payments with a bill row tag in Income & Expenses and manually added bills appear here. Statement transactions are not added to this list.",
     spending_credit_card_source: "Credit card statement",
@@ -623,7 +623,7 @@ export const spendingTranslations = {
     loans_status_planned: "Unbezahlt",
     loans_open_finance: "Zu Einnahmen & Ausgaben",
     spending_installments_info:
-      "Zeigt erfasste Raten und den verbleibenden Zahlungsplan ab diesem Monat bis zur letzten Rate. Monate ohne Abrechnung werden geschätzt; eine neue Abrechnung ersetzt die Schätzung.",
+      "Zeigt die Abrechnungsraten für den ausgewählten Monat. Monate ohne Abrechnung werden anhand der letzten Abrechnung geschätzt.",
     spending_bills_info:
       "Zahlungen mit einer Rechnungskennzeichnung aus Einnahmen & Ausgaben und manuell hinzugefügte Rechnungen erscheinen hier. Abrechnungsbuchungen werden dieser Liste nicht hinzugefügt.",
     spending_credit_card_source: "Kreditkartenabrechnung",

@@ -93,15 +93,6 @@ export function StatementCommitments({
     section === "installments" ? plans : bills.filter((bill) => !bill.amount_pending),
   );
   const amountsPending = bills.filter((bill) => bill.amount_pending).length;
-  const remainingTotals = spendingTotals(
-    plans.map((plan) => ({ currency: plan.currency, amount: plan.remaining_amount })),
-  );
-  if (section === "installments" && plans.length === 0)
-    return (
-      <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-        {t("spending_installment_month_empty")}
-      </p>
-    );
 
   return (
     <section className="space-y-4" aria-label={t(`spending_${section}_source`)}>
@@ -115,18 +106,14 @@ export function StatementCommitments({
               ))}
             </dd>
           </div>
-          <div>
-            <dt className="text-muted-foreground">{t("spending_remaining_amount")}</dt>
-            <dd className="flex flex-wrap gap-3 font-semibold tabular-nums">
-              {remainingTotals.map((total) => (
-                <span key={total.currency}>{money(total.amount, total.currency)}</span>
-              ))}
-            </dd>
-          </div>
         </dl>
       )}
       {section === "installments" ? (
-        <>
+        plans.length === 0 ? (
+          <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+            {t("spending_installment_month_empty")}
+          </p>
+        ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             {plans.map((plan) => (
               <article key={plan.id} className="space-y-4 rounded-2xl border p-4">
@@ -170,10 +157,6 @@ export function StatementCommitments({
                   </dd>
                   <dt>{t("spending_installment_amount")}</dt>
                   <dd className="text-right tabular-nums">{money(plan.amount, plan.currency)}</dd>
-                  <dt>{t("spending_remaining_amount")}</dt>
-                  <dd className="text-right font-semibold tabular-nums">
-                    {money(plan.remaining_amount, plan.currency)}
-                  </dd>
                   <dt>{t("spending_next_period")}</dt>
                   <dd className="text-right">
                     {plan.remaining ? plan.next_month : t("spending_completed")}
@@ -195,7 +178,7 @@ export function StatementCommitments({
               </article>
             ))}
           </div>
-        </>
+        )
       ) : (
         <>
           {!bills.length && (
@@ -247,7 +230,21 @@ export function StatementCommitments({
               {t("spending_show_more")}
             </Button>
           )}
-          <footer className="flex items-start gap-2 border-t pt-2 text-xs">
+        </>
+      )}
+      <footer className="flex items-start gap-2 border-t pt-2 text-xs">
+        {section === "installments" ? (
+          <>
+            <Lightbulb
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400"
+              aria-hidden="true"
+            />
+            <p className="leading-relaxed text-muted-foreground">
+              {t("spending_installments_info")}
+            </p>
+          </>
+        ) : (
+          <>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -295,9 +292,9 @@ export function StatementCommitments({
                 </p>
               )}
             </div>
-          </footer>
-        </>
-      )}
+          </>
+        )}
+      </footer>
       {providerFor && (
         <MerchantProviderDialog
           key={`${providerFor.name}-${providerFor.month}-${providerFor.rowId}`}

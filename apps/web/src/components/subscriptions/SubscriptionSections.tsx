@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -418,21 +417,6 @@ export function SubscriptionSections({
               : billRecordedMonths
           }
         />
-      )}
-      {section === "installments" && installmentPayments.some((plan) => plan.period === month) && (
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold">{t("spending_installments_source")}</h2>
-          <p className="text-sm text-muted-foreground">{t("spending_installments_help")}</p>
-        </div>
-      )}
-      {section === "installments" && (
-        <p className="flex items-start gap-2 rounded-xl border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
-          <Lightbulb
-            className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
-            aria-hidden="true"
-          />
-          <span>{t("spending_installments_info")}</span>
-        </p>
       )}
       {spending.isError && (
         <p role="alert" className="text-sm text-destructive">

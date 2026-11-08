@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Tag } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import { CategoryFormRow } from "@/components/settings/categories/CategoryFormRow";
@@ -14,6 +14,7 @@ import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { queryKeys } from "@/lib/queryKeys";
 import { toast } from "@/lib/toast";
 import { categoriesService } from "@/services/categories";
+import { subscriptionsService } from "@/services/subscriptions";
 
 export function CategoriesTab() {
   const { t } = useTranslation();
@@ -33,12 +34,23 @@ export function CategoriesTab() {
     enabled: !!user?.id,
   });
 
+  const { data: subscriptions, isError: subscriptionsError } = useQuery({
+    queryKey: queryKeys.subscriptions.all(userId),
+    queryFn: () => subscriptionsService.list(userId),
+    enabled: !!userId,
+  });
+  const subscriptionCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const subscription of subscriptions ?? []) {
+      if (subscription.category) {
+        counts.set(subscription.category, (counts.get(subscription.category) ?? 0) + 1);
+      }
+    }
+    return counts;
+  }, [subscriptions]);
+
   const categoryUsage = useQuery({
-    queryKey: [
-      ...queryKeys.subscriptions.all(user?.id ?? ""),
-      "category-usage",
-      pendingDeleteId,
-    ],
+    queryKey: [...queryKeys.subscriptions.all(user?.id ?? ""), "category-usage", pendingDeleteId],
     queryFn: () => categoriesService.subscriptionCount(user!.id, pendingDeleteId!),
     enabled: !!user?.id && !!pendingDeleteId,
     staleTime: 0,
@@ -143,6 +155,10 @@ export function CategoriesTab() {
               <CategoryListItem
                 key={cat.id}
                 categoryName={categoryLabel(cat, t)}
+                subscriptionCount={
+                  subscriptions ? (subscriptionCounts.get(cat.id) ?? 0) : undefined
+                }
+                subscriptionCountError={subscriptionsError}
                 onEdit={() => {
                   setEditingId(cat.id);
                   setEditingName(categoryLabel(cat, t));

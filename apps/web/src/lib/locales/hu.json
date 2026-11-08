@@ -626,6 +626,8 @@
   "success_delete": "Sikeresen törölve",
   "success_delete_account": "A fiók sikeresen törölve",
   "confirm_delete": "Biztosan törli ezt?",
+  "category_subscription_count_one": "<strong>{{count}}</strong> előfizetés",
+  "category_subscription_count_other": "<strong>{{count}}</strong> előfizetések",
   "category_delete_confirm_one": "Ezt a kategóriát <strong>{{count}}</strong> előfizetés használja. Biztosan törölni szeretné?",
   "category_delete_confirm_other": "Ezt a kategóriát <strong>{{count}}</strong> előfizetés használja. Biztosan törölni szeretné?",
   "category_usage_load_error": "Nem sikerült betölteni a kategóriát használó előfizetések számát. Zárja be ezt az ablakot, és próbálja újra.",

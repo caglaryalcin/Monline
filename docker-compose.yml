@@ -2,7 +2,7 @@ name: monline-beta
 services:
   app:
     build: .
-    image: monline:2.0.0-beta.35
+    image: monline:2.0.0-beta.36
     container_name: monline-beta
     restart: unless-stopped
     ports:

@@ -626,6 +626,8 @@
   "success_delete": "Deleted successfully",
   "success_delete_account": "Account deleted successfully",
   "confirm_delete": "Are you sure you want to delete this?",
+  "category_subscription_count_one": "<strong>{{count}}</strong> subscription",
+  "category_subscription_count_other": "<strong>{{count}}</strong> subscriptions",
   "category_delete_confirm_one": "This category is used by <strong>{{count}}</strong> subscription. Are you sure you want to delete it?",
   "category_delete_confirm_other": "This category is used by <strong>{{count}}</strong> subscriptions. Are you sure you want to delete it?",
   "category_usage_load_error": "Could not load the number of subscriptions using this category. Close this dialog and try again.",
