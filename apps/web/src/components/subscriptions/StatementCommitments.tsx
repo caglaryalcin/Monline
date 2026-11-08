@@ -1,10 +1,12 @@
-import { Receipt } from "lucide-react";
+import { Lightbulb, Receipt } from "lucide-react";
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { StatementLink } from "@/components/StatementLink";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import { MerchantLogosContext } from "@/contexts/MerchantLogosContext";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { installmentSchedule } from "@/lib/installmentSchedule";
@@ -73,6 +75,13 @@ export function StatementCommitments({
   const bills = billCandidates.filter(
     (event) => !event.duplicate_of || !billIds.has(event.duplicate_of),
   );
+  const billGroups = new Map<string, typeof bills>();
+  for (const bill of bills.slice(0, limit)) {
+    const period = year ? bill.date.slice(0, 7) : "";
+    const group = billGroups.get(period) ?? [];
+    group.push(bill);
+    billGroups.set(period, group);
+  }
   const money = (amount: number, currency: string) => formatCurrency(amount, currency, {});
   const periodName = (period: string) =>
     new Intl.DateTimeFormat(i18n.language.replace("_", "-"), {
@@ -96,40 +105,25 @@ export function StatementCommitments({
 
   return (
     <section className="space-y-4" aria-label={t(`spending_${section}_source`)}>
-      {totals.length > 0 && (
+      {section === "installments" && totals.length > 0 && (
         <dl className="flex flex-wrap gap-6 rounded-xl border p-4 text-sm">
           <div>
-            <dt className="text-muted-foreground">
-              {t(
-                section === "installments"
-                  ? "spending_installments_month_total"
-                  : year
-                    ? "spending_year_total"
-                    : "spending_month_total",
-              )}
-            </dt>
+            <dt className="text-muted-foreground">{t("spending_installments_month_total")}</dt>
             <dd className="flex flex-wrap gap-3 font-semibold tabular-nums">
               {totals.map((total) => (
                 <span key={total.currency}>{money(total.amount, total.currency)}</span>
               ))}
             </dd>
           </div>
-          {section === "installments" && (
-            <div>
-              <dt className="text-muted-foreground">{t("spending_remaining_amount")}</dt>
-              <dd className="flex flex-wrap gap-3 font-semibold tabular-nums">
-                {remainingTotals.map((total) => (
-                  <span key={total.currency}>{money(total.amount, total.currency)}</span>
-                ))}
-              </dd>
-            </div>
-          )}
+          <div>
+            <dt className="text-muted-foreground">{t("spending_remaining_amount")}</dt>
+            <dd className="flex flex-wrap gap-3 font-semibold tabular-nums">
+              {remainingTotals.map((total) => (
+                <span key={total.currency}>{money(total.amount, total.currency)}</span>
+              ))}
+            </dd>
+          </div>
         </dl>
-      )}
-      {section === "bills" && amountsPending > 0 && (
-        <p className="rounded-xl border bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
-          {t("spending_bills_amounts_pending", { count: amountsPending })}
-        </p>
       )}
       {section === "installments" ? (
         <>
@@ -212,28 +206,40 @@ export function StatementCommitments({
               <p className="text-lg font-medium text-foreground">{t("spending_no_bills")}</p>
             </div>
           )}
-          <div
-            className={
-              layout === "list"
-                ? "space-y-2"
-                : "grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3"
-            }
-          >
-            {bills.slice(0, limit).map((bill) => (
-              <BillCard
-                key={bill.id}
-                bill={bill}
-                layout={layout}
-                providerName={choiceFor(bill)?.provider_name}
-                providerKnown={!!findLogoService(bill.name) || !!choiceFor(bill)}
-                onChooseProvider={() =>
-                  setProviderFor({
-                    name: bill.name,
-                    month: bill.date.slice(0, 7),
-                    rowId: bill.provider_row_id,
-                  })
-                }
-              />
+          <div className="space-y-4">
+            {[...billGroups].map(([period, group], index) => (
+              <div key={period || month} className="space-y-3">
+                {index > 0 && <Separator className="w-60 max-w-full" />}
+                {year && (
+                  <h3 className="text-sm font-medium capitalize text-muted-foreground">
+                    {periodName(period)}
+                  </h3>
+                )}
+                <div
+                  className={
+                    layout === "list"
+                      ? "space-y-2"
+                      : "grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3"
+                  }
+                >
+                  {group.map((bill) => (
+                    <BillCard
+                      key={bill.id}
+                      bill={bill}
+                      layout={layout}
+                      providerName={choiceFor(bill)?.provider_name}
+                      providerKnown={!!findLogoService(bill.name) || !!choiceFor(bill)}
+                      onChooseProvider={() =>
+                        setProviderFor({
+                          name: bill.name,
+                          month: bill.date.slice(0, 7),
+                          rowId: bill.provider_row_id,
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
           {bills.length > limit && (
@@ -241,6 +247,55 @@ export function StatementCommitments({
               {t("spending_show_more")}
             </Button>
           )}
+          <footer className="flex items-start gap-2 border-t pt-2 text-xs">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0 text-amber-600 dark:text-amber-400"
+                  aria-label={t("more_info")}
+                  title={t("more_info")}
+                >
+                  <Lightbulb className="h-3.5 w-3.5" aria-hidden="true" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                side="top"
+                align="start"
+                className="max-w-[calc(100vw-2rem)] p-3 text-xs leading-relaxed text-muted-foreground"
+              >
+                {t("spending_bills_info")}
+              </PopoverContent>
+            </Popover>
+            <div className="min-w-0 space-y-0.5 pt-0.5">
+              {totals.length > 0 && (
+                <dl className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <dt className="text-muted-foreground">
+                    {t(year ? "spending_year_total" : "spending_month_total")}
+                  </dt>
+                  <dd className="flex flex-wrap gap-x-3 text-sm font-semibold tabular-nums">
+                    {totals.map((total) => (
+                      <span
+                        key={total.currency}
+                        className={!year ? "amount-marker-highlight" : undefined}
+                      >
+                        {total.currency === "TRY"
+                          ? `${total.amount.toFixed(2)}TL`
+                          : money(total.amount, total.currency)}
+                      </span>
+                    ))}
+                  </dd>
+                </dl>
+              )}
+              {amountsPending > 0 && (
+                <p className="leading-relaxed text-muted-foreground">
+                  {t("spending_bills_amounts_pending", { count: amountsPending })}
+                </p>
+              )}
+            </div>
+          </footer>
         </>
       )}
       {providerFor && (

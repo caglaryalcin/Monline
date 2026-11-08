@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+.amount-marker-highlight {
+  display: inline-block;
+  position: relative;
+  isolation: isolate;
+  padding-inline: 0.55em;
+  color: #1e250c;
+  font-weight: 800;
+}
+
+.amount-marker-highlight::before {
+  content: "";
+  position: absolute;
+  inset: 0.1em -0.35em 0.08em;
+  z-index: -1;
+  background-color: #D8FF68;
+  -webkit-mask: url("./assets/amount-marker-mask.svg") center / 100% 100% no-repeat;
+  mask: url("./assets/amount-marker-mask.svg") center / 100% 100% no-repeat;
+  mask-mode: alpha;
+  pointer-events: none;
+}
+
 .monline-login {
   min-height: 100vh;
   min-height: 100dvh;

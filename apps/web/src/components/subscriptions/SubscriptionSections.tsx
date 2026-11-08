@@ -92,7 +92,11 @@ export function SubscriptionSections({
   );
   const [view, setView] = useState<"grid" | "list">("grid");
   const [month, setMonth] = useState(currentSpendingMonth);
-  const [billYear, setBillYear] = useState<number | undefined>();
+  const currentBillYear = Number(currentSpendingMonth().slice(0, 4));
+  const [billYear, setBillYear] = useState(currentBillYear);
+  const [billMonth, setBillMonth] = useState<number | undefined>(() =>
+    Number(currentSpendingMonth().slice(5)),
+  );
   const spending = useQuery({
     queryKey: spendingKey(userId),
     queryFn: spendingService.get,
@@ -133,10 +137,26 @@ export function SubscriptionSections({
   });
 
   const mainCurrency = currencies.find((currency) => currency.is_main);
+  const billRecordedMonths = [
+    ...new Set(
+      [...(spending.data?.events ?? []), ...(spending.data?.pending_bills ?? [])]
+        .filter(isBillRecord)
+        .map((event) => event.date.slice(0, 7)),
+    ),
+  ]
+    .filter(Boolean)
+    .sort()
+    .reverse();
+  const selectedBillYear =
+    billYear === currentBillYear ||
+    billRecordedMonths.some((value) => value.startsWith(`${billYear}-`))
+      ? billYear
+      : currentBillYear;
   const installmentPayments =
     section === "installments"
       ? installmentSchedule(spending.data ?? EMPTY_SPENDING, today.slice(0, 7))
       : [];
+  const billFilterMonth = `${selectedBillYear}-${String(billMonth ?? Number(month.slice(5))).padStart(2, "0")}`;
 
   const statusMutation = useMutation({
     mutationFn: ({ id, inactive }: { id: string; inactive: boolean }) =>
@@ -371,19 +391,18 @@ export function SubscriptionSections({
       {["installments", "bills"].includes(section) && (
         <SpendingMonthPicker
           month={month}
-          onChange={(value) => {
-            setBillYear(undefined);
-            setMonth(value);
+          onChange={setMonth}
+          year={section === "bills" ? selectedBillYear : Number(month.slice(0, 4))}
+          onYearChange={(value) => {
+            if (section === "bills") setBillYear(value);
+            else setMonth(`${value}-${month.slice(5)}`);
           }}
-          year={section === "bills" ? billYear : undefined}
-          onYearChange={
-            section === "bills"
-              ? (value) => {
-                  setBillYear(value);
-                  setMonth(`${value}-${month.slice(5)}`);
-                }
-              : undefined
-          }
+          selectedMonth={section === "bills" ? billMonth : Number(month.slice(5))}
+          onMonthChange={(value) => {
+            if (section === "bills") setBillMonth(value);
+            else if (value) setMonth(`${month.slice(0, 4)}-${String(value).padStart(2, "0")}`);
+          }}
+          allowAllMonths={section === "bills"}
           calendarPicker={section === "installments"}
           monthsLabel={section === "installments" ? t("spending_installment_months") : undefined}
           recordedMonths={
@@ -396,16 +415,7 @@ export function SubscriptionSections({
                 ]
                   .sort()
                   .reverse()
-              : [
-                  ...new Set([
-                    ...[...(spending.data?.events ?? []), ...(spending.data?.pending_bills ?? [])]
-                      .filter(isBillRecord)
-                      .map((event) => event.date.slice(0, 7)),
-                  ]),
-                ]
-                  .filter(Boolean)
-                  .sort()
-                  .reverse()
+              : billRecordedMonths
           }
         />
       )}
@@ -415,15 +425,13 @@ export function SubscriptionSections({
           <p className="text-sm text-muted-foreground">{t("spending_installments_help")}</p>
         </div>
       )}
-      {["installments", "bills"].includes(section) && (
+      {section === "installments" && (
         <p className="flex items-start gap-2 rounded-xl border bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
           <Lightbulb
             className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
             aria-hidden="true"
           />
-          <span>
-            {t(section === "installments" ? "spending_installments_info" : "spending_bills_info")}
-          </span>
+          <span>{t("spending_installments_info")}</span>
         </p>
       )}
       {spending.isError && (
@@ -491,12 +499,12 @@ export function SubscriptionSections({
         )}
       {(section === "installments" || section === "bills") && !spending.isPending && (
         <StatementCommitments
-          key={`${section}:${section === "bills" && billYear ? billYear : month}`}
+          key={`${section}:${section === "bills" ? `${selectedBillYear}:${billMonth ?? "all"}` : month}`}
           data={spending.data ?? EMPTY_SPENDING}
           section={section}
           search={searchTerm}
-          month={month}
-          year={section === "bills" ? billYear : undefined}
+          month={section === "bills" ? billFilterMonth : month}
+          year={section === "bills" && !billMonth ? selectedBillYear : undefined}
           layout={view}
         />
       )}
@@ -525,7 +533,9 @@ export function SubscriptionSections({
           onClose={() => setSharingSubscription(null)}
         />
       )}
-      {showBillForm && <ManualBillDialog month={month} onClose={() => setShowBillForm(false)} />}
+      {showBillForm && (
+        <ManualBillDialog month={billFilterMonth} onClose={() => setShowBillForm(false)} />
+      )}
       {showForm ? (
         <SubscriptionFormModal
           sub={editSubscription}

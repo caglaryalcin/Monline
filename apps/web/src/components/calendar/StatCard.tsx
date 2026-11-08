@@ -7,9 +7,17 @@ interface StatCardProps {
   label: React.ReactNode;
   value: string;
   loading: boolean;
+  highlight?: boolean;
 }
 
-export function StatCard({ icon, iconClass, label, value, loading }: StatCardProps) {
+export function StatCard({
+  icon,
+  iconClass,
+  label,
+  value,
+  loading,
+  highlight = false,
+}: StatCardProps) {
   return (
     <Card className="min-w-0 shadow-sm border bg-card/40 backdrop-blur-md rounded-3xl overflow-hidden transition-shadow [container-type:inline-size]">
       <CardContent className="monline-calendar-stat flex flex-col items-start gap-2 p-3 sm:flex-row sm:items-center sm:gap-4 sm:p-5">
@@ -22,7 +30,14 @@ export function StatCard({ icon, iconClass, label, value, loading }: StatCardPro
             <div className="mt-1 h-6 w-24 animate-pulse rounded-md bg-muted" />
           ) : (
             <p className="break-words text-[clamp(1rem,9cqi,1.5rem)] font-extrabold tracking-tight text-foreground">
-              {value}
+              <span
+                className={cn(
+                  "inline-block max-w-full",
+                  highlight && value !== "-" && "amount-marker-highlight",
+                )}
+              >
+                {value}
+              </span>
             </p>
           )}
         </div>

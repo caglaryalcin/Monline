@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 100" preserveAspectRatio="none">
+  <defs>
+    <filter id="rough" x="-5%" y="-10%" width="110%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.12 0.9" numOctaves="2" seed="11" result="grain"/>
+      <feDisplacementMap in="SourceGraphic" in2="grain" scale="1.2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <mask id="dry-ends" maskUnits="userSpaceOnUse" x="0" y="0" width="480" height="100">
+      <rect width="480" height="100" fill="white"/>
+      <g fill="black">
+        <path d="m443 21 37-1v2l-36 1Zm6 23 31-2v3l-31 1Zm-6 26 37-2v2l-33 2Z"/>
+        <path d="m3 39 29-1-6 2-24 2Zm-2 20 28-1-5 2H1Zm4 22h30l-1 1-31 2Z"/>
+        <path d="m111 11 38-1-2 2-36 1Zm31 80 39-1-3 2-36 1Z"/>
+      </g>
+    </mask>
+  </defs>
+  <g mask="url(#dry-ends)" filter="url(#rough)">
+    <path fill="white" d="M30 20C38 13 70 12 105 10S163 9 200 10C260 11 310 9 356 11L430 12 427 16 456 15 451 19 475 18 461 22 478 24 450 28 462 31 448 35 479 34 469 40 478 42 457 47 468 51 451 56 478 56 472 62 459 66 470 69 447 74 459 78 438 81 449 84 423 88C375 94 331 91 286 94S200 92 156 94C113 95 78 93 45 90L17 88 32 84 9 83 24 79 3 77 26 72 8 69 33 65 15 62 28 57 13 54 32 49 17 46 36 42 22 40 39 35 25 32 39 29 22 27Z"/>
+    <path fill="none" stroke="white" stroke-width="1.2" stroke-linecap="round" opacity=".65" d="M18 23Q35 20 72 19M9 73Q34 71 58 72M5 81 48 80M390 8 454 9M416 13 473 12M431 26 478 27M429 90 471 86M399 96 446 94M20 91 60 92"/>
+  </g>
+</svg>

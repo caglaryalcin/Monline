@@ -76,6 +76,7 @@ export function CalendarOverview({
         />
         <StatCard
           icon={<TrendingUp className="h-5 w-5" />}
+          highlight
           iconClass="bg-blue-500/20 text-blue-500"
           label={
             <span className="inline-flex items-center gap-1">
@@ -86,11 +87,16 @@ export function CalendarOverview({
               </InfoButton>
             </span>
           }
-          value={incomeError || incomeTotal === null ? "-" : formatPrice(incomeTotal, currencySymbol, priceOptions)}
+          value={
+            incomeError || incomeTotal === null
+              ? "-"
+              : formatPrice(incomeTotal, currencySymbol, priceOptions)
+          }
           loading={loading || financeLoading}
         />
         <StatCard
           icon={<TrendingDown className="h-5 w-5" />}
+          highlight
           iconClass="bg-amber-500/20 text-amber-500"
           label={
             <span className="inline-flex items-center gap-1">
@@ -101,7 +107,9 @@ export function CalendarOverview({
               </InfoButton>
             </span>
           }
-          value={hasError || expenseError ? "-" : formatPrice(expenseTotal, currencySymbol, priceOptions)}
+          value={
+            hasError || expenseError ? "-" : formatPrice(expenseTotal, currencySymbol, priceOptions)
+          }
           loading={loading || financeLoading}
         />
       </div>
