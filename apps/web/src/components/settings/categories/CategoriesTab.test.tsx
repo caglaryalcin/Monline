@@ -4,6 +4,7 @@ import { CategoriesTab } from "./CategoriesTab";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (k: string) => k }),
+  Trans: ({ count }: { count: number }) => <>{count} subscriptions</>,
 }));
 
 let mockAuthUser: { id?: string } | null = { id: "u1" };
@@ -27,7 +28,10 @@ let capturedQueryFn: (() => unknown) | undefined;
 
 vi.mock("@tanstack/react-query", () => ({
   useQuery: (opts: { queryFn?: () => unknown }) => {
-    if ((opts as { queryKey?: string[] }).queryKey?.[0] === "subscriptions") return { data: 0, isPending: false, isFetching: false };
+    const queryKey = (opts as { queryKey?: string[] }).queryKey;
+    if (queryKey?.[0] === "subscriptions") {
+      return { data: queryKey.includes("category-usage") ? 0 : [], isPending: false, isFetching: false };
+    }
     capturedQueryFn = opts.queryFn;
     return mockUseQueryData;
   },

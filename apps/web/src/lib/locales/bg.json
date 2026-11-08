@@ -646,6 +646,8 @@
   "success_delete": "Успешно изтриване",
   "success_delete_account": "Акаунтът е изтрит успешно",
   "confirm_delete": "Сигурни ли сте, че искате да изтриете това?",
+  "category_subscription_count_one": "<strong>{{count}}</strong> абонамент",
+  "category_subscription_count_other": "<strong>{{count}}</strong> абонамента",
   "category_delete_confirm_one": "Тази категория се използва от <strong>{{count}}</strong> абонамент. Сигурни ли сте, че искате да я изтриете?",
   "category_delete_confirm_other": "Тази категория се използва от <strong>{{count}}</strong> абонамента. Сигурни ли сте, че искате да я изтриете?",
   "category_usage_load_error": "Броят на абонаментите, използващи тази категория, не можа да бъде зареден. Затворете този прозорец и опитайте отново.",

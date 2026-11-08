@@ -640,6 +640,8 @@
   "success_delete": "Başarıyla silindi",
   "success_delete_account": "Hesap başarıyla silindi",
   "confirm_delete": "Bunu silmek istediğinizden emin misiniz?",
+  "category_subscription_count_one": "<strong>{{count}}</strong> abonelik",
+  "category_subscription_count_other": "<strong>{{count}}</strong> abonelik",
   "category_delete_confirm_one": "Bu kategori <strong>{{count}}</strong> abonelikte kullanılıyor. Silmek istediğinizden emin misiniz?",
   "category_delete_confirm_other": "Bu kategori <strong>{{count}}</strong> abonelikte kullanılıyor. Silmek istediğinizden emin misiniz?",
   "category_usage_load_error": "Bu kategoriyi kullanan abonelik sayısı yüklenemedi. Bu pencereyi kapatıp tekrar deneyin.",

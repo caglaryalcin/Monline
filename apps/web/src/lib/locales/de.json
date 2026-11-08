@@ -624,6 +624,8 @@
   "success_delete": "Erfolgreich gelöscht",
   "success_delete_account": "Konto erfolgreich gelöscht",
   "confirm_delete": "Sind Sie sicher, dass Sie dies löschen möchten?",
+  "category_subscription_count_one": "<strong>{{count}}</strong> Abonnement",
+  "category_subscription_count_other": "<strong>{{count}}</strong> Abonnements",
   "category_delete_confirm_one": "Diese Kategorie wird von <strong>{{count}}</strong> Abonnement verwendet. Möchten Sie sie wirklich löschen?",
   "category_delete_confirm_other": "Diese Kategorie wird von <strong>{{count}}</strong> Abonnements verwendet. Möchten Sie sie wirklich löschen?",
   "category_usage_load_error": "Die Anzahl der Abonnements mit dieser Kategorie konnte nicht geladen werden. Schließen Sie dieses Fenster und versuchen Sie es erneut.",

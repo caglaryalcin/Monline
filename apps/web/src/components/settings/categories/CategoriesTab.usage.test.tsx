@@ -7,9 +7,10 @@ import { I18nextProvider, initReactI18next } from "react-i18next";
 import { CategoriesTab } from "@/components/settings/categories/CategoriesTab";
 import tr from "@/lib/locales/tr.json";
 
-const mocks = vi.hoisted(() => ({ list: vi.fn(), count: vi.fn(), remove: vi.fn(), error: vi.fn() }));
+const mocks = vi.hoisted(() => ({ list: vi.fn(), count: vi.fn(), subscriptions: vi.fn(), remove: vi.fn(), error: vi.fn() }));
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => ({ user: { id: "user" } }) }));
 vi.mock("@/services/categories", () => ({ categoriesService: { list: mocks.list, subscriptionCount: mocks.count, delete: mocks.remove } }));
+vi.mock("@/services/subscriptions", () => ({ subscriptionsService: { list: mocks.subscriptions } }));
 vi.mock("@/lib/toast", () => ({ toast: { success: vi.fn(), error: mocks.error } }));
 const i18n = createInstance();
 await i18n.use(initReactI18next).init({ lng: "tr", resources: { tr: { translation: tr } }, interpolation: { escapeValue: false } });
@@ -21,7 +22,24 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.list.mockResolvedValue([category]);
   mocks.count.mockResolvedValue(5);
+  mocks.subscriptions.mockResolvedValue([]);
   mocks.remove.mockResolvedValue(undefined);
+});
+it("counts active and inactive subscriptions only in their assigned category", async () => {
+  mocks.subscriptions.mockResolvedValue([
+    { id: "active", category: "category", inactive: false },
+    { id: "inactive", category: "category", inactive: true },
+    { id: "other", category: "other-category", inactive: false },
+    { id: "unassigned", category: "", inactive: false },
+  ]);
+  mount();
+  expect(await screen.findByText("2", { selector: "strong" })).toBeInTheDocument();
+  expect(screen.getByText("2", { selector: "strong" }).parentElement).toHaveTextContent("2 abonelik");
+  expect(mocks.subscriptions).toHaveBeenCalledWith("user");
+});
+it("shows zero for an unused category after subscriptions load", async () => {
+  mount();
+  expect(await screen.findByText("0", { selector: "strong" })).toBeInTheDocument();
 });
 it("shows a bold usage count and retains the server's category-in-use protection", async () => {
   mocks.remove.mockRejectedValue(new Error("category_in_use"));
