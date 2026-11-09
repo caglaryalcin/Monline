@@ -1,4 +1,4 @@
-import { CalendarDays, CalendarRange, History } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarRange } from "lucide-react";
 import { type ReactNode, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { isCredit } from "@/lib/recordTypes";
 
-import { historicalDateRange } from "./HistoricalPaymentDialog";
+import { calendarPaymentDateRange } from "./HistoricalPaymentDialog";
 import { type DayEntry, toDateStr } from "./types";
 
 interface DayMenuPosition {
@@ -44,7 +44,7 @@ export function CalendarDayMenu({
   const [position, setPosition] = useState<DayMenuPosition | null>(null);
   const target = useRef<HTMLElement | null>(null);
   const restoreFocus = useRef(true);
-  const range = historicalDateRange(now);
+  const range = calendarPaymentDateRange(now);
   const date = position ? toDateStr(position.date) : "";
   const inRange = date >= range.min && date <= range.max;
   const canAdd = !!onAddHistorical && inRange;
@@ -137,7 +137,7 @@ export function CalendarDayMenu({
             onAddHistorical?.(position.date);
           }}
         >
-          <History />
+          <CalendarPlus />
           {t("historical_add")}
         </DropdownMenuItem>
         {!inRange && (

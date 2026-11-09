@@ -65,7 +65,7 @@ describe("CalendarDayMenu", () => {
     fireEvent.click(await screen.findByRole("menuitem", { name: "calendar_day_payments" }));
     expect(onSelectDay).toHaveBeenCalledWith(new Date(2026, 9, 17, 12));
   });
-  it.each(["future day", "old day"])(
+  it.each(["old day"])(
     "prevents historical payments on %s while allowing its payments to be viewed",
     async (day) => {
       const { onAddHistorical } = setup();
@@ -77,6 +77,14 @@ describe("CalendarDayMenu", () => {
       expect(onAddHistorical).not.toHaveBeenCalled();
     },
   );
+  it("allows adding a pending payment directly to a future day", async () => {
+    const { onAddHistorical } = setup();
+    fireEvent.contextMenu(screen.getByRole("button", { name: "future day" }));
+    const add = await screen.findByRole("menuitem", { name: "historical_add" });
+    expect(add).not.toHaveAttribute("data-disabled");
+    fireEvent.click(add);
+    expect(onAddHistorical).toHaveBeenCalledWith(new Date(2026, 9, 18, 12));
+  });
   it("leaves non-current-month cells without an app menu", () => {
     setup();
     fireEvent.contextMenu(screen.getByRole("button", { name: "other month" }));

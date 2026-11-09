@@ -57,6 +57,7 @@ function setup(
     subscription,
     { ...subscription, id: "credit-1", name: "Income", record_type: "credit" },
   ],
+  initialDate?: string,
 ) {
   const { client, Wrapper } = createQueryClientWrapper();
   const onSaved = vi.fn();
@@ -83,6 +84,7 @@ function setup(
       ]}
       records={records}
       userId="user-1"
+      initialDate={initialDate}
       onClose={onClose}
       onSaved={onSaved}
     />,
@@ -140,7 +142,7 @@ describe("HistoricalPaymentDialog", () => {
     setup();
     Element.prototype.hasPointerCapture = () => false;
     Element.prototype.scrollIntoView = () => {};
-    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(screen.getByLabelText("subscription"));
     await userEvent.click(screen.getByRole("option", { name: "historical_standalone" }));
     expect(screen.getByLabelText("brand_display_name")).toBeVisible();
     expect(screen.getByLabelText("currency")).toHaveTextContent("EUR");
@@ -175,7 +177,7 @@ describe("HistoricalPaymentDialog", () => {
     setup();
     Element.prototype.hasPointerCapture = () => false;
     Element.prototype.scrollIntoView = () => {};
-    await userEvent.click(screen.getByRole("combobox"));
+    await userEvent.click(screen.getByLabelText("subscription"));
     expect(screen.getByRole("option", { name: "Music · inactive" })).toBeInTheDocument();
     expect(screen.queryByRole("option", { name: "Income" })).not.toBeInTheDocument();
     await userEvent.keyboard("{Escape}");
@@ -184,7 +186,9 @@ describe("HistoricalPaymentDialog", () => {
       await userEvent.click(screen.getByRole("button", { name: new RegExp(`^${label}:`) }));
       expect(screen.getByRole("combobox", { name: "Ayı seçin" })).toHaveTextContent("Ekim");
       expect(screen.getByRole("button", { name: "Temizle" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /^18 Ekim 2026/ })).toBeDisabled();
+      const nextDay = screen.getByRole("button", { name: /^18 Ekim 2026/ });
+      if (label === "historical_paid_date") expect(nextDay).toBeDisabled();
+      else expect(nextDay).toBeEnabled();
       await userEvent.keyboard("{Escape}");
     }
     expect(historicalDateRange(new Date(2024, 1, 29))).toEqual({
@@ -217,6 +221,7 @@ describe("HistoricalPaymentDialog", () => {
       subscription_id: subscription.id,
       due_date: "2026-06-05",
       paid_date: "2026-06-10",
+      status: "paid",
       amount: 0,
       notes: "receipt",
       utc_offset_minutes: new Date().getTimezoneOffset(),
@@ -232,7 +237,6 @@ describe("HistoricalPaymentDialog", () => {
     ["historical_paid_date", "16/10/2025"],
     ["historical_paid_date", "18/10/2026"],
     ["historical_due_date", "16/10/2025"],
-    ["historical_due_date", "18/10/2026"],
     ["historical_paid_date", "31/02/2026"],
   ])("rejects invalid or out-of-range manual dates in %s (%s)", (label, value) => {
     setup();
@@ -241,7 +245,7 @@ describe("HistoricalPaymentDialog", () => {
     expect(
       screen
         .getAllByRole("alert")
-        .some((alert) => alert.textContent?.includes("historical_invalid_date")),
+        .some((alert) => alert.textContent?.includes(label === "historical_due_date" ? "calendar_payment_invalid_date" : "historical_invalid_date")),
     ).toBe(true);
     expect(mocks.createHistorical).not.toHaveBeenCalled();
   });
@@ -268,4 +272,44 @@ describe("HistoricalPaymentDialog", () => {
     );
     expect(onSaved).not.toHaveBeenCalled();
   });
+  it("adds a future pending payment directly without an actual payment date", async () => {
+    const record = { id: "pending", subscription_id: subscription.id, due_date: "2027-01-12", paid_at: "" } as PaymentRecord;
+    mocks.createHistorical.mockResolvedValue(record);
+    const { onSaved } = setup([], [subscription], "2027-01-12");
+    expect(screen.getByLabelText("payment_status")).toHaveTextContent("unpaid");
+    expect(screen.queryByLabelText("historical_paid_date")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "historical_save" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith(record));
+    const body = mocks.createHistorical.mock.calls[0][0];
+    expect(body).toMatchObject({ status: "pending", due_date: "2027-01-12", amount: 25 });
+    expect(body).not.toHaveProperty("paid_date");
+    expect(body).not.toHaveProperty("paid_utc_offset_minutes");
+    expect(mocks.success).toHaveBeenCalledWith("calendar_payment_pending_saved");
+  });
+
+  it("automatically switches to pending when the due date moves into the future", () => {
+    setup();
+    fireEvent.change(screen.getByLabelText("historical_due_date"), { target: { value: "2027-01-12" } });
+    expect(screen.getByLabelText("payment_status")).toHaveTextContent("unpaid");
+    expect(screen.queryByLabelText("historical_paid_date")).not.toBeInTheDocument();
+  });
+
+  it("respects an explicitly selected paid status for a future due date", async () => {
+    setup([], [subscription], "2027-01-12");
+    Element.prototype.hasPointerCapture = () => false;
+    Element.prototype.scrollIntoView = () => {};
+    await userEvent.click(screen.getByLabelText("payment_status"));
+    await userEvent.click(screen.getByRole("option", { name: "paid" }));
+    expect(screen.getByLabelText("historical_paid_date")).toHaveValue("17/10/2026");
+    fireEvent.change(screen.getByLabelText("historical_due_date"), { target: { value: "2027-02-12" } });
+    expect(screen.getByLabelText("payment_status")).toHaveTextContent("paid");
+  });
+
+  it("prevents a duplicate pending record for the same subscription and date", () => {
+    setup([{ id: "existing", subscription_id: subscription.id, due_date: "2027-01-12", paid_at: "" } as PaymentRecord], [subscription], "2027-01-12");
+    expect(screen.getByRole("button", { name: "historical_save" })).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent("calendar_payment_duplicate");
+    expect(mocks.createHistorical).not.toHaveBeenCalled();
+  });
+
 });

@@ -28,11 +28,12 @@ export interface HistoricalPaymentInput {
   payment_method?: string;
   payer?: string;
   due_date: string;
-  paid_date: string;
+  paid_date?: string;
+  status?: "paid" | "pending";
   amount: number;
   notes?: string;
   utc_offset_minutes: number;
-  paid_utc_offset_minutes: number;
+  paid_utc_offset_minutes?: number;
 }
 
 export const paymentRecordsService = {

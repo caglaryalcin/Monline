@@ -65,7 +65,7 @@ routerAdd("POST", "/api/payments/history", (e) => {
   }
   let values;
   try {
-    values = helper.validateHistoricalPayment(body, new Date());
+    values = helper.validateCalendarPayment(body, new Date());
   } catch (err) {
     return e.json(400, {
       error: err.message,
@@ -165,7 +165,10 @@ routerAdd("POST", "/api/payments/history", (e) => {
         until: values.due_date + "~",
       },
     );
-    if (matches.some((record) => !!record.getString("paid_at"))) {
+    if (
+      (body.status === "pending" && matches.length) ||
+      matches.some((record) => !!record.getString("paid_at"))
+    ) {
       duplicate = true;
       return;
     }
@@ -181,7 +184,10 @@ routerAdd("POST", "/api/payments/history", (e) => {
   });
   if (duplicate)
     return e.json(409, {
-      error: "historical_duplicate",
+      error:
+        body.status === "pending"
+          ? "calendar_payment_duplicate"
+          : "historical_duplicate",
     });
   return e.json(201, saved);
 });

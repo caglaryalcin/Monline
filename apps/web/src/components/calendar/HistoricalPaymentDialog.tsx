@@ -45,6 +45,11 @@ export function historicalDateRange(now = new Date()) {
   return { min: toDateStr(new Date(year, month, day)), max: toDateStr(now) };
 }
 
+export function calendarPaymentDateRange(now = new Date()) {
+  const past = historicalDateRange(now);
+  return { min: past.min, max: "2200-12-31", today: past.max };
+}
+
 export function HistoricalPaymentDialog({
   subscriptions,
   currencies,
@@ -88,11 +93,18 @@ export function HistoricalPaymentDialog({
     confirmedPayers.find((item) => item.is_main)?.id ??
       (confirmedPayers.length === 1 ? confirmedPayers[0].id : ""),
   );
-  const range = historicalDateRange();
+  const range = calendarPaymentDateRange();
   const initial =
-    initialDate && initialDate >= range.min && initialDate <= range.max ? initialDate : range.max;
-  const [paidDate, setPaidDate] = useState(initial);
+    initialDate &&
+    isValidISODate(initialDate) &&
+    initialDate >= range.min &&
+    initialDate <= range.max
+      ? initialDate
+      : range.today;
+  const [paidDate, setPaidDate] = useState(initial > range.today ? range.today : initial);
   const [dueDate, setDueDate] = useState(initial);
+  const [chosenStatus, setChosenStatus] = useState<"paid" | "pending" | null>(null);
+  const status = chosenStatus ?? (dueDate > range.today ? "pending" : "paid");
   const [amount, setAmount] = useState(
     options[0] ? String(subscriptionAmount(options[0], initial)) : "",
   );
@@ -103,7 +115,12 @@ export function HistoricalPaymentDialog({
     ? currencies.find((item) => item.id === currencyId)
     : (subscription?.expand?.currency ??
       currencies.find((item) => item.id === subscription?.currency));
-  const duplicate = !standalone && !!getPaymentRecord(records, subscriptionId, dueDate)?.paid_at;
+  const existingPayment = standalone
+    ? undefined
+    : getPaymentRecord(records, subscriptionId, dueDate);
+  const duplicate = !!existingPayment && (status === "pending" || !!existingPayment.paid_at);
+  const duplicateMessage =
+    status === "pending" ? "calendar_payment_duplicate" : "historical_duplicate";
   const changeDueDate = (value: string) => {
     if (subscription && Number(amount) === subscriptionAmount(subscription, dueDate))
       setAmount(String(subscriptionAmount(subscription, value)));
@@ -124,9 +141,14 @@ export function HistoricalPaymentDialog({
             }
           : { subscription_id: subscriptionId }),
         due_date: dueDate,
-        paid_date: paidDate,
+        status,
+        ...(status === "paid"
+          ? {
+              paid_date: paidDate,
+              paid_utc_offset_minutes: new Date(`${paidDate}T00:00:00`).getTimezoneOffset(),
+            }
+          : {}),
         utc_offset_minutes: new Date().getTimezoneOffset(),
-        paid_utc_offset_minutes: new Date(`${paidDate}T00:00:00`).getTimezoneOffset(),
         amount: Number(amount),
         notes: notes.trim(),
       };
@@ -149,6 +171,9 @@ export function HistoricalPaymentDialog({
     onSuccess: async (record) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.paymentRecords.all(userId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.yearlyCosts.all(userId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all(userId) }),
+        queryClient.invalidateQueries({ queryKey: ["spending", userId] }),
         ...(subscriptionId
           ? [
               queryClient.invalidateQueries({
@@ -157,7 +182,9 @@ export function HistoricalPaymentDialog({
             ]
           : []),
       ]);
-      toast.success(t("historical_saved"));
+      toast.success(
+        t(status === "pending" ? "calendar_payment_pending_saved" : "historical_saved"),
+      );
       onSaved(record);
     },
     onError: (err: unknown) => {
@@ -174,6 +201,9 @@ export function HistoricalPaymentDialog({
         "historical_invalid_currency",
         "historical_invalid_logo",
         "historical_invalid_details",
+        "calendar_payment_duplicate",
+        "calendar_payment_invalid_date",
+        "calendar_payment_invalid_status",
       ];
       setError(t(code && known.includes(code) ? code : "historical_save_failed"));
     },
@@ -211,10 +241,13 @@ export function HistoricalPaymentDialog({
               setError(t("historical_invalid_currency"));
               return;
             }
+            if (!isValidISODate(dueDate) || dueDate < range.min || dueDate > range.max) {
+              setError(t("calendar_payment_invalid_date"));
+              return;
+            }
             if (
-              [paidDate, dueDate].some(
-                (date) => !isValidISODate(date) || date < range.min || date > range.max,
-              )
+              status === "paid" &&
+              (!isValidISODate(paidDate) || paidDate < range.min || paidDate > range.today)
             ) {
               setError(t("historical_invalid_date"));
               return;
@@ -374,23 +407,46 @@ export function HistoricalPaymentDialog({
                 </div>
               </div>
             )}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="historical-paid-date">{t("historical_paid_date")}</Label>
-                <DatePicker
-                  id="historical-paid-date"
-                  label={t("historical_paid_date")}
-                  required
-                  min={range.min}
-                  max={range.max}
-                  value={paidDate}
-                  onChange={(value) => {
-                    if (dueDate === paidDate) changeDueDate(value);
-                    setPaidDate(value);
-                    setError(null);
-                  }}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="calendar-payment-status">{t("payment_status")}</Label>
+              <ThemedSelect
+                id="calendar-payment-status"
+                value={status}
+                className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
+                onChange={(event) => {
+                  setChosenStatus(event.target.value as "paid" | "pending");
+                  setError(null);
+                }}
+              >
+                <option value="paid">{t("paid")}</option>
+                <option value="pending">{t("unpaid")}</option>
+              </ThemedSelect>
+            </div>
+            <div className={status === "paid" ? "grid gap-4 sm:grid-cols-2" : "space-y-4"}>
+              {status === "paid" && (
+                <div className="space-y-2">
+                  <Label htmlFor="historical-paid-date">{t("historical_paid_date")}</Label>
+                  <DatePicker
+                    id="historical-paid-date"
+                    label={t("historical_paid_date")}
+                    required
+                    min={range.min}
+                    max={range.today}
+                    value={paidDate}
+                    onChange={(value) => {
+                      if (
+                        dueDate === paidDate &&
+                        isValidISODate(value) &&
+                        value >= range.min &&
+                        value <= range.today
+                      )
+                        changeDueDate(value);
+                      setPaidDate(value);
+                      setError(null);
+                    }}
+                  />
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="historical-due-date">{t("historical_due_date")}</Label>
                 <DatePicker
@@ -408,7 +464,7 @@ export function HistoricalPaymentDialog({
               </div>
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground">
-              {t("historical_dates_hint")}
+              {t(status === "pending" ? "calendar_payment_pending_hint" : "historical_dates_hint")}
             </p>
             <div className="space-y-2">
               <Label htmlFor="historical-amount">
@@ -439,7 +495,7 @@ export function HistoricalPaymentDialog({
             <PaymentProofField file={proofFile} onChange={setProofFile} t={t} />
             {(duplicate || error) && (
               <p role="alert" className="text-sm text-destructive">
-                {duplicate ? t("historical_duplicate") : error}
+                {duplicate ? t(duplicateMessage) : error}
               </p>
             )}
             <div className="flex justify-end gap-2 border-t pt-4">
