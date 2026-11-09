@@ -1,4 +1,4 @@
-import { History, Trash2 } from "lucide-react";
+import { CalendarPlus, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -32,7 +32,7 @@ export function CalendarPageHeader({
             onClick={onAddHistorical}
             className="h-11 shrink-0 rounded-xl bg-gradient-to-r from-primary/90 to-primary font-semibold shadow-md transition-all"
           >
-            <History className="mr-1.5 h-5 w-5" />
+            <CalendarPlus className="mr-1.5 h-5 w-5" />
             {t("historical_add")}
           </Button>
         )

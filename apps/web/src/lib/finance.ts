@@ -15,6 +15,7 @@ export interface FinanceRow {
   is_rent?: boolean;
   is_auto_carryover?: boolean;
   loan_id?: string;
+  loan_principal?: number;
   payment_card?: string;
   notes: string;
   row_order?: number;

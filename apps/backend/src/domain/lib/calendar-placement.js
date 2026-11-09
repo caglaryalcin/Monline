@@ -122,6 +122,7 @@ function moveSourceCalendar(app, owner, input) {
           "is_rent",
           "is_auto_carryover",
           "loan_id",
+          "loan_principal",
         ])
           created.set(field, original[field]);
         created.set("user", owner);

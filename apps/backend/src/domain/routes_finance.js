@@ -27,6 +27,7 @@ const fields = {
     "is_rent",
     "is_auto_carryover",
     "loan_id",
+    "loan_principal",
     "year",
     "origin_row",
     "is_deleted",
@@ -477,6 +478,9 @@ routerAdd("POST", "/api/finance/restore", (e) => {
   for (const side of [changes[3].before, changes[3].after])
     for (const link of side)
       if (link && link.allow_month_boundary === undefined) link.allow_month_boundary = false;
+  const currentPrincipals = new Map(
+    own("finance_rows", owner).map((row) => [row.id, row.getFloat("loan_principal")]),
+  );
   for (const side of [changes[1].before, changes[1].after])
     for (const row of side)
       if (row) {
@@ -488,6 +492,7 @@ routerAdd("POST", "/api/finance/restore", (e) => {
         if (row.is_rent === undefined) row.is_rent = false;
         if (row.is_auto_carryover === undefined) row.is_auto_carryover = false;
         if (row.loan_id === undefined) row.loan_id = "";
+        if (row.loan_principal === undefined) row.loan_principal = currentPrincipals.get(row.id) ?? 0;
         if (row.year === undefined) row.year = 0;
         if (row.origin_row === undefined) row.origin_row = "";
         if (row.is_deleted === undefined) row.is_deleted = false;
@@ -500,7 +505,7 @@ routerAdd("POST", "/api/finance/restore", (e) => {
           !record ||
           spec.fields.some(
             (key) =>
-              !["amount", "row_order", "is_loan", "is_rent", "is_auto_carryover", "year", "is_deleted"].includes(key) &&
+              !["amount", "row_order", "loan_principal", "is_loan", "is_rent", "is_auto_carryover", "year", "is_deleted"].includes(key) &&
               typeof record[key] !== "string",
           ) ||
           !/^[a-z0-9]{15}$/.test(record.id) ||
@@ -992,7 +997,7 @@ routerAdd("POST", "/api/finance/cells", (e) => {
       } else {
         const existing = owned("finance_rows", row.row_id, owner);
         const view = yearRow(owner, existing.id, year);
-        const rowValue = (value, key) => ["row_order", "year"].includes(key)
+        const rowValue = (value, key) => ["row_order", "year", "loan_principal"].includes(key)
           ? value[key] ?? 0
           : ["is_loan", "is_rent", "is_auto_carryover", "is_deleted"].includes(key) ? value[key] ?? false : value[key] || "";
         if (

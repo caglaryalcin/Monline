@@ -395,7 +395,12 @@ export function CalendarPage() {
           onClose={() => setHistoricalOpen(false)}
           onSaved={(record) => {
             setHistoricalOpen(false);
-            setSelectedDate(parseLocalDate(record.due_date));
+            const date = parseLocalDate(record.due_date);
+            setSelectedDate(date);
+            if (date) {
+              setMonth(date.getMonth() + 1);
+              setYear(date.getFullYear());
+            }
           }}
         />
       )}

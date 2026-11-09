@@ -53,7 +53,7 @@ const MIGRATED_COLUMNS = {
   household: ["is_main", "account", "account_approval"],
   sharing_groups: ["pending_members"],
   bank_statements: ["summary", "unresolved", "excluded_transactions", "tracking_hidden"],
-  finance_rows: ["expense_type", "payment_card", "year", "origin_row", "is_deleted", "loan_id"],
+  finance_rows: ["expense_type", "payment_card", "year", "origin_row", "is_deleted", "loan_id", "loan_principal"],
   notifications_config: ["ntfy_username", "ntfy_password", "delivery_settings"],
 };
 

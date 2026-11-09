@@ -43,6 +43,8 @@ function isCarryoverRow(row) {
 }
 function validate(name, value) {
   if (name === "finance_rows") {
+    if (value.loan_principal != null && !amount(value.loan_principal))
+      return "loans_principal_invalid";
     if (
       typeof value.name !== "string" ||
       !value.name.trim() ||

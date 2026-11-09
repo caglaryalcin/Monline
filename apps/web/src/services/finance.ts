@@ -15,10 +15,10 @@ export type FinanceHistory = {
   before: (Required<Omit<FinanceEntry, "payment_tag">> & Pick<FinanceEntry, "payment_tag">)[];
   after: (Required<Omit<FinanceEntry, "payment_tag">> & Pick<FinanceEntry, "payment_tag">)[];
   rows?: {
-    before: (Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "year" | "origin_row" | "is_deleted">> &
-      Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "year" | "origin_row" | "is_deleted">)[];
-    after: (Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "year" | "origin_row" | "is_deleted">> &
-      Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "year" | "origin_row" | "is_deleted">)[];
+    before: (Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "year" | "origin_row" | "is_deleted">> &
+      Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "year" | "origin_row" | "is_deleted">)[];
+    after: (Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "year" | "origin_row" | "is_deleted">> &
+      Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "year" | "origin_row" | "is_deleted">)[];
   };
   transactions?: { before: FinanceCardTransaction[]; after: FinanceCardTransaction[] };
   links?: { before: FinanceStatementLink[]; after: FinanceStatementLink[] };

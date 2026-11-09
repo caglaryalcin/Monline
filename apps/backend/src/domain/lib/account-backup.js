@@ -50,6 +50,7 @@ const FIELDS = {
     "is_rent",
     "is_auto_carryover",
     "loan_id",
+    "loan_principal",
     "year",
     "origin_row",
     "is_deleted",

@@ -1,4 +1,4 @@
-import { Building2, Check, ChevronRight, Landmark } from "lucide-react";
+import { Building2, Check, ChevronRight, Landmark, Pencil } from "lucide-react";
 import { useContext, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
@@ -11,6 +11,7 @@ import { type MerchantProviderTarget, resolveMerchantLogo } from "@/lib/merchant
 import type { LoanSummary } from "@/lib/spending";
 import { cn, formatCurrency } from "@/lib/utils";
 
+import { LoanPrincipalDialog } from "./LoanPrincipalDialog";
 import { MerchantProviderDialog } from "./MerchantProviderDialog";
 import { SubscriptionSourceBadge } from "./SubscriptionSourceBadge";
 
@@ -36,6 +37,7 @@ export function LoansSection({
   const { t, i18n } = useTranslation();
   const { choices } = useContext(MerchantLogosContext);
   const [providerFor, setProviderFor] = useState<MerchantProviderTarget | null>(null);
+  const [principalFor, setPrincipalFor] = useState<LoanSummary | null>(null);
   const [expandedCompleted, toggleCompleted] = usePersistentExpandedItems(
     userId,
     "loans.completed",
@@ -98,6 +100,7 @@ export function LoansSection({
         : "text-rose-700 dark:text-rose-400";
 
   const renderLoan = (loan: LoanSummary, finished: boolean) => {
+    const principalAmount = loan.principal_amount ?? null;
     const monthsExpanded = !finished || expandedCompleted.has(loan.row_id);
     const start = loan.start_month ?? loan.months[0]?.month;
     const end = loan.end_month ?? loan.months.at(-1)?.month;
@@ -175,9 +178,7 @@ export function LoansSection({
                   }
                 >
                   <Building2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  <span className="truncate">
-                    {providerName || t("spending_provider_choose")}
-                  </span>
+                  <span className="truncate">{providerName || t("spending_provider_choose")}</span>
                 </Button>
               </div>
             </div>
@@ -281,40 +282,101 @@ export function LoansSection({
             </tbody>
             <tfoot className="border-t bg-muted/30">
               <tr>
-                <th scope="row" className="px-4 py-3 font-semibold">
-                  {t("loans_sum")}
-                  <span className="mt-1 block text-[11px] font-normal text-muted-foreground">
-                    {t("loans_installment_count", { count: loan.total_installments })}
-                  </span>
-                </th>
-                <td className="px-4 py-3 font-semibold tabular-nums">
-                  <span className={cn(finished && statusClass("settled"))}>
-                    {money(loan.total_amount)}
-                  </span>
-                  {!finished && (
-                    <span
-                      className={cn("mt-1 block text-[11px] font-normal", statusClass("settled"))}
-                    >
-                      {t("loans_paid")}: {money(loan.paid_amount)}
-                    </span>
-                  )}
-                  <span className="mt-1 block text-[11px] font-normal text-muted-foreground">
-                    {t("loans_installment_count", { count: loan.paid_installments })}
-                  </span>
-                </td>
-                <td
-                  className={cn(
-                    "px-4 py-3 font-semibold tabular-nums",
-                    !finished && statusClass("planned"),
-                  )}
-                >
-                  <span className="mb-1 block text-[11px] font-normal text-muted-foreground">
-                    {t("loans_remaining")}
-                  </span>
-                  {money(loan.remaining_amount)}
-                  <span className="mt-1 block text-[11px] font-normal text-muted-foreground">
-                    {t("loans_installment_count", { count: loan.remaining_installments })}
-                  </span>
+                <td colSpan={3} className="whitespace-normal p-4 sm:p-5">
+                  <h5 className="mb-3 text-xs font-semibold">{t("loans_summary")}</h5>
+                  <dl className="grid grid-cols-2 gap-3">
+                    <div className="min-w-0 space-y-1 rounded-xl border bg-background/40 p-3">
+                      <dt className="flex min-h-5 items-center justify-between gap-2 text-xs text-muted-foreground">
+                        {t("loans_principal_amount")}
+                        {principalAmount !== null && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 shrink-0"
+                            aria-label={`${t("loans_principal_edit")} · ${loan.name}`}
+                            title={t("loans_principal_edit")}
+                            onClick={() => setPrincipalFor(loan)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                          </Button>
+                        )}
+                      </dt>
+                      <dd className="break-words text-base font-semibold tabular-nums">
+                        {principalAmount === null ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            aria-label={`${t("loans_principal_enter")} · ${loan.name}`}
+                            onClick={() => setPrincipalFor(loan)}
+                          >
+                            {t("loans_principal_enter")}
+                          </Button>
+                        ) : (
+                          money(principalAmount)
+                        )}
+                      </dd>
+                      <dd className="text-[11px] text-muted-foreground">
+                        {t(
+                          principalAmount === null
+                            ? "loans_principal_missing"
+                            : "loans_principal_note",
+                        )}
+                      </dd>
+                    </div>
+                    <div className="min-w-0 space-y-1 rounded-xl border bg-background/40 p-3">
+                      <dt className="text-xs text-muted-foreground">
+                        {t("loans_repayment_total")}
+                      </dt>
+                      <dd className="break-words text-base font-semibold tabular-nums">
+                        {money(loan.total_amount)}
+                      </dd>
+                      <dd className="text-[11px] text-muted-foreground">
+                        {t("loans_installment_count", { count: loan.total_installments })}
+                      </dd>
+                    </div>
+                    <div className="min-w-0 space-y-1 rounded-xl border bg-background/40 p-3">
+                      <dt className="text-xs text-muted-foreground">{t("loans_paid_amount")}</dt>
+                      <dd
+                        className={cn(
+                          "break-words text-base font-semibold tabular-nums",
+                          statusClass("settled"),
+                        )}
+                      >
+                        {money(loan.paid_amount)}
+                      </dd>
+                      <dd className="text-[11px] text-muted-foreground">
+                        {t("loans_installments_paid", { count: loan.paid_installments })}
+                      </dd>
+                      {loan.months.some((item) => item.status === "partial") && (
+                        <dd className="text-[11px] text-muted-foreground">
+                          {t("loans_partial_included")}
+                        </dd>
+                      )}
+                    </div>
+                    <div className="min-w-0 space-y-1 rounded-xl border bg-background/40 p-3">
+                      <dt className="text-xs text-muted-foreground">
+                        {t("loans_remaining_amount")}
+                      </dt>
+                      <dd
+                        className={cn(
+                          "break-words text-base font-semibold tabular-nums",
+                          loan.remaining_amount > 0
+                            ? statusClass("planned")
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {money(loan.remaining_amount)}
+                      </dd>
+                      <dd className="text-[11px] text-muted-foreground">
+                        {t("loans_installments_remaining", {
+                          count: loan.remaining_installments,
+                        })}
+                      </dd>
+                    </div>
+                  </dl>
                 </td>
               </tr>
             </tfoot>
@@ -439,6 +501,13 @@ export function LoansSection({
       )}
       {providerFor && (
         <MerchantProviderDialog {...providerFor} onClose={() => setProviderFor(null)} />
+      )}
+      {principalFor && (
+        <LoanPrincipalDialog
+          key={principalFor.row_id}
+          loan={principalFor}
+          onClose={() => setPrincipalFor(null)}
+        />
       )}
     </section>
   );

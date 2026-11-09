@@ -337,6 +337,7 @@ class Repository {
       ["year", "REAL NOT NULL DEFAULT 0"],
       ["origin_row", "TEXT NOT NULL DEFAULT ''"],
       ["loan_id", "TEXT NOT NULL DEFAULT ''"],
+      ["loan_principal", "REAL NOT NULL DEFAULT 0"],
       ["is_deleted", "INTEGER NOT NULL DEFAULT 0"],
     ]) {
       if (!this.connection.prepare('PRAGMA table_info("finance_rows")').all().some((column) => column.name === field))

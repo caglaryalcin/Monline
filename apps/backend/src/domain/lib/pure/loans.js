@@ -1,25 +1,55 @@
 const { validDate } = require("./backfill-schedule.js");
+const { amount } = require("./finance.js");
+
+function loanKey(name) {
+  return String(name)
+    .normalize("NFKC")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase("tr");
+}
+
+function isLoanRow(row, includeDeleted = false) {
+  return Boolean(
+    row &&
+    (includeDeleted || !row.is_deleted) &&
+    row.kind === "expense" &&
+    row.expense_type !== "credit_card" &&
+    row.is_loan,
+  );
+}
 
 // A read-only view of the months explicitly entered in the user's ledger.
 function loanSummaries(data) {
   const groups = new Map();
   for (const row of data.finance_rows || []) {
-    if (row.is_deleted || row.kind !== "expense" || row.expense_type === "credit_card" || !row.is_loan)
-      continue;
+    if (!isLoanRow(row)) continue;
     // The visible loan name identifies the repayment schedule across years.
     // Users can keep separate loans separate by giving them different names.
-    const key = String(row.name).normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("tr");
-    const group = groups.get(key) || { row, rowIds: new Set() };
+    const key = loanKey(row.name);
+    const group = groups.get(key) || {
+      row,
+      rowIds: new Set(),
+      principalRow: null,
+    };
     group.rowIds.add(row.id);
     if ((row.year || 0) > (group.row.year || 0)) group.row = row;
+    if (
+      amount(row.loan_principal, false) &&
+      (!group.principalRow || (row.year || 0) >= (group.principalRow.year || 0))
+    )
+      group.principalRow = row;
     groups.set(key, group);
   }
   return [...groups.values()]
-    .filter(({ row, rowIds }) => row.year ||
-      !(data.finance_rows || []).some((fork) => fork.origin_row === row.id) ||
-      (data.finance_entries || []).some((entry) => rowIds.has(entry.row_id)))
+    .filter(
+      ({ row, rowIds }) =>
+        row.year ||
+        !(data.finance_rows || []).some((fork) => fork.origin_row === row.id) ||
+        (data.finance_entries || []).some((entry) => rowIds.has(entry.row_id)),
+    )
     .sort((a, b) => (a.row.row_order || 0) - (b.row.row_order || 0))
-    .map(({ row, rowIds }) => {
+    .map(({ row, rowIds, principalRow }) => {
       const byMonth = new Map();
       for (const entry of data.finance_entries || []) {
         if (
@@ -69,6 +99,7 @@ function loanSummaries(data) {
         row_id: row.id,
         provider_row_id: row.origin_row || row.id,
         name: row.name,
+        principal_amount: principalRow?.loan_principal ?? null,
         currency: "TRY",
         start_month: months[0]?.month || null,
         end_month: months.at(-1)?.month || null,
@@ -82,4 +113,4 @@ function loanSummaries(data) {
       };
     });
 }
-module.exports = { loanSummaries };
+module.exports = { loanSummaries, loanKey, isLoanRow };

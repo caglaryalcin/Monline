@@ -2163,6 +2163,12 @@
         "required": false
       },
       {
+        "name": "loan_principal",
+        "type": "number",
+        "hidden": false,
+        "required": false
+      },
+      {
         "name": "is_rent",
         "type": "bool",
         "hidden": false
@@ -2173,7 +2179,7 @@
         "hidden": false
       }
     ],
-    "sql": "CREATE TABLE \"finance_rows\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"name\" TEXT NOT NULL DEFAULT '', \"kind\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"source_subscription\" TEXT NOT NULL DEFAULT '', \"expense_type\" TEXT NOT NULL DEFAULT '', \"payment_card\" TEXT NOT NULL DEFAULT '', \"bill_type\" TEXT NOT NULL DEFAULT '', \"row_order\" REAL NOT NULL DEFAULT 0, \"is_loan\" INTEGER NOT NULL DEFAULT 0, \"year\" REAL NOT NULL DEFAULT 0, \"origin_row\" TEXT NOT NULL DEFAULT '', \"is_deleted\" INTEGER NOT NULL DEFAULT 0, \"loan_id\" TEXT NOT NULL DEFAULT '', \"is_rent\" INTEGER NOT NULL DEFAULT 0, \"is_auto_carryover\" INTEGER NOT NULL DEFAULT 0)"
+    "sql": "CREATE TABLE \"finance_rows\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"name\" TEXT NOT NULL DEFAULT '', \"kind\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"source_subscription\" TEXT NOT NULL DEFAULT '', \"expense_type\" TEXT NOT NULL DEFAULT '', \"payment_card\" TEXT NOT NULL DEFAULT '', \"bill_type\" TEXT NOT NULL DEFAULT '', \"row_order\" REAL NOT NULL DEFAULT 0, \"is_loan\" INTEGER NOT NULL DEFAULT 0, \"year\" REAL NOT NULL DEFAULT 0, \"origin_row\" TEXT NOT NULL DEFAULT '', \"is_deleted\" INTEGER NOT NULL DEFAULT 0, \"loan_id\" TEXT NOT NULL DEFAULT '', \"is_rent\" INTEGER NOT NULL DEFAULT 0, \"is_auto_carryover\" INTEGER NOT NULL DEFAULT 0, \"loan_principal\" REAL NOT NULL DEFAULT 0)"
   },
   {
     "name": "finance_entries",
