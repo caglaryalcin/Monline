@@ -59,7 +59,7 @@ export function DashboardPaymentSidebar({
     ...bills.entries,
     ...entries.filter((entry) => entry.date >= from && entry.date < until && subscriptionSection(entry.subscription) === "bills"),
   ].sort((a, b) => a.date.localeCompare(b.date));
-  const loans = monthlyLoanPayments(data.loans, today, data.currencies, data.financeRows);
+  const loans = monthlyLoanPayments(data.loans, today, data.currencies, data.financeRows, periodMonths);
   return (
     <BudgetOverviewCard
       quickPayments={quickPayments}

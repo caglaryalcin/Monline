@@ -32,7 +32,8 @@ routerAdd("PUT", "/api/loans/{id}/principal", (e) => {
     for (const record of rows) {
       if (
         isLoanRow(record.publicExport(), true) &&
-        loanKey(record.getString("name")) === key
+        loanKey(record.getString("name")) === key &&
+        record.getFloat("loan_principal") !== (principal ?? 0)
       ) {
         record.set("loan_principal", principal ?? 0);
         tx.save(record);

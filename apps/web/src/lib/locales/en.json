@@ -1,4 +1,8 @@
 {
+  "budget_period_loans_1": "This month's loan installments",
+  "budget_period_loans_3": "Loan installments for the 3-month period",
+  "budget_period_loans_6": "Loan installments for the 6-month period",
+  "budget_period_loans_12": "Loan installments for the 1-year period",
   "budget_period_bills_1": "This month's bills",
   "budget_period_bills_3": "Bills for the 3-month period",
   "budget_period_bills_6": "Bills for the 6-month period",

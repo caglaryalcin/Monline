@@ -65,42 +65,46 @@ export function monthlyLoanPayments(
   today: string,
   currencies: Currency[],
   rows: FinanceRow[] = [],
+  months: BudgetPeriod = 1,
 ) {
+  const { from, until } = budgetPeriodBounds(today, months);
   const entries: DashboardMonthlyEntry[] = [];
   let unpriced = 0;
   for (const loan of loans) {
-    const month = loan.months.find((payment) => payment.month === today.slice(0, 7));
-    if (!month) continue;
     const row = rows.find((row) => row.id === loan.row_id);
-    const item = { name: loan.name, date: `${month.month}-01`, currency: loan.currency };
-    const result = monthlyBillPayments(
-      {
-        items: month.paid_amount > 0 ? [{ ...item, amount: month.paid_amount }] : [],
-        upcoming: month.remaining_amount > 0 ? [{ ...item, amount: month.remaining_amount }] : [],
-        totals: [],
-        unpriced: 0,
-      },
-      today,
-      currencies,
-    );
-    if (result.unpriced) {
-      unpriced++;
-      continue;
+    for (const month of loan.months) {
+      const item = { name: loan.name, date: `${month.month}-01`, currency: loan.currency };
+      if (item.date < from || item.date >= until) continue;
+      const result = monthlyBillPayments(
+        {
+          items: month.paid_amount > 0 ? [{ ...item, amount: month.paid_amount }] : [],
+          upcoming: month.remaining_amount > 0 ? [{ ...item, amount: month.remaining_amount }] : [],
+          totals: [],
+          unpriced: 0,
+        },
+        today,
+        currencies,
+        months,
+      );
+      if (result.unpriced) {
+        unpriced++;
+        continue;
+      }
+      if (!result.entries.length) continue;
+      const paidAmount = result.entries.find((entry) => entry.status === "paid")?.amount ?? 0;
+      const pendingAmount = result.entries.find((entry) => entry.status !== "paid")?.amount ?? 0;
+      entries.push({
+        id: `loan:${loan.row_id}:${month.month}`,
+        name: loan.name,
+        providerRowId: loan.provider_row_id || row?.origin_row || loan.row_id,
+        date: item.date,
+        amount: (Math.round(paidAmount * 100) + Math.round(pendingAmount * 100)) / 100,
+        paidAmount,
+        pendingAmount,
+        monthOnly: true,
+        status: pendingAmount === 0 ? "paid" : paidAmount > 0 ? "partial" : "pending",
+      });
     }
-    if (!result.entries.length) continue;
-    const paidAmount = result.entries.find((entry) => entry.status === "paid")?.amount ?? 0;
-    const pendingAmount = result.entries.find((entry) => entry.status !== "paid")?.amount ?? 0;
-    entries.push({
-      id: `loan:${loan.row_id}:${month.month}`,
-      name: loan.name,
-      providerRowId: loan.provider_row_id || row?.origin_row || loan.row_id,
-      date: item.date,
-      amount: (Math.round(paidAmount * 100) + Math.round(pendingAmount * 100)) / 100,
-      paidAmount,
-      pendingAmount,
-      monthOnly: true,
-      status: pendingAmount === 0 ? "paid" : paidAmount > 0 ? "partial" : "pending",
-    });
   }
-  return { entries, unpriced };
+  return { entries: entries.sort((a, b) => a.date.localeCompare(b.date)), unpriced };
 }

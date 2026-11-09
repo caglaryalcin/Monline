@@ -1,4 +1,8 @@
 {
+  "budget_period_loans_1": "Kreditraten dieses Monats",
+  "budget_period_loans_3": "Kreditraten für 3 Monate",
+  "budget_period_loans_6": "Kreditraten für 6 Monate",
+  "budget_period_loans_12": "Kreditraten für 1 Jahr",
   "budget_period_bills_1": "Rechnungen dieses Monats",
   "budget_period_bills_3": "Rechnungen für 3 Monate",
   "budget_period_bills_6": "Rechnungen für 6 Monate",

@@ -220,12 +220,28 @@ function check(record) {
   )
     throw new BadRequestError("finance_duplicate_date");
 }
+function isLoanPrincipalUpdate(record) {
+  const previous = record.original();
+  // Principal belongs to the whole loan, including its legacy yearless root.
+  // That root must still reject changes to its yearly ledger fields.
+  return (
+    record.id === previous.id &&
+    record.getBool("is_loan") &&
+    record.getString("kind") === "expense" &&
+    record.getString("expense_type") !== "credit_card" &&
+    record.getFloat("loan_principal") !== previous.getFloat("loan_principal") &&
+    record.collection().fields.every(
+      ({ name }) => name === "loan_principal" || record.get(name) === previous.get(name),
+    )
+  );
+}
 for (const event of [onRecordCreate, onRecordUpdate])
   event(
     (e) => {
       check(e.record);
       if (event === onRecordUpdate && e.record.collection().name === "finance_rows" &&
-          !e.record.getBool("__monline_restore") && !e.record.getFloat("year") && !finance.isCarryoverRow(e.record.publicExport()))
+          !e.record.getBool("__monline_restore") && !e.record.getFloat("year") &&
+          !finance.isCarryoverRow(e.record.publicExport()) && !isLoanPrincipalUpdate(e.record))
         throw new BadRequestError("finance_invalid_year");
       return e.next();
     },
