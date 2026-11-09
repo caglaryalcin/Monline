@@ -25,12 +25,12 @@ export function StatisticsPage() {
   const [categoryYear, setCategoryYear] = useState(year);
   const [paymentYear, setPaymentYear] = useState(year);
   const [categoryMode, setCategoryMode] = useState<CategoryCostMode>("paid");
+  const { user } = useAuth();
+  const userId = user?.id ?? "";
   useEffect(() => {
     setCategoryYear(year);
     setPaymentYear(year);
-  }, [year]);
-  const { user } = useAuth();
-  const userId = user?.id ?? "";
+  }, [year, month, userId]);
 
   const subscriptionsQuery = useQuery({
     queryKey: queryKeys.subscriptions.all(userId),

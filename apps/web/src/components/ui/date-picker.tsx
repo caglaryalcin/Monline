@@ -1,7 +1,13 @@
 import { format, isValid, parseISO } from "date-fns";
 import { CalendarDays } from "lucide-react";
-import { forwardRef, useId, useState } from "react";
-import { DayPicker, type DropdownProps } from "react-day-picker";
+import { Children, forwardRef, isValidElement, useId, useState } from "react";
+import {
+  DayPicker,
+  type DropdownNavProps,
+  type DropdownProps,
+  MonthsDropdown,
+  YearsDropdown,
+} from "react-day-picker";
 import {
   bg,
   cs,
@@ -72,6 +78,20 @@ const clearLabels: Record<string, string> = {
   bg: "Изчистване",
 };
 
+function CalendarDropdownNav({ children, ...props }: DropdownNavProps) {
+  const controls = Children.toArray(children);
+  const monthIndex = controls.findIndex(
+    (child) => isValidElement(child) && child.type === MonthsDropdown,
+  );
+  const yearIndex = controls.findIndex(
+    (child) => isValidElement(child) && child.type === YearsDropdown,
+  );
+  if (monthIndex > yearIndex && yearIndex >= 0) {
+    [controls[monthIndex], controls[yearIndex]] = [controls[yearIndex], controls[monthIndex]];
+  }
+  return <div {...props}>{controls}</div>;
+}
+
 function CalendarDropdown({
   options,
   value,
@@ -117,7 +137,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
   ref,
 ) {
   const { t, i18n } = useTranslation();
-  const language = (resolveLocale(i18n)).split(/[-_]/)[0];
+  const language = resolveLocale(i18n).split(/[-_]/)[0];
   const locale = locales[language as keyof typeof locales] ?? enUS;
   const parsed = isValidISODate(value) ? parseISO(value) : undefined;
   const selected = parsed && isValid(parsed) ? parsed : undefined;
@@ -213,7 +233,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
             ...(minimum ? [{ before: minimum }] : []),
             ...(maximum ? [{ after: maximum }] : []),
           ]}
-          components={{ Dropdown: CalendarDropdown }}
+          components={{ Dropdown: CalendarDropdown, DropdownNav: CalendarDropdownNav }}
           classNames={{
             root: "relative p-3",
             months: "w-full",

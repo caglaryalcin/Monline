@@ -2,7 +2,6 @@ import { Lightbulb, Receipt } from "lucide-react";
 import { useContext, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { StatementLink } from "@/components/StatementLink";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -96,18 +95,6 @@ export function StatementCommitments({
 
   return (
     <section className="space-y-4" aria-label={t(`spending_${section}_source`)}>
-      {section === "installments" && totals.length > 0 && (
-        <dl className="flex flex-wrap gap-6 rounded-xl border p-4 text-sm">
-          <div>
-            <dt className="text-muted-foreground">{t("spending_installments_month_total")}</dt>
-            <dd className="flex flex-wrap gap-3 font-semibold tabular-nums">
-              {totals.map((total) => (
-                <span key={total.currency}>{money(total.amount, total.currency)}</span>
-              ))}
-            </dd>
-          </div>
-        </dl>
-      )}
       {section === "installments" ? (
         plans.length === 0 ? (
           <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
@@ -130,51 +117,30 @@ export function StatementCommitments({
                       source="statement"
                       label={`${plan.card_name ? `${plan.card_name} · ` : ""}${t("spending_installment_statement", { period: periodName(plan.source_period) })}`}
                     />
-                    {plan.period >= currentMonth && (
-                      <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-400">
-                        {t("spending_installment_payable")}
-                        {plan.projected && (
-                          <span className="ml-2 text-muted-foreground">
-                            {t("spending_installment_estimated")}
-                          </span>
-                        )}
-                      </p>
-                    )}
                   </div>
                 </div>
                 <dl className="grid grid-cols-2 gap-2 text-sm">
                   <dt>{t("spending_installment_progress")}</dt>
                   <dd className="text-right tabular-nums">
-                    {plan.current} / {plan.total}
+                    <span className="amount-marker-highlight">
+                      {plan.current}/{plan.total}
+                    </span>
                   </dd>
                   <dt>{t("spending_remaining_count")}</dt>
                   <dd className="text-right tabular-nums">{plan.remaining}</dd>
+                  <dt>{t("spending_installment_amount")}</dt>
+                  <dd className="text-right tabular-nums">{money(plan.amount, plan.currency)}</dd>
                   <dt>{t("spending_purchase_total")}</dt>
                   <dd className="text-right tabular-nums">
                     {estimatedInstallmentTotal(plan) == null
                       ? "-"
                       : money(estimatedInstallmentTotal(plan)!, plan.currency)}
                   </dd>
-                  <dt>{t("spending_installment_amount")}</dt>
-                  <dd className="text-right tabular-nums">{money(plan.amount, plan.currency)}</dd>
                   <dt>{t("spending_next_period")}</dt>
                   <dd className="text-right">
                     {plan.remaining ? plan.next_month : t("spending_completed")}
                   </dd>
                 </dl>
-                <StatementLink
-                  statementId={plan.statement_id}
-                  className="text-sm text-primary underline underline-offset-4"
-                >
-                  {t("finance_go_statement")}
-                </StatementLink>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setProviderFor({ name: plan.name })}
-                >
-                  {t("spending_provider_change")}
-                </Button>
               </article>
             ))}
           </div>
@@ -234,15 +200,29 @@ export function StatementCommitments({
       )}
       <footer className="flex items-start gap-2 border-t pt-2 text-xs">
         {section === "installments" ? (
-          <>
-            <Lightbulb
-              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400"
-              aria-hidden="true"
-            />
-            <p className="leading-relaxed text-muted-foreground">
-              {t("spending_installments_info")}
-            </p>
-          </>
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="flex items-start gap-2">
+              <Lightbulb
+                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400"
+                aria-hidden="true"
+              />
+              <p className="leading-relaxed text-muted-foreground">
+                {t("spending_installments_info")}
+              </p>
+            </div>
+            {totals.length > 0 && (
+              <dl className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <dt className="text-muted-foreground">{t("spending_installments_month_total")}</dt>
+                <dd className="flex flex-wrap gap-x-3 text-sm font-semibold tabular-nums">
+                  {totals.map((total) => (
+                    <span key={total.currency} className="amount-marker-highlight">
+                      {money(total.amount, total.currency)}
+                    </span>
+                  ))}
+                </dd>
+              </dl>
+            )}
+          </div>
         ) : (
           <>
             <Popover>

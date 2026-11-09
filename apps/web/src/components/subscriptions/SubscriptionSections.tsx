@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { QuickPaymentDialog } from "@/components/QuickPaymentDialog";
@@ -31,13 +31,7 @@ import { useQuickPayments } from "@/hooks/useQuickPayments";
 import { useSubscriptionSort } from "@/hooks/useSubscriptionSort";
 import { installmentSchedule } from "@/lib/installmentSchedule";
 import { queryKeys } from "@/lib/queryKeys";
-import {
-  currentSpendingMonth,
-  EMPTY_SPENDING,
-  isBillRecord,
-  spendingKey,
-  subscriptionSection,
-} from "@/lib/spending";
+import { EMPTY_SPENDING, isBillRecord, spendingKey, subscriptionSection } from "@/lib/spending";
 import { toast } from "@/lib/toast";
 import { categoriesService } from "@/services/categories";
 import { currenciesService } from "@/services/currencies";
@@ -65,6 +59,7 @@ export function SubscriptionSections({
   const userId = user?.id ?? "";
   const quickPayments = useQuickPayments();
   const today = useLocalToday();
+  const currentMonth = today.slice(0, 7);
 
   const [searchTerm, setSearchTerm] = useState("");
   const { sort, sortDir, setSort, toggleSortDir, isSaving: sortSaving } = useSubscriptionSort();
@@ -90,12 +85,15 @@ export function SubscriptionSections({
     `subscriptions.filters.${section}`,
   );
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [month, setMonth] = useState(currentSpendingMonth);
-  const currentBillYear = Number(currentSpendingMonth().slice(0, 4));
+  const [month, setMonth] = useState(currentMonth);
+  const currentBillYear = Number(currentMonth.slice(0, 4));
   const [billYear, setBillYear] = useState(currentBillYear);
-  const [billMonth, setBillMonth] = useState<number | undefined>(() =>
-    Number(currentSpendingMonth().slice(5)),
-  );
+  const [billMonth, setBillMonth] = useState<number | undefined>(Number(currentMonth.slice(5)));
+  useEffect(() => {
+    setMonth(currentMonth);
+    setBillYear(Number(currentMonth.slice(0, 4)));
+    setBillMonth(Number(currentMonth.slice(5)));
+  }, [currentMonth, section, userId]);
   const spending = useQuery({
     queryKey: spendingKey(userId),
     queryFn: spendingService.get,

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
@@ -26,10 +26,15 @@ export function FinancialStatistics({ section }: { section: FinancialStatisticsS
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const today = useLocalToday();
+  const currentPeriod = today.slice(0, 7);
   const locale = resolveLocale(i18n);
   const [year, setYear] = useState(Number(today.slice(0, 4)));
-  const [chosenMonth, setChosenMonth] = useState("");
+  const [chosenMonth, setChosenMonth] = useState(currentPeriod);
   const [chosenCurrency, setChosenCurrency] = useState("");
+  useEffect(() => {
+    setYear(Number(currentPeriod.slice(0, 4)));
+    setChosenMonth(currentPeriod);
+  }, [currentPeriod, section, user?.id]);
   const accountCurrencies = useQuery({
     queryKey: queryKeys.currencies.all(user?.id || ""),
     queryFn: () => currenciesService.list(user!.id),
@@ -70,17 +75,14 @@ export function FinancialStatistics({ section }: { section: FinancialStatisticsS
   ]
     .filter((value) => value.startsWith(`${year}-`))
     .sort();
-  const installmentMonth = recordedMonths.includes(chosenMonth)
-    ? chosenMonth
-    : recordedMonths.includes(today.slice(0, 7))
-      ? today.slice(0, 7)
-      : recordedMonths.at(-1) || "";
+  const defaultMonth = `${year}-${currentPeriod.slice(5)}`;
   const period =
-    section === "installments"
-      ? installmentMonth
+    section !== "installments" && chosenMonth === ""
+      ? ""
       : chosenMonth.startsWith(`${year}-`)
         ? chosenMonth
-        : "";
+        : defaultMonth;
+  const installmentMonths = [...new Set([defaultMonth, period, ...recordedMonths])].sort();
   const yearRows = sourceRows.filter((row) => row.month.startsWith(`${year}-`));
   const rows =
     section === "installments"
@@ -216,37 +218,35 @@ export function FinancialStatistics({ section }: { section: FinancialStatisticsS
         </div>
         <div className="flex flex-wrap gap-2">
           <ThemedSelect
-            value={year}
-            aria-label={t("history_select_year")}
-            className="h-10 rounded-xl px-3 text-sm"
-            onChange={(event) => {
-              setYear(Number(event.target.value));
-              setChosenMonth("");
-            }}
-          >
-            {years.map((value) => (
-              <option key={value} value={value}>
-                {value}
-              </option>
-            ))}
-          </ThemedSelect>
-          <ThemedSelect
             value={period}
             aria-label={t(
               section === "installments" ? "finance_stats_statement_period" : "spending_month",
             )}
             className="h-10 rounded-xl px-3 text-sm"
             onChange={(event) => setChosenMonth(event.target.value)}
-            disabled={section === "installments" && !recordedMonths.length}
           >
-            {section !== "installments" ? (
+            {section !== "installments" && (
               <option value="">{t("finance_stats_whole_year")}</option>
-            ) : (
-              !recordedMonths.length && <option value="">{t("finance_stats_no_statement")}</option>
             )}
-            {(section === "installments" ? recordedMonths : months).map((value) => (
+            {(section === "installments" ? installmentMonths : months).map((value) => (
               <option key={value} value={value}>
                 {monthName(value)}
+              </option>
+            ))}
+          </ThemedSelect>
+          <ThemedSelect
+            value={year}
+            aria-label={t("history_select_year")}
+            className="h-10 rounded-xl px-3 text-sm"
+            onChange={(event) => {
+              const nextYear = Number(event.target.value);
+              setYear(nextYear);
+              setChosenMonth((value) => (value ? `${nextYear}-${value.slice(5)}` : ""));
+            }}
+          >
+            {years.map((value) => (
+              <option key={value} value={value}>
+                {value}
               </option>
             ))}
           </ThemedSelect>

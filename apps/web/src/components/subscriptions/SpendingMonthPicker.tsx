@@ -63,21 +63,6 @@ export function SpendingMonthPicker({
     const selectedYear = year && years.includes(year) ? year : currentYear;
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <Select value={String(selectedYear)} onValueChange={(value) => onYearChange(Number(value))}>
-          <SelectTrigger
-            aria-label={t("history_select_year")}
-            className="h-10 w-fit min-w-[84px] gap-2 rounded-xl bg-transparent px-3"
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {years.map((value) => (
-              <SelectItem key={value} value={String(value)}>
-                {value}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
         {onMonthChange && (
           <Select
             value={
@@ -110,6 +95,21 @@ export function SpendingMonthPicker({
             </SelectContent>
           </Select>
         )}
+        <Select value={String(selectedYear)} onValueChange={(value) => onYearChange(Number(value))}>
+          <SelectTrigger
+            aria-label={t("history_select_year")}
+            className="h-10 w-fit min-w-[84px] gap-2 rounded-xl bg-transparent px-3"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map((value) => (
+              <SelectItem key={value} value={String(value)}>
+                {value}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     );
   }
