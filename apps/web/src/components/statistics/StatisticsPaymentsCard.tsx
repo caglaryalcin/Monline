@@ -1,5 +1,5 @@
 import { Portal as TooltipPortal } from "@radix-ui/react-tooltip";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { STATISTICS_COLORS } from "@/components/statistics/constants";
@@ -8,6 +8,7 @@ import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ThemedSelect } from "@/components/ui/themed-select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useLocalToday } from "@/hooks/useLocalToday";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { historyMonth } from "@/lib/costHistory";
 import type { MonthlyPaymentTotal } from "@/lib/paymentStatistics";
@@ -33,23 +34,24 @@ export function StatisticsPaymentsCard({
   onYearChange,
 }: StatisticsPaymentsCardProps) {
   const { t, i18n } = useTranslation();
+  const currentPeriod = useLocalToday().slice(0, 7);
   const language = i18n?.resolvedLanguage ?? i18n?.language ?? "en";
   const [mode, setMode] = useState<"paid" | "upcoming">("paid");
   const [selected, setSelected] = useState<{ paid: string | null; upcoming: string | null }>({
     paid: null,
     upcoming: null,
   });
+  useEffect(() => {
+    setSelected({ paid: null, upcoming: null });
+  }, [year, currentPeriod]);
   const months = data[mode];
   const columns = Math.max(1, Math.min(months.length, 6));
   const current =
     months.find((month) => month.name === selected[mode]) ??
-    (mode === "paid"
-      ? (months.find(
-          (month) =>
-            month.name ===
-            `${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, "0")}`,
-        ) ?? months.at(-1))
-      : (months.find((month) => month.count > 0) ?? months[0]));
+    months.find(
+      (month) => month.name === `${year ?? currentPeriod.slice(0, 4)}/${currentPeriod.slice(5)}`,
+    ) ??
+    months[0];
   const ids = [
     ...new Set(
       [...data.paid, ...data.upcoming].flatMap((month) =>
