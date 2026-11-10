@@ -245,7 +245,7 @@ export const financeTranslations = {
     finance_edit_purchase: "Kauf bearbeiten",
     finance_purchase_date: "Kaufdatum",
     finance_merchant: "Händler / Beschreibung",
-    finance_purchase_invalid: "Gib einen gültigen TRY-Betrag größer als null ein.",
+    finance_purchase_invalid: "Gib einen gültigen {{currency}}-Betrag größer als null ein.",
     finance_statement_empty: "Noch keine Käufe in diesem Abrechnungsmonat.",
     finance_delete_purchase: "Kauf löschen?",
     finance_delete_purchase_help:
@@ -265,7 +265,7 @@ export const financeTranslations = {
       "Namen gehören in die Namensspalte, reine Beträge in die Monatsspalten.",
     finance_clipboard_name_invalid: "Jede Zeile benötigt einen Namen mit höchstens 160 Zeichen.",
     finance_quick_edit: "Betrag direkt bearbeiten",
-    finance_quick_invalid: "Gib einen gültigen TRY-Betrag ein.",
+    finance_quick_invalid: "Gib einen gültigen {{currency}}-Betrag ein.",
     finance_undo: "Rückgängig (Strg+Z)",
     finance_redo: "Wiederholen (Strg+Umschalt+Z)",
     finance_undone: "Änderung rückgängig gemacht.",
@@ -297,7 +297,7 @@ export const financeTranslations = {
     finance_copy_external_title: "Aus Excel einfügen:",
     finance_copy_external_help: "Der Zahlungsstatus der Zielzelle bleibt erhalten. Leere Zellen werden übersprungen.",
     finance_clipboard_invalid:
-      "Die Auswahl enthält einen ungültigen Betrag. Verwende Zahlen oder TRY-Beträge mit höchstens zwei Dezimalstellen.",
+      "Die Auswahl enthält einen ungültigen Betrag. Verwende gültige Beträge in der angezeigten Währung.",
     finance_clipboard_too_large: "Wähle höchstens 1.200 Zellen zum Einfügen aus.",
     finance_clipboard_bounds: "Die Daten passen nicht in die verbleibenden Zeilen und Monate.",
     finance_clipboard_multiple:
@@ -349,7 +349,7 @@ export const financeTranslations = {
     finance_name: "Bezeichnung",
     finance_kind: "Art",
     finance_notes: "Beschreibung",
-    finance_amount: "Betrag (TRY)",
+    finance_amount: "Betrag ({{currency}})",
     finance_date: "Budgetdatum",
     finance_settled_date: "Zahlungs- / Eingangsdatum",
     finance_planned: "Geplant",
@@ -428,7 +428,7 @@ export const financeTranslations = {
       "Kopiert bezahlte Abonnementzahlungen des ausgewählten Jahres in diese Tabelle. USD/EUR werden mit der Monatsreferenz in TRY umgerechnet. Fehlende Beträge oder Referenzen werden übersprungen. Strg+Z macht den Import rückgängig, solange diese Seite geöffnet bleibt; Strg+Umschalt+Z wiederholt ihn.",
     finance_import_done:
       "{{imported}} Zahlungen importiert; {{skipped}} vorhandene oder nicht bewertbare Zahlungen übersprungen.",
-    finance_currency: "Alle Tabellenbeträge sind in TRY.",
+    finance_currency: "Tabellenbeträge werden in {{currency}} angezeigt und eingegeben.",
     finance_budget_month: "Budgetmonat",
     finance_detail: "Details",
     finance_new_row: "Neuer Posten",
@@ -689,7 +689,7 @@ export const financeTranslations = {
     finance_edit_purchase: "Edit purchase",
     finance_purchase_date: "Purchase date",
     finance_merchant: "Merchant / description",
-    finance_purchase_invalid: "Enter a valid TRY amount greater than zero.",
+    finance_purchase_invalid: "Enter a valid {{currency}} amount greater than zero.",
     finance_statement_empty: "No purchases in this statement month yet.",
     finance_delete_purchase: "Delete purchase?",
     finance_delete_purchase_help:
@@ -708,7 +708,7 @@ export const financeTranslations = {
       "Paste names into the item-name column and plain amounts into month columns.",
     finance_clipboard_name_invalid: "Every row needs an item name of at most 160 characters.",
     finance_quick_edit: "Quick amount edit",
-    finance_quick_invalid: "Enter a valid TRY amount.",
+    finance_quick_invalid: "Enter a valid {{currency}} amount.",
     finance_undo: "Undo (Ctrl+Z)",
     finance_redo: "Redo (Ctrl+Shift+Z)",
     finance_undone: "Change undone.",
@@ -740,7 +740,7 @@ export const financeTranslations = {
     finance_copy_external_title: "Pasting from Excel:",
     finance_copy_external_help: "The destination cell keeps its payment status. Blank cells are skipped.",
     finance_clipboard_invalid:
-      "The selection contains an invalid amount. Use numbers or TRY amounts with up to two decimal places.",
+      "The selection contains an invalid amount. Use valid amounts in the displayed currency.",
     finance_clipboard_too_large: "Paste at most 1,200 cells at a time.",
     finance_clipboard_bounds: "The data does not fit in the remaining rows and months.",
     finance_clipboard_multiple:
@@ -790,7 +790,7 @@ export const financeTranslations = {
     finance_name: "Item name",
     finance_kind: "Type",
     finance_notes: "Description",
-    finance_amount: "Amount (TRY)",
+    finance_amount: "Amount ({{currency}})",
     finance_date: "Budget date",
     finance_settled_date: "Payment / receipt date",
     finance_planned: "Planned",
@@ -869,7 +869,7 @@ export const financeTranslations = {
       "Copies paid subscription payments from the selected year into this ledger. USD/EUR amounts are fixed in TRY using that month's references. Missing amounts or references are skipped. Ctrl+Z undoes the import while this page remains open; Ctrl+Shift+Z redoes it.",
     finance_import_done:
       "Imported {{imported}} payments; skipped {{skipped}} existing or unpriced payments.",
-    finance_currency: "All ledger amounts are in TRY.",
+    finance_currency: "Ledger amounts are displayed and entered in {{currency}}.",
     finance_budget_month: "Budget month",
     finance_detail: "Details",
     finance_new_row: "New item",
@@ -1130,7 +1130,7 @@ export const financeTranslations = {
     finance_edit_purchase: "Harcamayı düzenle",
     finance_purchase_date: "Harcama tarihi",
     finance_merchant: "İş yeri / açıklama",
-    finance_purchase_invalid: "Sıfırdan büyük, geçerli bir TL tutarı gir.",
+    finance_purchase_invalid: "Sıfırdan büyük, geçerli bir {{currency}} tutarı gir.",
     finance_statement_empty: "Bu ayın ekstresinde henüz harcama yok.",
     finance_delete_purchase: "Harcama silinsin mi?",
     finance_delete_purchase_help:
@@ -1149,7 +1149,7 @@ export const financeTranslations = {
       "Adları kalem adı sütununa, yalnızca tutarları ay hücrelerine yapıştır.",
     finance_clipboard_name_invalid: "Her satırda en fazla 160 karakterlik bir kalem adı olmalı.",
     finance_quick_edit: "Hızlı tutar düzenleme",
-    finance_quick_invalid: "Geçerli bir TL tutarı gir.",
+    finance_quick_invalid: "Geçerli bir {{currency}} tutarı gir.",
     finance_undo: "Geri al (Ctrl+Z)",
     finance_redo: "Sonraki (Ctrl+Shift+Z)",
     finance_undone: "Değişiklik geri alındı.",
@@ -1181,7 +1181,7 @@ export const financeTranslations = {
     finance_copy_external_title: "Excel’den yapıştırma:",
     finance_copy_external_help: "Yapıştırdığın hücrenin ödeme durumu değişmez. Boş hücreler atlanır.",
     finance_clipboard_invalid:
-      "Seçimde geçersiz bir tutar var. En fazla iki ondalık basamaklı sayı veya TL tutarı kullan.",
+      "Seçimde geçersiz bir tutar var. Gösterilen para biriminde geçerli tutarlar kullan.",
     finance_clipboard_too_large: "Tek seferde en fazla 1.200 hücre yapıştırabilirsin.",
     finance_clipboard_bounds: "Veriler kalan satırlara ve aylara sığmıyor.",
     finance_clipboard_multiple:
@@ -1230,7 +1230,7 @@ export const financeTranslations = {
     finance_name: "Kalem adı",
     finance_kind: "Tür",
     finance_notes: "Açıklama",
-    finance_amount: "Tutar (TL)",
+    finance_amount: "Tutar ({{currency}})",
     finance_date: "Bütçe tarihi",
     finance_settled_date: "Ödeme / tahsilat tarihi",
     finance_planned: "Planlandı",
@@ -1309,7 +1309,7 @@ export const financeTranslations = {
       "Abonelikler bölümünde seçili yılda ödenmiş olarak kaydedilen ödemeleri bu tabloya kopyalar. USD/EUR tutarları aylık referansla TL'ye çevrilip sabitlenir. Tutarı veya referansı eksik kayıtlar atlanır. Sayfa açıkken Ctrl+Z aktarımı geri alır, Ctrl+Shift+Z yeniden uygular.",
     finance_import_done:
       "{{imported}} ödeme aktarıldı; mevcut veya tutarı hesaplanamayan {{skipped}} ödeme atlandı.",
-    finance_currency: "Tablodaki bütün tutarlar TL cinsindedir.",
+    finance_currency: "Tablodaki tutarlar {{currency}} cinsinden gösterilir ve girilir.",
     finance_budget_month: "Bütçe ayı",
     finance_detail: "Ayrıntılar",
     finance_new_row: "Yeni kalem",

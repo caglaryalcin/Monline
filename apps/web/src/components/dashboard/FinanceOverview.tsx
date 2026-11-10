@@ -6,19 +6,20 @@ import { SummaryCard } from "@/components/dashboard/SummaryCard";
 import { FinanceAnimationIcon } from "@/components/FinanceAnimationIcon";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFinanceCurrency } from "@/hooks/useFinanceCurrency";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { useNumberLocale } from "@/hooks/useNumberLocale";
 import client from "@/lib/client";
 import { financeOverview, type FinanceOverviewStatement } from "@/lib/financeOverview";
 import { resolveLocale } from "@/lib/locale";
 import { spendingKey } from "@/lib/spending";
-import { formatCurrency } from "@/lib/utils";
 import { financeService } from "@/services/finance";
 import { savingsService } from "@/services/savings";
 import { spendingService } from "@/services/spending";
 
 export function FinanceOverview() {
   const { user } = useAuth();
+  const currency = useFinanceCurrency();
   const { t, i18n } = useTranslation();
   const numberLocale = useNumberLocale();
   const today = useLocalToday();
@@ -52,14 +53,14 @@ export function FinanceOverview() {
   });
   const monthLabel = new Intl.DateTimeFormat(resolveLocale(i18n), { month: "long", year: "numeric" })
     .format(new Date(`${month}-01T12:00:00`));
-  const money = (value: number | null) => value === null ? "—" : formatCurrency(value, "TRY", { locale: numberLocale });
+  const money = (value: number | null) => currency.format(value, { locale: numberLocale });
   const rateLoading = needsRates && rates.isPending;
-  const cashLoading = ledger.isPending;
+  const cashLoading = ledger.isPending || currency.pending;
   const debtLoading = ledger.isPending || (needsStatements && statements.isPending) ||
-    (needsCardSpending && spending.isPending) || (needsRates && rates.isPending);
-  const assetLoading = savings.isPending || rateLoading;
+    (needsCardSpending && spending.isPending) || (needsRates && rates.isPending) || currency.pending;
+  const assetLoading = savings.isPending || rateLoading || currency.pending;
   const failed = ledger.isError || savings.isError ||
-    (needsStatements && statements.isError) || (needsCardSpending && spending.isError) || (needsRates && rates.isError);
+    (needsStatements && statements.isError) || (needsCardSpending && spending.isError) || (needsRates && rates.isError) || currency.failed;
 
   return (
     <div className="space-y-6">
@@ -70,10 +71,10 @@ export function FinanceOverview() {
       {failed && <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 p-4 text-sm">
         <p>{t("finance_workspace_load_error")}</p>
         <Button variant="outline" size="sm" onClick={() => void Promise.all([
-          ledger.refetch(), savings.refetch(),
+          ledger.refetch(), savings.refetch(), currency.currencies.refetch(),
           ...(needsStatements ? [statements.refetch()] : []),
           ...(needsCardSpending ? [spending.refetch()] : []),
-          ...(needsRates ? [rates.refetch()] : []),
+          ...(needsRates || currency.currency !== "TRY" ? [rates.refetch()] : []),
         ])}>{t("savings_retry")}</Button>
       </div>}
       <section className="space-y-3" aria-label={t("finance_workspace_month_state")}>
@@ -93,7 +94,7 @@ export function FinanceOverview() {
       <section className="space-y-3" aria-label={t("finance_workspace_assets_state")}>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-semibold">{t("finance_workspace_assets_state")}</h2>
-          <span className="text-sm text-muted-foreground">{t("finance_workspace_recorded")}</span>
+          <span className="text-sm text-muted-foreground">{t("finance_workspace_recorded", { currency: currency.label })}</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="finance-animated-card min-w-0">

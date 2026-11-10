@@ -1,8 +1,9 @@
 import { useTranslation } from "react-i18next";
 
+import { useFinanceCurrencyValue } from "@/contexts/FinanceCurrencyContext";
 import type { CardPaymentCheck } from "@/lib/finance";
 import { resolveLocale } from "@/lib/locale";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export function FinanceCardPaymentComparison({
   check,
@@ -12,9 +13,10 @@ export function FinanceCardPaymentComparison({
   compact?: boolean;
 }) {
   const { t, i18n } = useTranslation();
+  const currency = useFinanceCurrencyValue();
   const locale = resolveLocale(i18n, "tr");
   const money = (amount: number | null) =>
-    amount === null ? "-" : formatCurrency(amount, "TRY", {});
+    currency.format(amount);
   const monthName = (month: string) =>
     new Intl.DateTimeFormat(locale, { month: "long", year: "numeric", timeZone: "UTC" }).format(
       new Date(`${month}-01T12:00:00Z`),

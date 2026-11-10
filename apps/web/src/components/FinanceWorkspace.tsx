@@ -4,6 +4,8 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import { InfoButton } from "@/components/ui/info-button";
+import { FinanceCurrencyContext } from "@/contexts/FinanceCurrencyContext";
+import { useFinanceCurrency } from "@/hooks/useFinanceCurrency";
 import { FINANCE_SECTIONS, financeWorkspaceSection } from "@/lib/financeWorkspace";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +15,8 @@ export function FinanceWorkspace({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const active = financeWorkspaceSection(pathname);
+  const displaysLedgerCurrency = active === "overview" || active === "ledger";
+  const currency = useFinanceCurrency({ convert: displaysLedgerCurrency });
   const statements = pathname.startsWith("/statements");
   const search = useSearch({ strict: false });
   const debtSection = statements ? "statements" : search.tab === "loans" ? "loans" : "installments";
@@ -26,6 +30,7 @@ export function FinanceWorkspace({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
+    <FinanceCurrencyContext.Provider value={currency}>
     <section className="flex h-full min-h-0 min-w-0 flex-col gap-5" aria-label={t("finance_workspace")}>
       <div className="shrink-0 border-b pb-4">
         <div className="flex flex-wrap items-center justify-end gap-3">
@@ -64,9 +69,13 @@ export function FinanceWorkspace({ children }: { children: ReactNode }) {
               <p>{t("loans_help")}</p>
             </InfoButton>}
           </nav>}
+          {displaysLedgerCurrency && currency.failed && <p role="alert" className="rounded-xl border border-destructive/30 p-4 text-sm text-destructive">
+            {t("finance_currency_unavailable", { currency: currency.label })}
+          </p>}
           {children}
         </div>
       </div>
     </section>
+    </FinanceCurrencyContext.Provider>
   );
 }

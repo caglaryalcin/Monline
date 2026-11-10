@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useFinanceCurrencyValue } from "@/contexts/FinanceCurrencyContext";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import {
   type FinanceData,
@@ -68,6 +69,7 @@ export function FinanceSalaryComparison({
   onEditReference: (month: number, year: number, field?: "usd" | "eur" | "minimum") => void;
 }) {
   const { t, i18n } = useTranslation();
+  const financeCurrency = useFinanceCurrencyValue();
   const currentYear = Number(today.slice(0, 4));
   const year = Math.min(selectedYear, currentYear);
   const automaticRequests = useRef(new Set<string>());
@@ -113,11 +115,11 @@ export function FinanceSalaryComparison({
   };
   const label = (key: string) => t(`finance_${key}`);
   const locale = resolveLocale(i18n, "tr");
-  const currency = (amount: number, code = "TRY") =>
-    formatCurrency(amount, code, {
-      minimumFractionDigits: decimalPlaces,
-      maximumFractionDigits: decimalPlaces,
-    });
+  const currency = (amount: number, code?: string) => {
+    const precision = decimalPlaces === 0 ? 0 : financeCurrency.precision;
+    return code ? formatCurrency(amount, code, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })
+      : financeCurrency.format(amount, { minimumFractionDigits: precision, maximumFractionDigits: precision });
+  };
   const percent = (amount: number | null) =>
     amount == null
       ? "-"

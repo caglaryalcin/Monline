@@ -61,6 +61,7 @@ import { Label } from "@/components/ui/label";
 import { PersistentDetails } from "@/components/ui/persistent-details";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFinanceCurrency } from "@/hooks/useFinanceCurrency";
 import { type FinanceGrid, useFinanceGrid } from "@/hooks/useFinanceGrid";
 import { useFinanceHistory } from "@/hooks/useFinanceHistory";
 import { useHiddenFinanceRows } from "@/hooks/useHiddenFinanceRows";
@@ -86,7 +87,7 @@ import { resolveLocale } from "@/lib/locale";
 import { financeProviderTarget, type MerchantProviderTarget } from "@/lib/merchantLogo";
 import { resolveNumberLocale } from "@/lib/numberFormat";
 import { spendingKey } from "@/lib/spending";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { financeService } from "@/services/finance";
 
 const EMPTY: FinanceData = {
@@ -135,6 +136,7 @@ function savedDecimalPlaces() {
 export function FinancePage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const currency = useFinanceCurrency();
   const today = useLocalToday();
   const yearOwner = user?.id || "";
   const [yearSelection, setYearSelection] = useState(() => ({
@@ -223,15 +225,15 @@ export function FinancePage() {
   const months = financeMonths(rawData, year);
   const language = resolveLocale(i18n);
   const money = (value: number) =>
-    formatCurrency(value, "TRY", {
-      minimumFractionDigits: decimalPlaces,
-      maximumFractionDigits: decimalPlaces,
+    currency.format(value, {
+      minimumFractionDigits: decimalPlaces === 0 ? 0 : currency.precision,
+      maximumFractionDigits: decimalPlaces === 0 ? 0 : currency.precision,
     });
   const monthName = (index: number, short = false) =>
     new Intl.DateTimeFormat(language, { month: short ? "short" : "long" }).format(
       new Date(year, index, 1),
     );
-  const label = (name: string) => t(`finance_${name}`);
+  const label = (name: string) => t(`finance_${name}`, { currency: currency.label });
   const refresh = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: key }),
@@ -250,7 +252,8 @@ export function FinancePage() {
     entries: data.finance_entries,
     year,
     language: resolveNumberLocale(),
-    locked: history.busy,
+    locked: history.busy || !currency.available,
+    displayCurrency: currency,
     ownerId: user?.id,
     statementLinks: data.finance_statement_links,
     applyCellAction: (action, cells, targets) =>
@@ -297,11 +300,15 @@ export function FinancePage() {
       }
     : undefined;
   const refreshTable = async () => {
-    if (refreshLock.current || query.isFetching || grid.busy || grid.quickEdit || grid.quickName)
+    if (refreshLock.current || query.isFetching || history.busy || (grid.busy && currency.available) || grid.quickEdit || grid.quickName)
       return;
     refreshLock.current = true;
     try {
-      await query.refetch({ cancelRefetch: false, throwOnError: true });
+      await Promise.all([
+        query.refetch({ cancelRefetch: false, throwOnError: true }),
+        currency.currencies.refetch({ cancelRefetch: false, throwOnError: true }),
+        ...(currency.currency !== "TRY" ? [currency.rates.refetch({ cancelRefetch: false, throwOnError: true })] : []),
+      ]);
     } catch {
       toast.error(label("refresh_error"));
     } finally {
@@ -431,11 +438,7 @@ export function FinancePage() {
         entry.date.startsWith(`${year}-${String(month).padStart(2, "0")}`),
     );
   const summaryRows = ["received", "paid", "remaining"] as const;
-  const sheetMoney = (value: number) =>
-    formatCurrency(value, "TRY", {
-      minimumFractionDigits: decimalPlaces,
-      maximumFractionDigits: decimalPlaces,
-    });
+  const sheetMoney = money;
   const summaryLabel = (field: SummaryField) => label(SUMMARY_LABEL_KEYS[field]);
 
   const renderSummaryCell = (
@@ -485,7 +488,7 @@ export function FinancePage() {
     );
   };
 
-  if (query.isPending)
+  if (query.isPending || currency.pending)
     return (
       <div role="status" className="py-20 text-center text-muted-foreground">
         {label("loading")}
@@ -661,7 +664,7 @@ export function FinancePage() {
           size="icon"
           variant="outline"
           onClick={() => void refreshTable()}
-          disabled={query.isFetching || grid.busy || !!grid.quickEdit || !!grid.quickName}
+          disabled={query.isFetching || history.busy || (grid.busy && currency.available) || !!grid.quickEdit || !!grid.quickName}
           aria-busy={query.isFetching}
           aria-label={label("refresh")}
           title={label(query.isFetching ? "refreshing" : "refresh")}
@@ -706,7 +709,7 @@ export function FinancePage() {
             onSaveOpening={(amount) => run(() => financeService.setOpeningDeficit(year, amount, sumEntries(openingDeficitEntries)), false)}
             links={data.finance_statement_links}
             checks={data.card_payment_checks}
-            pending={history.busy || mutate.isPending || !!grid.quickEdit || !!grid.quickName}
+            pending={history.busy || mutate.isPending || !currency.available || !!grid.quickEdit || !!grid.quickName}
             label={label}
             money={sheetMoney}
             onEdit={(row, month) => setEditor({ type: "cell", row, month })}
@@ -1527,7 +1530,7 @@ export function FinancePage() {
         >
           {editor && (
             <FinanceEditor
-              key={`${editor.type}-${"month" in editor ? editor.month : "row" in editor ? editor.row?.id : "new"}`}
+              key={`${currency.currency}-${editor.type}-${"month" in editor ? editor.month : "row" in editor ? editor.row?.id : "new"}`}
               editor={editor}
               year={year}
               data={data}

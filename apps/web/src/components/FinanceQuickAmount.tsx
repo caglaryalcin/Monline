@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
+import { useFinanceCurrencyValue } from "@/contexts/FinanceCurrencyContext";
 import type { FinanceEntry, FinanceRow } from "@/lib/finance";
 import { parseClipboardAmount } from "@/lib/financeClipboard";
 import { numberFormatter } from "@/lib/numberFormat";
@@ -24,16 +25,18 @@ export function FinanceQuickAmount({
   onSave: (amounts: (number | null)[], focus: boolean) => Promise<boolean>;
   onCancel: (focus: boolean) => void;
 }) {
+  const liveCurrency = useFinanceCurrencyValue();
+  const currency = useRef(liveCurrency).current;
   const [values, setValues] = useState(() =>
     entries.length
       ? entries.map((entry, index) =>
           index === 0 && initialValue !== undefined
             ? initialValue
-            : numberFormatter({
+            : currency.available ? numberFormatter({
                 useGrouping: false,
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }).format(entry.amount),
+                minimumFractionDigits: currency.precision,
+                maximumFractionDigits: currency.precision,
+              }).format(currency.toDisplay(entry.amount)!) : "",
         )
       : [initialValue ?? ""],
   );
@@ -49,7 +52,7 @@ export function FinanceQuickAmount({
     else input?.select();
   }, []);
   const commit = async (focus: boolean) => {
-    if (saving.current || cancelled.current || pending) return;
+    if (saving.current || cancelled.current || pending || !currency.available || liveCurrency.currency !== currency.currency) return;
     if (!entries.length && !values[0].trim()) {
       cancelled.current = true;
       onCancel(focus);
@@ -57,7 +60,10 @@ export function FinanceQuickAmount({
     }
     let amounts: (number | null)[];
     try {
-      amounts = values.map((value) => parseClipboardAmount(value));
+      amounts = values.map((value, index) => {
+        const amount = parseClipboardAmount(value, currency.currency);
+        return amount === null ? null : currency.toStored(amount, entries[index]?.amount);
+      });
     } catch {
       setInvalid(true);
       if (focus) firstInput.current?.focus();
@@ -123,7 +129,7 @@ export function FinanceQuickAmount({
                 title + " · " + label("amount") + (entries.length > 1 ? ` · ${index + 1}` : "")
               }
               aria-invalid={invalid || undefined}
-              disabled={pending}
+              disabled={pending || !currency.available || liveCurrency.currency !== currency.currency}
               onChange={(event) => {
                 setValues((current) =>
                   current.map((old, at) => (at === index ? event.target.value : old)),

@@ -1,3 +1,6 @@
+import { formatNumber } from "@/lib/numberFormat";
+import { getCurrencyFractionDigits, getCurrencySymbol } from "@/lib/utils";
+
 import { type FinanceEntry, type FinanceRow, sumEntries } from "./finance";
 
 export interface GridPoint {
@@ -121,14 +124,14 @@ export function copyFinanceMetadata(
       : {}),
   };
 }
-export function clipboardHtml(payload: FinanceClipboard) {
+export function clipboardHtml(payload: FinanceClipboard, formatAmount: (amount: number) => string = String) {
   const escape = (value: string) =>
     value
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
-  return `<table data-monline-finance="${encodeURIComponent(JSON.stringify(payload))}">${payload.cells.map((row, index) => `<tr>${payload.rowNames ? `<td>${escape(payload.rowNames[index])}</td>` : ""}${row.map((records) => `<td>${records.reduce((sum, record) => sum + Math.round(record.amount * 100), 0) / 100}</td>`).join("")}</tr>`).join("")}</table>`;
+  return `<table data-monline-finance="${encodeURIComponent(JSON.stringify(payload))}">${payload.cells.map((row, index) => `<tr>${payload.rowNames ? `<td>${escape(payload.rowNames[index])}</td>` : ""}${row.map((records) => `<td>${escape(formatAmount(records.reduce((sum, record) => sum + Math.round(record.amount * 100), 0) / 100))}</td>`).join("")}</tr>`).join("")}</table>`;
 }
 export function readFinanceMetadata(json: string, html = ""): FinanceClipboard | undefined {
   if (json.length + html.length > 2000000) return undefined;
@@ -199,6 +202,7 @@ export function copyFinanceCells(
   year: number,
   selection: GridSelection,
   language: string,
+  formatAmount?: (amount: number) => string,
 ) {
   const selectedRows = selectionRows(selection),
     columns = selectionColumns(selection);
@@ -216,20 +220,28 @@ export function copyFinanceCells(
           return /[\t\r\n"]/.test(name) ? `"${name.replace(/"/g, '""')}"` : name;
         }
         const values = cellEntries(entries, rows[row].id, year, col);
-        return values.length ? format.format(sumEntries(values)) : "";
+        return values.length ? (formatAmount || format.format)(sumEntries(values)) : "";
       })
       .join("\t"),
   ).join("\r\n");
 }
-export function parseClipboardAmount(raw: string): number | null {
+export function parseClipboardAmount(raw: string, currency = "TRY"): number | null {
   let value = raw.trim();
   if (!value) return null;
   if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1).trim();
+  const precision = getCurrencyFractionDigits(currency);
+  const markers = currency === "TRY" ? ["TRY", "TL", "₺"] : [currency, getCurrencySymbol(currency)];
+  const escaped = markers.map((marker) => marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  for (let digit = 0; digit <= 9; digit++) {
+    const native = formatNumber(digit, { useGrouping: false });
+    if (native !== String(digit)) value = value.split(native).join(String(digit));
+  }
   value = value
-    .replace(/^(?:TRY|TL|₺)\s*|\s*(?:TRY|TL|₺)$/gi, "")
-    .replace(/[\s\u00a0\u202f]/g, "")
+    .replace(new RegExp(`^(?:${escaped})\\s*|\\s*(?:${escaped})$`, "gi"), "")
+    .replace(/\u066b/g, ".").replace(/\u066c/g, ",")
+    .replace(/[\s\u00a0\u202f'’]/g, "")
     .replace(/^\+/, "");
-  if (!/^(?:\d+(?:[.,]\d+)*|[.,]\d{1,2})$/.test(value))
+  if (!new RegExp(`^(?:\\d+(?:[.,]\\d+)*|[.,]\\d{1,${Math.max(1, precision)}})$`).test(value))
     throw new Error("finance_clipboard_invalid");
   const comma = value.lastIndexOf(","),
     dot = value.lastIndexOf(".");
@@ -239,23 +251,26 @@ export function parseClipboardAmount(raw: string): number | null {
     const parts = value.split(decimal);
     if (
       parts.length !== 2 ||
-      !/^\d{1,2}$/.test(parts[1]) ||
-      !new RegExp("^\\d{1,3}(\\" + group + "\\d{3})+$").test(parts[0])
+      precision === 0 || !new RegExp(`^\\d{1,${precision}}$`).test(parts[1]) ||
+      !(new RegExp("^\\d{1,3}(\\" + group + "\\d{3})+$").test(parts[0]) ||
+        (group === "," && /^\d{1,2}(?:,\d{2})*,\d{3}$/.test(parts[0])))
     )
       throw new Error("finance_clipboard_invalid");
     value = parts[0].split(group).join("") + "." + parts[1];
   } else if (comma >= 0 || dot >= 0) {
     const separator = comma >= 0 ? "," : ".",
       parts = value.split(separator);
-    if (parts.length === 2 && parts[1].length <= 2) value = (parts[0] || "0") + "." + parts[1];
+    if (parts.length === 2 && parts[1].length <= precision) value = (parts[0] || "0") + "." + parts[1];
     else if (/^\d{1,3}$/.test(parts[0]) && parts.slice(1).every((part) => /^\d{3}$/.test(part)))
       value = parts.join("");
+    else if (separator === "," && /^\d{1,2}(?:,\d{2})*,\d{3}$/.test(value)) value = parts.join("");
     else throw new Error("finance_clipboard_invalid");
   }
   const number = Number(value);
   if (!Number.isFinite(number) || number < 0 || number > 1e12)
     throw new Error("finance_clipboard_invalid");
-  return Math.round(number * 100) / 100;
+  const scale = 10 ** precision;
+  return Math.round(number * scale) / scale;
 }
 export function prepareFinancePaste(
   text: string,
@@ -266,10 +281,11 @@ export function prepareFinancePaste(
   metadata?: FinanceClipboard,
   section?: "income" | "expense",
   appendName?: string,
+  currency = "TRY",
 ) {
   if (text.length > 250000) throw new Error("finance_clipboard_too_large");
   if (selectionBounds(selection).left === -1)
-    return prepareNamedPaste(text, rows, entries, year, selection, metadata, section);
+    return prepareNamedPaste(text, rows, entries, year, selection, metadata, section, currency);
   if (metadata?.rowNames) throw new Error("finance_clipboard_name_target");
   const lines = text.replace(/\r\n?/g, "\n").replace(/\n+$/, "").split("\n");
   if (lines.length > 1200) throw new Error("finance_clipboard_too_large");
@@ -285,7 +301,7 @@ export function prepareFinancePaste(
             : null,
         ),
       )
-    : lines.map((line) => line.split("\t").map(parseClipboardAmount));
+    : lines.map((line) => line.split("\t").map((value) => parseClipboardAmount(value, currency)));
   let appendedRows: PastedRow[] | undefined;
   if (appendName && section && selectionBounds(selection).top === rows.length) {
     appendedRows = matrix.map((_, index) => ({
@@ -399,6 +415,7 @@ function prepareNamedPaste(
   selection: GridSelection,
   metadata?: FinanceClipboard,
   section?: "income" | "expense",
+  currency = "TRY",
 ) {
   if (metadata && !metadata.rowNames) throw new Error("finance_clipboard_name_target");
   const matrix = metadata?.rowNames
@@ -448,7 +465,7 @@ function prepareNamedPaste(
         ? records.length
           ? records.reduce((sum, record) => sum + Math.round(record.amount * 100), 0) / 100
           : null
-        : parseClipboardAmount(matrix[y][col + 1] || "");
+        : parseClipboardAmount(matrix[y][col + 1] || "", currency);
       if (amount === null) continue;
       const existing = target ? cellEntries(entries, target.id, year, targetColumns[col]) : [];
       if (existing.length > 1) throw new Error("finance_clipboard_multiple");

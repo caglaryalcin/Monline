@@ -12,14 +12,15 @@ import {
 } from "recharts";
 
 import { Button } from "@/components/ui/button";
+import { useFinanceCurrencyValue } from "@/contexts/FinanceCurrencyContext";
 import { type FinanceData, salaryAnalysis, type SalaryTag } from "@/lib/finance";
 import { resolveLocale } from "@/lib/locale";
 import { SALARY_TAG_STYLES } from "@/lib/salaryTagStyles";
-import { cn, formatCurrency, formatMultiplier } from "@/lib/utils";
+import { cn, formatCurrency, formatMultiplier, getCurrencyFractionDigits } from "@/lib/utils";
 
 type SalaryChartId = "rates" | "currency" | "minimum" | "multiple";
 type ChartKey = "salary" | "usdSalary" | "eurSalary" | "minimumWage" | "multiple";
-type ChartUnit = "TRY" | "USD" | "EUR" | "multiple";
+type ChartUnit = string;
 type ChartSeries = { key: ChartKey; label: string; color: string; unit: ChartUnit };
 type ChartPoint = { month: string; salaryTag?: SalaryTag | "" } & Record<ChartKey, number | null>;
 
@@ -126,6 +127,7 @@ export function FinanceSalaryCharts({
   decimalPlaces: number;
 }) {
   const { t, i18n } = useTranslation();
+  const currency = useFinanceCurrencyValue();
   const gradientId = `salary-${useId().replace(/:/g, "")}`;
   const [allYears, setAllYears] = useState(true);
   const [selectedChart, setSelectedChart] = useState<SalaryChartId>("rates");
@@ -151,14 +153,14 @@ export function FinanceSalaryCharts({
       : months.slice(firstIndex, lastIndex + 1).map((month) => ({
           month: month.month,
           salaryTag: month.reference?.salary_tag,
-          salary: month.salary,
+          salary: month.salary == null ? null : currency.toDisplay(month.salary),
           usdSalary: month.usd,
           eurSalary: month.eur,
           minimumWage:
             month.salary != null &&
             month.reference?.minimum_wage &&
             month.reference.minimum_wage > 0
-              ? month.reference.minimum_wage
+              ? currency.toDisplay(month.reference.minimum_wage)
               : null,
           multiple: month.minimum,
         }));
@@ -178,14 +180,14 @@ export function FinanceSalaryCharts({
     unit === "multiple"
       ? formatMultiplier(value)
       : formatCurrency(value, unit, {
-          minimumFractionDigits: decimalPlaces,
-          maximumFractionDigits: decimalPlaces,
+          minimumFractionDigits: decimalPlaces === 0 ? 0 : getCurrencyFractionDigits(unit),
+          maximumFractionDigits: decimalPlaces === 0 ? 0 : getCurrencyFractionDigits(unit),
         });
   const salary: ChartSeries = {
     key: "salary",
     label: t("finance_salary_chart_salary_tl"),
     color: "var(--salary-chart-tl)",
-    unit: "TRY",
+    unit: currency.currency,
   };
   const charts: Record<SalaryChartId, { id: SalaryChartId; title: string; series: ChartSeries[] }> =
     {
@@ -234,7 +236,7 @@ export function FinanceSalaryCharts({
             key: "minimumWage",
             label: t("finance_salary_chart_minimum_wage"),
             color: "var(--salary-chart-minimum)",
-            unit: "TRY",
+            unit: currency.currency,
           },
           salary,
         ],

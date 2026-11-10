@@ -23,6 +23,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { ThemedSelect } from "@/components/ui/themed-select";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFinanceCurrency } from "@/hooks/useFinanceCurrency";
 import { useNumberLocale } from "@/hooks/useNumberLocale";
 import { resolveDateLocale } from "@/lib/locale";
 import { formatNumber } from "@/lib/numberFormat";
@@ -33,12 +34,14 @@ import { savingsService } from "@/services/savings";
 export function SavingsPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const mainCurrency = useFinanceCurrency({ convert: false });
   const locale = useNumberLocale();
   const dateLocale = resolveDateLocale(i18n, user?.country);
   const queryClient = useQueryClient();
   const key = ["savings", user?.id];
   const ratesKey = ["savings-rates", user?.id, "fixer"];
-  const [currency, setCurrency] = useState("TRY");
+  const [selection, setSelection] = useState<{ owner: string; currency: string } | null>(null);
+  const currency = selection && selection.owner === user?.id ? selection.currency : mainCurrency.currency;
   const [editor, setEditor] = useState<{ saving?: Saving } | null>(null);
   const [editorPending, setEditorPending] = useState(false);
   const [deleting, setDeleting] = useState<Saving | null>(null);
@@ -89,7 +92,7 @@ export function SavingsPage() {
           <div className="flex items-center gap-2">
             <Label htmlFor="savings-display-currency" className="text-xs text-muted-foreground">{t("savings_display_currency")}</Label>
             <ThemedSelect id="savings-display-currency" value={currency} className="h-10 min-w-28 rounded-xl"
-              onChange={(event) => setCurrency(event.target.value)}>
+              onChange={(event) => setSelection({ owner: user?.id || "", currency: event.target.value })}>
               {currencyOptions.map((code) => {
                 const symbol = getCurrencySymbol(code, locale);
                 return <option key={code} value={code}>{symbol === code ? code : `${code} (${symbol})`}</option>;
@@ -104,10 +107,10 @@ export function SavingsPage() {
         </div>
       </div>
 
-      {holdings.isPending ? <PageLoading /> : holdings.isError ? (
+      {holdings.isPending || mainCurrency.currencies.isPending ? <PageLoading /> : holdings.isError || !mainCurrency.main ? (
         <div role="alert" className="rounded-xl border border-destructive/30 p-5 text-sm">
           <p>{t("savings_load_error")}</p>
-          <Button className="mt-3" variant="outline" onClick={() => void holdings.refetch()}>{t("savings_retry")}</Button>
+          <Button className="mt-3" variant="outline" onClick={() => void Promise.all([holdings.refetch(), mainCurrency.currencies.refetch()])}>{t("savings_retry")}</Button>
         </div>
       ) : <>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] gap-4">

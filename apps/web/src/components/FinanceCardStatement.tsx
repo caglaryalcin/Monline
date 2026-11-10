@@ -1,11 +1,12 @@
 import { Pencil, Plus, Redo2, Trash2, Undo2 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useFinanceCurrencyValue } from "@/contexts/FinanceCurrencyContext";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import type { FinanceCardTransaction, FinanceRow } from "@/lib/finance";
 import { parseClipboardAmount } from "@/lib/financeClipboard";
@@ -43,6 +44,8 @@ export function FinanceCardStatement({
   canUndo: boolean;
   canRedo: boolean;
 }) {
+  const liveCurrency = useFinanceCurrencyValue();
+  const currency = useRef(liveCurrency).current;
   const [editing, setEditing] = useState<FinanceCardTransaction | null>(null);
   const [revision, setRevision] = useState(0);
   const [invalid, setInvalid] = useState<"" | "purchase_invalid" | "invalid_card_transaction">("");
@@ -99,7 +102,7 @@ export function FinanceCardStatement({
           const form = new FormData(event.currentTarget);
           let amount: number | null;
           try {
-            amount = parseClipboardAmount(String(form.get("amount") || ""));
+            amount = parseClipboardAmount(String(form.get("amount") || ""), currency.currency);
           } catch {
             setInvalid("purchase_invalid");
             return;
@@ -122,7 +125,7 @@ export function FinanceCardStatement({
                 month,
                 date: String(form.get("date")),
                 merchant,
-                amount,
+                amount: currency.toStored(amount, editing?.amount),
                 notes: String(form.get("notes") || ""),
               },
               editing?.id,
@@ -132,7 +135,7 @@ export function FinanceCardStatement({
           });
         }}
       >
-        <fieldset disabled={pending} className="space-y-3">
+        <fieldset disabled={pending || !currency.available || currency.currency !== liveCurrency.currency} className="space-y-3">
           <h3 className="text-sm font-semibold">
             {label(editing ? "edit_purchase" : "add_purchase")}
           </h3>
@@ -169,11 +172,11 @@ export function FinanceCardStatement({
                 maxLength={32}
                 className="text-right tabular-nums"
                 defaultValue={
-                  editing
-                    ? formatNumber(editing.amount, {
+                  editing && currency.available
+                    ? formatNumber(currency.toDisplay(editing.amount)!, {
                         useGrouping: false,
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
+                        minimumFractionDigits: currency.precision,
+                        maximumFractionDigits: currency.precision,
                       })
                     : ""
                 }

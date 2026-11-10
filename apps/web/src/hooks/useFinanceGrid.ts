@@ -21,6 +21,7 @@ import {
   selectionRows,
   toggleSelectionCells,
 } from "@/lib/financeClipboard";
+import type { financeCurrencyQuote } from "@/lib/financeCurrency";
 import { type FinanceCellSnapshot, financeService } from "@/services/finance";
 
 type GridContext = {x:number;y:number} & (
@@ -41,6 +42,7 @@ export function useFinanceGrid({
   year,
   language,
   locked = false,
+  displayCurrency,
   applyPaste = financeService.pasteCells,
   applyCellAction = financeService.cellAction,
   statementLinks = [],
@@ -54,6 +56,7 @@ export function useFinanceGrid({
   year: number;
   language: string;
   locked?: boolean;
+  displayCurrency?: ReturnType<typeof financeCurrencyQuote>;
   applyPaste?: typeof financeService.pasteCells;
   applyCellAction?: typeof financeService.cellAction;
   statementLinks?: FinanceData["finance_statement_links"];
@@ -387,9 +390,12 @@ export function useFinanceGrid({
     rows[selectionBounds(selection).top] &&
     (columnAnchor.current?.section !== "income" || rows.some((row) => row.kind !== "expense")) &&
     (columnAnchor.current?.section !== "expense" || rows.some((row) => row.kind === "expense"));
+  const formatClipboardAmount = displayCurrency ? (amount: number) =>
+    new Intl.NumberFormat(language, { useGrouping: false, minimumFractionDigits: displayCurrency.precision,
+      maximumFractionDigits: displayCurrency.precision }).format(displayCurrency.toDisplay(amount)!) : undefined;
   const clipboardText = () =>
-    selection && hasSelectedRows()
-      ? copyFinanceCells(rows, entries, year, selection, language)
+    selection && hasSelectedRows() && (!displayCurrency || displayCurrency.available)
+      ? copyFinanceCells(rows, entries, year, selection, language, formatClipboardAmount)
       : "";
   const clipboardPayload = () =>
     selection && hasSelectedRows()
@@ -438,7 +444,12 @@ export function useFinanceGrid({
         columnAnchor.current?.append
           ? t(section === "expense" ? "finance_new_expense" : "finance_new_income")
           : undefined,
+        displayCurrency?.currency,
       );
+      if (!metadata && displayCurrency)
+        plan.cells = plan.cells.map((cell) => ({ ...cell,
+          amount: displayCurrency.toStored(cell.amount, cell.expected_amount ?? undefined),
+        }));
       saving.current = true;
       setBusy(true);
       const result = plan.rows
@@ -462,7 +473,7 @@ export function useFinanceGrid({
     transfer.setData("text/plain", text);
     if (metadata) {
       transfer.setData(FINANCE_CLIPBOARD_TYPE, JSON.stringify(metadata));
-      transfer.setData("text/html", clipboardHtml(metadata));
+      transfer.setData("text/html", clipboardHtml(metadata, formatClipboardAmount));
     }
   };
   const copy = async (value?: { text: string; metadata?: FinanceClipboard }, silent = false) => {
@@ -472,7 +483,7 @@ export function useFinanceGrid({
         await navigator.clipboard.write([
           new ClipboardItem({
             "text/plain": new Blob([text], { type: "text/plain" }),
-            "text/html": new Blob([clipboardHtml(metadata)], { type: "text/html" }),
+            "text/html": new Blob([clipboardHtml(metadata, formatClipboardAmount)], { type: "text/html" }),
           }),
         ]);
       else await navigator.clipboard.writeText(text);
