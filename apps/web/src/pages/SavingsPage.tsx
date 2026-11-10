@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { ThemedSelect } from "@/components/ui/themed-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNumberLocale } from "@/hooks/useNumberLocale";
-import { resolveLocale } from "@/lib/locale";
+import { resolveDateLocale } from "@/lib/locale";
 import { formatNumber } from "@/lib/numberFormat";
 import { isGoldSavingsAsset, isSavingsCurrency, type Saving, savingsPrecision, savingsUnitRate, savingsValue } from "@/lib/savings";
 import { cn, formatCurrency, getCurrencyFractionDigits, getCurrencySymbol } from "@/lib/utils";
@@ -33,11 +33,7 @@ export function SavingsPage() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const locale = useNumberLocale();
-  const language = resolveLocale(i18n);
-  const country = user?.country;
-  const dateLocale = country && /^[a-z]{2}$/i.test(country)
-    ? new Intl.Locale(language, { region: country.toUpperCase() }).toString()
-    : language;
+  const dateLocale = resolveDateLocale(i18n, user?.country);
   const queryClient = useQueryClient();
   const key = ["savings", user?.id];
   const ratesKey = ["savings-rates", user?.id, "fixer"];

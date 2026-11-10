@@ -1,4 +1,4 @@
-import { ExternalLink, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,6 @@ import { Input } from "@/components/ui/input";
 interface FixerApiKeyFieldProps {
   apiKey: string;
   apiKeyConfigured: boolean;
-  provider: "fixer" | "apilayer";
-  providerLink: string;
   removeStoredApiKey: boolean;
   onApiKeyChange: (value: string) => void;
   onRemoveStoredApiKey: () => void;
@@ -17,8 +15,6 @@ interface FixerApiKeyFieldProps {
 export function FixerApiKeyField({
   apiKey,
   apiKeyConfigured,
-  provider,
-  providerLink,
   removeStoredApiKey,
   onApiKeyChange,
   onRemoveStoredApiKey,
@@ -63,15 +59,6 @@ export function FixerApiKeyField({
             : ""}
       </p>
 
-      <a
-        href={providerLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 text-xs text-primary mt-1"
-      >
-        {t("get_free_api_key")} {provider === "fixer" ? "Fixer.io" : "APILayer"}
-        <ExternalLink className="w-3 h-3" />
-      </a>
     </div>
   );
 }

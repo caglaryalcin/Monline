@@ -5,3 +5,14 @@ export function resolveLocale(
 ) {
   return (language?.resolvedLanguage || language?.language || fallback).replace(/_/g, "-");
 }
+
+/** Dates use the selected interface language and profile country. */
+export function resolveDateLocale(
+  language: { resolvedLanguage?: string; language?: string } | undefined,
+  country?: string,
+) {
+  const locale = resolveLocale(language);
+  return country && /^[a-z]{2}$/i.test(country)
+    ? new Intl.Locale(locale, { region: country.toUpperCase() }).toString()
+    : locale;
+}

@@ -10,9 +10,11 @@ import { useNumberLocale } from "@/hooks/useNumberLocale";
 import client from "@/lib/client";
 import { financeOverview, type FinanceOverviewStatement } from "@/lib/financeOverview";
 import { resolveLocale } from "@/lib/locale";
+import { spendingKey } from "@/lib/spending";
 import { formatCurrency } from "@/lib/utils";
 import { financeService } from "@/services/finance";
 import { savingsService } from "@/services/savings";
+import { spendingService } from "@/services/spending";
 
 export function FinanceOverview() {
   const { user } = useAuth();
@@ -29,8 +31,12 @@ export function FinanceOverview() {
     queryFn: () => client.collection("bank_statements").getFullList<FinanceOverviewStatement>({ fields: "id,period,summary", sort: "-period,-created" }),
     enabled: enabled && needsStatements,
   });
+  const needsCardSpending = !!ledger.data?.finance_rows.some((row) => !row.is_deleted && row.expense_type === "credit_card");
+  const spending = useQuery({ queryKey: spendingKey(userId), queryFn: spendingService.get, enabled: enabled && needsCardSpending });
   const savings = useQuery({ queryKey: ["savings", userId], queryFn: savingsService.list, enabled });
-  const needsRates = !!savings.data?.some((saving) => saving.asset !== "TRY");
+  const needsRates = !!savings.data?.some((saving) => saving.asset !== "TRY") ||
+    !!spending.data?.installments.some((plan) => plan.row_id && plan.currency !== "TRY") ||
+    !!spending.data?.events.some((event) => event.card_row_id && event.currency !== "TRY");
   const rates = useQuery({
     queryKey: ["savings-rates", userId, "fixer"], queryFn: savingsService.rates,
     enabled: enabled && needsRates, staleTime: 60000, refetchInterval: 5 * 60 * 1000,
@@ -40,6 +46,7 @@ export function FinanceOverview() {
     ledger: ledger.isError ? undefined : ledger.data,
     savings: savings.isError ? undefined : savings.data,
     statements: needsStatements ? (statements.isError ? undefined : statements.data) : [],
+    spending: spending.isError ? undefined : spending.data,
     rates: rates.data,
   });
   const monthLabel = new Intl.DateTimeFormat(resolveLocale(i18n), { month: "long", year: "numeric" })
@@ -47,10 +54,11 @@ export function FinanceOverview() {
   const money = (value: number | null) => value === null ? "—" : formatCurrency(value, "TRY", { locale: numberLocale });
   const rateLoading = needsRates && rates.isPending;
   const cashLoading = ledger.isPending;
-  const debtLoading = ledger.isPending || (needsStatements && statements.isPending);
+  const debtLoading = ledger.isPending || (needsStatements && statements.isPending) ||
+    (needsCardSpending && spending.isPending) || (needsRates && rates.isPending);
   const assetLoading = savings.isPending || rateLoading;
   const failed = ledger.isError || savings.isError ||
-    (needsStatements && statements.isError) || (needsRates && rates.isError);
+    (needsStatements && statements.isError) || (needsCardSpending && spending.isError) || (needsRates && rates.isError);
 
   return (
     <div className="space-y-6">
@@ -63,6 +71,7 @@ export function FinanceOverview() {
         <Button variant="outline" size="sm" onClick={() => void Promise.all([
           ledger.refetch(), savings.refetch(),
           ...(needsStatements ? [statements.refetch()] : []),
+          ...(needsCardSpending ? [spending.refetch()] : []),
           ...(needsRates ? [rates.refetch()] : []),
         ])}>{t("savings_retry")}</Button>
       </div>}

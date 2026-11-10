@@ -63,7 +63,6 @@ export function AdminPage() {
               <ApiKeyTab preferenceOwnerId={user?.id} />
             </section>
             <section className="space-y-4 border-t pt-6">
-              <h3 className="text-lg font-semibold">{t("fixer_api")}</h3>
               <FixerTab />
             </section>
           </div>

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -90,24 +91,36 @@ export function FixerTab() {
   const canSave = removeStoredApiKey || apiKey.trim().length > 0 || isKeySavedOnServer;
   const canUpdateRates = !removeStoredApiKey && (isKeySavedOnServer || apiKey.trim().length > 0);
 
-  if (isPending) return <p role="status">{t("loading")}</p>;
-  if (isError)
+  const heading = (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <h3 className="text-lg font-semibold">{t("fixer_api")}</h3>
+      <a href={FIXER_PROVIDER_LINKS[provider]} target="_blank" rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-xs text-primary">
+        {t("get_free_api_key")} {provider === "fixer" ? "Fixer.io" : "APILayer"}
+        <ExternalLink className="h-3 w-3" aria-hidden="true" />
+      </a>
+    </div>
+  );
+
+  if (isPending || isError)
     return (
-      <p role="alert" className="text-sm text-destructive">
-        {t("admin_config_load_error")}
-      </p>
+      <div className="space-y-4">
+        {heading}
+        {isPending ? <p role="status">{t("loading")}</p> : (
+          <p role="alert" className="text-sm text-destructive">{t("admin_config_load_error")}</p>
+        )}
+      </div>
     );
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {heading}
       <div className="space-y-6 ">
         <FixerProviderSelect provider={provider} onProviderChange={setProvider} />
 
         <FixerApiKeyField
           apiKey={apiKey}
           apiKeyConfigured={isKeySavedOnServer}
-          provider={provider}
-          providerLink={FIXER_PROVIDER_LINKS[provider]}
           removeStoredApiKey={removeStoredApiKey}
           onApiKeyChange={(value) => {
             setApiKey(value);
