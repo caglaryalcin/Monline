@@ -107,6 +107,10 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 5173,
+    // Windows may lock animation files during conversion. Avoid fs.watch EBUSY.
+    watch: process.platform === "win32"
+      ? { usePolling: true, interval: 300, binaryInterval: 1000 }
+      : undefined,
     proxy: {
       "/api": {
         target:
