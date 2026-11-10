@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
+import { FinanceAnimationIcon } from "@/components/FinanceAnimationIcon";
 import { PageLoading } from "@/components/PageLoading";
 import { SavingsEditor } from "@/components/SavingsEditor";
 import {
@@ -115,20 +116,22 @@ export function SavingsPage() {
               ? isGoldSavingsAsset(saving.asset) : saving.asset === id);
             const unavailable = items.some((item) => item.value === null);
             const sum = items.reduce((value, item) => value + Math.round((item.value || 0) * scale), 0) / scale;
-            return <SummaryCard
-              key={id}
-              title={t(label, { defaultValue: id })}
-              value={unavailable ? "—" : money(sum)}
-              icon={<Icon aria-hidden="true" />}
-              accent={accent}
-              description={t("savings_entry_count", { count: items.length })}
-            />;
+            const animation = id === "gold" ? "gold" : id === "USD" ? "dollar" : id === "EUR" ? "euro" : null;
+            return <div key={id} className={cn("min-w-0", animation && "finance-animated-card")}>
+              <SummaryCard
+                title={t(label, { defaultValue: id })}
+                value={unavailable ? "—" : money(sum)}
+                icon={animation ? <FinanceAnimationIcon asset={animation} /> : <Icon aria-hidden="true" />}
+                accent={accent}
+                description={t("savings_entry_count", { count: items.length })}
+              />
+            </div>;
           })}
-          <div className="[grid-column-end:-1]">
+          <div className="finance-animated-card [grid-column-end:-1]">
             <SummaryCard
               title={t(missing ? "savings_partial_total" : "savings_total")}
               value={records.length > 0 && missing === records.length ? "—" : money(total)}
-              icon={<span aria-hidden="true" className="inline-flex h-[22px] w-[22px] items-center justify-center text-xl leading-none">💰</span>}
+              icon={<FinanceAnimationIcon asset="wallet" />}
               accent="139 92 246"
               description={t("savings_entry_count", { count: records.length })}
             />
@@ -143,11 +146,9 @@ export function SavingsPage() {
         </div> : <div className="space-y-3">
           {valued.map(({ saving, value }) => {
             const isCurrency = isSavingsCurrency(saving.asset);
-            const Icon = saving.asset === "USD" ? DollarSign : saving.asset === "EUR" ? Euro : isCurrency ? Banknote : Coins;
             const unit = isCurrency ? saving.asset === "TRY" ? "TL" : saving.asset : t(saving.asset === "GRA" ? "savings_unit_gram" : "savings_unit_piece");
             const rate = savingsUnitRate(saving.asset, rates.data, currency);
             return <article key={saving.id} className="flex flex-wrap items-center gap-4 rounded-2xl border bg-card p-4 sm:p-5">
-              <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", isCurrency ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-600 dark:text-amber-400")}><Icon className="h-5 w-5" /></div>
               <div className="min-w-0 flex-1 basis-36">
                 <h2 className="break-words font-semibold">{saving.name}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">{t(`savings_asset_${saving.asset}`, { defaultValue: saving.asset })} · {formatNumber(saving.quantity, { maximumFractionDigits: savingsPrecision(saving.asset) }, locale)} {unit}</p>

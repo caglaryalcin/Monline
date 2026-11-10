@@ -552,6 +552,15 @@ html[data-theme-changing] *::after {
   color: rgb(var(--summary-accent));
   background: rgb(var(--summary-accent) / 0.16);
 }
+.finance-animated-card .summary-card-icon {
+  display: flex;
+  width: 45px;
+  height: 45px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+}
 .finance-salary-charts {
   --salary-chart-tl: #a16207;
   --salary-chart-usd: #0284c7;

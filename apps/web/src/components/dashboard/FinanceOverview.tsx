@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownLeft, ArrowUpRight, Landmark, Lightbulb, Scale, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Lightbulb, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
+import { FinanceAnimationIcon } from "@/components/FinanceAnimationIcon";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalToday } from "@/hooks/useLocalToday";
@@ -95,13 +96,19 @@ export function FinanceOverview() {
           <span className="text-sm text-muted-foreground">{t("finance_workspace_recorded")}</span>
         </div>
         <div className="grid gap-3 sm:grid-cols-3">
-          <SummaryCard title={t("savings_total")} value={money(summary.assets)}
-            icon={<span aria-hidden="true" className="inline-flex h-[22px] w-[22px] items-center justify-center text-xl leading-none">💰</span>}
-            accent="139 92 246" loading={assetLoading} description={t("finance_workspace_savings")} />
-          <SummaryCard title={t("finance_workspace_total_debts")} value={money(summary.debts)}
-            icon={<Landmark />} accent="249 115 22" loading={debtLoading} description={t("finance_workspace_debt_formula")} />
-          <SummaryCard title={t("finance_workspace_net")} value={money(summary.net)}
-            icon={<Scale />} accent="20 184 166" loading={assetLoading || debtLoading} description={t("finance_workspace_net_formula")} />
+          <div className="finance-animated-card min-w-0">
+            <SummaryCard title={t("savings_total")} value={money(summary.assets)}
+              icon={<FinanceAnimationIcon asset="wallet" />}
+              accent="139 92 246" loading={assetLoading} description={t("finance_workspace_savings")} />
+          </div>
+          <div className="finance-animated-card min-w-0">
+            <SummaryCard title={t("finance_workspace_total_debts")} value={money(summary.debts)}
+              icon={<FinanceAnimationIcon asset="receipt" />} accent="249 115 22" loading={debtLoading} description={t("finance_workspace_debt_formula")} />
+          </div>
+          <div className="finance-animated-card min-w-0">
+            <SummaryCard title={t("finance_workspace_net")} value={money(summary.net)}
+              icon={<FinanceAnimationIcon asset="banknote" />} accent="20 184 166" loading={assetLoading || debtLoading} description={t("finance_workspace_net_formula")} />
+          </div>
         </div>
         {!assetLoading && !debtLoading && (summary.assets === null || summary.debts === null) &&
           <p role="status" className="text-xs text-amber-700 dark:text-amber-400">{t("finance_workspace_incomplete")}</p>}

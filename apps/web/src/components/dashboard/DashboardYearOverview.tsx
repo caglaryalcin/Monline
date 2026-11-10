@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CreditCard, Globe, Landmark, Lightbulb, TrendingUp } from "lucide-react";
+import { Globe, Lightbulb } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { DashboardSidebarData } from "@/components/dashboard/DashboardPaymentSidebar";
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
 import { YearHistoryCard } from "@/components/dashboard/YearHistoryCard";
+import { FinanceAnimationIcon } from "@/components/FinanceAnimationIcon";
 import { PageLoading } from "@/components/PageLoading";
 import { Button } from "@/components/ui/button";
 import { ThemedSelect } from "@/components/ui/themed-select";
@@ -327,14 +328,16 @@ export function DashboardYearOverview({
             </div>
           )}
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <SummaryCard
-              title={t("dashboard_year_cards_paid")}
-              year={year}
-              value={finance.isError ? "-" : formatTotals("cards")}
-              icon={<CreditCard className="h-6 w-6" />}
-              loading={finance.isPending}
-              accent="var(--chart-2)"
-            />
+            <div className="finance-animated-card min-w-0">
+              <SummaryCard
+                title={t("dashboard_year_cards_paid")}
+                year={year}
+                value={finance.isError ? "-" : formatTotals("cards")}
+                icon={<FinanceAnimationIcon asset="credit-card" />}
+                loading={finance.isPending}
+                accent="var(--chart-2)"
+              />
+            </div>
             <SummaryCard
               title={t("dashboard_year_online_paid")}
               year={year}
@@ -343,40 +346,44 @@ export function DashboardYearOverview({
               loading={onlineLoading}
               accent="var(--chart-3)"
             />
-            <SummaryCard
-              title={t("dashboard_year_loans_paid")}
-              year={year}
-              value={finance.isError ? "-" : formatTotals("loans")}
-              icon={<Landmark className="h-6 w-6" />}
-              loading={finance.isPending}
-              accent="var(--chart-2)"
-            />
-            <SummaryCard
-              title={t("dashboard_year_raise")}
-              year={year}
-              value={
-                finance.isError || salary.change == null
-                  ? "-"
-                  : numberFormatter({
-                      style: "percent",
-                      maximumFractionDigits: 1,
-                      signDisplay: "exceptZero",
-                    }).format(salary.change / 100)
-              }
-              icon={<TrendingUp className="h-6 w-6" />}
-              loading={finance.isPending}
-              accent="var(--chart-1)"
-              comparison={
-                finance.isError
-                  ? undefined
-                  : {
-                      value: minimumWageText,
-                      label: t("dashboard_year_minimum_wage_label"),
-                      title: minimumWageTitle,
-                    }
-              }
-              valueLabel={t("finance_salary")}
-            />
+            <div className="finance-animated-card min-w-0">
+              <SummaryCard
+                title={t("dashboard_year_loans_paid")}
+                year={year}
+                value={finance.isError ? "-" : formatTotals("loans")}
+                icon={<FinanceAnimationIcon asset="loans" />}
+                loading={finance.isPending}
+                accent="var(--chart-2)"
+              />
+            </div>
+            <div className="finance-animated-card min-w-0">
+              <SummaryCard
+                title={t("dashboard_year_raise")}
+                year={year}
+                value={
+                  finance.isError || salary.change == null
+                    ? "-"
+                    : numberFormatter({
+                        style: "percent",
+                        maximumFractionDigits: 1,
+                        signDisplay: "exceptZero",
+                      }).format(salary.change / 100)
+                }
+                icon={<FinanceAnimationIcon asset="raise" />}
+                loading={finance.isPending}
+                accent="var(--chart-1)"
+                comparison={
+                  finance.isError
+                    ? undefined
+                    : {
+                        value: minimumWageText,
+                        label: t("dashboard_year_minimum_wage_label"),
+                        title: minimumWageTitle,
+                      }
+                }
+                valueLabel={t("finance_salary")}
+              />
+            </div>
           </div>
           {missingAmounts > 0 && (
             <p role="status" className="text-xs text-amber-700 dark:text-amber-400">

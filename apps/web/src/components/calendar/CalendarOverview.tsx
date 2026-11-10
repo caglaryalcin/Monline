@@ -1,7 +1,8 @@
-import { RefreshCw, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { RefreshCw, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { StatCard } from "@/components/calendar/StatCard";
+import { FinanceAnimationIcon } from "@/components/FinanceAnimationIcon";
 import { InfoButton } from "@/components/ui/info-button";
 import { formatPrice } from "@/lib/utils";
 import type { Currency } from "@/types";
@@ -75,9 +76,9 @@ export function CalendarOverview({
           loading={loading}
         />
         <StatCard
-          icon={<TrendingUp className="h-5 w-5" />}
+          icon={<FinanceAnimationIcon asset="wallet" />}
           highlight
-          iconClass="bg-blue-500/20 text-blue-500"
+          iconClass="bg-transparent p-0 shadow-none sm:p-0"
           label={
             <span className="inline-flex items-center gap-1">
               {t("calendar_income_total")}
@@ -95,9 +96,9 @@ export function CalendarOverview({
           loading={loading || financeLoading}
         />
         <StatCard
-          icon={<TrendingDown className="h-5 w-5" />}
+          icon={<FinanceAnimationIcon asset="receipt" />}
           highlight
-          iconClass="bg-amber-500/20 text-amber-500"
+          iconClass="bg-transparent p-0 shadow-none sm:p-0"
           label={
             <span className="inline-flex items-center gap-1">
               {t("calendar_expense_total")}
