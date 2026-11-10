@@ -30,6 +30,10 @@ const OIDCCallbackPage = lazyRouteComponent(
 
 const DashboardPage = lazyRouteComponent(() => import("@/pages/DashboardPage"), "DashboardPage");
 const FinancePage = lazyRouteComponent(() => import("@/pages/FinancePage"), "FinancePage");
+const FinanceOverview = lazyRouteComponent(
+  () => import("@/components/dashboard/FinanceOverview"),
+  "FinanceOverview",
+);
 const AboutPage = lazyRouteComponent(() => import("@/pages/AboutPage"), "AboutPage");
 const SubscriptionsPage = lazyRouteComponent(
   () => import("@/pages/SubscriptionsPage"),
@@ -38,6 +42,7 @@ const SubscriptionsPage = lazyRouteComponent(
 const CalendarPage = lazyRouteComponent(() => import("@/pages/CalendarPage"), "CalendarPage");
 const StatisticsPage = lazyRouteComponent(() => import("@/pages/StatisticsPage"), "StatisticsPage");
 const DebtPage = lazyRouteComponent(() => import("@/pages/DebtPage"), "DebtPage");
+const SavingsPage = lazyRouteComponent(() => import("@/pages/SavingsPage"), "SavingsPage");
 const StatementsPage = lazyRouteComponent(() => import("@/pages/StatementsPage"), "StatementsPage");
 const StatementDetailPage = lazyRouteComponent(
   () => import("@/pages/StatementsPage"),
@@ -152,6 +157,11 @@ const financeRoute = createRoute({
   path: "/finance",
   component: FinancePage,
 });
+const financeOverviewRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: "/finance/overview",
+  component: FinanceOverview,
+});
 
 const aboutRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
@@ -196,6 +206,11 @@ const statementsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: "/statements",
   component: StatementsPage,
+});
+const savingsRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: "/savings",
+  component: SavingsPage,
 });
 
 export const settingsRoute = createRoute({
@@ -249,11 +264,13 @@ const routeTree = rootRoute.addChildren([
     indexRoute,
     dashboardRoute,
     financeRoute,
+    financeOverviewRoute,
     aboutRoute,
     subscriptionsRoute,
     calendarRoute,
     statisticsRoute,
     debtRoute,
+    savingsRoute,
     dataTransferRoute,
     statementsRoute,
     statementDetailRoute,

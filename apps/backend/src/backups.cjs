@@ -230,7 +230,8 @@ function validateDatabase(file, { allowV1Schema = false } = {}) {
       );
       if (
         !columns.size &&
-        (["budget_matches", "calendar_moves", "sharing_groups"].includes(entry.name) ||
+        // Additive collections are absent from backups made before they existed.
+        (["budget_matches", "calendar_moves", "sharing_groups", "savings"].includes(entry.name) ||
           (allowV1Schema && V2_COLLECTIONS.has(entry.name)))
       )
         continue;

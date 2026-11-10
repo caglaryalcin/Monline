@@ -114,6 +114,18 @@
   overscroll-behavior-y: contain;
 }
 
+/* All finance sections share the workbook's original full-width frame. */
+.monline-page.monline-finance-workspace {
+  max-width: none;
+  padding: 20px;
+}
+
+@media (max-width: 767px) {
+  .monline-page.monline-finance-workspace {
+    padding: 8px;
+  }
+}
+
 @media (min-width: 1280px) {
   .monline-page.monline-dashboard-content {
     padding-bottom: max(30px, env(safe-area-inset-bottom));

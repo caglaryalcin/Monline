@@ -3,7 +3,6 @@ import {
   BarChart2,
   Calendar,
   CreditCard,
-  FileText,
   Landmark,
   LayoutDashboard,
   Menu,
@@ -15,6 +14,7 @@ import { type CSSProperties, Suspense, useEffect, useRef, useState } from "react
 import { useTranslation } from "react-i18next";
 
 import { LogoIcon, LogoWithName } from "@/components/AppLogo";
+import { FinanceWorkspace } from "@/components/FinanceWorkspace";
 import { PageLoading } from "@/components/PageLoading";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { SidebarFooter } from "@/components/SidebarFooter";
@@ -27,23 +27,24 @@ import { useLocalToday } from "@/hooks/useLocalToday";
 import { usePersistentDisclosure } from "@/hooks/usePersistentDisclosure";
 import { useSidebarResize } from "@/hooks/useSidebarResize";
 import { useSummaryData } from "@/hooks/useSummaryData";
+import { isFinanceWorkspace } from "@/lib/financeWorkspace";
 import { resolveLocale } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 
 const baseNavItems = [
   { key: "dashboard", path: "/dashboard" as const, icon: LayoutDashboard },
-  { key: "finance", path: "/finance" as const, icon: Wallet },
+  { key: "finance_workspace", path: "/finance/overview" as const, icon: Wallet },
   { key: "subscriptions", path: "/subscriptions" as const, icon: CreditCard },
-  { key: "debt", path: "/debt" as const, icon: Landmark },
   { key: "calendar", path: "/calendar" as const, icon: Calendar },
-  { key: "statistics", path: "/statistics" as const, icon: BarChart2 },
-  { key: "bank_statements", path: "/statements" as const, icon: FileText },
+  { key: "finance_workspace_reports", path: "/statistics" as const, icon: BarChart2 },
 ];
 
 const COMPACT_HEADER_PATHS = new Set([
   "/finance",
+  "/finance/overview",
   "/subscriptions",
   "/debt",
+  "/savings",
   "/calendar",
   "/statistics",
 ]);
@@ -61,6 +62,7 @@ export function Layout() {
   const summary = useSummaryData(userId);
   const activeLoanCount = useActiveLoanCount(userId);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const financeWorkspace = isFinanceWorkspace(pathname);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = usePersistentDisclosure(userId, "layout.sidebar-collapsed");
   const sidebar = useSidebarResize();
@@ -178,12 +180,13 @@ export function Layout() {
           <nav className="flex-1 overflow-y-auto px-3 py-6 space-y-2 overflow-x-hidden">
             <TooltipProvider delayDuration={0}>
               {navItems.map(({ key, path, icon: Icon }) => {
-                const isActive = pathname.startsWith(path);
+                const isActive = key === "finance_workspace" ? financeWorkspace : pathname.startsWith(path);
                 return (
                   <Tooltip key={key} delayDuration={0}>
                     <TooltipTrigger asChild>
                       <Link
                         to={path}
+                        aria-current={isActive ? "page" : undefined}
                         onClick={() => setSidebarOpen(false)}
                         className={cn(
                           "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 group relative overflow-hidden",
@@ -234,7 +237,7 @@ export function Layout() {
         <header
           className={cn(
             "monline-main-header relative h-[var(--monline-header-height)] shrink-0",
-            COMPACT_HEADER_PATHS.has(pathname) && "monline-main-header--compact",
+            (financeWorkspace || COMPACT_HEADER_PATHS.has(pathname)) && "monline-main-header--compact",
           )}
         >
           <div className="monline-main-header__content flex h-full items-center justify-between border-b border-border bg-background px-4 md:px-8 lg:px-10">
@@ -308,14 +311,18 @@ export function Layout() {
             "monline-page min-h-0 min-w-0 flex-1 overflow-y-auto w-full max-w-[1600px] mx-auto p-4 md:p-8 lg:p-10",
             pathname.startsWith("/calendar") && "monline-calendar-content",
             pathname === "/dashboard" && "monline-dashboard-content",
-            pathname === "/finance" && "monline-finance-content",
-            ["/debt", "/subscriptions", "/statistics", "/statements"].includes(pathname) &&
+            financeWorkspace && "monline-finance-workspace overflow-y-hidden",
+            ["/subscriptions", "/statistics"].includes(pathname) &&
               "pt-3 md:pt-3 lg:pt-3",
           )}
         >
-          <Suspense fallback={<PageLoading />}>
-            <Outlet />
-          </Suspense>
+          {financeWorkspace ? (
+            <FinanceWorkspace>
+              <Suspense fallback={<PageLoading />}><Outlet /></Suspense>
+            </FinanceWorkspace>
+          ) : (
+            <Suspense fallback={<PageLoading />}><Outlet /></Suspense>
+          )}
         </main>
       </div>
     </div>

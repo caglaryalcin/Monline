@@ -6,6 +6,7 @@ import { LS_KEYS } from "@/lib/constants";
 
 import { budgetTranslations } from "./budgetTranslations";
 import { financeTranslations } from "./financeTranslations";
+import { financeWorkspaceTranslations } from "./financeWorkspaceTranslations";
 import bg from "./locales/bg.json";
 import cs from "./locales/cs.json";
 import da from "./locales/da.json";
@@ -24,6 +25,7 @@ import ru from "./locales/ru.json";
 import tr from "./locales/tr.json";
 import uk from "./locales/uk.json";
 import zh_cn from "./locales/zh_cn.json";
+import { savingsTranslations } from "./savingsTranslations";
 import { spendingTranslations } from "./spendingTranslations";
 import { spreadsheetScheduleTranslations } from "./spreadsheetScheduleTranslations";
 import { statementTranslations } from "./statementTranslations";
@@ -41,6 +43,8 @@ i18n
           ...spendingTranslations.en,
           ...budgetTranslations.en,
           ...spreadsheetScheduleTranslations.en,
+          ...savingsTranslations.en,
+          ...financeWorkspaceTranslations.en,
         },
       },
       pt_BR: { translation: pt_br },
@@ -52,6 +56,8 @@ i18n
           ...spendingTranslations.de,
           ...budgetTranslations.de,
           ...spreadsheetScheduleTranslations.de,
+          ...savingsTranslations.de,
+          ...financeWorkspaceTranslations.de,
         },
       },
       es: { translation: es },
@@ -72,6 +78,8 @@ i18n
           ...spendingTranslations.tr,
           ...budgetTranslations.tr,
           ...spreadsheetScheduleTranslations.tr,
+          ...savingsTranslations.tr,
+          ...financeWorkspaceTranslations.tr,
         },
       },
       uk: { translation: uk },

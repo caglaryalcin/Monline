@@ -449,6 +449,7 @@ class Repository {
       DROP INDEX IF EXISTS merchant_logo_name;
       CREATE UNIQUE INDEX IF NOT EXISTS merchant_logo_period ON merchant_logos(user,merchant_key,row_id,start_month,scope);
       CREATE INDEX IF NOT EXISTS manual_bills_user_date ON manual_bills(user,date);
+      CREATE INDEX IF NOT EXISTS savings_user ON savings(user);
       CREATE INDEX IF NOT EXISTS sessions_expiry ON monline_sessions(expires);
     `);
     require("./category-defaults.cjs").addMissingDefaultCategories(this.connection);

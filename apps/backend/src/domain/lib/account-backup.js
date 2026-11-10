@@ -37,6 +37,7 @@ const PROFILE = [
   "avatar",
 ];
 const FIELDS = {
+  savings: ["name", "asset", "quantity", "notes"],
   finance_rows: [
     "name",
     "kind",
@@ -349,6 +350,7 @@ function validateBackup(backup) {
     backup.data.bank_statements = [];
   if (backup.data.merchant_logos === undefined) backup.data.merchant_logos = [];
   if (backup.data.manual_bills === undefined) backup.data.manual_bills = [];
+  if (backup.data.savings === undefined) backup.data.savings = [];
   if (backup.data.budget_matches === undefined) backup.data.budget_matches = [];
   if (backup.data.calendar_moves === undefined) backup.data.calendar_moves = [];
   for (const name of Object.keys(FIELDS)) {
@@ -369,6 +371,13 @@ function validateBackup(backup) {
             require("./pure/subscription-reminders.js").validateSubscriptionReminders(
               row.notification_reminders,
             );
+        } catch {
+          throw new Error("transfer_invalid_backup");
+        }
+      }
+      if (name === "savings") {
+        try {
+          require("./pure/savings.js").validate(row);
         } catch {
           throw new Error("transfer_invalid_backup");
         }
