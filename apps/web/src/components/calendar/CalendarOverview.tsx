@@ -1,9 +1,10 @@
-import { RefreshCw, Wallet } from "lucide-react";
+import { RefreshCw, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { StatCard } from "@/components/calendar/StatCard";
 import { FinanceAnimationIcon } from "@/components/FinanceAnimationIcon";
 import { InfoButton } from "@/components/ui/info-button";
+import { useAnimationPreferences } from "@/hooks/useAnimationPreferences";
 import { formatPrice } from "@/lib/utils";
 import type { Currency } from "@/types";
 
@@ -33,6 +34,7 @@ export function CalendarOverview({
   expenseError = false,
 }: CalendarOverviewProps) {
   const { t } = useTranslation();
+  const { gifsEnabled } = useAnimationPreferences();
   const currencySymbol = mainCurrency?.symbol ?? "$";
   const priceOptions = { currencyCode: mainCurrency?.code };
 
@@ -76,9 +78,9 @@ export function CalendarOverview({
           loading={loading}
         />
         <StatCard
-          icon={<FinanceAnimationIcon asset="wallet" />}
+          icon={<FinanceAnimationIcon asset="wallet" fallback={<TrendingUp className="h-5 w-5" />} />}
           highlight
-          iconClass="bg-transparent p-0 shadow-none sm:p-0"
+          iconClass={gifsEnabled ? "bg-transparent p-0 shadow-none sm:p-0" : "bg-blue-500/20 text-blue-500"}
           label={
             <span className="inline-flex items-center gap-1">
               {t("calendar_income_total")}
@@ -96,9 +98,9 @@ export function CalendarOverview({
           loading={loading || financeLoading}
         />
         <StatCard
-          icon={<FinanceAnimationIcon asset="receipt" />}
+          icon={<FinanceAnimationIcon asset="receipt" fallback={<TrendingDown className="h-5 w-5" />} />}
           highlight
-          iconClass="bg-transparent p-0 shadow-none sm:p-0"
+          iconClass={gifsEnabled ? "bg-transparent p-0 shadow-none sm:p-0" : "bg-amber-500/20 text-amber-500"}
           label={
             <span className="inline-flex items-center gap-1">
               {t("calendar_expense_total")}

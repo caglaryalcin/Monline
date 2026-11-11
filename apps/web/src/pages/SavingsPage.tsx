@@ -124,7 +124,7 @@ export function SavingsPage() {
               <SummaryCard
                 title={t(label, { defaultValue: id })}
                 value={unavailable ? "—" : money(sum)}
-                icon={animation ? <FinanceAnimationIcon asset={animation} /> : <Icon aria-hidden="true" />}
+                icon={animation ? <FinanceAnimationIcon asset={animation} fallback={<Icon aria-hidden="true" />} /> : <Icon aria-hidden="true" />}
                 accent={accent}
                 description={t("savings_entry_count", { count: items.length })}
               />
@@ -134,7 +134,7 @@ export function SavingsPage() {
             <SummaryCard
               title={t(missing ? "savings_partial_total" : "savings_total")}
               value={records.length > 0 && missing === records.length ? "—" : money(total)}
-              icon={<FinanceAnimationIcon asset="wallet" />}
+              icon={<FinanceAnimationIcon asset="wallet" fallback={<span aria-hidden="true" className="inline-flex h-[22px] w-[22px] items-center justify-center text-xl leading-none">💰</span>} />}
               accent="139 92 246"
               description={t("savings_entry_count", { count: records.length })}
             />

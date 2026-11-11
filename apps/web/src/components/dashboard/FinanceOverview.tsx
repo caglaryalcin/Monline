@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownLeft, ArrowUpRight, Lightbulb, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Landmark, Lightbulb, Scale, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
@@ -99,16 +99,16 @@ export function FinanceOverview() {
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="finance-animated-card min-w-0">
             <SummaryCard title={t("savings_total")} value={money(summary.assets)}
-              icon={<FinanceAnimationIcon asset="wallet" />}
+              icon={<FinanceAnimationIcon asset="wallet" fallback={<span aria-hidden="true" className="inline-flex h-[22px] w-[22px] items-center justify-center text-xl leading-none">💰</span>} />}
               accent="139 92 246" loading={assetLoading} description={t("finance_workspace_savings")} />
           </div>
           <div className="finance-animated-card min-w-0">
             <SummaryCard title={t("finance_workspace_total_debts")} value={money(summary.debts)}
-              icon={<FinanceAnimationIcon asset="receipt" />} accent="249 115 22" loading={debtLoading} description={t("finance_workspace_debt_formula")} />
+              icon={<FinanceAnimationIcon asset="receipt" fallback={<Landmark />} />} accent="249 115 22" loading={debtLoading} description={t("finance_workspace_debt_formula")} />
           </div>
           <div className="finance-animated-card min-w-0">
             <SummaryCard title={t("finance_workspace_net")} value={money(summary.net)}
-              icon={<FinanceAnimationIcon asset="banknote" />} accent="20 184 166" loading={assetLoading || debtLoading} description={t("finance_workspace_net_formula")} />
+              icon={<FinanceAnimationIcon asset="banknote" fallback={<Scale />} />} accent="20 184 166" loading={assetLoading || debtLoading} description={t("finance_workspace_net_formula")} />
           </div>
         </div>
         {!assetLoading && !debtLoading && (summary.assets === null || summary.debts === null) &&

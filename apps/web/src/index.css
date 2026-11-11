@@ -7,7 +7,7 @@
   position: relative;
   isolation: isolate;
   padding-inline: 0.55em;
-  color: #1e250c;
+  color: hsl(var(--amount-marker-foreground, 76.8 51.020408% 9.607843%));
   font-weight: 800;
 }
 
@@ -16,7 +16,7 @@
   position: absolute;
   inset: 0.1em -0.35em 0.08em;
   z-index: -1;
-  background-color: #D8FF68;
+  background-color: hsl(var(--amount-marker-background, 75.496689 100% 70.392157%));
   -webkit-mask: url("./assets/amount-marker-mask.svg") center / 100% 100% no-repeat;
   mask: url("./assets/amount-marker-mask.svg") center / 100% 100% no-repeat;
   mask-mode: alpha;
@@ -552,7 +552,7 @@ html[data-theme-changing] *::after {
   color: rgb(var(--summary-accent));
   background: rgb(var(--summary-accent) / 0.16);
 }
-.finance-animated-card .summary-card-icon {
+.finance-animated-card .summary-card-icon:has(picture) {
   display: flex;
   width: 45px;
   height: 45px;

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Globe, Lightbulb } from "lucide-react";
+import { CreditCard, Globe, Landmark, Lightbulb, TrendingUp } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -333,25 +333,27 @@ export function DashboardYearOverview({
                 title={t("dashboard_year_cards_paid")}
                 year={year}
                 value={finance.isError ? "-" : formatTotals("cards")}
-                icon={<FinanceAnimationIcon asset="credit-card" />}
+                icon={<FinanceAnimationIcon asset="credit-card" fallback={<CreditCard className="h-6 w-6" />} />}
                 loading={finance.isPending}
                 accent="var(--chart-2)"
               />
             </div>
-            <SummaryCard
-              title={t("dashboard_year_online_paid")}
-              year={year}
-              value={onlineError ? "-" : formatTotals("online")}
-              icon={<Globe className="h-6 w-6" />}
-              loading={onlineLoading}
-              accent="var(--chart-3)"
-            />
+            <div className="finance-animated-card min-w-0">
+              <SummaryCard
+                title={t("dashboard_year_online_paid")}
+                year={year}
+                value={onlineError ? "-" : formatTotals("online")}
+                icon={<FinanceAnimationIcon asset="online" fallback={<Globe className="h-6 w-6" />} />}
+                loading={onlineLoading}
+                accent="var(--chart-3)"
+              />
+            </div>
             <div className="finance-animated-card min-w-0">
               <SummaryCard
                 title={t("dashboard_year_loans_paid")}
                 year={year}
                 value={finance.isError ? "-" : formatTotals("loans")}
-                icon={<FinanceAnimationIcon asset="loans" />}
+                icon={<FinanceAnimationIcon asset="loans" fallback={<Landmark className="h-6 w-6" />} />}
                 loading={finance.isPending}
                 accent="var(--chart-2)"
               />
@@ -369,7 +371,7 @@ export function DashboardYearOverview({
                         signDisplay: "exceptZero",
                       }).format(salary.change / 100)
                 }
-                icon={<FinanceAnimationIcon asset="raise" />}
+                icon={<FinanceAnimationIcon asset="raise" fallback={<TrendingUp className="h-6 w-6" />} />}
                 loading={finance.isPending}
                 accent="var(--chart-1)"
                 comparison={

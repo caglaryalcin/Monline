@@ -8,6 +8,7 @@
     "strict": true
   },
   "include": [
-    "vite.config.ts"
+    "vite.config.ts",
+    "finance-animation-assets.ts"
   ]
 }

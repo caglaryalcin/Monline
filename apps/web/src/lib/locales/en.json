@@ -1420,5 +1420,9 @@
   "calendar_payment_invalid_date": "Choose a valid due date within the past year or in the future.",
   "calendar_payment_invalid_status": "Choose Paid or Unpaid.",
   "calendar_payment_pending_hint": "The payment is added as unpaid on the selected date. You can mark it as paid from the calendar later.",
-  "calendar_payment_pending_saved": "Pending payment added."
+  "calendar_payment_pending_saved": "Pending payment added.",
+  "use_gifs": "Use GIFs",
+  "use_gifs_desc": "Show animated icons. When turned off, the original icons are displayed.",
+  "loop_gifs": "Play continuously",
+  "loop_gifs_desc": "Keep animations playing. When turned off, each animation plays three times and stops."
 }

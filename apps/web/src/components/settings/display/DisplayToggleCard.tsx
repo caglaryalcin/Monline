@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 
 interface DisplayToggleCardProps {
   checked: boolean;
+  disabled?: boolean;
   description: string;
   label: string;
   onToggle: () => void;
@@ -13,6 +14,7 @@ interface DisplayToggleCardProps {
 
 export function DisplayToggleCard({
   checked,
+  disabled = false,
   description,
   label,
   onToggle,
@@ -34,6 +36,7 @@ export function DisplayToggleCard({
         id={id}
         aria-describedby={`${id}-description`}
         checked={checked}
+        disabled={disabled}
         onCheckedChange={onToggle}
         className="shrink-0 mt-0.5"
       />

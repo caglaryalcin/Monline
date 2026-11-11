@@ -5,6 +5,8 @@ import { createRequire } from "node:module";
 import type { Plugin } from "vite";
 import { defineConfig } from "vite";
 
+import { financeAnimationAssets } from "./finance-animation-assets";
+
 // Keep PDF.js support files local in development and production; no CDN calls.
 function pdfAssets(): Plugin {
   const root = path.dirname(createRequire(import.meta.url).resolve("pdfjs-dist/package.json"));
@@ -66,7 +68,7 @@ function isScopedPackage(packageName: string, scope: string) {
 export default defineConfig({
   // Local worktrees can share node_modules, but must not share optimizer output.
   cacheDir: path.resolve(__dirname, "./.local/vite"),
-  plugins: [react(), pdfAssets()],
+  plugins: [react(), pdfAssets(), financeAnimationAssets()],
   resolve: {
     dedupe: ["react", "react-dom"],
     alias: {

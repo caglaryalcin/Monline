@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { buildColorCSS, getPreset, saveColorToStorage, storedColor } from "@/lib/color-presets";
+import { setDocumentTheme } from "@/lib/documentTheme";
 
 export function ThemeTab() {
   const { t } = useTranslation();
@@ -22,6 +23,7 @@ export function ThemeTab() {
   );
 
   function applyColor(id: string) {
+    const preset = getPreset(id);
     setActiveColor(id);
     saveColorToStorage(id);
     // Immediately update the CSS so the whole app reflects the change
@@ -31,8 +33,9 @@ export function ThemeTab() {
       el.id = "color-theme";
       document.head.appendChild(el);
     }
-    el.textContent = buildColorCSS(getPreset(id));
-    mut.mutate({ color_theme: id });
+    el.textContent = buildColorCSS(preset);
+    if (preset.darkSurfaces) setDocumentTheme(true);
+    mut.mutate({ color_theme: id, ...(preset.darkSurfaces ? { dark_theme_mode: 1 } : {}) });
   }
 
   return (

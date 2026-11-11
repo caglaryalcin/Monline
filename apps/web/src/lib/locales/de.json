@@ -1420,5 +1420,9 @@
   "calendar_payment_invalid_date": "Wählen Sie eine gültige Fälligkeit innerhalb des letzten Jahres oder in der Zukunft.",
   "calendar_payment_invalid_status": "Wählen Sie Bezahlt oder Unbezahlt.",
   "calendar_payment_pending_hint": "Die Zahlung wird am gewählten Tag als unbezahlt eingetragen. Sie können sie später im Kalender als bezahlt markieren.",
-  "calendar_payment_pending_saved": "Ausstehende Zahlung hinzugefügt."
+  "calendar_payment_pending_saved": "Ausstehende Zahlung hinzugefügt.",
+  "use_gifs": "GIFs verwenden",
+  "use_gifs_desc": "Animierte Symbole anzeigen. Wenn deaktiviert, werden die ursprünglichen Symbole angezeigt.",
+  "loop_gifs": "Kontinuierlich abspielen",
+  "loop_gifs_desc": "Animationen dauerhaft abspielen. Wenn deaktiviert, wird jede Animation dreimal abgespielt und dann angehalten."
 }
