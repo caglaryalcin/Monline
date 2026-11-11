@@ -8,6 +8,9 @@ vi.mock("react-i18next", () => ({
     t: (key: string) => key,
   }),
 }));
+vi.mock("@/hooks/useAnimationPreferences", () => ({
+  useAnimationPreferences: () => ({ gifsEnabled: true, loopAnimations: false }),
+}));
 
 vi.mock("@/components/calendar/StatCard", () => ({
   StatCard: ({ label, value, loading }: any) => (

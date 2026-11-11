@@ -186,7 +186,7 @@ function validateDatabase(file) {
             !columns.has(field.name) &&
             !(
               (entry.name === "users" &&
-                ["disabled", "show_currency_code", "number_locale", "country", "region"].includes(field.name)) ||
+                ["disabled", "show_currency_code", "number_locale", "country", "region", "disable_gifs", "loop_gifs"].includes(field.name)) ||
               (entry.name === "payment_records" &&
                 [
                   "payment_account",

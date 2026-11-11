@@ -20,6 +20,8 @@ export interface User {
   monthly_price?: boolean;
   show_original_price?: boolean;
   show_currency_code?: boolean;
+  disable_gifs?: boolean;
+  loop_gifs?: boolean;
   hide_disabled?: boolean;
   disabled_to_bottom?: boolean;
   subscription_progress?: boolean;

@@ -11,6 +11,14 @@ export interface ColorPreset {
   dark: string;
   /** Whether the primary-foreground should be dark (for bright colors like amber) */
   darkFg?: boolean;
+  /** A complete dark palette, in addition to the accent color. */
+  darkSurfaces?: Partial<Record<
+    | "background" | "foreground" | "card" | "card-foreground"
+    | "popover" | "popover-foreground" | "secondary" | "secondary-foreground"
+    | "muted" | "muted-foreground" | "accent" | "accent-foreground"
+    | "border" | "input" | "amount-marker-background" | "amount-marker-foreground",
+    string
+  >>;
 }
 
 export const DEFAULT_COLOR = "monline";
@@ -31,6 +39,32 @@ export const COLOR_PRESETS: ColorPreset[] = [
     light: BRAND_ACCENT_HSL,
     dark: BRAND_ACCENT_HSL,
     darkFg: true,
+  },
+  {
+    id: "champagne",
+    label: "Champagne",
+    hex: "#eed08f",
+    light: "41.052632 73.643411% 74.705882%",
+    dark: "41.052632 73.643411% 74.705882%",
+    darkFg: true,
+    darkSurfaces: {
+      background: "218.181818 20% 10.784314%", // #161a21
+      foreground: "40 45% 92.156863%",
+      card: "220 20% 14.705882%",
+      "card-foreground": "var(--foreground)",
+      popover: "220 20% 14.705882%",
+      "popover-foreground": "var(--foreground)",
+      secondary: "218.823529 18.681319% 17.843137%",
+      "secondary-foreground": "var(--foreground)",
+      muted: "218.823529 18.681319% 17.843137%",
+      "muted-foreground": "217.894737 12.258065% 69.607843%",
+      accent: "217.142857 19.266055% 21.372549%",
+      "accent-foreground": "var(--foreground)",
+      border: "215 18.75% 25.098039%",
+      input: "215.172414 18.238994% 31.176471%",
+      "amount-marker-background": "var(--primary)",
+      "amount-marker-foreground": "var(--background)",
+    },
   },
   // Blues
   { id: "navy", label: "Navy", hex: "#1d4ed8", light: "224 72% 46%", dark: "224 72% 56%" },
@@ -155,6 +189,9 @@ export function applyColorFromStorage() {
 export function buildColorCSS(preset: ColorPreset): string {
   const fg = accentForeground(preset.dark);
   const lightFg = accentForeground(preset.light);
+  const darkSurfaces = Object.entries(preset.darkSurfaces ?? {})
+    .map(([name, value]) => `--${name}: ${value} !important;`)
+    .join("\n");
   return `
     :root {
       --primary: ${preset.light} !important;
@@ -163,6 +200,7 @@ export function buildColorCSS(preset: ColorPreset): string {
       --ring: ${preset.light} !important;
     }
     :root.dark {
+      ${darkSurfaces}
       --primary: ${preset.dark} !important;
       --primary-text: var(--primary) !important;
       --primary-foreground: ${fg} !important;

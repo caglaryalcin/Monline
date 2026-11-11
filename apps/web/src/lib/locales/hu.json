@@ -1469,5 +1469,9 @@
   "calendar_payment_invalid_date": "Válasszon érvényes esedékességi dátumot az elmúlt egy évből vagy a jövőből.",
   "calendar_payment_invalid_status": "Válassza a Fizetve vagy a Nem fizetett állapotot.",
   "calendar_payment_pending_hint": "A fizetés kifizetetlenként kerül a kiválasztott napra. Később a naptárban fizetettnek jelölheti.",
-  "calendar_payment_pending_saved": "Függőben lévő fizetés hozzáadva."
+  "calendar_payment_pending_saved": "Függőben lévő fizetés hozzáadva.",
+  "use_gifs": "GIF-ek használata",
+  "use_gifs_desc": "Animált ikonok megjelenítése. Kikapcsolva az eredeti ikonok láthatók.",
+  "loop_gifs": "Folyamatos lejátszás",
+  "loop_gifs_desc": "Az animációk folyamatos lejátszása. Kikapcsolva minden animáció háromszor játszódik le, majd megáll."
 }

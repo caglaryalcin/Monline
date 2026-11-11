@@ -1346,5 +1346,9 @@
   "calendar_payment_invalid_date": "Son bir yıl içindeki veya gelecekteki geçerli bir ödeme günü seçin.",
   "calendar_payment_invalid_status": "Ödendi veya Ödenmedi durumunu seçin.",
   "calendar_payment_pending_hint": "Ödeme, seçilen güne ödenmemiş olarak eklenir. Daha sonra takvimden ödendi olarak işaretleyebilirsiniz.",
-  "calendar_payment_pending_saved": "Bekleyen ödeme eklendi."
+  "calendar_payment_pending_saved": "Bekleyen ödeme eklendi.",
+  "use_gifs": "GIF kullan",
+  "use_gifs_desc": "Hareketli ikonları göster. Kapalı olduğunda eski ikonlar görüntülenir.",
+  "loop_gifs": "Sürekli oynat",
+  "loop_gifs_desc": "Animasyonlar sürekli oynasın. Kapalı olduğunda her animasyon üç kez oynar ve durur."
 }

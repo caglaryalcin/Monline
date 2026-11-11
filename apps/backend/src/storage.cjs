@@ -198,6 +198,10 @@ class Repository {
         .all()
         .map((column) => column.name),
     );
+    for (const field of ["disable_gifs", "loop_gifs"]) {
+      if (!this.connection.prepare('PRAGMA table_info("users")').all().some(column => column.name === field))
+        this.connection.exec("ALTER TABLE users ADD COLUMN " + identifier(field) + " INTEGER NOT NULL DEFAULT 0");
+    }
     if (
       !this.connection
         .prepare('PRAGMA table_info("users")')

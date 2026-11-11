@@ -1,8 +1,9 @@
-import { RefreshCw } from "lucide-react";
+import { AlertTriangle, CircleAlert, Clock, RefreshCw, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { StatCard } from "@/components/calendar/StatCard";
 import { FinanceAnimationIcon } from "@/components/FinanceAnimationIcon";
+import { useAnimationPreferences } from "@/hooks/useAnimationPreferences";
 import { formatPrice } from "@/lib/utils";
 import type { Currency } from "@/types";
 
@@ -28,6 +29,7 @@ export function CalendarOverview({
   budgetOverrun = 0,
 }: CalendarOverviewProps) {
   const { t } = useTranslation();
+  const { gifsEnabled } = useAnimationPreferences();
   const currencySymbol = mainCurrency?.symbol ?? "$";
   const priceOptions = { currencyCode: mainCurrency?.code };
 
@@ -42,22 +44,22 @@ export function CalendarOverview({
           loading={loading}
         />
         <StatCard
-          icon={<FinanceAnimationIcon asset="receipt" />}
-          iconClass="!bg-transparent !p-0 !shadow-none"
+          icon={<FinanceAnimationIcon asset="receipt" fallback={<TrendingUp className="h-5 w-5" />} />}
+          iconClass={gifsEnabled ? "!bg-transparent !p-0 !shadow-none" : "bg-blue-500/20 text-blue-500"}
           label={t("total")}
           value={hasError ? "-" : formatPrice(total, currencySymbol, priceOptions)}
           loading={loading}
         />
         <StatCard
-          icon={<FinanceAnimationIcon asset="credit-card" />}
-          iconClass="!bg-transparent !p-0 !shadow-none"
+          icon={<FinanceAnimationIcon asset="credit-card" fallback={<Clock className="h-5 w-5" />} />}
+          iconClass={gifsEnabled ? "!bg-transparent !p-0 !shadow-none" : "bg-amber-500/20 text-amber-500"}
           label={t("due")}
           value={hasError ? "-" : formatPrice(due, currencySymbol, priceOptions)}
           loading={loading}
         />
         <StatCard
-          icon={<FinanceAnimationIcon asset="loans" />}
-          iconClass="!bg-transparent !p-0 !shadow-none"
+          icon={<FinanceAnimationIcon asset="loans" fallback={<AlertTriangle className="h-5 w-5" />} />}
+          iconClass={gifsEnabled ? "!bg-transparent !p-0 !shadow-none" : "bg-destructive/20 text-destructive"}
           label={t("budget_overrun")}
           value={
             hasError ? "-" : formatPrice(Math.max(0, budgetOverrun), currencySymbol, priceOptions)
@@ -65,8 +67,8 @@ export function CalendarOverview({
           loading={loading}
         />
         <StatCard
-          icon={<FinanceAnimationIcon asset="price-tag" />}
-          iconClass="!bg-transparent !p-0 !shadow-none"
+          icon={<FinanceAnimationIcon asset="price-tag" fallback={<CircleAlert className="h-5 w-5" />} />}
+          iconClass={gifsEnabled ? "!bg-transparent !p-0 !shadow-none" : "bg-red-500/20 text-red-600 dark:text-red-400"}
           label={t("subscription_payments_awaiting")}
           value={hasError ? "-" : formatPrice(awaitingConfirmation, currencySymbol, priceOptions)}
           loading={loading}

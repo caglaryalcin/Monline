@@ -33,6 +33,8 @@ it("restores older full archives with payment history into a new installation us
       ALTER TABLE subscriptions DROP COLUMN calendar_history_recovery_passes;
       ALTER TABLE payment_methods DROP COLUMN is_main;
       ALTER TABLE household DROP COLUMN is_main;
+      ALTER TABLE users DROP COLUMN disable_gifs;
+      ALTER TABLE users DROP COLUMN loop_gifs;
     `);
     const snapshot = path.join(directory, "snapshot");
     fs.mkdirSync(

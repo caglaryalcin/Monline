@@ -13,6 +13,8 @@ const PROFILE = [
   "monthly_price",
   "show_original_price",
   "show_currency_code",
+  "disable_gifs",
+  "loop_gifs",
   "hide_disabled",
   "disabled_to_bottom",
   "subscription_progress",
