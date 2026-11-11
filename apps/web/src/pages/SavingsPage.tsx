@@ -85,6 +85,41 @@ export function SavingsPage() {
     ...extraCurrencies.map((code) => ({ id: code, label: `savings_asset_${code}`, icon: Banknote, accent: "20 184 166" })),
   ];
 
+  const renderSavingCard = ({ saving, value }: (typeof valued)[number]) => {
+    const isCurrency = isSavingsCurrency(saving.asset);
+    const unit = isCurrency ? saving.asset === "TRY" ? "TL" : saving.asset : t(saving.asset === "GRA" ? "savings_unit_gram" : "savings_unit_piece");
+    const rate = savingsUnitRate(saving.asset, rates.data, currency);
+    return <article key={saving.id} className="group relative flex min-w-0 flex-col justify-between overflow-hidden rounded-2xl border bg-card/60 p-4 backdrop-blur-sm transition-all duration-300">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 basis-24 flex-1">
+          <h2 className="text-sm font-medium text-muted-foreground [overflow-wrap:anywhere]">{saving.name}</h2>
+          <p className="mt-1 text-lg font-bold leading-tight [overflow-wrap:anywhere]">{t(`savings_asset_${saving.asset}`, { defaultValue: saving.asset })}</p>
+        </div>
+        <p className="ml-auto max-w-full text-right font-mono text-xl font-extrabold tracking-tight [overflow-wrap:anywhere]">
+          {formatNumber(saving.quantity, { maximumFractionDigits: savingsPrecision(saving.asset) }, locale)} {unit}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border bg-background/50 px-3 py-2">
+        <p className="text-xs text-muted-foreground">{t("savings_value", { currency: currencyLabel })}</p>
+        <p className="min-w-0 text-sm font-semibold tabular-nums [overflow-wrap:anywhere]">{value === null ? t("savings_rate_missing") : money(value)}</p>
+      </div>
+
+      {saving.notes && <p className="mt-3 whitespace-pre-wrap break-words text-xs text-muted-foreground">{saving.notes}</p>}
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+        {rate !== null && <div className="min-w-0 basis-28 flex-1 text-xs">
+          <p className="text-muted-foreground">{t("savings_rate")}</p>
+          <p className="mt-1 font-medium tabular-nums text-foreground/80 [overflow-wrap:anywhere]">{formatCurrency(rate, currency, { locale, maximumFractionDigits: 2, minimumFractionDigits: 2 })}</p>
+        </div>}
+        <div className="ml-auto flex max-w-full shrink-0 items-center gap-1 rounded-full border bg-background/80 p-1 shadow-sm backdrop-blur">
+          <Button type="button" size="icon" variant="ghost" className="h-7 w-7 rounded-full text-muted-foreground" onClick={() => setEditor({ saving })} aria-label={`${t("edit")}: ${saving.name}`} title={t("edit")}><Pencil className="h-3.5 w-3.5" /></Button>
+          <Button type="button" size="icon" variant="ghost" className="h-7 w-7 rounded-full text-muted-foreground" onClick={() => setDeleting(saving)} aria-label={`${t("delete")}: ${saving.name}`} title={t("delete")}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+        </div>
+      </div>
+    </article>;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-end gap-4">
@@ -113,22 +148,25 @@ export function SavingsPage() {
           <Button className="mt-3" variant="outline" onClick={() => void Promise.all([holdings.refetch(), mainCurrency.currencies.refetch()])}>{t("savings_retry")}</Button>
         </div>
       ) : <>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] gap-4">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] items-start gap-4">
           {groups.map(({ id, label, icon: Icon, accent }) => {
             const items = valued.filter(({ saving }) => id === "gold"
               ? isGoldSavingsAsset(saving.asset) : saving.asset === id);
             const unavailable = items.some((item) => item.value === null);
             const sum = items.reduce((value, item) => value + Math.round((item.value || 0) * scale), 0) / scale;
             const animation = id === "gold" ? "gold" : id === "USD" ? "dollar" : id === "EUR" ? "euro" : null;
-            return <div key={id} className={cn("min-w-0", animation && "finance-animated-card")}>
-              <SummaryCard
-                title={t(label, { defaultValue: id })}
-                value={unavailable ? "—" : money(sum)}
-                icon={animation ? <FinanceAnimationIcon asset={animation} fallback={<Icon aria-hidden="true" />} /> : <Icon aria-hidden="true" />}
-                accent={accent}
-                description={t("savings_entry_count", { count: items.length })}
-              />
-            </div>;
+            return <section key={id} className="min-w-0 space-y-4" aria-label={t(label, { defaultValue: id })}>
+              <div className={cn(animation && "finance-animated-card")}>
+                <SummaryCard
+                  title={t(label, { defaultValue: id })}
+                  value={unavailable ? "—" : money(sum)}
+                  icon={animation ? <FinanceAnimationIcon asset={animation} fallback={<Icon aria-hidden="true" />} /> : <Icon aria-hidden="true" />}
+                  accent={accent}
+                  description={t("savings_entry_count", { count: items.length })}
+                />
+              </div>
+              {items.map(renderSavingCard)}
+            </section>;
           })}
           <div className="finance-animated-card [grid-column-end:-1]">
             <SummaryCard
@@ -141,33 +179,11 @@ export function SavingsPage() {
           </div>
         </div>
 
-        {records.length === 0 ? <div className="flex flex-col items-center rounded-2xl border border-dashed px-6 py-14 text-center">
+        {records.length === 0 && <div className="flex flex-col items-center rounded-2xl border border-dashed px-6 py-14 text-center">
           <PiggyBank className="mb-4 h-12 w-12 text-primary/70" />
           <h2 className="font-semibold">{t("savings_empty_title")}</h2>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">{t("savings_empty_help")}</p>
           <Button className="mt-5" onClick={() => setEditor({})}><Plus className="mr-2 h-4 w-4" />{t("savings_add")}</Button>
-        </div> : <div className="space-y-3">
-          {valued.map(({ saving, value }) => {
-            const isCurrency = isSavingsCurrency(saving.asset);
-            const unit = isCurrency ? saving.asset === "TRY" ? "TL" : saving.asset : t(saving.asset === "GRA" ? "savings_unit_gram" : "savings_unit_piece");
-            const rate = savingsUnitRate(saving.asset, rates.data, currency);
-            return <article key={saving.id} className="flex flex-wrap items-center gap-4 rounded-2xl border bg-card p-4 sm:p-5">
-              <div className="min-w-0 flex-1 basis-36">
-                <h2 className="break-words font-semibold">{saving.name}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{t(`savings_asset_${saving.asset}`, { defaultValue: saving.asset })} · {formatNumber(saving.quantity, { maximumFractionDigits: savingsPrecision(saving.asset) }, locale)} {unit}</p>
-                {saving.notes && <p className="mt-2 whitespace-pre-wrap break-words text-xs text-muted-foreground">{saving.notes}</p>}
-              </div>
-              <div className="min-w-0 flex-1 basis-40 sm:text-right">
-                <p className="text-xs text-muted-foreground">{t("savings_value", { currency: currencyLabel })}</p>
-                <p className="mt-1 break-words text-lg font-semibold tabular-nums">{value === null ? t("savings_rate_missing") : money(value)}</p>
-                {rate !== null && <p className="mt-1 text-xs text-muted-foreground">{t("savings_rate")}: {formatCurrency(rate, currency, { locale, maximumFractionDigits: 6, minimumFractionDigits: 2 })}</p>}
-              </div>
-              <div className="flex shrink-0 gap-1">
-                <Button size="icon" variant="ghost" onClick={() => setEditor({ saving })} aria-label={`${t("edit")}: ${saving.name}`}><Pencil className="h-4 w-4" /></Button>
-                <Button size="icon" variant="ghost" onClick={() => setDeleting(saving)} aria-label={`${t("delete")}: ${saving.name}`}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-              </div>
-            </article>;
-          })}
         </div>}
         <footer className="flex items-start gap-2 border-t pt-4 text-xs text-muted-foreground">
           <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
