@@ -36,7 +36,7 @@ const baseNavItems = [
   { key: "finance_workspace", path: "/finance/overview" as const, icon: Wallet },
   { key: "subscriptions", path: "/subscriptions" as const, icon: CreditCard },
   { key: "calendar", path: "/calendar" as const, icon: Calendar },
-  { key: "finance_workspace_reports", path: "/statistics" as const, icon: BarChart2 },
+  { key: "statistics", path: "/statistics" as const, icon: BarChart2 },
 ];
 
 const COMPACT_HEADER_PATHS = new Set([

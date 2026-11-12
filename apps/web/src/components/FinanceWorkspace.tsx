@@ -33,7 +33,7 @@ export function FinanceWorkspace({ children }: { children: ReactNode }) {
     <FinanceCurrencyContext.Provider value={currency}>
     <section className="flex h-full min-h-0 min-w-0 flex-col gap-5" aria-label={t("finance_workspace")}>
       <div className="shrink-0 border-b pb-4">
-        <div className="flex flex-wrap items-center justify-end gap-3">
+        <div className="flex flex-wrap items-center justify-start gap-3">
           <nav aria-label={t("finance_workspace_sections")} className="flex max-w-full flex-wrap gap-1 rounded-xl bg-muted p-1">
             {FINANCE_SECTIONS.map(({ key, path }) => {
               const Icon = icons[key];
