@@ -145,7 +145,7 @@ export function FinanceMobileLedger({
                   const automatic = isFinanceCarryoverRow(row);
                   const cell = monthEntries.filter((entry) => entry.row_id === row.id);
                   const settled = cell.filter((entry) => entry.status === "settled");
-                  const planned = cell.filter((entry) => entry.status === "planned");
+                  const planned = cell.filter((entry) => entry.status === "planned" && !entry.bill_skip);
                   const tag = financeRowTag(row);
                   const canEditOpening = automatic && editableOpening && month === 1;
                   const link = links?.find(
@@ -260,6 +260,9 @@ export function FinanceMobileLedger({
                                       )}
                                     </span>
                                   </span>
+                                )}
+                                {cell.some((entry) => entry.bill_skip) && (
+                                  <span className="finance-mobile-ledger__status">{label("bill_skipped")}</span>
                                 )}
                                 {cell.length === 0 && (
                                   <span className="finance-mobile-ledger__status">

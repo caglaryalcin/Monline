@@ -1,5 +1,6 @@
 export const financeTranslations = {
   de: {
+    finance_bill_skipped: "Keine Rechnung gestellt",
     finance_monthly_view: "Monatsübersicht",
     finance_ledger_view: "Tabellenansicht",
     finance_previous_month: "Vorheriger Monat",
@@ -446,6 +447,7 @@ export const financeTranslations = {
     finance_salary_plan_done: "{{count}} Gehaltspläne erstellt.",
   },
   en: {
+    finance_bill_skipped: "Not billed",
     finance_monthly_view: "Monthly view",
     finance_ledger_view: "Ledger view",
     finance_previous_month: "Previous month",
@@ -887,6 +889,7 @@ export const financeTranslations = {
     finance_salary_plan_done: "Created {{count}} salary plans.",
   },
   tr: {
+    finance_bill_skipped: "Fatura kesilmedi",
     finance_monthly_view: "Aylık görünüm",
     finance_ledger_view: "Tablo görünümü",
     finance_previous_month: "Önceki ay",

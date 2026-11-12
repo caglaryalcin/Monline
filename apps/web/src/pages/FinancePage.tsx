@@ -1808,7 +1808,7 @@ function FinanceSection({
             </th>
             {entries.map((cell, index) => {
               const paid = cell.filter((entry) => entry.status === "settled"),
-                planned = cell.filter((entry) => entry.status === "planned");
+                planned = cell.filter((entry) => entry.status === "planned" && !entry.bill_skip);
               const cardTagged = cell.some((entry) => isCardPaid(entry, row));
               const cardTagLabel = label(
                 cell.every((entry) => isCardPaid(entry, row))
@@ -1913,6 +1913,9 @@ function FinanceSection({
                         >
                           {money(sumEntries(planned))}
                         </span>
+                      )}
+                      {cell.some((entry) => entry.bill_skip) && (
+                        <span className="finance-sheet__bill-skipped text-muted-foreground" title={label("bill_skipped")}>{label("bill_skipped")}</span>
                       )}
                       {cell.length === 0 && <span className="sr-only">{label("empty_cell")}</span>}
                       {hasTags && (

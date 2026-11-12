@@ -8,6 +8,7 @@ export interface SpendingEvent {
   name: string;
   amount: number;
   amount_pending?: boolean;
+  bill_skipped?: boolean;
   currency: string;
   source: "statement" | "ledger" | "manual_card" | "manual_bill";
   kind: "expense" | "refund" | "card_payment" | "carryover" | "loan_payment";

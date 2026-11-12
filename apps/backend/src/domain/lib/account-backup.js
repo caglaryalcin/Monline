@@ -67,6 +67,7 @@ const FIELDS = {
     "notes",
     "source_payment",
     "payment_tag",
+    "bill_skip",
   ],
   finance_card_transactions: [
     "row_id",
@@ -205,7 +206,7 @@ const FIELDS = {
     "scope",
     "updated_at",
   ],
-  manual_bills: ["name", "date", "amount", "currency", "status", "notes"],
+  manual_bills: ["name", "date", "amount", "currency", "status", "notes", "bill_skip"],
   budget_matches: [
     "target_type",
     "target_id",

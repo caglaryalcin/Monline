@@ -89,7 +89,7 @@ export function StatementCommitments({
       timeZone: "UTC",
     }).format(new Date(`${period}-01T12:00:00Z`));
   const totals = spendingTotals(
-    section === "installments" ? plans : bills.filter((bill) => !bill.amount_pending),
+    section === "installments" ? plans : bills.filter((bill) => !bill.amount_pending && !bill.bill_skipped),
   );
   const amountsPending = bills.filter((bill) => bill.amount_pending).length;
 

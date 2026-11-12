@@ -236,6 +236,7 @@ function spendingData(data, { trackingOnly = false } = {}) {
   }
   for (const entry of data.finance_entries) {
     const row = rows.get(entry.row_id);
+    const billSkipped = !!entry.bill_skip && !!row?.bill_type;
     const amountPending =
       entry.amount === 0 &&
       entry.status === "planned" &&
@@ -247,7 +248,7 @@ function spendingData(data, { trackingOnly = false } = {}) {
       row?.kind !== "expense" ||
       !validDate(entry.date) ||
       !validAmount(entry.amount) ||
-      (entry.amount === 0 && !amountPending)
+      (entry.amount === 0 && !amountPending && !billSkipped)
     )
       continue;
     const cardPayment = row.expense_type === "credit_card";
@@ -264,12 +265,12 @@ function spendingData(data, { trackingOnly = false } = {}) {
     const statement = link ? statementsById.get(link.statement_id) : undefined;
     // Keep bills with an unknown amount available to the bills page without
     // treating them as zero-cost expenses in charts, calendars or statistics.
-    (amountPending ? pendingBills : events).push({
+    (amountPending || billSkipped ? pendingBills : events).push({
       id: `ledger:${entry.id}`,
       name: row.name,
       date: entry.date,
       amount: entry.amount,
-      ...(amountPending ? { amount_pending: true } : {}),
+      ...(billSkipped ? { bill_skipped: true } : amountPending ? { amount_pending: true } : {}),
       currency: "TRY",
       source: "ledger",
       row_id: row.id,
@@ -291,7 +292,7 @@ function spendingData(data, { trackingOnly = false } = {}) {
       category: "other",
       bill: !cardPayment && !!row.bill_type,
       bill_type: !cardPayment ? row.bill_type || "" : "",
-      counts_as_expense: !cardPayment && !row.is_auto_carryover,
+      counts_as_expense: !billSkipped && !cardPayment && !row.is_auto_carryover,
       payment_record_id: entry.source_payment || "",
       notes: entry.notes || "",
     });
@@ -303,13 +304,14 @@ function spendingData(data, { trackingOnly = false } = {}) {
     } catch {
       continue;
     }
-    events.push({
+    (values.bill_skip ? pendingBills : events).push({
       id: `bill:${bill.id}`,
       manual_bill_id: bill.id,
       ...values,
       source: "manual_bill",
       kind: "expense",
-      counts_as_expense: true,
+      counts_as_expense: !values.bill_skip,
+      ...(values.bill_skip ? { bill_skipped: true } : {}),
       bill: true,
     });
   }

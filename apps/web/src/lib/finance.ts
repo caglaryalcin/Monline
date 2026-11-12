@@ -92,6 +92,7 @@ export function financeRowTagValues(tag: ExpenseRowTag) {
   };
 }
 export interface FinanceEntry {
+  bill_skip?: string;
   id: string;
   row_id: string;
   date: string;

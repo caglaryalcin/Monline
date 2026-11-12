@@ -42,6 +42,7 @@ const fields = {
     "notes",
   ],
   finance_entries: [
+    "bill_skip",
     "row_id",
     "date",
     "amount",
@@ -145,6 +146,10 @@ function check(record) {
     throw new BadRequestError("finance_card_type_in_use");
   if (record.collection().name === "finance_entries") {
     const row = owned("finance_rows", values.row_id, record.getString("user"));
+    if (values.bill_skip && (row.getString("kind") !== "expense" ||
+        !row.getString("bill_type") || row.getString("expense_type") === "credit_card" ||
+        record.getString("source_payment")))
+      throw new BadRequestError("finance_invalid_entry");
     if (
       values.payment_tag &&
       (row.getString("kind") !== "expense" ||
@@ -238,6 +243,14 @@ function isLoanPrincipalUpdate(record) {
 for (const event of [onRecordCreate, onRecordUpdate])
   event(
     (e) => {
+      if (event === onRecordUpdate && e.record.collection().name === "finance_entries" &&
+          e.record.getString("bill_skip") && !e.record.getBool("__monline_restore")) {
+        const previous = e.record.original();
+        // Editing an amount, status or month resumes normal bill tracking.
+        if (e.record.getFloat("amount") !== 0 || e.record.getString("status") !== "planned" ||
+            e.record.getString("date").slice(0, 7) !== previous.getString("date").slice(0, 7))
+          e.record.set("bill_skip", "");
+      }
       check(e.record);
       if (event === onRecordUpdate && e.record.collection().name === "finance_rows" &&
           !e.record.getBool("__monline_restore") && !e.record.getFloat("year") &&
@@ -490,7 +503,10 @@ routerAdd("POST", "/api/finance/restore", (e) => {
   // Older page sessions and old backups have no expense subtype.
   for (const side of [changes[0].before, changes[0].after])
     for (const entry of side)
-      if (entry && entry.payment_tag === undefined) entry.payment_tag = "";
+      if (entry) {
+        if (entry.payment_tag === undefined) entry.payment_tag = "";
+        if (entry.bill_skip === undefined) entry.bill_skip = "";
+      }
   for (const side of [changes[3].before, changes[3].after])
     for (const link of side)
       if (link && link.allow_month_boundary === undefined) link.allow_month_boundary = false;
@@ -657,7 +673,7 @@ routerAdd("POST", "/api/finance/cells/action", (e) => {
         const expected = new Map(cell.entries.map((entry) => [entry?.id, entry]));
         if (expected.size !== cell.entries.length || current.length !== expected.size ||
             current.some((entry) => !expected.has(entry.id) || historyFields.some((field) =>
-              entry.get(field) !== (field === "payment_tag" || field === "source_payment" ? expected.get(entry.id)[field] || "" : expected.get(entry.id)[field]))))
+              entry.get(field) !== (["payment_tag", "source_payment", "bill_skip"].includes(field) ? expected.get(entry.id)[field] || "" : expected.get(entry.id)[field]))))
           throw new BadRequestError("finance_clipboard_conflict");
         const link = links.find((link) => link.getString("row_id") === cell.row_id && link.getString("month") === cell.month);
         if ((link?.id || null) !== (cell.statement_link?.id || null) ||

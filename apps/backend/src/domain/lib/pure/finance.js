@@ -99,6 +99,7 @@ function validate(name, value) {
       return "finance_invalid_card_transaction";
   } else if (name === "finance_entries") {
     if (
+      !require("./bill-skip.js").validSkip(value) ||
       !validDate(value.date) ||
       !amount(value.amount) ||
       !["planned", "settled"].includes(value.status) ||

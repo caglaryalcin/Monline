@@ -11,6 +11,7 @@ import { isCredit } from "@/lib/recordTypes";
 import {
   isBillRecord,
   type SpendingData,
+  type SpendingEvent,
   spendingTotals,
   subscriptionSection,
 } from "@/lib/spending";
@@ -28,6 +29,7 @@ type PaymentItem = {
   name?: string;
   labelKey?: string;
   providerRowId?: string;
+  bill?: SpendingEvent;
 };
 export interface DashboardPaymentGroup {
   items: PaymentItem[];
@@ -130,7 +132,7 @@ function forecastCardPayments(
 
 /** Project one bill row at a time so separate phone lines stay separate. */
 function forecastFixedBill(
-  entries: { date: string; amount: number; status?: string }[],
+  entries: { date: string; amount: number; status?: string; bill_skip?: string }[],
   currency: string,
   futureMonths: string[],
   currentMonth: string,
@@ -148,6 +150,7 @@ function forecastFixedBill(
   return futureMonths
     .filter(
       (month) =>
+        !entries.some((entry) => entry.bill_skip && entry.date.startsWith(month)) &&
         (monthly.get(month) ?? 0) <= 0 &&
         !(
           month === currentMonth &&
@@ -215,9 +218,12 @@ export function dashboardYearPayments({
   );
   // The ledger month is authoritative. Bulk confirmation dates and calendar
   // moves must not shift years of historical amounts into the current month.
+  const billRecords = new Map(
+    [...spending.events, ...(spending.pending_bills ?? [])].map((event) => [event.id, event]),
+  );
   for (const entry of finance.finance_entries) {
     const row = rows.get(entry.row_id);
-    if (!row) continue;
+    if (!row || entry.bill_skip) continue;
     const section =
       row.expense_type === "credit_card"
         ? "cards"
@@ -234,6 +240,7 @@ export function dashboardYearPayments({
         currency: "TRY",
         name: row.name,
         providerRowId: row.origin_row || row.id,
+        ...(section === "bills" ? { bill: billRecords.get(`ledger:${entry.id}`) } : {}),
       };
     if (entry.status === "settled" && inPeriod(date)) add(section, item);
     else if (entry.status === "planned" && inFuture(date)) add(section, item, true);
@@ -251,6 +258,7 @@ export function dashboardYearPayments({
         currency: event.currency,
         name: event.name,
         providerRowId: event.provider_row_id,
+        bill: event,
       };
     if (event.status === "settled" && inPeriod(date)) add("bills", item);
     else if (event.status === "planned" && inFuture(date)) add("bills", item, true);
@@ -269,13 +277,16 @@ export function dashboardYearPayments({
   // Fixed bills are estimated per row/series, never per bill tag: two phone
   // lines remain two charges. An explicit positive future amount wins.
   const projectFixedBill = (
-    entries: { date: string; amount: number; status?: string }[],
+    entries: { date: string; amount: number; status?: string; bill_skip?: string }[],
     currency: string,
     name: string,
     providerRowId?: string,
   ) => {
     for (const item of forecastFixedBill(entries, currency, futureMonths, currentMonth)) {
       let displayName = name;
+      if (providerRowId && finance.finance_entries.some((entry) =>
+        entry.bill_skip && entry.date.startsWith(item.date.slice(0, 7)) &&
+        (rows.get(entry.row_id)?.origin_row || entry.row_id) === providerRowId)) continue;
       if (periodMonths && providerRowId) {
         const sameMonth = (candidate: PaymentItem) => candidate.providerRowId === providerRowId && candidate.date.slice(0, 7) === item.date.slice(0, 7);
         // Future-year forks may already contain the actual bill. Never add an estimate over it.

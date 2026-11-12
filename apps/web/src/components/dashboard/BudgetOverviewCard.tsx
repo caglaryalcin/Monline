@@ -1,9 +1,10 @@
-import { Check, CheckCheck, Clock3, Landmark, ReceiptText, TriangleAlert } from "lucide-react";
+import { CalendarOff, Check, CheckCheck, Clock3, Landmark, ReceiptText, TriangleAlert } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { BudgetPeriodSelect } from "@/components/dashboard/BudgetPeriodSelect";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
+import { BillMonthStatusAction } from "@/components/subscriptions/BillMonthStatusAction";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -200,11 +201,11 @@ export function BudgetOverviewCard({
                             {t(entry.labelKey)}
                           </p>
                         )}
-                        <p className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+                        <div className="mt-0.5 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                           <time
                             dateTime={entry.date}
                             className={
-                              entry.status !== "paid" && !entry.monthOnly && entry.date <= today
+                              entry.status !== "paid" && entry.status !== "skipped" && !entry.monthOnly && entry.date <= today
                                 ? "text-red-600 dark:text-red-400"
                                 : undefined
                             }
@@ -212,7 +213,9 @@ export function BudgetOverviewCard({
                             {entry.monthOnly ? budgetPeriodLabel(entry.date, 1, language) : dateLabel(entry.date)}
                           </time>
                           <span aria-hidden="true">·</span>
-                          {entry.status === "paid" ? (
+                          {entry.status === "skipped" ? (
+                            <CalendarOff className="h-3 w-3" aria-hidden="true" />
+                          ) : entry.status === "paid" ? (
                             <Check
                               className="h-3 w-3 text-green-700 dark:text-green-400"
                               aria-hidden="true"
@@ -235,19 +238,26 @@ export function BudgetOverviewCard({
                             }
                           >
                             {t(
-                              entry.status === "partial"
+                              entry.status === "skipped"
+                                ? "spending_bill_skipped"
+                                : entry.status === "partial"
                                 ? "loans_status_partial"
                                 : entry.status === "overdue"
                                   ? "not_paid"
                                   : `budget_status_${entry.status}`,
                             )}
                           </span>
-                        </p>
+                        </div>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
-                        <span className="shrink-0 text-sm font-semibold tabular-nums">
-                          {formatValue(entry.amount)}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {section === "bills" && entry.bill && (
+                            <BillMonthStatusAction bill={entry.bill} compact />
+                          )}
+                          <span className="shrink-0 text-sm font-semibold tabular-nums">
+                            {entry.status === "skipped" ? "—" : formatValue(entry.amount)}
+                          </span>
+                        </div>
                         {entry.subscription && entry.status !== "paid" && quickPayments?.canPay(entry.subscription, entry.date) && (
                           <Button type="button" variant="outline" size="sm" className="h-8 shrink-0 gap-1 rounded-lg px-2 text-xs"
                             aria-label={t("quick_payment_button", { name: entry.subscription.name })}

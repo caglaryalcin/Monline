@@ -12,8 +12,8 @@ type FinanceProof = { id: string; target_type: string; target_id: string; statem
 type FinanceCalendarMove = { id: string; source: string; source_id: string; source_date: string; date: string };
 
 export type FinanceHistory = {
-  before: (Required<Omit<FinanceEntry, "payment_tag">> & Pick<FinanceEntry, "payment_tag">)[];
-  after: (Required<Omit<FinanceEntry, "payment_tag">> & Pick<FinanceEntry, "payment_tag">)[];
+  before: (Required<Omit<FinanceEntry, "payment_tag" | "bill_skip">> & Pick<FinanceEntry, "payment_tag" | "bill_skip">)[];
+  after: (Required<Omit<FinanceEntry, "payment_tag" | "bill_skip">> & Pick<FinanceEntry, "payment_tag" | "bill_skip">)[];
   rows?: {
     before: (Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "year" | "origin_row" | "is_deleted">> &
       Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "year" | "origin_row" | "is_deleted">)[];

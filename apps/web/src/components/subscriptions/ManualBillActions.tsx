@@ -32,7 +32,7 @@ export function ManualBillActions({
   });
   return (
     <div className={compact ? "flex flex-wrap items-center gap-1" : "flex flex-wrap items-center gap-2"}>
-      <Button
+      {!bill.bill_skipped && <Button
         size={compact ? "icon" : "sm"}
         variant="ghost"
         className={compact ? "h-8 w-8 text-muted-foreground hover:text-foreground" : undefined}
@@ -42,7 +42,7 @@ export function ManualBillActions({
         onClick={() => setEditing(true)}
       >
         {compact ? <Pencil className="h-4 w-4" aria-hidden="true" /> : t("spending_edit_bill")}
-      </Button>
+      </Button>}
       <Button
         size={compact ? "icon" : "sm"}
         variant="ghost"

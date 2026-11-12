@@ -441,6 +441,23 @@
   width: 100%;
   text-align: right;
 }
+.finance-sheet__cell > .finance-sheet__bill-skipped {
+  display: -webkit-box;
+  min-width: 0;
+  max-width: 100%;
+  max-height: 24px;
+  overflow: hidden;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 11px;
+  line-height: 12px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.finance-sheet__cell:has(> .finance-sheet__bill-skipped) {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
 .finance-sheet__quick-edit {
   padding: 3px;
   border: 1px solid hsl(var(--ring));

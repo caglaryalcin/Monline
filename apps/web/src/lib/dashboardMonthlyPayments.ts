@@ -2,11 +2,11 @@ import { type BudgetPeriod, budgetPeriodBounds } from "@/lib/budgetPeriod";
 import type { DashboardPaymentGroup } from "@/lib/dashboardYear";
 import type { FinanceRow } from "@/lib/finance";
 import type { MonthlyBudgetEntry } from "@/lib/monthlyBudget";
-import type { LoanSummary } from "@/lib/spending";
+import type { LoanSummary, SpendingEvent } from "@/lib/spending";
 import type { Currency } from "@/types";
 
 export type DashboardMonthlyEntry = Omit<MonthlyBudgetEntry, "subscription" | "status"> & {
-  status: MonthlyBudgetEntry["status"] | "partial";
+  status: MonthlyBudgetEntry["status"] | "partial" | "skipped";
   paidAmount?: number;
   pendingAmount?: number;
   subscription?: MonthlyBudgetEntry["subscription"];
@@ -14,6 +14,7 @@ export type DashboardMonthlyEntry = Omit<MonthlyBudgetEntry, "subscription" | "s
   labelKey?: string;
   monthOnly?: boolean;
   providerRowId?: string;
+  bill?: SpendingEvent;
 };
 
 /** Use the same bill plans as the year graph, converted to the user's main currency. */
@@ -48,6 +49,7 @@ export function monthlyBillPayments(
         id: `bill:${paid}:${index}`,
         name: item.name,
         providerRowId: item.providerRowId,
+        bill: item.bill,
         date: item.date,
         labelKey: item.labelKey,
         monthOnly: !!item.labelKey,

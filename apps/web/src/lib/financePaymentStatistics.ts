@@ -120,7 +120,7 @@ export function buildFinancePaymentStatistics({
   const validRate = ledgerRate !== null && Number.isFinite(ledgerRate) && ledgerRate > 0;
   for (const entry of ledger?.finance_entries ?? []) {
     const parsed = parseLocalDate(entry.date);
-    if (!parsed || entry.status !== "planned" || !Number.isFinite(entry.amount)) continue;
+    if (!parsed || entry.bill_skip || entry.status !== "planned" || !Number.isFinite(entry.amount)) continue;
     const date = toDateStr(parsed);
     if (date < today || parsed.getFullYear() !== year) continue;
     const row = rowForEntry(entry.row_id, date);

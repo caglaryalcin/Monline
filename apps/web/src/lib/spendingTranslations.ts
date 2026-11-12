@@ -1,5 +1,11 @@
 export const spendingTranslations = {
   tr: {
+    spending_bill_skip: "Bu ay fatura kesilmedi",
+    spending_bill_skipped: "Fatura kesilmedi",
+    spending_bill_skip_undo: "Geri al",
+    spending_bill_skip_help:
+      "Yalnızca bu aya uygulanır. Ödeme toplamlarına dahil edilmez; sonraki ay yeniden beklenir. Geri alındığında önceki tutar geri yüklenir.",
+    spending_bill_skip_failed: "Fatura durumu güncellenemedi. Sayfayı yenileyip tekrar dene.",
     calendar_move_periods: "Hangi aylara uygulansın?",
     calendar_move_periods_single: "Yalnızca bu ödeme",
     calendar_move_periods_future: "{{month}} ve sonraki aylar",
@@ -254,6 +260,12 @@ export const spendingTranslations = {
     spending_show_more: "Daha fazla göster",
   },
   en: {
+    spending_bill_skip: "No bill this month",
+    spending_bill_skipped: "Not billed",
+    spending_bill_skip_undo: "Undo",
+    spending_bill_skip_help:
+      "Applies only to this month. Excluded from payment totals; tracking resumes next month. Undo restores the previous amount.",
+    spending_bill_skip_failed: "Could not update the bill. Refresh the page and try again.",
     calendar_move_periods: "Which months should this apply to?",
     calendar_move_periods_single: "Only this payment",
     calendar_move_periods_future: "{{month}} and later months",
@@ -507,6 +519,12 @@ export const spendingTranslations = {
     spending_show_more: "Show more",
   },
   de: {
+    spending_bill_skip: "Diesen Monat keine Rechnung",
+    spending_bill_skipped: "Keine Rechnung gestellt",
+    spending_bill_skip_undo: "Rückgängig",
+    spending_bill_skip_help:
+      "Gilt nur für diesen Monat. Nicht in Zahlungssummen enthalten; im nächsten Monat wird wieder eine Rechnung erwartet. Rückgängig stellt den vorherigen Betrag wieder her.",
+    spending_bill_skip_failed: "Die Rechnung konnte nicht aktualisiert werden. Lade die Seite neu und versuche es erneut.",
     calendar_move_periods: "Für welche Monate anwenden?",
     calendar_move_periods_single: "Nur diese Zahlung",
     calendar_move_periods_future: "{{month}} und spätere Monate",

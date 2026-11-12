@@ -308,6 +308,8 @@ class Repository {
       ["finance_rows", "payment_card"],
       ["finance_rows", "bill_type"],
       ["finance_entries", "payment_tag"],
+      ["finance_entries", "bill_skip"],
+      ["manual_bills", "bill_skip"],
       ["payment_methods", "finance_card"],
     ])
       if (

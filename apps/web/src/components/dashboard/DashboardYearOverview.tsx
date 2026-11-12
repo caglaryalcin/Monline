@@ -467,6 +467,7 @@ export function DashboardYearOverview({
             {typeof sidebar === "function"
               ? sidebar({
                   bills: billPayments,
+                  skippedBills: spending.data?.pending_bills?.filter((bill) => bill.bill_skipped),
                   loans: spending.data?.loans ?? [],
                   financeRows: finance.data?.finance_rows ?? [],
                   currencies: currencies.data ?? [],

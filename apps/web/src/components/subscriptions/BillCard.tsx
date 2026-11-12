@@ -1,4 +1,4 @@
-import { BadgeCheck, Building2, CalendarDays, Check, Clock, ExternalLink } from "lucide-react";
+import { BadgeCheck, Building2, CalendarDays, CalendarOff, Check, Clock, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { StatementLink } from "@/components/StatementLink";
@@ -8,6 +8,7 @@ import { resolveLocale } from "@/lib/locale";
 import type { SpendingEvent } from "@/lib/spending";
 import { cn, formatCurrency } from "@/lib/utils";
 
+import { BillMonthStatusAction } from "./BillMonthStatusAction";
 import { ManualBillActions } from "./ManualBillActions";
 import { SubscriptionSourceBadge } from "./SubscriptionSourceBadge";
 
@@ -27,7 +28,7 @@ export function BillCard({
   const { t, i18n } = useTranslation();
   const locale = resolveLocale(i18n);
   const settled = bill.status === "settled";
-  const amount = bill.amount_pending
+  const amount = bill.bill_skipped ? "—" : bill.amount_pending
     ? t("spending_bill_amount_pending")
     : formatCurrency(bill.amount, bill.currency, {});
   const date = new Intl.DateTimeFormat(locale, {
@@ -87,7 +88,7 @@ export function BillCard({
             className={cn(
               "whitespace-nowrap font-semibold tracking-tight",
               bill.amount_pending ? "text-sm" : "font-mono text-xl font-extrabold",
-              settled
+              bill.bill_skipped ? "text-muted-foreground" : settled
                 ? "text-emerald-700 dark:text-emerald-400"
                 : "text-rose-700 dark:text-rose-400",
             )}
@@ -119,18 +120,22 @@ export function BillCard({
           <span
             className={cn(
               "inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium",
-              settled
+              bill.bill_skipped
+                ? "border-border bg-muted/50 text-muted-foreground"
+                : settled
                 ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                 : "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-400",
             )}
           >
-            {settled ? (
+            {bill.bill_skipped ? (
+              <CalendarOff className="h-3 w-3" aria-hidden="true" />
+            ) : settled ? (
               <Check className="h-3 w-3" aria-hidden="true" />
             ) : (
               <Clock className="h-3 w-3" aria-hidden="true" />
             )}
             {t(
-              bill.status === "planned" ? "spending_bill_unpaid" : `spending_status_${bill.status}`,
+              bill.bill_skipped ? "spending_bill_skipped" : bill.status === "planned" ? "spending_bill_unpaid" : `spending_status_${bill.status}`,
             )}
           </span>
           {bill.verification === "verified" && (
@@ -143,28 +148,31 @@ export function BillCard({
             </span>
           )}
         </div>
-        <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-1 rounded-2xl border bg-background/80 p-1 shadow-sm backdrop-blur sm:rounded-full">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            title={providerLabel}
-            aria-label={`${providerLabel} · ${bill.name}`}
-            onClick={onChooseProvider}
-          >
-            <Building2 className="h-4 w-4" aria-hidden="true" />
-          </Button>
-          {bill.statement_id && (
-            <StatementLink
-              statementId={bill.statement_id}
-              title={t("finance_go_statement")}
-              aria-label={`${t("finance_go_statement")} · ${bill.name}`}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
+          <BillMonthStatusAction bill={bill} />
+          <div className="flex max-w-full flex-wrap items-center justify-end gap-1 rounded-2xl border bg-background/80 p-1 shadow-sm backdrop-blur sm:rounded-full">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              title={providerLabel}
+              aria-label={`${providerLabel} · ${bill.name}`}
+              onClick={onChooseProvider}
             >
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
-            </StatementLink>
-          )}
-          {bill.manual_bill_id && <ManualBillActions bill={bill} compact />}
+              <Building2 className="h-4 w-4" aria-hidden="true" />
+            </Button>
+            {bill.statement_id && (
+              <StatementLink
+                statementId={bill.statement_id}
+                title={t("finance_go_statement")}
+                aria-label={`${t("finance_go_statement")} · ${bill.name}`}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </StatementLink>
+            )}
+            {bill.manual_bill_id && <ManualBillActions bill={bill} compact />}
+          </div>
         </div>
       </div>
     </article>

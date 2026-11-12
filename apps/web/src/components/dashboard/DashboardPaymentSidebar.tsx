@@ -3,17 +3,18 @@ import { useTranslation } from "react-i18next";
 
 import { BudgetOverviewCard } from "@/components/dashboard/BudgetOverviewCard";
 import { type BudgetPeriod, budgetPeriodBounds } from "@/lib/budgetPeriod";
-import { monthlyBillPayments, monthlyLoanPayments } from "@/lib/dashboardMonthlyPayments";
+import { type DashboardMonthlyEntry, monthlyBillPayments, monthlyLoanPayments } from "@/lib/dashboardMonthlyPayments";
 import type { DashboardPaymentGroup } from "@/lib/dashboardYear";
 import type { FinanceRow } from "@/lib/finance";
 import type { MonthlyBudgetEntry } from "@/lib/monthlyBudget";
 import type { QuickPaymentActions } from "@/lib/quickPayment";
-import { type LoanSummary, subscriptionSection } from "@/lib/spending";
+import { type LoanSummary, type SpendingEvent, subscriptionSection } from "@/lib/spending";
 import { cn } from "@/lib/utils";
 import type { Currency } from "@/types";
 
 export interface DashboardSidebarData {
   bills: DashboardPaymentGroup;
+  skippedBills?: SpendingEvent[];
   loans: LoanSummary[];
   financeRows?: FinanceRow[];
   currencies: Currency[];
@@ -55,8 +56,20 @@ export function DashboardPaymentSidebar({
   );
   const { from, until } = budgetPeriodBounds(today, periodMonths);
   const bills = monthlyBillPayments(data.bills, today, data.currencies, periodMonths);
+  const skippedBills: DashboardMonthlyEntry[] = (data.skippedBills ?? [])
+    .filter((bill) => bill.date >= from && bill.date < until)
+    .map((bill) => ({
+      id: `skipped:${bill.id}`,
+      name: bill.name,
+      date: bill.date,
+      providerRowId: bill.provider_row_id,
+      amount: 0,
+      status: "skipped",
+      bill,
+    }));
   const billEntries = [
     ...bills.entries,
+    ...skippedBills,
     ...entries.filter((entry) => entry.date >= from && entry.date < until && subscriptionSection(entry.subscription) === "bills"),
   ].sort((a, b) => a.date.localeCompare(b.date));
   const loans = monthlyLoanPayments(data.loans, today, data.currencies, data.financeRows, periodMonths);

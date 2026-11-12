@@ -2261,9 +2261,15 @@
         "type": "text",
         "max": 20,
         "hidden": false
+      },
+      {
+        "name": "bill_skip",
+        "type": "text",
+        "max": 100,
+        "hidden": false
       }
     ],
-    "sql": "CREATE TABLE \"finance_entries\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"row_id\" TEXT NOT NULL DEFAULT '', \"date\" TEXT NOT NULL DEFAULT '', \"amount\" REAL NOT NULL DEFAULT 0, \"status\" TEXT NOT NULL DEFAULT '', \"settled_date\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"source_payment\" TEXT NOT NULL DEFAULT '', \"payment_tag\" TEXT NOT NULL DEFAULT '')"
+    "sql": "CREATE TABLE \"finance_entries\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"row_id\" TEXT NOT NULL DEFAULT '', \"date\" TEXT NOT NULL DEFAULT '', \"amount\" REAL NOT NULL DEFAULT 0, \"status\" TEXT NOT NULL DEFAULT '', \"settled_date\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"source_payment\" TEXT NOT NULL DEFAULT '', \"payment_tag\" TEXT NOT NULL DEFAULT '', \"bill_skip\" TEXT NOT NULL DEFAULT '')"
   },
   {
     "name": "salary_history",
@@ -2614,9 +2620,15 @@
         "type": "text",
         "max": 2000,
         "hidden": false
+      },
+      {
+        "name": "bill_skip",
+        "type": "text",
+        "max": 100,
+        "hidden": false
       }
     ],
-    "sql": "CREATE TABLE \"manual_bills\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"name\" TEXT NOT NULL DEFAULT '', \"date\" TEXT NOT NULL DEFAULT '', \"amount\" REAL NOT NULL DEFAULT 0, \"currency\" TEXT NOT NULL DEFAULT '', \"status\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '')"
+    "sql": "CREATE TABLE \"manual_bills\" (\"id\" TEXT NOT NULL DEFAULT '' PRIMARY KEY, \"user\" TEXT NOT NULL DEFAULT '', \"name\" TEXT NOT NULL DEFAULT '', \"date\" TEXT NOT NULL DEFAULT '', \"amount\" REAL NOT NULL DEFAULT 0, \"currency\" TEXT NOT NULL DEFAULT '', \"status\" TEXT NOT NULL DEFAULT '', \"notes\" TEXT NOT NULL DEFAULT '', \"bill_skip\" TEXT NOT NULL DEFAULT '')"
   },
   {
     "name": "budget_matches",
