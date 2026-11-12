@@ -12,8 +12,11 @@ import { ThemedSelect } from "@/components/ui/themed-select";
 import { useNumberLocale } from "@/hooks/useNumberLocale";
 import { formatNumber, parseNumberInput } from "@/lib/numberFormat";
 import {
+  banknoteDenominations,
+  banknotesTotal,
   isGoldSavingsAsset,
   isSavingsCurrency,
+  normalizeBanknotes,
   type Saving,
   SAVINGS_ASSETS,
   type SavingsAsset,
@@ -26,11 +29,18 @@ import { formatCurrency, getCurrencySymbol } from "@/lib/utils";
 import { savingsService } from "@/services/savings";
 
 export function SavingsEditor({
-  saving, rates, currency = "TRY", onSaved, onCancel, onPendingChange,
+  saving,
+  rates,
+  currency = "TRY",
+  editBanknotes = false,
+  onSaved,
+  onCancel,
+  onPendingChange,
 }: {
   saving?: Saving;
   rates?: SavingsRates;
   currency?: string;
+  editBanknotes?: boolean;
   onSaved: () => void;
   onCancel: () => void;
   onPendingChange: (pending: boolean) => void;
@@ -39,38 +49,108 @@ export function SavingsEditor({
   const locale = useNumberLocale();
   const [name, setName] = useState(saving?.name || "");
   const [asset, setAsset] = useState<SavingsAsset>(saving?.asset || "GRA");
-  const [quantity, setQuantity] = useState(saving
-    ? formatNumber(saving.quantity, { useGrouping: false, maximumFractionDigits: 4 }, locale) : "");
+  const [quantity, setQuantity] = useState(
+    saving
+      ? formatNumber(saving.quantity, { useGrouping: false, maximumFractionDigits: 4 }, locale)
+      : "",
+  );
   const [notes, setNotes] = useState(saving?.notes || "");
+  const [trackBanknotes, setTrackBanknotes] = useState(
+    editBanknotes || !!Object.keys(saving?.banknotes ?? {}).length,
+  );
+  const [banknotes, setBanknotes] = useState<Record<string, string>>(
+    Object.fromEntries(
+      Object.entries(saving?.banknotes ?? {}).map(([value, count]) => [
+        value,
+        formatNumber(count, { useGrouping: false }, locale),
+      ]),
+    ),
+  );
   const [invalid, setInvalid] = useState(false);
   const parsed = /^[\p{Nd}\s.,'’\u066b\u066c]+$/u.test(quantity.trim())
-    ? parseNumberInput(quantity, locale) : NaN;
+    ? parseNumberInput(quantity, locale)
+    : NaN;
   const valid = validSavingsQuantity(asset, parsed);
+  const denominations = banknoteDenominations(asset);
+  const banknoteCounts = Object.fromEntries(
+    Object.entries(banknotes).map(([value, count]) => [
+      value,
+      count.trim() === ""
+        ? 0
+        : /^[\p{Nd}\s.,'’\u066b\u066c]+$/u.test(count.trim())
+          ? parseNumberInput(count, locale)
+          : NaN,
+    ]),
+  );
+  let normalizedBanknotes: Record<string, number> | null = {};
+  if (trackBanknotes && denominations.length) {
+    try {
+      normalizedBanknotes = normalizeBanknotes(asset, banknoteCounts, parsed);
+    } catch {
+      normalizedBanknotes = null;
+    }
+  }
+  const banknoteTotal = banknotesTotal(banknoteCounts);
+  const validBanknoteCounts = Object.values(banknoteCounts).every(
+    (count) => Number.isSafeInteger(count) && count >= 0 && count <= 1e9,
+  );
+  const banknoteMismatch =
+    trackBanknotes &&
+    valid &&
+    validBanknoteCounts &&
+    Math.round(banknoteTotal * 100) !== Math.round(parsed * 100);
   const preview = valid ? savingsValue({ asset, quantity: parsed }, rates, currency) : null;
   const unit = isGoldSavingsAsset(asset)
-    ? t(asset === "GRA" ? "savings_unit_gram" : "savings_unit_piece") : asset === "TRY" ? "TL" : asset;
-  const assetOptions = [...new Set([
-    ...SAVINGS_ASSETS, ...Object.keys(rates?.currency_rates || {}).filter(isSavingsCurrency).sort(), asset,
-  ])];
+    ? t(asset === "GRA" ? "savings_unit_gram" : "savings_unit_piece")
+    : asset === "TRY"
+      ? "TL"
+      : asset;
+  const assetOptions = [
+    ...new Set([
+      ...SAVINGS_ASSETS,
+      ...Object.keys(rates?.currency_rates || {})
+        .filter(isSavingsCurrency)
+        .sort(),
+      asset,
+    ]),
+  ];
   const save = useMutation({
     mutationFn: () => {
-      const value = { name: name.trim(), asset, quantity: parsed, notes };
+      const value = {
+        name: name.trim(),
+        asset,
+        quantity: parsed,
+        notes,
+        banknotes: normalizedBanknotes ?? {},
+      };
       return saving ? savingsService.update(saving.id, value) : savingsService.create(value);
     },
-    onSuccess: () => { toast.success(t("savings_saved")); onSaved(); },
-    onError: (error) => toast.error(t(error.message === "savings_invalid" ? "savings_invalid" : "savings_save_error")),
+    onSuccess: () => {
+      toast.success(t("savings_saved"));
+      onSaved();
+    },
+    onError: (error) =>
+      toast.error(
+        t(error.message === "savings_invalid" ? "savings_invalid" : "savings_save_error"),
+      ),
     onSettled: () => onPendingChange(false),
   });
 
   return (
-    <form className="space-y-5" onSubmit={(event) => {
-      event.preventDefault();
-      if (save.isPending) return;
-      if (!name.trim() || !valid) { setInvalid(true); return; }
-      setInvalid(false);
-      onPendingChange(true);
-      save.mutate();
-    }}>
+    <form
+      className="space-y-5"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (save.isPending) return;
+        if (!name.trim() || !valid || normalizedBanknotes === null || banknoteMismatch) {
+          setInvalid(true);
+          return;
+        }
+        setInvalid(false);
+        onPendingChange(true);
+        save.mutate();
+      }}
+    >
       <DialogHeader>
         <DialogTitle>{t(saving ? "savings_edit" : "savings_add")}</DialogTitle>
         <DialogDescription>{t("savings_empty_help")}</DialogDescription>
@@ -78,48 +158,154 @@ export function SavingsEditor({
       <fieldset disabled={save.isPending} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="saving-name">{t("name")}</Label>
-          <Input id="saving-name" value={name} onChange={(event) => setName(event.target.value)}
-            maxLength={160} required autoFocus placeholder={t("savings_name_placeholder")} />
+          <Input
+            id="saving-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            maxLength={160}
+            required
+            autoFocus
+            placeholder={t("savings_name_placeholder")}
+          />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="saving-asset">{t("savings_asset")}</Label>
-            <ThemedSelect id="saving-asset" value={asset}
-              onChange={(event) => setAsset(event.target.value as SavingsAsset)}
-              className="h-10 w-full rounded-xl">
+            <ThemedSelect
+              id="saving-asset"
+              value={asset}
+              onChange={(event) => {
+                setAsset(event.target.value as SavingsAsset);
+                setBanknotes({});
+                setTrackBanknotes(false);
+              }}
+              className="h-10 w-full rounded-xl"
+            >
               {assetOptions.map((value) => {
                 const label = t(`savings_asset_${value}`, { defaultValue: value });
                 const symbol = getCurrencySymbol(value, locale);
-                const text = isGoldSavingsAsset(value) ? label : label !== value ? `${label} (${value})`
-                  : symbol !== value ? `${value} (${symbol})` : value;
-                return <option key={value} value={value}>{text}</option>;
+                const text = isGoldSavingsAsset(value)
+                  ? label
+                  : label !== value
+                    ? `${label} (${value})`
+                    : symbol !== value
+                      ? `${value} (${symbol})`
+                      : value;
+                return (
+                  <option key={value} value={value}>
+                    {text}
+                  </option>
+                );
               })}
             </ThemedSelect>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="saving-quantity">{t("savings_quantity")} ({unit})</Label>
-            <Input id="saving-quantity" value={quantity} inputMode="decimal" required
+            <Label htmlFor="saving-quantity">
+              {t("savings_quantity")} ({unit})
+            </Label>
+            <Input
+              id="saving-quantity"
+              value={quantity}
+              inputMode="decimal"
+              required
               onChange={(event) => setQuantity(event.target.value)}
-              aria-invalid={invalid && !valid} aria-describedby="saving-quantity-help" />
+              aria-invalid={invalid && !valid}
+              aria-describedby="saving-quantity-help"
+            />
           </div>
         </div>
-        <p id="saving-quantity-help" className="text-xs text-muted-foreground">{t(savingsPrecision(asset) === 0 ? "savings_quantity_whole" : "savings_quantity_help", { decimals: savingsPrecision(asset) })}</p>
+        <p id="saving-quantity-help" className="text-xs text-muted-foreground">
+          {t(savingsPrecision(asset) === 0 ? "savings_quantity_whole" : "savings_quantity_help", {
+            decimals: savingsPrecision(asset),
+          })}
+        </p>
+        {denominations.length > 0 && (
+          <div className="space-y-3 rounded-xl border p-4">
+            <label
+              htmlFor="saving-banknotes"
+              className="flex cursor-pointer items-center gap-2 text-sm font-medium"
+            >
+              <input
+                id="saving-banknotes"
+                type="checkbox"
+                className="h-4 w-4 accent-primary"
+                checked={trackBanknotes}
+                onChange={(event) => setTrackBanknotes(event.target.checked)}
+              />
+              {t("savings_banknotes_optional")}
+            </label>
+            {trackBanknotes && (
+              <>
+                <p className="text-xs text-muted-foreground">{t("savings_banknotes_help")}</p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {denominations.map((value) => (
+                    <div key={value} className="space-y-1">
+                      <Label htmlFor={`saving-banknote-${value}`} className="text-xs">
+                        {formatCurrency(value, asset, { locale, maximumFractionDigits: 0 })}
+                      </Label>
+                      <Input
+                        id={`saving-banknote-${value}`}
+                        inputMode="numeric"
+                        value={banknotes[value] ?? ""}
+                        placeholder="0"
+                        maxLength={12}
+                        aria-label={t("savings_banknote_count", { value, currency: asset })}
+                        onChange={(event) =>
+                          setBanknotes((current) => ({ ...current, [value]: event.target.value }))
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+                {invalid && valid && (normalizedBanknotes === null || banknoteMismatch) && (
+                  <p role="alert" className="text-xs text-destructive">
+                    {banknoteMismatch
+                      ? t("savings_banknotes_mismatch", {
+                          total: formatCurrency(banknoteTotal, asset, { locale }),
+                        })
+                      : t("savings_banknotes_invalid")}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )}
         <div className="rounded-xl border bg-muted/30 p-4">
-          <p className="text-sm text-muted-foreground">{t("savings_value", { currency: currency === "TRY" ? "TL" : currency })}</p>
-          <p className="mt-1 text-xl font-semibold tabular-nums">
-            {preview === null ? t("savings_rate_missing") : formatCurrency(preview, currency, { locale })}
+          <p className="text-sm text-muted-foreground">
+            {t("savings_value", { currency: currency === "TRY" ? "TL" : currency })}
           </p>
-          {rates?.stale && preview !== null && <p className="mt-2 text-xs text-muted-foreground">{t("savings_rates_stale")}</p>}
+          <p className="mt-1 text-xl font-semibold tabular-nums">
+            {preview === null
+              ? t("savings_rate_missing")
+              : formatCurrency(preview, currency, { locale })}
+          </p>
+          {rates?.stale && preview !== null && (
+            <p className="mt-2 text-xs text-muted-foreground">{t("savings_rates_stale")}</p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="saving-notes">{t("notes")}</Label>
-          <Textarea id="saving-notes" value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={2000} rows={3} />
+          <Textarea
+            id="saving-notes"
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            maxLength={2000}
+            rows={3}
+          />
         </div>
       </fieldset>
-      {invalid && <p role="alert" className="text-sm text-destructive">{t("savings_invalid")}</p>}
+      {invalid && (!name.trim() || !valid) && (
+        <p role="alert" className="text-sm text-destructive">
+          {t("savings_invalid")}
+        </p>
+      )}
       <DialogFooter>
-        <Button type="button" variant="outline" disabled={save.isPending} onClick={onCancel}>{t("cancel")}</Button>
-        <Button type="submit" disabled={save.isPending}>{t(save.isPending ? "loading" : "save")}</Button>
+        <Button type="button" variant="outline" disabled={save.isPending} onClick={onCancel}>
+          {t("cancel")}
+        </Button>
+        <Button type="submit" disabled={save.isPending}>
+          {t(save.isPending ? "loading" : "save")}
+        </Button>
       </DialogFooter>
     </form>
   );

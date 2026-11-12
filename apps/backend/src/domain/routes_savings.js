@@ -26,7 +26,9 @@ for (const hook of [onRecordCreate, onRecordUpdate])
   }, "savings");
 
 function save(e, record) {
-  const values = validate(e.requestInfo().body);
+  const body = e.requestInfo().body;
+  const values = validate({ ...body, banknotes: Object.hasOwn(body, "banknotes") ? body.banknotes :
+    body.asset === record.getString("asset") ? record.get("banknotes") : undefined });
   record.set("user", owner(e));
   for (const [key, value] of Object.entries(values)) record.set(key, value);
   repository.save(record);

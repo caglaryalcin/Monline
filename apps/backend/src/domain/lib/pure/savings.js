@@ -1,7 +1,8 @@
 const GOLD_ASSETS = ["GRA", "CEYREKALTIN", "YARIMALTIN", "TAMALTIN", "CUMHURIYETALTINI"];
 const ASSETS = ["TRY", "USD", "EUR", "GBP", ...GOLD_ASSETS];
 const NON_CURRENCY_CODES = new Set(["XAU", "XAG", "XPT", "XPD", "BTC", "GRA"]);
-const FIELDS = ["name", "asset", "quantity", "notes"];
+const { normalizeBanknotes } = require("./savings-banknotes.mjs");
+const FIELDS = ["name", "asset", "quantity", "notes", "banknotes"];
 
 function validAsset(asset) {
   return typeof asset === "string" && (GOLD_ASSETS.includes(asset) ||
@@ -24,7 +25,8 @@ function validate(value) {
     !validQuantity(value.asset, value.quantity) ||
     (value.notes != null && (typeof value.notes !== "string" || value.notes.length > 2000)))
     throw new Error("savings_invalid");
-  return { name: value.name.trim(), asset: value.asset, quantity: value.quantity, notes: value.notes || "" };
+  return { name: value.name.trim(), asset: value.asset, quantity: value.quantity, notes: value.notes || "",
+    banknotes: normalizeBanknotes(value.asset, value.banknotes, value.quantity) };
 }
 
 // Fixer quotes XAU in troy ounces of fine gold (https://fixer.io/symbols).

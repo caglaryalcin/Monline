@@ -1,12 +1,20 @@
 import { getCurrencyFractionDigits } from "@/lib/utils";
 
+export {
+  banknoteDenominations,
+  banknotesTotal,
+  normalizeBanknotes,
+} from "../../../backend/src/domain/lib/pure/savings-banknotes.mjs";
+
 export const SAVINGS_GOLD_ASSETS = [
-  "GRA", "CEYREKALTIN", "YARIMALTIN", "TAMALTIN", "CUMHURIYETALTINI",
+  "GRA",
+  "CEYREKALTIN",
+  "YARIMALTIN",
+  "TAMALTIN",
+  "CUMHURIYETALTINI",
 ] as const;
 
-export const SAVINGS_ASSETS = [
-  "TRY", "USD", "EUR", "GBP", ...SAVINGS_GOLD_ASSETS,
-] as const;
+export const SAVINGS_ASSETS = ["TRY", "USD", "EUR", "GBP", ...SAVINGS_GOLD_ASSETS] as const;
 
 export type SavingsAsset = string;
 
@@ -23,6 +31,7 @@ export interface Saving {
   asset: SavingsAsset;
   quantity: number;
   notes: string;
+  banknotes?: Record<string, number> | null;
 }
 export type SavingInput = Omit<Saving, "id">;
 export interface SavingsRates {
@@ -42,20 +51,34 @@ export function savingsPrecision(asset: SavingsAsset) {
 
 export function validSavingsQuantity(asset: SavingsAsset, quantity: number) {
   const scale = 10 ** savingsPrecision(asset);
-  return Number.isFinite(quantity) && quantity > 0 && quantity <= 1e9 &&
-    Math.abs(quantity * scale - Math.round(quantity * scale)) < 0.00001;
+  return (
+    Number.isFinite(quantity) &&
+    quantity > 0 &&
+    quantity <= 1e9 &&
+    Math.abs(quantity * scale - Math.round(quantity * scale)) < 0.00001
+  );
 }
 
 export function savingsUnitRate(asset: SavingsAsset, rates?: SavingsRates, currency = "TRY") {
   if (asset === currency) return 1;
-  const rate = asset === "TRY" ? 1 : rates?.currency_rates?.[asset] ?? rates?.rates[asset];
-  const target = currency === "TRY" ? 1 : rates?.currency_rates?.[currency] ??
-    rates?.rates[currency];
-  return rate && Number.isFinite(rate) && rate > 0 && target && Number.isFinite(target) && target > 0
-    ? rate / target : null;
+  const rate = asset === "TRY" ? 1 : (rates?.currency_rates?.[asset] ?? rates?.rates[asset]);
+  const target =
+    currency === "TRY" ? 1 : (rates?.currency_rates?.[currency] ?? rates?.rates[currency]);
+  return rate &&
+    Number.isFinite(rate) &&
+    rate > 0 &&
+    target &&
+    Number.isFinite(target) &&
+    target > 0
+    ? rate / target
+    : null;
 }
 
-export function savingsValue(saving: Pick<Saving, "asset" | "quantity">, rates?: SavingsRates, currency = "TRY") {
+export function savingsValue(
+  saving: Pick<Saving, "asset" | "quantity">,
+  rates?: SavingsRates,
+  currency = "TRY",
+) {
   const rate = savingsUnitRate(saving.asset, rates, currency);
   const scale = 10 ** getCurrencyFractionDigits(currency);
   return rate === null ? null : Math.round(saving.quantity * rate * scale) / scale;

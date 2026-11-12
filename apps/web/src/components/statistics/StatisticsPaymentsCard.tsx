@@ -11,17 +11,21 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { historyMonth } from "@/lib/costHistory";
+import {
+  statisticsPaymentItems,
+  type StatisticsPaymentsData,
+} from "@/lib/financePaymentStatistics";
 import { resolveLocale } from "@/lib/locale";
-import type { MonthlyPaymentTotal } from "@/lib/paymentStatistics";
 import { cn, formatDate } from "@/lib/utils";
 
 interface StatisticsPaymentsCardProps {
-  data: { paid: MonthlyPaymentTotal[]; upcoming: MonthlyPaymentTotal[] };
+  data: StatisticsPaymentsData;
   formatValue: (value: number) => string;
   isLoading?: boolean;
   hasError?: boolean;
   year?: number;
   years?: number[];
+  upcomingYears?: number[];
   onYearChange?: (year: number) => void;
 }
 
@@ -32,28 +36,64 @@ export function StatisticsPaymentsCard({
   hasError,
   year,
   years,
+  upcomingYears,
   onYearChange,
 }: StatisticsPaymentsCardProps) {
   const { t, i18n } = useTranslation();
   const currentPeriod = useLocalToday().slice(0, 7);
   const currentYear = Number(currentPeriod.slice(0, 4));
   const language = resolveLocale(i18n);
-  const [mode, setMode] = useState<"paid" | "upcoming">(
+  const [mode, setMode] = useState<"paid" | "upcoming" | "income">(
     year && year > currentYear ? "upcoming" : "paid",
   );
-  const availableYears = mode === "upcoming"
-    ? [...new Set([currentYear + 1, ...(years ?? [year ?? currentYear])])].sort(
-        (left, right) => right - left,
-      )
-    : years ?? [year ?? currentYear];
-  const [selected, setSelected] = useState<{ paid: string | null; upcoming: string | null }>({
+  const availableYears =
+    mode !== "paid"
+      ? [
+          ...new Set([
+            currentYear + 1,
+            ...(years ?? [year ?? currentYear]),
+            ...(upcomingYears ?? []),
+          ]),
+        ].sort((left, right) => right - left)
+      : (years ?? [year ?? currentYear]);
+  const [selected, setSelected] = useState<Record<"paid" | "upcoming" | "income", string | null>>({
     paid: null,
     upcoming: null,
+    income: null,
   });
   useEffect(() => {
-    setSelected({ paid: null, upcoming: null });
+    setSelected({ paid: null, upcoming: null, income: null });
   }, [year, currentPeriod]);
-  const months = data[mode];
+  const months = data[mode] ?? [];
+  const includesLedger = data.income !== undefined;
+  const labels = {
+    paid: {
+      button: "budget_paid",
+      sentence: "payments_month_sentence",
+      empty: "payments_month_empty",
+      none: "payments_no_record",
+      note: "payments_paid_note",
+    },
+    upcoming: {
+      button: "payments_upcoming",
+      none: "payments_upcoming_none",
+      sentence: includesLedger
+        ? "statistics_ledger_upcoming_sentence"
+        : "payments_upcoming_sentence",
+      empty: includesLedger ? "statistics_ledger_upcoming_empty" : "payments_upcoming_empty",
+      note: includesLedger ? "statistics_ledger_upcoming_note" : "payments_upcoming_note",
+    },
+    income: {
+      button: "statistics_expected_income",
+      sentence: "statistics_income_sentence",
+      empty: "statistics_income_empty",
+      none: "statistics_income_none",
+      note: "statistics_income_note",
+    },
+  }[mode];
+  const modes = includesLedger
+    ? (["paid", "upcoming", "income"] as const)
+    : (["paid", "upcoming"] as const);
   const columns = Math.max(1, Math.min(months.length, 6));
   const current =
     months.find((month) => month.name === selected[mode]) ??
@@ -61,10 +101,11 @@ export function StatisticsPaymentsCard({
       (month) => month.name === `${year ?? currentPeriod.slice(0, 4)}/${currentPeriod.slice(5)}`,
     ) ??
     months[0];
+  const currentItems = current ? statisticsPaymentItems(current) : [];
   const ids = [
     ...new Set(
-      [...data.paid, ...data.upcoming].flatMap((month) =>
-        month.subscriptions.map((item) => item.subscription.id),
+      [...data.paid, ...data.upcoming, ...(data.income ?? [])].flatMap((month) =>
+        statisticsPaymentItems(month).map((item) => item.id),
       ),
     ),
   ].sort();
@@ -73,7 +114,9 @@ export function StatisticsPaymentsCard({
     <Card className="overflow-hidden rounded-3xl border shadow-sm">
       <CardHeader className="gap-4 border-b bg-muted/20 pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-lg">{t("payments_by_month")}</CardTitle>
+          <CardTitle className="text-lg">
+            {t(includesLedger ? "statistics_monthly_payments_income" : "payments_by_month")}
+          </CardTitle>
           {year && onYearChange && (
             <ThemedSelect
               aria-label={t("history_select_year")}
@@ -95,7 +138,7 @@ export function StatisticsPaymentsCard({
             role="group"
             aria-label={t("payments_view")}
           >
-            {(["paid", "upcoming"] as const).map((value) => (
+            {modes.map((value) => (
               <button
                 key={value}
                 type="button"
@@ -109,7 +152,13 @@ export function StatisticsPaymentsCard({
                   mode === value ? "bg-primary text-primary-foreground" : "text-muted-foreground",
                 )}
               >
-                {t(value === "paid" ? "budget_paid" : "payments_upcoming")}
+                {t(
+                  value === "paid"
+                    ? "budget_paid"
+                    : value === "income"
+                      ? "statistics_expected_income"
+                      : "payments_upcoming",
+                )}
               </button>
             ))}
           </div>
@@ -137,82 +186,87 @@ export function StatisticsPaymentsCard({
                 }}
                 aria-label={t("payments_by_month")}
               >
-                {months.map((month) => (
-                  <li key={month.name}>
-                    <button
-                      type="button"
-                      aria-pressed={current?.name === month.name}
-                      onClick={() =>
-                        setSelected((currentSelection) => ({
-                          ...currentSelection,
-                          [mode]: month.name,
-                        }))
-                      }
-                      className={cn(
-                        "flex min-h-[140px] w-full flex-col items-start justify-between gap-4 rounded-2xl border p-4 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2",
-                        current?.name === month.name
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-transparent",
-                      )}
-                    >
-                      <span className="text-xs font-medium">
-                        {historyMonth(month.name, language)}
-                      </span>
-                      <span className="text-base font-bold tabular-nums sm:text-lg">
-                        {month.count
-                          ? formatValue(month.total)
-                          : t(
-                              month.unpricedCount
-                                ? "payments_incomplete"
-                                : mode === "paid"
-                                  ? "payments_no_record"
-                                  : "payments_upcoming_none",
-                            )}
-                      </span>
-                      <TooltipProvider delayDuration={100}>
-                        <span className="flex h-2 w-full rounded-full bg-muted">
-                          {month.subscriptions
-                            .filter((item) => item.amount > 0)
-                            .map((item) => {
-                              const category = item.subscription.expand?.category;
-                              const label = category
-                                ? categoryLabel(category, t)
-                                : t("statistics_category_uncategorized");
-                              return (
-                                <Tooltip key={item.subscription.id}>
-                                  <TooltipTrigger asChild>
-                                    <span
-                                      tabIndex={0}
-                                      role="img"
-                                      aria-label={`${item.subscription.name} · ${label} · ${formatValue(item.amount)}`}
-                                      style={{
-                                        width: `${month.total > 0 ? (item.amount / month.total) * 100 : 0}%`,
-                                        backgroundColor: color(item.subscription.id),
-                                      }}
-                                      className="relative block h-full shrink-0 first:rounded-l-full last:rounded-r-full transition-[transform,border-radius,box-shadow] duration-200 ease-out hover:z-10 hover:scale-y-[1.75] hover:rounded-sm hover:shadow-sm focus-visible:z-10 focus-visible:scale-y-[1.75] focus-visible:rounded-sm focus-visible:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring motion-reduce:transition-none"
-                                    />
-                                  </TooltipTrigger>
-                                  <TooltipPortal>
-                                    <TooltipContent side="top" sideOffset={10} className="max-w-64">
-                                      <span className="block font-semibold">
-                                        {item.subscription.name}
-                                      </span>
-                                      <span className="block text-xs text-muted-foreground">
-                                        {label}
-                                      </span>
-                                      <span className="block mt-1 font-semibold tabular-nums">
-                                        {formatValue(item.amount)}
-                                      </span>
-                                    </TooltipContent>
-                                  </TooltipPortal>
-                                </Tooltip>
-                              );
-                            })}
+                {months.map((month) => {
+                  const items = statisticsPaymentItems(month);
+                  const positiveTotal = items.reduce(
+                    (sum, item) => sum + Math.max(0, item.amount),
+                    0,
+                  );
+                  return (
+                    <li key={month.name}>
+                      <button
+                        type="button"
+                        aria-pressed={current?.name === month.name}
+                        onClick={() =>
+                          setSelected((currentSelection) => ({
+                            ...currentSelection,
+                            [mode]: month.name,
+                          }))
+                        }
+                        className={cn(
+                          "flex min-h-[140px] w-full flex-col items-start justify-between gap-4 rounded-2xl border p-4 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-2",
+                          current?.name === month.name
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-transparent",
+                        )}
+                      >
+                        <span className="text-xs font-medium">
+                          {historyMonth(month.name, language)}
                         </span>
-                      </TooltipProvider>
-                    </button>
-                  </li>
-                ))}
+                        <span className="text-base font-bold tabular-nums sm:text-lg">
+                          {month.count
+                            ? formatValue(month.total)
+                            : t(month.unpricedCount ? "payments_incomplete" : labels.none)}
+                        </span>
+                        <TooltipProvider delayDuration={100}>
+                          <span className="flex h-2 w-full rounded-full bg-muted">
+                            {items
+                              .filter((item) => item.amount > 0)
+                              .map((item) => {
+                                const category = item.subscription?.expand?.category;
+                                const label = item.row
+                                  ? t("finance_workspace_ledger")
+                                  : category
+                                    ? categoryLabel(category, t)
+                                    : t("statistics_category_uncategorized");
+                                return (
+                                  <Tooltip key={item.id}>
+                                    <TooltipTrigger asChild>
+                                      <span
+                                        tabIndex={0}
+                                        role="img"
+                                        aria-label={`${item.name} · ${label} · ${formatValue(item.amount)}`}
+                                        style={{
+                                          width: `${positiveTotal > 0 ? (item.amount / positiveTotal) * 100 : 0}%`,
+                                          backgroundColor: color(item.id),
+                                        }}
+                                        className="relative block h-full shrink-0 first:rounded-l-full last:rounded-r-full transition-[transform,border-radius,box-shadow] duration-200 ease-out hover:z-10 hover:scale-y-[1.75] hover:rounded-sm hover:shadow-sm focus-visible:z-10 focus-visible:scale-y-[1.75] focus-visible:rounded-sm focus-visible:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring motion-reduce:transition-none"
+                                      />
+                                    </TooltipTrigger>
+                                    <TooltipPortal>
+                                      <TooltipContent
+                                        side="top"
+                                        sideOffset={10}
+                                        className="max-w-64"
+                                      >
+                                        <span className="block font-semibold">{item.name}</span>
+                                        <span className="block text-xs text-muted-foreground">
+                                          {label}
+                                        </span>
+                                        <span className="block mt-1 font-semibold tabular-nums">
+                                          {formatValue(item.amount)}
+                                        </span>
+                                      </TooltipContent>
+                                    </TooltipPortal>
+                                  </Tooltip>
+                                );
+                              })}
+                          </span>
+                        </TooltipProvider>
+                      </button>
+                    </li>
+                  );
+                })}
               </ol>
             </div>
             {current && (
@@ -222,62 +276,59 @@ export function StatisticsPaymentsCard({
               >
                 <p className="text-sm leading-relaxed font-medium">
                   {current.count
-                    ? t(
-                        mode === "paid" ? "payments_month_sentence" : "payments_upcoming_sentence",
-                        {
-                          month: historyMonth(current.name, language, true),
-                          count: current.subscriptions.length,
-                          amount: formatValue(current.total),
-                        },
-                      )
-                    : t(
-                        current.unpricedCount
-                          ? "payments_month_unpriced"
-                          : mode === "paid"
-                            ? "payments_month_empty"
-                            : "payments_upcoming_empty",
-                        {
-                          month: historyMonth(current.name, language, true),
-                        },
-                      )}
+                    ? t(labels.sentence, {
+                        month: historyMonth(current.name, language, true),
+                        count: currentItems.length,
+                        amount: formatValue(current.total),
+                      })
+                    : t(current.unpricedCount ? "payments_month_unpriced" : labels.empty, {
+                        month: historyMonth(current.name, language, true),
+                      })}
                 </p>
                 {current.unpricedCount > 0 && (
                   <p className="text-xs text-muted-foreground">
                     {t("payments_missing_amount", { count: current.unpricedCount })}
                   </p>
                 )}
-                {current.subscriptions.length > 0 && (
+                {currentItems.length > 0 && (
                   <ul
                     className="monline-scroll grid max-h-72 grid-cols-1 gap-y-1 overflow-y-auto"
-                    aria-label={t("subscriptions")}
+                    aria-label={t(
+                      includesLedger && mode !== "paid"
+                        ? "statistics_payment_items"
+                        : "subscriptions",
+                    )}
                   >
-                    {current.subscriptions.map((item) => (
-                      <li
-                        key={item.subscription.id}
-                        className="flex items-center gap-3 rounded-xl py-2"
-                      >
+                    {currentItems.map((item) => (
+                      <li key={item.id} className="flex items-center gap-3 rounded-xl py-2">
                         <span
                           className="h-2 w-2 shrink-0 rounded-full"
-                          style={{ backgroundColor: color(item.subscription.id) }}
+                          style={{ backgroundColor: color(item.id) }}
                           aria-hidden="true"
                         />
-                        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg border bg-background">
-                          <SubscriptionLogo sub={item.subscription} />
-                        </div>
+                        {item.subscription && (
+                          <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg border bg-background">
+                            <SubscriptionLogo sub={item.subscription} />
+                          </div>
+                        )}
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold">{item.subscription.name}</p>
+                          <p className="truncate text-sm font-semibold">{item.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {mode === "upcoming" && item.nextDate && !item.dates?.length && (
+                            {item.row && <span>{t("finance_workspace_ledger")} · </span>}
+                            {mode !== "paid" && item.nextDate && !item.dates?.length && (
                               <span>
                                 {t("next_payment")}: {formatDate(item.nextDate, language)} ·{" "}
                               </span>
                             )}
-                            {t("payments_count", { count: item.count })}
+                            {t(item.row ? "statistics_entry_count" : "payments_count", {
+                              count: item.count,
+                            })}
                           </p>
                           <StatisticsPaymentDates
                             dates={item.dates}
                             language={language}
-                            upcoming={mode === "upcoming"}
+                            upcoming={mode !== "paid"}
+                            label={mode === "income" ? t("statistics_planned_dates") : undefined}
                           />
                         </div>
                         <span className="text-sm font-semibold tabular-nums">
@@ -289,9 +340,7 @@ export function StatisticsPaymentsCard({
                 )}
               </section>
             )}
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              {t(mode === "paid" ? "payments_paid_note" : "payments_upcoming_note")}
-            </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">{t(labels.note)}</p>
           </>
         )}
       </CardContent>

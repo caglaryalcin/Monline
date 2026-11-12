@@ -7,14 +7,15 @@ import { StatisticsDistributionCard } from "@/components/statistics/StatisticsDi
 import { StatisticsPaymentsCard } from "@/components/statistics/StatisticsPaymentsCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFinanceCurrency } from "@/hooks/useFinanceCurrency";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { type CategoryCostMode, categoryPeriodCosts } from "@/lib/categoryPeriodCosts";
 import { historyMonth } from "@/lib/costHistory";
+import { buildFinancePaymentStatistics } from "@/lib/financePaymentStatistics";
 import { resolveLocale } from "@/lib/locale";
-import { buildPaymentStatistics } from "@/lib/paymentStatistics";
 import { queryKeys } from "@/lib/queryKeys";
 import { formatPrice } from "@/lib/utils";
-import { currenciesService } from "@/services/currencies";
+import { financeService } from "@/services/finance";
 import { paymentRecordsService } from "@/services/paymentRecords";
 import { subscriptionsService } from "@/services/subscriptions";
 
@@ -27,6 +28,7 @@ export function StatisticsPage() {
   const [categoryMode, setCategoryMode] = useState<CategoryCostMode>("paid");
   const { user } = useAuth();
   const userId = user?.id ?? "";
+  const financeCurrency = useFinanceCurrency();
   useEffect(() => {
     setCategoryYear(year);
     setPaymentYear(year);
@@ -38,9 +40,10 @@ export function StatisticsPage() {
     enabled: !!userId,
   });
 
-  const currenciesQuery = useQuery({
-    queryKey: queryKeys.currencies.all(userId),
-    queryFn: () => currenciesService.list(userId),
+  const currenciesQuery = financeCurrency.currencies;
+  const ledgerQuery = useQuery({
+    queryKey: ["finance", userId],
+    queryFn: financeService.get,
     enabled: !!userId,
   });
 
@@ -50,7 +53,6 @@ export function StatisticsPage() {
     enabled: !!userId,
   });
 
-  const currencies = currenciesQuery.data ?? [];
   const years = [
     ...new Set([
       year,
@@ -62,22 +64,34 @@ export function StatisticsPage() {
       }),
     ]),
   ].sort((left, right) => right - left);
+  const ledgerYears = [
+    ...new Set(
+      (ledgerQuery.data?.finance_entries ?? [])
+        .map((entry) => Number(entry.date.slice(0, 4)))
+        .filter((value) => Number.isInteger(value) && value >= 1970 && value <= 2200),
+    ),
+  ];
+  const paymentYears = [
+    ...new Set([...years, ...ledgerYears.filter((value) => value <= year)]),
+  ].sort((left, right) => right - left);
   const payments = useMemo(() => {
     const now = new Date();
     now.setFullYear(year, month - 1, day);
-    return buildPaymentStatistics(
-      subscriptionsQuery.data ?? [],
-      currenciesQuery.data ?? [],
-      recordsQuery.data ?? [],
+    return buildFinancePaymentStatistics({
+      subscriptions: subscriptionsQuery.data ?? [],
+      currencies: currenciesQuery.data ?? [],
+      records: recordsQuery.data ?? [],
+      ledger: ledgerQuery.data,
+      ledgerRate: financeCurrency.rate,
       now,
-      12,
-      12,
-      paymentYear,
-    );
+      year: paymentYear,
+    });
   }, [
     subscriptionsQuery.data,
     currenciesQuery.data,
     recordsQuery.data,
+    ledgerQuery.data,
+    financeCurrency.rate,
     year,
     month,
     day,
@@ -92,7 +106,23 @@ export function StatisticsPage() {
       12,
       t,
       now,
-      { mode: categoryMode, records: recordsQuery.data ?? [], year: categoryYear },
+      {
+        mode: categoryMode,
+        records: recordsQuery.data ?? [],
+        year: categoryYear,
+        upcoming:
+          categoryMode === "upcoming"
+            ? buildFinancePaymentStatistics({
+                subscriptions: subscriptionsQuery.data ?? [],
+                currencies: currenciesQuery.data ?? [],
+                records: recordsQuery.data ?? [],
+                ledger: ledgerQuery.data,
+                ledgerRate: financeCurrency.rate,
+                now,
+                year: categoryYear,
+              }).upcoming
+            : undefined,
+      },
     );
   }, [
     subscriptionsQuery.data,
@@ -100,12 +130,14 @@ export function StatisticsPage() {
     recordsQuery.data,
     categoryYear,
     categoryMode,
+    ledgerQuery.data,
+    financeCurrency.rate,
     t,
     year,
     month,
     day,
   ]);
-  const mainCurrency = currencies.find((currency) => currency.is_main);
+  const mainCurrency = financeCurrency.main;
   const mainCode = mainCurrency?.code,
     mainSymbol = mainCurrency?.symbol ?? "$";
   // Both category views cover the selected calendar year.
@@ -129,11 +161,19 @@ export function StatisticsPage() {
               <StatisticsPaymentsCard
                 data={payments}
                 year={paymentYear}
-                years={years}
+                years={paymentYears}
+                upcomingYears={ledgerYears}
                 onYearChange={setPaymentYear}
                 formatValue={(value) => formatPrice(value, mainSymbol, { currencyCode: mainCode })}
-                isLoading={loading || recordsQuery.isPending}
-                hasError={error || recordsQuery.isError}
+                isLoading={
+                  loading ||
+                  recordsQuery.isPending ||
+                  ledgerQuery.isPending ||
+                  financeCurrency.pending
+                }
+                hasError={
+                  error || recordsQuery.isError || ledgerQuery.isError || financeCurrency.failed
+                }
               />
             </div>
             <div>
@@ -155,17 +195,36 @@ export function StatisticsPage() {
                   mainSymbol={mainSymbol}
                   title={t("cost_by_category")}
                   year={categoryYear}
-                  years={years}
+                  years={
+                    categoryMode === "upcoming"
+                      ? [...new Set([...paymentYears, year + 1, ...ledgerYears])].sort(
+                          (left, right) => right - left,
+                        )
+                      : years
+                  }
                   onYearChange={setCategoryYear}
                   periodLabel={periodLabel}
                   mode={categoryMode}
-                  onModeChange={setCategoryMode}
+                  onModeChange={(mode) => {
+                    setCategoryMode(mode);
+                    if (mode === "paid" && categoryYear > year) setCategoryYear(year);
+                  }}
+                  sourceNote={
+                    categoryMode === "upcoming" ? t("statistics_ledger_category_note") : undefined
+                  }
                   paymentCount={categories.paymentCount}
                   unpricedCount={categories.unpricedCount}
                   categoryDetails={categories.categoryDetails}
                   uncategorizedCount={categories.uncategorizedCount}
-                  isLoading={recordsQuery.isPending}
-                  hasError={recordsQuery.isError}
+                  isLoading={
+                    recordsQuery.isPending ||
+                    (categoryMode === "upcoming" &&
+                      (ledgerQuery.isPending || financeCurrency.pending))
+                  }
+                  hasError={
+                    recordsQuery.isError ||
+                    (categoryMode === "upcoming" && (ledgerQuery.isError || financeCurrency.failed))
+                  }
                 />
               )}
             </div>

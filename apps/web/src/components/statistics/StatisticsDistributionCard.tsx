@@ -27,6 +27,7 @@ interface StatisticsDistributionCardProps {
   years?: number[];
   onYearChange?: (value: number) => void;
   periodLabel?: string;
+  sourceNote?: string;
   mode?: CategoryCostMode;
   onModeChange?: (mode: CategoryCostMode) => void;
   paymentCount?: number;
@@ -47,6 +48,7 @@ export function StatisticsDistributionCard({
   years,
   onYearChange,
   periodLabel,
+  sourceNote,
   mode,
   onModeChange,
   paymentCount,
@@ -145,6 +147,9 @@ export function StatisticsDistributionCard({
               </p>
             )}
           </div>
+        )}
+        {sourceNote && (
+          <p className="text-xs leading-relaxed text-muted-foreground">{sourceNote}</p>
         )}
         {year && mode === "paid" && (
           <p className="text-xs leading-relaxed text-muted-foreground">

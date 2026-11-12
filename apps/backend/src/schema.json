@@ -2761,8 +2761,9 @@
       { "name": "name", "type": "text", "required": true, "max": 160 },
       { "name": "asset", "type": "text", "required": true },
       { "name": "quantity", "type": "number", "required": true },
-      { "name": "notes", "type": "text", "max": 2000 }
+      { "name": "notes", "type": "text", "max": 2000 },
+      { "name": "banknotes", "type": "json" }
     ],
-    "sql": "CREATE TABLE \"savings\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"asset\" TEXT NOT NULL, \"quantity\" REAL NOT NULL, \"notes\" TEXT NOT NULL DEFAULT '')"
+    "sql": "CREATE TABLE \"savings\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"asset\" TEXT NOT NULL, \"quantity\" REAL NOT NULL, \"notes\" TEXT NOT NULL DEFAULT '', \"banknotes\" JSON DEFAULT NULL)"
   }
 ]

@@ -196,6 +196,8 @@ class Repository {
       if (!this.connection.prepare('PRAGMA table_info("users")').all().some(column => column.name === field))
         this.connection.exec("ALTER TABLE users ADD COLUMN " + identifier(field) + " INTEGER NOT NULL DEFAULT 0");
     }
+    if (!this.connection.prepare('PRAGMA table_info("savings")').all().some(column => column.name === "banknotes"))
+      this.connection.exec("ALTER TABLE savings ADD COLUMN banknotes JSON DEFAULT NULL");
     if (
       !this.connection
         .prepare('PRAGMA table_info("users")')

@@ -52,6 +52,7 @@ export function buildPaymentStatistics(
   upcomingMonths = 6,
   paidMonths = 6,
   selectedYear?: number,
+  excludeUpcoming?: (subscription: Subscription, date: string) => boolean,
 ) {
   const makeMonths = (offset: number, count = 6): MonthlyPaymentTotal[] =>
     Array.from({ length: count }, (_, index) => {
@@ -113,7 +114,8 @@ export function buildPaymentStatistics(
         entry.date < toDateStr(next) ||
         !Number.isFinite(entry.amount) ||
         entry.amount < 0 ||
-        entry.status === "paid"
+        entry.status === "paid" ||
+        excludeUpcoming?.(entry.subscription, entry.date)
       )
         continue;
       addPaymentToMonth(month, entry.subscription, entry.amount, entry.date, entry.date);

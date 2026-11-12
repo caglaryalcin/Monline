@@ -39,7 +39,7 @@ const PROFILE = [
   "avatar",
 ];
 const FIELDS = {
-  savings: ["name", "asset", "quantity", "notes"],
+  savings: ["name", "asset", "quantity", "notes", "banknotes"],
   finance_rows: [
     "name",
     "kind",
@@ -379,7 +379,7 @@ function validateBackup(backup) {
       }
       if (name === "savings") {
         try {
-          require("./pure/savings.js").validate(row);
+          row.banknotes = require("./pure/savings.js").validate(row).banknotes;
         } catch {
           throw new Error("transfer_invalid_backup");
         }

@@ -18,6 +18,15 @@ export const savingsTranslations = {
     savings_asset_CUMHURIYETALTINI: "Cumhuriyet altını",
     savings_asset: "Birikim türü",
     savings_quantity: "Miktar",
+    savings_banknotes: "Banknot dağılımı",
+    savings_banknotes_edit: "Banknotları düzenle",
+    savings_banknotes_optional: "Banknot dağılımı ekle (isteğe bağlı)",
+    savings_banknotes_help:
+      "Her banknottan kaç adet olduğunu girin. Dağılım, girdiğiniz birikim miktarıyla tam olarak eşleşmelidir.",
+    savings_banknote_count: "{{value}} {{currency}} banknot adedi",
+    savings_banknotes_mismatch:
+      "Banknot dağılımı, girdiğiniz birikim miktarıyla eşleşmelidir. Mevcut banknot toplamı: {{total}}.",
+    savings_banknotes_invalid: "Banknot adetlerini sıfır veya pozitif tam sayı olarak girin.",
     savings_unit_gram: "gram",
     savings_unit_piece: "adet",
     savings_quantity_help: "En fazla {{decimals}} ondalık basamak kullanın.",
@@ -28,15 +37,22 @@ export const savingsTranslations = {
     savings_rate: "Birim referans kuru",
     savings_rate_missing: "Kur bekleniyor",
     savings_rates_refresh: "Kurları yenile",
-    savings_rates_help: "Tüm değerler Fixer.io referans kurlarıyla hesaplanır. Gram altın 24 ayar saf altın, çeyrek/yarım/tam altın 22 ayar ziynet, Cumhuriyet altını 22 ayar Ata olarak değerlendirilir. Altın değerleri ons fiyatı, ağırlık ve saflığa göre tahmin edilir; işçilik, piyasa primi ve alış-satış farkı dahil değildir. Kurlar mevcut kur ayarlarınızla otomatik olarak 12 saatte bir veya “Kurları yenile” ile güncellenir.",
-    savings_gold_unavailable: "Fixer yanıtında XAU (ons altın) kuru bulunamadı. Altın değerleri kur alınana kadar hesaplanamıyor.",
-    savings_fixer_not_configured: "Kur dönüşümleri için Yönetim bölümündeki Fixer API ayarlarında bağlantı etkin ve API anahtarı tanımlı olmalıdır.",
+    savings_rates_help:
+      "Tüm değerler Fixer.io referans kurlarıyla hesaplanır. Gram altın 24 ayar saf altın, çeyrek/yarım/tam altın 22 ayar ziynet, Cumhuriyet altını 22 ayar Ata olarak değerlendirilir. Altın değerleri ons fiyatı, ağırlık ve saflığa göre tahmin edilir; işçilik, piyasa primi ve alış-satış farkı dahil değildir. Kurlar mevcut kur ayarlarınızla otomatik olarak 12 saatte bir veya “Kurları yenile” ile güncellenir.",
+    savings_gold_unavailable:
+      "Fixer yanıtında XAU (ons altın) kuru bulunamadı. Altın değerleri kur alınana kadar hesaplanamıyor.",
+    savings_fixer_not_configured:
+      "Kur dönüşümleri için Yönetim bölümündeki Fixer API ayarlarında bağlantı etkin ve API anahtarı tanımlı olmalıdır.",
     savings_rates_as_of: "Kur zamanı: {{date}}",
-    savings_rates_stale: "Güncel kur alınamadı veya kaynak henüz yeni fiyat yayımlamadı. Görünen değerler son alınan kurlarla hesaplandı.",
-    savings_rates_unavailable: "Kurlar şu anda alınamıyor. Birikimlerinizi kaydedebilirsiniz; karşılıkları kurlar alındığında otomatik hesaplanır.",
-    savings_missing_values: "{{count}} birikimin dönüşüm kuru eksik. Bu kayıtlar toplama dahil edilmedi.",
+    savings_rates_stale:
+      "Güncel kur alınamadı veya kaynak henüz yeni fiyat yayımlamadı. Görünen değerler son alınan kurlarla hesaplandı.",
+    savings_rates_unavailable:
+      "Kurlar şu anda alınamıyor. Birikimlerinizi kaydedebilirsiniz; karşılıkları kurlar alındığında otomatik hesaplanır.",
+    savings_missing_values:
+      "{{count}} birikimin dönüşüm kuru eksik. Bu kayıtlar toplama dahil edilmedi.",
     savings_empty_title: "İlk birikiminizi ekleyin",
-    savings_empty_help: "Miktarı kendi biriminde kaydedin, seçtiğiniz para birimindeki karşılığını otomatik takip edin.",
+    savings_empty_help:
+      "Miktarı kendi biriminde kaydedin, seçtiğiniz para birimindeki karşılığını otomatik takip edin.",
     savings_load_error: "Birikimler yüklenemedi.",
     savings_retry: "Tekrar dene",
     savings_saved: "Birikim kaydedildi.",
@@ -50,7 +66,8 @@ export const savingsTranslations = {
   },
   en: {
     savings: "Savings",
-    savings_description: "Track your TRY, foreign currency and gold savings in your chosen currency.",
+    savings_description:
+      "Track your TRY, foreign currency and gold savings in your chosen currency.",
     savings_add: "Add savings",
     savings_edit: "Edit savings",
     savings_total: "Total savings",
@@ -67,6 +84,15 @@ export const savingsTranslations = {
     savings_asset_CUMHURIYETALTINI: "Republic gold coin",
     savings_asset: "Asset type",
     savings_quantity: "Quantity",
+    savings_banknotes: "Banknote breakdown",
+    savings_banknotes_edit: "Edit banknotes",
+    savings_banknotes_optional: "Add banknote breakdown (optional)",
+    savings_banknotes_help:
+      "Enter how many notes you hold of each denomination. The breakdown must exactly match your entered savings amount.",
+    savings_banknote_count: "Number of {{value}} {{currency}} banknotes",
+    savings_banknotes_mismatch:
+      "The banknote breakdown must match your entered savings amount. Current banknote total: {{total}}.",
+    savings_banknotes_invalid: "Enter zero or positive whole numbers for banknote counts.",
     savings_unit_gram: "grams",
     savings_unit_piece: "pieces",
     savings_quantity_help: "Use up to {{decimals}} decimal places.",
@@ -77,15 +103,22 @@ export const savingsTranslations = {
     savings_rate: "Unit reference rate",
     savings_rate_missing: "Awaiting rate",
     savings_rates_refresh: "Refresh rates",
-    savings_rates_help: "All values use Fixer.io reference rates. Gram gold represents 24-karat fine gold; quarter, half and full coins represent 22-karat ziynet coins; Republic coins represent 22-karat Ata coins. Gold values are estimated from the troy-ounce price, weight and purity, excluding workmanship, premiums and buy/sell spreads. Rates use your existing exchange settings and refresh automatically every 12 hours or via Refresh rates.",
-    savings_gold_unavailable: "The Fixer response did not include XAU (troy-ounce gold). Gold values cannot be calculated until that rate is available.",
-    savings_fixer_not_configured: "Conversions require an enabled connection and API key in Administration → Fixer API.",
+    savings_rates_help:
+      "All values use Fixer.io reference rates. Gram gold represents 24-karat fine gold; quarter, half and full coins represent 22-karat ziynet coins; Republic coins represent 22-karat Ata coins. Gold values are estimated from the troy-ounce price, weight and purity, excluding workmanship, premiums and buy/sell spreads. Rates use your existing exchange settings and refresh automatically every 12 hours or via Refresh rates.",
+    savings_gold_unavailable:
+      "The Fixer response did not include XAU (troy-ounce gold). Gold values cannot be calculated until that rate is available.",
+    savings_fixer_not_configured:
+      "Conversions require an enabled connection and API key in Administration → Fixer API.",
     savings_rates_as_of: "Rates as of: {{date}}",
-    savings_rates_stale: "Current rates are unavailable or the source has not published new prices. Values use the last available rates.",
-    savings_rates_unavailable: "Rates are currently unavailable. You can save your holdings; equivalents will be calculated automatically when rates are available.",
-    savings_missing_values: "Conversion rates are missing for {{count}} holdings. These are excluded from the total.",
+    savings_rates_stale:
+      "Current rates are unavailable or the source has not published new prices. Values use the last available rates.",
+    savings_rates_unavailable:
+      "Rates are currently unavailable. You can save your holdings; equivalents will be calculated automatically when rates are available.",
+    savings_missing_values:
+      "Conversion rates are missing for {{count}} holdings. These are excluded from the total.",
     savings_empty_title: "Add your first savings",
-    savings_empty_help: "Save the amount in its original unit and track its value in your chosen currency automatically.",
+    savings_empty_help:
+      "Save the amount in its original unit and track its value in your chosen currency automatically.",
     savings_load_error: "Savings could not be loaded.",
     savings_retry: "Try again",
     savings_saved: "Savings saved.",
@@ -99,7 +132,8 @@ export const savingsTranslations = {
   },
   de: {
     savings: "Ersparnisse",
-    savings_description: "Ersparnisse in TRY, Fremdwährungen und Gold in der gewählten Währung verfolgen.",
+    savings_description:
+      "Ersparnisse in TRY, Fremdwährungen und Gold in der gewählten Währung verfolgen.",
     savings_add: "Ersparnis hinzufügen",
     savings_edit: "Ersparnis bearbeiten",
     savings_total: "Gesamte Ersparnisse",
@@ -116,6 +150,15 @@ export const savingsTranslations = {
     savings_asset_CUMHURIYETALTINI: "Republik-Goldmünze",
     savings_asset: "Anlageart",
     savings_quantity: "Menge",
+    savings_banknotes: "Banknotenaufteilung",
+    savings_banknotes_edit: "Banknoten bearbeiten",
+    savings_banknotes_optional: "Banknotenaufteilung hinzufügen (optional)",
+    savings_banknotes_help:
+      "Gib die Anzahl der Banknoten je Stückelung ein. Die Aufteilung muss genau dem eingegebenen Sparbetrag entsprechen.",
+    savings_banknote_count: "Anzahl der Banknoten zu {{value}} {{currency}}",
+    savings_banknotes_mismatch:
+      "Die Banknotenaufteilung muss dem eingegebenen Sparbetrag entsprechen. Aktuelle Banknotensumme: {{total}}.",
+    savings_banknotes_invalid: "Gib null oder positive ganze Zahlen als Banknotenanzahl ein.",
     savings_unit_gram: "Gramm",
     savings_unit_piece: "Stück",
     savings_quantity_help: "Bis zu {{decimals}} Nachkommastellen verwenden.",
@@ -126,15 +169,22 @@ export const savingsTranslations = {
     savings_rate: "Referenzkurs je Einheit",
     savings_rate_missing: "Kurs ausstehend",
     savings_rates_refresh: "Kurse aktualisieren",
-    savings_rates_help: "Alle Werte verwenden Fixer.io-Referenzkurse. Grammgold entspricht 24-karätigem Feingold; Viertel-, Halb- und Ganzgoldmünzen entsprechen 22-karätigen Ziynet-Münzen, Republikmünzen 22-karätigen Ata-Münzen. Goldwerte werden aus Feinunzenpreis, Gewicht und Reinheit geschätzt, ohne Verarbeitungskosten, Aufschläge und Handelsspannen. Die bestehenden Wechselkurseinstellungen werden verwendet; Aktualisierung automatisch alle 12 Stunden oder über Kurse aktualisieren.",
-    savings_gold_unavailable: "Die Fixer-Antwort enthält keinen XAU-Kurs (Gold je Feinunze). Goldwerte können erst berechnet werden, wenn dieser Kurs verfügbar ist.",
-    savings_fixer_not_configured: "Umrechnungen erfordern eine aktive Verbindung und einen API-Schlüssel unter Verwaltung → Fixer API.",
+    savings_rates_help:
+      "Alle Werte verwenden Fixer.io-Referenzkurse. Grammgold entspricht 24-karätigem Feingold; Viertel-, Halb- und Ganzgoldmünzen entsprechen 22-karätigen Ziynet-Münzen, Republikmünzen 22-karätigen Ata-Münzen. Goldwerte werden aus Feinunzenpreis, Gewicht und Reinheit geschätzt, ohne Verarbeitungskosten, Aufschläge und Handelsspannen. Die bestehenden Wechselkurseinstellungen werden verwendet; Aktualisierung automatisch alle 12 Stunden oder über Kurse aktualisieren.",
+    savings_gold_unavailable:
+      "Die Fixer-Antwort enthält keinen XAU-Kurs (Gold je Feinunze). Goldwerte können erst berechnet werden, wenn dieser Kurs verfügbar ist.",
+    savings_fixer_not_configured:
+      "Umrechnungen erfordern eine aktive Verbindung und einen API-Schlüssel unter Verwaltung → Fixer API.",
     savings_rates_as_of: "Kursstand: {{date}}",
-    savings_rates_stale: "Aktuelle Kurse sind nicht verfügbar oder die Quelle hat keine neuen Preise veröffentlicht. Die letzten verfügbaren Kurse werden verwendet.",
-    savings_rates_unavailable: "Kurse sind derzeit nicht verfügbar. Ersparnisse können gespeichert werden; Gegenwerte werden berechnet, sobald Kurse verfügbar sind.",
-    savings_missing_values: "Für {{count}} Einträge fehlen Umrechnungskurse. Diese werden nicht in die Summe einbezogen.",
+    savings_rates_stale:
+      "Aktuelle Kurse sind nicht verfügbar oder die Quelle hat keine neuen Preise veröffentlicht. Die letzten verfügbaren Kurse werden verwendet.",
+    savings_rates_unavailable:
+      "Kurse sind derzeit nicht verfügbar. Ersparnisse können gespeichert werden; Gegenwerte werden berechnet, sobald Kurse verfügbar sind.",
+    savings_missing_values:
+      "Für {{count}} Einträge fehlen Umrechnungskurse. Diese werden nicht in die Summe einbezogen.",
     savings_empty_title: "Erste Ersparnis hinzufügen",
-    savings_empty_help: "Betrag in der ursprünglichen Einheit speichern und den Wert in der gewählten Währung automatisch verfolgen.",
+    savings_empty_help:
+      "Betrag in der ursprünglichen Einheit speichern und den Wert in der gewählten Währung automatisch verfolgen.",
     savings_load_error: "Ersparnisse konnten nicht geladen werden.",
     savings_retry: "Erneut versuchen",
     savings_saved: "Ersparnis gespeichert.",
