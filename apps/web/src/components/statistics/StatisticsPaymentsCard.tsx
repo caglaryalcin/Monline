@@ -35,8 +35,16 @@ export function StatisticsPaymentsCard({
 }: StatisticsPaymentsCardProps) {
   const { t, i18n } = useTranslation();
   const currentPeriod = useLocalToday().slice(0, 7);
+  const currentYear = Number(currentPeriod.slice(0, 4));
   const language = i18n?.resolvedLanguage ?? i18n?.language ?? "en";
-  const [mode, setMode] = useState<"paid" | "upcoming">("paid");
+  const [mode, setMode] = useState<"paid" | "upcoming">(
+    year && year > currentYear ? "upcoming" : "paid",
+  );
+  const availableYears = mode === "upcoming"
+    ? [...new Set([currentYear + 1, ...(years ?? [year ?? currentYear])])].sort(
+        (left, right) => right - left,
+      )
+    : years ?? [year ?? currentYear];
   const [selected, setSelected] = useState<{ paid: string | null; upcoming: string | null }>({
     paid: null,
     upcoming: null,
@@ -72,7 +80,7 @@ export function StatisticsPaymentsCard({
               onChange={(event) => onYearChange(Number(event.target.value) as number)}
               className="h-10 rounded-xl px-3 text-sm"
             >
-              {(years ?? [year]).map((value) => (
+              {availableYears.map((value) => (
                 <option key={value} value={value}>
                   {value}
                 </option>
@@ -91,7 +99,10 @@ export function StatisticsPaymentsCard({
                 key={value}
                 type="button"
                 aria-pressed={mode === value}
-                onClick={() => setMode(value)}
+                onClick={() => {
+                  setMode(value);
+                  if (value === "paid" && year && year > currentYear) onYearChange?.(currentYear);
+                }}
                 className={cn(
                   "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
                   mode === value ? "bg-primary text-primary-foreground" : "text-muted-foreground",
