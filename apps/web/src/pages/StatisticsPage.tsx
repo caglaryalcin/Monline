@@ -146,11 +146,14 @@ export function StatisticsPage() {
               mainSymbol={mainSymbol}
               title={t("cost_by_category")}
               year={categoryYear}
-              years={years}
+              years={categoryMode === "upcoming" ? [year + 1, ...years] : years}
               onYearChange={setCategoryYear}
               periodLabel={periodLabel}
               mode={categoryMode}
-              onModeChange={setCategoryMode}
+              onModeChange={(mode) => {
+                setCategoryMode(mode);
+                if (mode === "paid" && categoryYear > year) setCategoryYear(year);
+              }}
               paymentCount={categories.paymentCount}
               unpricedCount={categories.unpricedCount}
               categoryDetails={categories.categoryDetails}
