@@ -941,6 +941,7 @@ routerAdd("POST", "/api/finance/bill-month-status", (e) => {
           ? expected.get(entry.id)[field] || "" : expected.get(entry.id)[field]))))
       throw new BadRequestError("finance_history_conflict");
     if (entries.some((entry) => entry.getString("status") !== "planned" || entry.getString("source_payment") ||
+      (body.skipped && entry.getFloat("amount") !== 0) ||
       repository.findRecordsByFilter("budget_matches", "user = {:owner} && target_type = 'finance_entries' && target_id = {:id}", "", 1, 0, { owner, id: entry.id }).length))
       throw new BadRequestError("finance_invalid_entry");
     if (!entries.length && !body.skipped) return { updated: 0 };

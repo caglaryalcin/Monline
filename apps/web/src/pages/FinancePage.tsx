@@ -281,7 +281,8 @@ export function FinancePage() {
     : [];
   const contextBillSkipped = contextBillEntries.length > 0 && contextBillEntries.every((entry) => !!entry.bill_skip);
   const contextIsBill = !!contextCell?.row.bill_type && contextCell.row.kind === "expense" &&
-    contextCell.row.expense_type !== "credit_card" && !isFinanceCarryoverRow(contextCell.row) && grid.count === 1;
+    contextCell.row.expense_type !== "credit_card" && !isFinanceCarryoverRow(contextCell.row) && grid.count === 1 &&
+    (contextBillSkipped || contextBillEntries.every((entry) => entry.amount === 0));
   const providerContext = financeProviderTarget(
     context?.row,
     year,

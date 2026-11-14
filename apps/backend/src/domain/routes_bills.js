@@ -84,6 +84,8 @@ routerAdd("POST", "/api/bills/month-status", (e) => {
           { user, type: collection, id: record.id }).length)
       throw new BadRequestError("bill_invalid");
     const saved = require("./lib/pure/bill-skip.js").skippedAmount(record.getString("bill_skip"), body.date);
+    if (body.skipped && record.getFloat("amount") !== 0)
+      throw new BadRequestError("bill_invalid");
     if (body.skipped && saved === null) {
       record.set("bill_skip", JSON.stringify({ amount: record.getFloat("amount"), month: body.date.slice(0, 7) }));
       record.set("amount", 0);

@@ -27,6 +27,7 @@ export function BillMonthStatusAction({ bill, compact = false }: { bill: Spendin
     },
   });
   if (bill.status !== "planned" || bill.payment_record_id || bill.verification ||
+      (!bill.bill_skipped && bill.amount !== 0) ||
       !["ledger", "manual_bill"].includes(bill.source)) return null;
   const Icon = bill.bill_skipped ? Undo2 : CalendarOff;
   const label = t(bill.bill_skipped ? "spending_bill_skip_undo" : "spending_bill_skip");
