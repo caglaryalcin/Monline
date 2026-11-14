@@ -369,7 +369,7 @@ export function dashboardYearPayments({
   }
   // Saved pending charges take precedence over the subscription's current
   // price. Project renewals only inside the active schedule and lifetime.
-  for (const subscription of subscriptions.filter(online)) {
+  for (const subscription of subscriptions.filter((subscription) => online(subscription) && !subscription.inactive)) {
     const saved = records.filter((record) => record.subscription_id === subscription.id);
     const dates = new Set(
       saved

@@ -3,6 +3,7 @@ import "./finance-sheet.css";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
+  CalendarOff,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -274,6 +275,13 @@ export function FinancePage() {
   const contextStatementLink = contextCell
     ? linkedStatement(contextCell.row.id, contextCell.month)
     : undefined;
+  const contextBillEntries = contextCell
+    ? data.finance_entries.filter((entry) => entry.row_id === contextCell.row.id &&
+        entry.date.startsWith(`${year}-${String(contextCell.month).padStart(2, "0")}-`))
+    : [];
+  const contextBillSkipped = contextBillEntries.length > 0 && contextBillEntries.every((entry) => !!entry.bill_skip);
+  const contextIsBill = !!contextCell?.row.bill_type && contextCell.row.kind === "expense" &&
+    contextCell.row.expense_type !== "credit_card" && !isFinanceCarryoverRow(contextCell.row) && grid.count === 1;
   const providerContext = financeProviderTarget(
     context?.row,
     year,
@@ -1154,6 +1162,19 @@ export function FinancePage() {
                     {label("edit")}
                   </DropdownMenuItem>
                 )}
+                {contextIsBill && contextCell && (
+                  <DropdownMenuItem
+                    disabled={grid.busy || contextBillEntries.some((entry) => entry.status !== "planned" || entry.source_payment || data.entry_verifications?.[entry.id])}
+                    onSelect={() => {
+                      const target = contextCell;
+                      void run(() => financeService.setBillMonthSkipped(target.row.id,
+                        `${year}-${String(target.month).padStart(2, "0")}`, !contextBillSkipped, contextBillEntries), false);
+                    }}
+                  >
+                    {contextBillSkipped ? <Undo2 className="mr-2 h-4 w-4" /> : <CalendarOff className="mr-2 h-4 w-4" />}
+                    {t(contextBillSkipped ? "spending_bill_skip_undo" : "spending_bill_skip")}
+                  </DropdownMenuItem>
+                )}
                 {contextCell?.row.kind === "expense" &&
                   contextCell.row.expense_type !== "credit_card" && (
                     <DropdownMenuItem
@@ -1267,11 +1288,11 @@ export function FinancePage() {
                 <DropdownMenuItem
                   className="border border-emerald-500/50 bg-transparent data-[highlighted]:border-emerald-500 data-[highlighted]:bg-transparent data-[highlighted]:text-foreground"
                   disabled={
-                    !grid.selectedEntries.some((entry) => entry.status === "planned") || grid.busy
+                    !grid.selectedEntries.some((entry) => entry.status === "planned" && !entry.bill_skip) || grid.busy
                   }
                   onSelect={() =>
                     void updateEntries(
-                      grid.selectedEntries.filter((entry) => entry.status === "planned"),
+                      grid.selectedEntries.filter((entry) => entry.status === "planned" && !entry.bill_skip),
                       { status: "settled", settled_date: today },
                     )
                   }

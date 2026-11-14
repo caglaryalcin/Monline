@@ -1,4 +1,9 @@
 {
+  "payment_date_invalid": "Válassz érvényes fizetési dátumot.",
+  "payment_edit_date_help": "A fizetés tényleges napja. A naptári esedékesség külön módosítható.",
+  "subscription_not_renewed": "Az előfizetés nem lett megújítva",
+  "subscription_not_renewed_help": "Inaktívvá teszi az előfizetést. A függőben lévő fizetések eltűnnek a naptárból és az összesítésekből; a kifizetett tételek megmaradnak.",
+  "subscription_not_renewed_success": "Az előfizetés inaktívvá vált.",
   "budget_period_loans_1": "E havi hiteltörlesztések",
   "budget_period_loans_3": "Hiteltörlesztések a 3 hónapos időszakra",
   "budget_period_loans_6": "Hiteltörlesztések a 6 hónapos időszakra",

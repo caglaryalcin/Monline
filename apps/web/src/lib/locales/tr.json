@@ -1,4 +1,9 @@
 {
+  "payment_date_invalid": "Geçerli bir ödeme tarihi seçin.",
+  "payment_edit_date_help": "Ödemenin gerçekte yapıldığı gündür. Takvimdeki ödeme günü ayrı olarak taşınabilir.",
+  "subscription_not_renewed": "Abonelik yenilenmedi",
+  "subscription_not_renewed_help": "Aboneliği pasife alır. Bekleyen ödemeler takvimden ve toplamlardan kalkar; ödenmiş geçmiş korunur.",
+  "subscription_not_renewed_success": "Abonelik pasife alındı.",
   "budget_period_loans_1": "Bu ayın kredi taksitleri",
   "budget_period_loans_3": "3 aylık dönemin kredi taksitleri",
   "budget_period_loans_6": "6 aylık dönemin kredi taksitleri",

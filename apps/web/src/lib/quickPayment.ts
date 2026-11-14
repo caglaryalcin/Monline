@@ -1,5 +1,6 @@
 import { getPaymentRecord, parseLocalDate, toDateOnly, toDateStr } from "@/components/calendar/types";
 import { isCredit } from "@/lib/recordTypes";
+import type { SubscriptionNotRenewedActions } from "@/lib/subscriptionNotRenewed";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
@@ -12,6 +13,7 @@ export interface QuickPaymentTarget {
 }
 
 export interface QuickPaymentActions {
+  notRenewed?: SubscriptionNotRenewedActions;
   canPay: (subscription: Subscription, date?: string) => boolean;
   select: (subscription: Subscription, date?: string) => void;
 }

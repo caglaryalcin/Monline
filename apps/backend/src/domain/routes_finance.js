@@ -920,6 +920,51 @@ routerAdd("POST", "/api/finance/salary-tag", (e) => {
   });
   return e.json(200, result);
 });
+routerAdd("POST", "/api/finance/bill-month-status", (e) => {
+  const owner = user(e), body = e.requestInfo().body;
+  if (!body || !/^[a-z0-9]{15}$/.test(body.row_id) || typeof body.month !== "string" ||
+      !/^(19[7-9]\d|20\d{2}|21\d{2}|2200)-(0[1-9]|1[0-2])$/.test(body.month) ||
+      typeof body.skipped !== "boolean" || !Array.isArray(body.entries) || body.entries.length > 1200)
+    throw new BadRequestError("finance_invalid_entry");
+  const { result, history } = entryChange(owner, () => {
+    const original = owned("finance_rows", body.row_id, owner);
+    const row = yearRow(owner, original.id, Number(body.month.slice(0, 4)));
+    if (!row || row.kind !== "expense" || !row.bill_type || row.is_deleted ||
+        row.expense_type === "credit_card" || finance.isCarryoverRow(row))
+      throw new BadRequestError("finance_invalid_row");
+    const entries = own("finance_entries", owner).filter((entry) =>
+      entry.getString("row_id") === row.id && entry.getString("date").startsWith(body.month + "-"));
+    const expected = new Map(body.entries.map((entry) => [entry?.id, entry]));
+    if (expected.size !== body.entries.length || entries.length !== expected.size || entries.some((entry) =>
+      !expected.has(entry.id) || historyFields.some((field) => entry.get(field) !==
+        (["bill_skip", "payment_tag", "source_payment"].includes(field)
+          ? expected.get(entry.id)[field] || "" : expected.get(entry.id)[field]))))
+      throw new BadRequestError("finance_history_conflict");
+    if (entries.some((entry) => entry.getString("status") !== "planned" || entry.getString("source_payment") ||
+      repository.findRecordsByFilter("budget_matches", "user = {:owner} && target_type = 'finance_entries' && target_id = {:id}", "", 1, 0, { owner, id: entry.id }).length))
+      throw new BadRequestError("finance_invalid_entry");
+    if (!entries.length && !body.skipped) return { updated: 0 };
+    const scoped = scopedRow(owner, owned("finance_rows", row.id, owner), Number(body.month.slice(0, 4)));
+    if (!entries.length) {
+      save("finance_entries", owner, { row_id: scoped.id, date: body.month + "-01", amount: 0, status: "planned", settled_date: "", notes: "",
+        bill_skip: JSON.stringify({ amount: 0, month: body.month }) });
+      return { updated: 1 };
+    }
+    let updated = 0;
+    for (const previous of entries) {
+      const entry = owned("finance_entries", previous.id, owner);
+      const saved = require("./lib/pure/bill-skip.js").skippedAmount(entry.getString("bill_skip"), entry.getString("date"));
+      if (body.skipped === (saved !== null)) continue;
+      entry.set("bill_skip", body.skipped ? JSON.stringify({ amount: entry.getFloat("amount"), month: body.month }) : "");
+      entry.set("amount", body.skipped ? 0 : saved);
+      repository.save(entry);
+      updated++;
+    }
+    return { updated };
+  });
+  return e.json(200, { ...result, history });
+});
+
 for (const name of finance.COLLECTIONS) {
   routerAdd("POST", `/api/finance/${name}`, (e) => {
     const owner = user(e),

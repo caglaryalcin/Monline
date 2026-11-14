@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { BudgetPeriodSelect } from "@/components/dashboard/BudgetPeriodSelect";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { BillMonthStatusAction } from "@/components/subscriptions/BillMonthStatusAction";
+import { SubscriptionNotRenewedButton } from "@/components/subscriptions/SubscriptionNotRenewedButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -251,6 +252,9 @@ export function BudgetOverviewCard({
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <div className="flex items-center gap-1.5">
+                          {entry.subscription && entry.status !== "paid" && (
+                            <SubscriptionNotRenewedButton subscription={entry.subscription} date={entry.date} actions={quickPayments?.notRenewed} compact />
+                          )}
                           {section === "bills" && entry.bill && (
                             <BillMonthStatusAction bill={entry.bill} compact />
                           )}

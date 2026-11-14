@@ -32,6 +32,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscriptionNotRenewed } from "@/hooks/useSubscriptionNotRenewed";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { queryKeys } from "@/lib/queryKeys";
 import { EMPTY_SPENDING, spendingKey } from "@/lib/spending";
@@ -65,6 +66,7 @@ export function CalendarPage() {
   const setSelectedDay = (day: number | null) =>
     setSelectedDate(day === null ? null : new Date(year, month - 1, day));
   const [detailEntry, setDetailEntry] = useState<DayEntry | null>(null);
+  const notRenewed = useSubscriptionNotRenewed(() => { setDetailEntry(null); setSelectedDate(null); });
   const [moveEntry, setMoveEntry] = useState<DayEntry | null>(null);
   const [historicalOpen, setHistoricalOpen] = useState(false);
   const [paymentMode, setPaymentMode] = useState<"confirm" | "edit">("confirm");
@@ -538,6 +540,7 @@ export function CalendarPage() {
         />
       ) : detailEntry ? (
         <SubDetailDialog
+          notRenewed={notRenewed}
           sub={detailEntry.sub}
           date={detailEntry.date}
           currencies={currencies}

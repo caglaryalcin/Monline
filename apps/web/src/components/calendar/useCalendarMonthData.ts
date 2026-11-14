@@ -14,7 +14,7 @@ import {
 import { useLocalToday } from "@/hooks/useLocalToday";
 import type { FinanceData } from "@/lib/finance";
 import { type SpendingData, type SpendingEvent, uncoveredSpending } from "@/lib/spending";
-import { paymentOwnerId, withStandalonePayments } from "@/lib/standalonePayments";
+import { isVisibleSubscriptionPayment, paymentOwnerId, withStandalonePayments } from "@/lib/standalonePayments";
 import { isTrialDate } from "@/lib/subscriptionTrial";
 import type { Currency, Cycle, PaymentRecord, Subscription } from "@/types";
 
@@ -122,6 +122,7 @@ export function useCalendarMonthData({
         const date = parseLocalDate(key)!;
         if (!visible(date)) continue;
         const record = getPaymentRecord(subscriptionRecords, subscription.id, key);
+        if (!isVisibleSubscriptionPayment(subscription, record)) continue;
         (entries[key] ??= []).push({
           sub:
             record?.currency && record.currency !== subscription.currency

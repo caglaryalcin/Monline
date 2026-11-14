@@ -18,6 +18,7 @@ function subscriptionEvent(record, data) {
   )?.code;
   if (
     (record.subscription_id && !sub) ||
+    (sub?.inactive && !record.paid_at) ||
     sub?.record_type === "credit" ||
     !currency ||
     !(record.name || sub?.name)

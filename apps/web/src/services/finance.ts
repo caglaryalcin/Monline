@@ -26,6 +26,8 @@ export type FinanceHistory = {
   moves?: { before: FinanceCalendarMove[]; after: FinanceCalendarMove[] };
 };
 export const financeService = {
+  setBillMonthSkipped: (row_id: string, month: string, skipped: boolean, entries: FinanceEntry[]) =>
+    api.post<{ updated: number; history: FinanceHistory }>("/api/finance/bill-month-status", { row_id, month, skipped, entries }),
   checkCardPayment: (row_id: string, statement_id: string, month: string, allow_month_boundary = false) =>
     api.post<CardPaymentCheck>("/api/finance/card-payment-check", { row_id, statement_id, month, allow_month_boundary }),
   setOpeningDeficit: (year: number, amount: number | null, expected_amount: number) =>

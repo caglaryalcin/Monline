@@ -1,4 +1,9 @@
 {
+  "payment_date_invalid": "Wähle ein gültiges Zahlungsdatum.",
+  "payment_edit_date_help": "Der Tag, an dem tatsächlich bezahlt wurde. Der Kalendertermin kann separat verschoben werden.",
+  "subscription_not_renewed": "Abonnement nicht verlängert",
+  "subscription_not_renewed_help": "Deaktiviert das Abonnement. Offene Zahlungen werden aus Kalender und Summen entfernt; bezahlte Einträge bleiben erhalten.",
+  "subscription_not_renewed_success": "Abonnement deaktiviert.",
   "budget_period_loans_1": "Kreditraten dieses Monats",
   "budget_period_loans_3": "Kreditraten für 3 Monate",
   "budget_period_loans_6": "Kreditraten für 6 Monate",

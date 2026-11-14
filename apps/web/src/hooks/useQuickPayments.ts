@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { getPaymentRecord, toDateOnly } from "@/components/calendar/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocalToday } from "@/hooks/useLocalToday";
+import { useSubscriptionNotRenewed } from "@/hooks/useSubscriptionNotRenewed";
 import { queryKeys } from "@/lib/queryKeys";
 import { type QuickPaymentActions, type QuickPaymentTarget, quickPaymentTarget } from "@/lib/quickPayment";
 import { toast } from "@/lib/toast";
@@ -17,6 +19,7 @@ export function useQuickPayments() {
   const queryClient = useQueryClient();
   const userId = user?.id ?? "";
   const enabled = !!userId && !!user?.payment_tracking;
+  const notRenewed = useSubscriptionNotRenewed();
   const records = useQuery({
     queryKey: queryKeys.paymentRecords.all(userId),
     queryFn: () => paymentRecordsService.listForUser(userId),
@@ -49,6 +52,11 @@ export function useQuickPayments() {
   const find = (sub: Subscription, date?: string) => enabled && records.isSuccess && !records.isError
     ? quickPaymentTarget(sub, records.data, userId, today, date) : null;
   const actions: QuickPaymentActions = {
+    notRenewed: {
+      ...notRenewed,
+      canDecline: (sub, date, paid) => (!enabled || records.isSuccess) &&
+        notRenewed.canDecline(sub, date, paid || !!getPaymentRecord(records.data ?? [], sub.id, date || toDateOnly(sub.next_payment))?.paid_at),
+    },
     canPay: (sub, date) => !!find(sub, date),
     select: (sub, date) => { if (!submitting.current) setTarget(find(sub, date)); },
   };

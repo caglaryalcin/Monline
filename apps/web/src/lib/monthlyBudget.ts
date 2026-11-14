@@ -5,7 +5,7 @@ import {
   toDateStr,
 } from "@/components/calendar/types";
 import { isCredit, isDateInMonth } from "@/lib/recordTypes";
-import { paymentOwnerId, withStandalonePayments } from "@/lib/standalonePayments";
+import { isVisibleSubscriptionPayment, paymentOwnerId, withStandalonePayments } from "@/lib/standalonePayments";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
@@ -50,6 +50,7 @@ export function buildMonthlyBudget(
     }
     for (const date of dates) {
       const record = getPaymentRecord(subscriptionRecords, subscription.id, date);
+      if (!isVisibleSubscriptionPayment(subscription, record)) continue;
       const paid = !!record?.paid_at;
       const price = record?.amount ?? subscriptionAmount(subscription, date);
       const currency =

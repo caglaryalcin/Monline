@@ -1,4 +1,9 @@
 {
+  "payment_date_invalid": "Choose a valid payment date.",
+  "payment_edit_date_help": "The day the payment was actually made. The calendar due date can be moved separately.",
+  "subscription_not_renewed": "Subscription not renewed",
+  "subscription_not_renewed_help": "Makes the subscription inactive. Pending payments leave the calendar and totals; paid history is preserved.",
+  "subscription_not_renewed_success": "Subscription marked inactive.",
   "budget_period_loans_1": "This month's loan installments",
   "budget_period_loans_3": "Loan installments for the 3-month period",
   "budget_period_loans_6": "Loan installments for the 6-month period",
