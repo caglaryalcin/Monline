@@ -7,6 +7,7 @@ import { ScopedTransferActions } from "@/components/ScopedTransferActions";
 import { SubscriptionFormModal } from "@/components/SubscriptionFormModal";
 import { LoansSection } from "@/components/subscriptions/LoansSection";
 import { ManualBillDialog } from "@/components/subscriptions/ManualBillDialog";
+import { ReactivateSubscriptionDialog } from "@/components/subscriptions/ReactivateSubscriptionDialog";
 import { SharedSubscriptions } from "@/components/subscriptions/SharedSubscriptions";
 import { SpendingMonthPicker } from "@/components/subscriptions/SpendingMonthPicker";
 import { StatementCommitments } from "@/components/subscriptions/StatementCommitments";
@@ -67,6 +68,7 @@ export function SubscriptionSections({
   const [showForm, setShowForm] = useState(false);
   const [showBillForm, setShowBillForm] = useState(false);
   const [editSubscription, setEditSubscription] = useState<Subscription | null>(null);
+  const [reactivateSubscription, setReactivateSubscription] = useState<Subscription | null>(null);
   const [historySubscription, setHistorySubscription] = useState<Subscription | null>(null);
   const [sharingSubscription, setSharingSubscription] = useState<Subscription | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -460,8 +462,10 @@ export function SubscriptionSections({
               onHistory={setHistorySubscription}
               onDelete={setDeleteId}
               onToggleActive={(subscription) => {
-                if (!statusMutation.isPending && !automationMutation.isPending)
-                  statusMutation.mutate({ id: subscription.id, inactive: !subscription.inactive });
+                if (!statusMutation.isPending && !automationMutation.isPending) {
+                  if (subscription.inactive) setReactivateSubscription(subscription);
+                  else statusMutation.mutate({ id: subscription.id, inactive: true });
+                }
               }}
               statusPendingId={statusMutation.isPending ? statusMutation.variables?.id : null}
               showAutoMarkPaid={!!user?.payment_tracking}
@@ -518,6 +522,8 @@ export function SubscriptionSections({
       {showBillForm && (
         <ManualBillDialog month={billFilterMonth} onClose={() => setShowBillForm(false)} />
       )}
+      {reactivateSubscription && <ReactivateSubscriptionDialog subscription={reactivateSubscription}
+        onClose={() => setReactivateSubscription(null)} />}
       {showForm ? (
         <SubscriptionFormModal
           sub={editSubscription}

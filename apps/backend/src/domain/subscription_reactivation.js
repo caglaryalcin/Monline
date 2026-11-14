@@ -4,6 +4,7 @@ const { restoreReactivatedMonth } = require("./lib/subscription-reactivation.js"
 
 onRecordUpdate((event) => {
   const reactivated = event.record.get("__monline_restore") !== true &&
+    event.record.get("__monline_reactivation_dates") !== true &&
     event.record.original().getBool("inactive") && !event.record.getBool("inactive");
   event.next();
   if (reactivated)

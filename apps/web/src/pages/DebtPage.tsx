@@ -4,6 +4,6 @@ import { SubscriptionSections } from "@/components/subscriptions/SubscriptionSec
 
 export function DebtPage() {
   const search = useSearch({ strict: false });
-  const section = search.tab === "loans" ? "loans" : "installments";
+  const section = search.tab === "installments" ? "installments" : "loans";
   return <SubscriptionSections section={section} />;
 }

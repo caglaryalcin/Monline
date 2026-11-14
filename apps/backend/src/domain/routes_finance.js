@@ -28,6 +28,12 @@ const fields = {
     "is_auto_carryover",
     "loan_id",
     "loan_principal",
+    "loan_start_date",
+    "loan_end_date",
+    "loan_installment_amount",
+    "rent_start_date",
+    "rent_end_date",
+    "rent_amount",
     "year",
     "origin_row",
     "is_deleted",
@@ -93,9 +99,9 @@ function yearRows(owner, year) {
   const data = financeYearData(owner);
   return financeYears.rowsForYear(data.finance_rows, year, data);
 }
-function yearRow(owner, id, year) {
+function yearRow(owner, id, year, forNewPayment = false) {
   const data = financeYearData(owner);
-  return financeYears.rowForYear(data.finance_rows, id, year, data);
+  return financeYears.rowForYear(data.finance_rows, id, year, data, forNewPayment);
 }
 function owned(name, id, owner) {
   const record = repository.findRecordById(name, id);
@@ -103,6 +109,12 @@ function owned(name, id, owner) {
   return record;
 }
 function check(record) {
+  if (record.collection().name === "finance_rows" && record.getBool("is_loan"))
+    record.set("payment_card", "");
+  if (record.collection().name === "finance_entries") {
+    const row = owned("finance_rows", record.getString("row_id"), record.getString("user"));
+    if (row.getBool("is_loan")) record.set("payment_tag", "direct");
+  }
   const values = Object.fromEntries(
     fields[record.collection().name].map((key) => [key, record.get(key)]),
   );
@@ -320,8 +332,12 @@ function save(name, owner, body, id) {
     const rowId = body.row_id || record.getString("row_id");
     const period = body.date || body.month || record.getString("date") || record.getString("month");
     if (rowId && period) {
-      const row = yearRow(owner, rowId, Number(period.slice(0, 4)));
+      const year = Number(period.slice(0, 4));
+      let row = yearRow(owner, rowId, year, true);
       if (!row) throw new BadRequestError("finance_invalid_row");
+      // An explicit payment creates its yearly counterpart, preserving identity.
+      if (Number(row.year || 0) && Number(row.year) !== year)
+        row = scopedRow(owner, owned("finance_rows", row.id, owner), year).publicExport();
       body = { ...body, row_id: row.id };
     }
   }
@@ -345,13 +361,50 @@ function save(name, owner, body, id) {
     record.set("row_order", order);
   }
   const previousName = record.getString("name");
+  if (name === "finance_rows" && body.is_rent === true && !record.getBool("is_rent") &&
+      (!body.rent_start_date || !body.rent_end_date || !finance.amount(body.rent_amount, false)))
+    throw new BadRequestError("finance_rent_period_invalid");
+  if (name === "finance_rows" && body.is_loan === true && !record.getBool("is_loan") &&
+      (!body.loan_start_date || !body.loan_end_date || !finance.amount(body.loan_installment_amount, false)))
+    throw new BadRequestError("finance_loan_period_invalid");
   for (const key of fields[name])
     if (Object.hasOwn(body, key)) record.set(key, body[key]);
   if (name === "finance_rows" && (body.is_loan === false ||
       (id && body.name != null && body.name !== previousName)))
     record.set("loan_id", "");
   repository.save(record);
+  if (name === "finance_rows" && record.getBool("is_loan") && Object.hasOwn(body, "loan_installment_amount"))
+    fillMonthlySchedule(owner, record, "loan");
+  if (name === "finance_rows" && record.getBool("is_rent") && Object.hasOwn(body, "rent_amount"))
+    fillMonthlySchedule(owner, record, "rent");
   return record;
+}
+function fillMonthlySchedule(owner, row, type) {
+  const start = row.getString(type + "_start_date"), end = row.getString(type + "_end_date");
+  const amount = row.getFloat(type === "loan" ? "loan_installment_amount" : "rent_amount");
+  const error = type === "loan" ? "finance_loan_period_invalid" : "finance_rent_period_invalid";
+  if (!require("./lib/pure/backfill-schedule.js").validDate(start) ||
+      !require("./lib/pure/backfill-schedule.js").validDate(end) || start > end ||
+      !finance.amount(amount, false))
+    throw new BadRequestError(error);
+  const [startYear, startMonth, day] = start.split("-").map(Number);
+  const months = (Number(end.slice(0, 4)) - startYear) * 12 + Number(end.slice(5, 7)) - startMonth;
+  if (months > 1200) throw new BadRequestError(error);
+  const root = financeYears.rootId(row.publicExport());
+  const family = new Set(own("finance_rows", owner).filter((item) =>
+    financeYears.rootId(item.publicExport()) === root).map((item) => item.id));
+  const existing = new Set(own("finance_entries", owner).filter((entry) => family.has(entry.getString("row_id")))
+    .map((entry) => entry.getString("date").slice(0, 7)));
+  for (let index = 0; index <= months; index++) {
+    const first = new Date(Date.UTC(startYear, startMonth - 1 + index, 1));
+    const year = first.getUTCFullYear(), month = first.getUTCMonth() + 1;
+    const prefix = first.toISOString().slice(0, 7);
+    const date = prefix + "-" + String(Math.min(day, new Date(Date.UTC(year, month, 0)).getUTCDate())).padStart(2, "0");
+    if (date < "2026-01-01" || date > end || existing.has(prefix)) continue;
+    save("finance_entries", owner, { row_id: row.id, date, amount,
+      status: "planned", settled_date: "", notes: "" });
+    existing.add(prefix);
+  }
 }
 function requestedYear(value) {
   if (!Number.isInteger(value) || value < 1970 || value > 2200)
@@ -365,8 +418,8 @@ function scopedRow(owner, original, year) {
   let scoped = own("finance_rows", owner).find((row) => row.getFloat("year") === year && row.getString("origin_row") === root);
   if (!scoped) {
     if (original.getFloat("year")) {
-      original = owned("finance_rows", root, owner);
-      if (original.getString("origin_row")) throw new BadRequestError("finance_invalid_year");
+      const rootRow = owned("finance_rows", root, owner);
+      if (rootRow.getString("origin_row")) throw new BadRequestError("finance_invalid_year");
     }
     scoped = new Record(repository.findCollectionByNameOrId("finance_rows"));
     scoped.set("user", owner);
@@ -397,7 +450,18 @@ function deleteFinanceRows(owner, rowIds, year) {
   });
   if (new Set(selected.map((row) => row.id)).size !== selected.length)
     throw new BadRequestError("finance_invalid_row");
-  const rows = selected.map((row) => scopedRow(owner, owned("finance_rows", row.id, owner), year));
+  let rows = selected.map((row) => scopedRow(owner, owned("finance_rows", row.id, owner), year));
+  const allRows = own("finance_rows", owner);
+  const values = allRows.map((row) => row.publicExport());
+  const cascadingLoans = new Set(rows.filter((row) =>
+    financeYears.loanStartingRow(values, row.publicExport())?.id === row.id).map((row) => financeYears.rootId(row.publicExport())));
+  const affected = new Map(rows.map((row) => [row.id, row]));
+  for (const row of allRows)
+    if (row.getBool("is_loan") && !row.getBool("is_deleted") && row.getFloat("year") >= year &&
+        cascadingLoans.has(financeYears.rootId(row.publicExport()))) affected.set(row.id, row);
+  rows = [...affected.values()];
+  const cascadingIds = new Set(allRows.filter((row) => row.getBool("is_loan") &&
+    cascadingLoans.has(financeYears.rootId(row.publicExport()))).map((row) => row.id));
   const ids = new Set(rows.map((row) => row.id));
   const visible = yearRows(owner, year);
   for (const row of rows)
@@ -405,7 +469,14 @@ function deleteFinanceRows(owner, rowIds, year) {
       throw new BadRequestError("finance_card_type_in_use");
   for (const [collection, field] of [["finance_statement_links", "month"], ["finance_card_transactions", "month"], ["finance_entries", "date"]])
     for (const item of own(collection, owner))
-      if (ids.has(item.getString("row_id")) && item.getString(field).startsWith(year + "-")) repository.delete(item);
+      if ((ids.has(item.getString("row_id")) && item.getString(field).startsWith(year + "-")) ||
+          (cascadingIds.has(item.getString("row_id")) && Number(item.getString(field).slice(0, 4)) >= year)) {
+        if (collection === "finance_entries")
+          for (const move of own("calendar_moves", owner))
+            if (move.getString("source") === "ledger" && move.getString("source_id") === "ledger:" + item.id)
+              repository.delete(move);
+        repository.delete(item);
+      }
   for (const row of rows) {
     row.set("is_deleted", true);
     repository.save(row);
@@ -525,6 +596,12 @@ routerAdd("POST", "/api/finance/restore", (e) => {
         if (row.is_auto_carryover === undefined) row.is_auto_carryover = false;
         if (row.loan_id === undefined) row.loan_id = "";
         if (row.loan_principal === undefined) row.loan_principal = currentPrincipals.get(row.id) ?? 0;
+        if (row.loan_start_date === undefined) row.loan_start_date = "";
+        if (row.loan_end_date === undefined) row.loan_end_date = "";
+        if (row.loan_installment_amount === undefined) row.loan_installment_amount = 0;
+        if (row.rent_start_date === undefined) row.rent_start_date = "";
+        if (row.rent_end_date === undefined) row.rent_end_date = "";
+        if (row.rent_amount === undefined) row.rent_amount = 0;
         if (row.year === undefined) row.year = 0;
         if (row.origin_row === undefined) row.origin_row = "";
         if (row.is_deleted === undefined) row.is_deleted = false;
@@ -537,7 +614,7 @@ routerAdd("POST", "/api/finance/restore", (e) => {
           !record ||
           spec.fields.some(
             (key) =>
-              !["amount", "row_order", "loan_principal", "is_loan", "is_rent", "is_auto_carryover", "year", "is_deleted"].includes(key) &&
+              !["amount", "row_order", "loan_principal", "loan_installment_amount", "rent_amount", "is_loan", "is_rent", "is_auto_carryover", "year", "is_deleted"].includes(key) &&
               typeof record[key] !== "string",
           ) ||
           !/^[a-z0-9]{15}$/.test(record.id) ||
@@ -768,9 +845,15 @@ routerAdd("POST", "/api/finance/rows/tag", (e) => {
       throw new BadRequestError("finance_invalid_row");
     let tagged_rows = 0;
     for (const row of targets) {
-      if (finance.rowTag(row) === body.tag && !(body.tag === "credit_card" && row.payment_card)) continue;
+      if (finance.rowTag(row) === body.tag && !["loan", "rent"].includes(body.tag) && !(body.tag === "credit_card" && row.payment_card)) continue;
       save("finance_rows", owner, {
         ...finance.rowTagValues(body.tag),
+        ...(body.tag === "rent" ? { rent_start_date: body.rent_start_date || row.rent_start_date || "",
+          rent_end_date: body.rent_end_date || row.rent_end_date || "",
+          rent_amount: body.rent_amount ?? row.rent_amount ?? 0 } : {}),
+        ...(body.tag === "loan" ? { loan_start_date: body.loan_start_date || row.loan_start_date || "",
+          loan_end_date: body.loan_end_date || row.loan_end_date || "",
+          loan_installment_amount: body.loan_installment_amount ?? row.loan_installment_amount ?? 0 } : {}),
         ...(row.kind !== "expense" ? { kind: body.tag === "salary" ? "salary" : "income" } : {}),
         year,
       }, row.id);
@@ -835,6 +918,20 @@ routerAdd("POST", "/api/finance/rows/action", (e) => {
         repository.save(row);
       }
     });
+    // Plans can create future counterparts before an inserted row gets its final order.
+    const allRows = own("finance_rows", owner);
+    const values = allRows.map((row) => row.publicExport());
+    for (const row of rows) {
+      if (financeYears.loanStartingRow(values, row.publicExport())?.id !== row.id) continue;
+      const root = financeYears.rootId(row.publicExport());
+      for (const counterpart of allRows)
+        if (counterpart.getBool("is_loan") && !counterpart.getBool("is_deleted") &&
+            counterpart.getFloat("year") > year && financeYears.rootId(counterpart.publicExport()) === root &&
+            counterpart.getFloat("row_order") !== row.getFloat("row_order")) {
+          counterpart.set("row_order", row.getFloat("row_order"));
+          repository.save(counterpart);
+        }
+    }
     return {
       changed: true,
       ...(created ? { row: created.publicExport() } : {}),
@@ -1075,7 +1172,7 @@ routerAdd("POST", "/api/finance/cells", (e) => {
       } else {
         const existing = owned("finance_rows", row.row_id, owner);
         const view = yearRow(owner, existing.id, year);
-        const rowValue = (value, key) => ["row_order", "year", "loan_principal"].includes(key)
+        const rowValue = (value, key) => ["row_order", "year", "loan_principal", "loan_installment_amount", "rent_amount"].includes(key)
           ? value[key] ?? 0
           : ["is_loan", "is_rent", "is_auto_carryover", "is_deleted"].includes(key) ? value[key] ?? false : value[key] || "";
         if (
@@ -1192,7 +1289,7 @@ routerAdd("POST", "/api/finance/cells", (e) => {
 routerAdd("POST", "/api/finance/plan", (e) => {
   const owner = user(e),
     body = e.requestInfo().body;
-  const row = owned("finance_rows", body.row_id, owner);
+  let row = owned("finance_rows", body.row_id, owner);
   const { year, from_month, to_month, day, amount } = body;
   if (
     ![year, from_month, to_month, day].every(Number.isInteger) ||
@@ -1207,6 +1304,11 @@ routerAdd("POST", "/api/finance/plan", (e) => {
     throw new BadRequestError("finance_invalid_plan");
   let created = 0;
   repository.runInTransaction(() => {
+    const planned = yearRow(owner, row.id, year, true);
+    if (!planned) throw new BadRequestError("finance_invalid_row");
+    if (Number(planned.year || 0) && Number(planned.year) !== year)
+      row = scopedRow(owner, owned("finance_rows", planned.id, owner), year);
+    else row = owned("finance_rows", planned.id, owner);
     const entries = own("finance_entries", owner);
     for (let month = from_month; month <= to_month; month++) {
       const prefix = `${year}-${String(month).padStart(2, "0")}`;

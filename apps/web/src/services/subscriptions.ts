@@ -5,6 +5,10 @@ import type { Subscription } from "@/types";
 const FULL_EXPAND = "currency,cycle,category,payment_method,payer";
 
 export const subscriptionsService = {
+  reactivate: (id: string, body: { paid_date: string; next_payment: string; expected_next_payment: string;
+    price: number; expected_currency: string;
+    utc_offset_minutes: number; paid_utc_offset_minutes: number }) =>
+    api.post<{ reactivated: boolean }>(`/api/subscriptions/${encodeURIComponent(id)}/reactivate`, body),
   deleteAll: () =>
     api.post<{ deleted: number; payments_deleted: number; statements_hidden: number }>(
       "/api/subscriptions/delete-all",

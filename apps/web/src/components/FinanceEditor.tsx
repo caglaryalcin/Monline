@@ -4,6 +4,8 @@ import { toast } from "sonner";
 
 import { FinanceCardPaymentComparison } from "@/components/FinanceCardPaymentComparison";
 import { FinanceRowProvider } from "@/components/FinanceRowProvider";
+import { LoanPeriodFields } from "@/components/LoanPeriodFields";
+import { RentPeriodFields } from "@/components/RentPeriodFields";
 import { StatementLink } from "@/components/StatementLink";
 import { Button } from "@/components/ui/button";
 import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,6 +24,7 @@ import {
   isCardPaid,
 } from "@/lib/finance";
 import { parseClipboardAmount } from "@/lib/financeClipboard";
+import { readLoanPeriod, readRentPeriod } from "@/lib/loanPeriod";
 import { formatNumber } from "@/lib/numberFormat";
 import { cn } from "@/lib/utils";
 import { financeService } from "@/services/finance";
@@ -115,7 +118,7 @@ export function FinanceEditor({
     is_loan: isLoan,
     is_rent: isRent,
   } = financeRowTagValues(rowKind === "expense" ? rowTag : "");
-  const acceptsPaymentCard = rowKind === "expense" && expenseType !== "credit_card";
+  const acceptsPaymentCard = rowKind === "expense" && expenseType !== "credit_card" && !isLoan;
   const isIncome = editor.type === "cell" && editor.row.kind !== "expense";
   const editorMonth = "month" in editor ? `${year}-${String(editor.month).padStart(2, "0")}` : "";
   const statementLink =
@@ -267,6 +270,8 @@ export function FinanceEditor({
           kind: rowKind,
           notes: value("notes"),
           ...(isLoan || editor.row?.is_loan ? { is_loan: isLoan } : {}),
+          ...(isLoan ? readLoanPeriod(form, currency) : {}),
+          ...(isRent ? readRentPeriod(form, currency) : {}),
           ...(isRent || editor.row?.is_rent ? { is_rent: isRent } : {}),
           ...(billType || editor.row?.bill_type
             ? {
@@ -464,26 +469,6 @@ export function FinanceEditor({
           {editor.type === "row" && (
             <>
               {input("name", "text", editor.row?.name, { required: true, maxLength: 160 })}
-              {rowKind === "expense" && billType && editor.row?.id && (
-                <FinanceRowProvider row={editor.row} year={year} monthName={monthName} />
-              )}
-              {field(
-                "kind",
-                <select
-                  id="finance-kind"
-                  name="kind"
-                  disabled={!!editor.position}
-                  value={rowKind === "salary" ? "income" : rowKind}
-                  onChange={(event) => setRowKind(event.target.value as FinanceRow["kind"])}
-                  className={financeSelectClass}
-                >
-                  {["income", "expense"].map((kind) => (
-                    <option key={kind} value={kind}>
-                      {label(kind === "income" ? "income_kind" : kind)}
-                    </option>
-                  ))}
-                </select>,
-              )}
               {rowKind !== "expense" && (
                 <div className="space-y-1.5">
                   {field(
@@ -533,7 +518,7 @@ export function FinanceEditor({
                   <p className="text-xs text-muted-foreground">
                     {label(expenseType === "credit_card" ? "card_row_tag_help" : "bill_type_help")}
                   </p>
-                  {expenseType !== "credit_card" && (
+                  {acceptsPaymentCard && (
                     <>
                       {field(
                         "payment_card",
@@ -561,6 +546,11 @@ export function FinanceEditor({
                   )}
                 </div>
               )}
+              {rowKind === "expense" && billType && editor.row?.id && (
+                <FinanceRowProvider row={editor.row} year={year} monthName={monthName} />
+              )}
+              {isLoan && <LoanPeriodFields initial={editor.row} />}
+              {isRent && <RentPeriodFields initial={editor.row} />}
             </>
           )}
           {editor.type === "cell" && (

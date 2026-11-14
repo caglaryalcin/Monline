@@ -26,6 +26,7 @@ function betaEnvironment(root, environment) {
   }
   return {
     ...environment,
+    MONLINE_PORT: environment.MONLINE_PORT || "8081",
     MONLINE_DATA_DIR: data,
     MONLINE_LEGACY_DATA_DIR: legacy,
   };

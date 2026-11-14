@@ -13,7 +13,7 @@ function rowTagValues(tag) {
     is_loan: tag === "loan",
     is_rent: tag === "rent",
     bill_type: BILL_TYPES.includes(tag) ? tag : "",
-    ...(tag === "credit_card" ? { payment_card: "" } : {}),
+    ...(["credit_card", "loan"].includes(tag) ? { payment_card: "" } : {}),
   };
 }
 const KINDS = ["salary", "income", "expense"];
@@ -43,6 +43,17 @@ function isCarryoverRow(row) {
 }
 function validate(name, value) {
   if (name === "finance_rows") {
+    if (value.rent_amount != null && !amount(value.rent_amount)) return "finance_rent_period_invalid";
+    if ((value.rent_start_date || value.rent_end_date) &&
+        (!validDate(value.rent_start_date) || !validDate(value.rent_end_date) ||
+         value.rent_start_date < "1970-01-01" || value.rent_end_date > "2200-12-31" ||
+         value.rent_start_date > value.rent_end_date)) return "finance_rent_period_invalid";
+    if (value.loan_installment_amount != null && !amount(value.loan_installment_amount))
+      return "finance_loan_period_invalid";
+    if ((value.loan_start_date || value.loan_end_date) &&
+        (!validDate(value.loan_start_date) || !validDate(value.loan_end_date) ||
+         value.loan_start_date < "1970-01-01" || value.loan_end_date > "2200-12-31" ||
+         value.loan_start_date > value.loan_end_date)) return "finance_loan_period_invalid";
     if (value.loan_principal != null && !amount(value.loan_principal))
       return "loans_principal_invalid";
     if (

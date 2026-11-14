@@ -16,6 +16,12 @@ export interface FinanceRow {
   is_auto_carryover?: boolean;
   loan_id?: string;
   loan_principal?: number;
+  loan_start_date?: string;
+  loan_end_date?: string;
+  loan_installment_amount?: number;
+  rent_start_date?: string;
+  rent_end_date?: string;
+  rent_amount?: number;
   payment_card?: string;
   notes: string;
   row_order?: number;
@@ -23,6 +29,24 @@ export interface FinanceRow {
   year?: number;
   origin_row?: string;
   is_deleted?: boolean;
+}
+// Automatic continuation starts with the 2026 ledger; historical years stay saved views.
+const CONTINUATION_START_YEAR = 2026;
+export function loanStartingRow(rows: FinanceRow[], row: FinanceRow) {
+  if (!row.is_loan) return undefined;
+  const rootId = row.origin_row || row.id;
+  const root = rows.find((item) => item.id === rootId);
+  const startYear = Number((row.loan_start_date || "").slice(0, 4)) || root?.year || 0;
+  if (startYear < CONTINUATION_START_YEAR) return undefined;
+  return rows.find((item) => item.is_loan && (item.origin_row || item.id) === rootId && item.year === startYear);
+}
+function continuesAcrossYears(row: FinanceRow, year: number) {
+  return row.kind === "expense" && !row.is_auto_carryover &&
+    (row.expense_type === "credit_card" || !!row.bill_type ||
+      (row.is_rent && row.rent_start_date && row.rent_end_date &&
+       row.rent_start_date <= `${year}-12-31` && row.rent_end_date >= `${year}-01-01`) ||
+      (row.is_loan && row.loan_start_date && row.loan_end_date &&
+       row.loan_start_date <= `${year}-12-31` && row.loan_end_date >= `${year}-01-01`));
 }
 export function financeRowsForYear(rows: FinanceRow[], year: number, data: Partial<FinanceData> = {}) {
   const active = new Set(rows.filter((row) => !row.is_deleted && row.year === year).map((row) => row.id));
@@ -36,12 +60,32 @@ export function financeRowsForYear(rows: FinanceRow[], year: number, data: Parti
   const forks = new Set(rows.filter((row) => row.year === year && row.origin_row).map((row) => row.origin_row));
   const visible = rows.filter((row) => !row.is_deleted &&
     (row.year === year || (!row.year && !forks.has(row.id) && (row.is_auto_carryover || active.has(row.id)))));
+  // Resolve the latest yearly version before deciding whether it continues.
+  const rootId = (row: FinanceRow) => row.origin_row || row.id;
+  const continuations = new Map<string, FinanceRow>();
+  for (const row of rows) {
+    const rowYear = row.year ?? 0;
+    const root = rootId(row);
+    if (!rowYear || rowYear >= year || forks.has(root)) continue;
+    if (rowYear < CONTINUATION_START_YEAR) continue;
+    const previous = continuations.get(root);
+    if (!previous || (previous.year ?? 0) < rowYear) continuations.set(root, row);
+  }
+  for (const row of continuations.values()) {
+    if (!row.is_deleted && (continuesAcrossYears(row, year) || active.has(row.id)) &&
+        !visible.some((item) => rootId(item) === rootId(row))) {
+      visible.push(row);
+    }
+  }
   const all = new Map(rows.map((row) => [row.id, row]));
   const cards = new Map(visible.map((row) => [row.origin_row || row.id, row.id]));
+  const loanPriority = (row: FinanceRow) => Number((loanStartingRow(rows, row)?.year || year) < year);
   return visible.map((row) => {
     const card = all.get(row.payment_card || "");
-    return { ...row, payment_card: row.payment_card ? cards.get(card?.origin_row || card?.id || row.payment_card) || row.payment_card : "" };
-  }).sort((a, b) => Number(!!a.is_auto_carryover) - Number(!!b.is_auto_carryover) || (a.row_order || 0) - (b.row_order || 0));
+    return { ...row, row_order: loanStartingRow(rows, row)?.row_order ?? row.row_order,
+      payment_card: !row.is_loan && row.payment_card ? cards.get(card?.origin_row || card?.id || row.payment_card) || row.payment_card : "" };
+  }).sort((a, b) => Number(!!a.is_auto_carryover) - Number(!!b.is_auto_carryover) ||
+    (a.row_order || 0) - (b.row_order || 0) || loanPriority(b) - loanPriority(a));
 }
 export function isFinanceCarryoverRow(row: FinanceRow) {
   return row.kind === "expense" && row.is_auto_carryover === true;
@@ -170,7 +214,7 @@ export function sumEntries(entries: FinanceEntry[]) {
   return entries.reduce((sum, entry) => sum + cents(entry.amount), 0) / 100;
 }
 export function canTagPayment(row: FinanceRow) {
-  return row.kind === "expense" && row.expense_type !== "credit_card";
+  return row.kind === "expense" && row.expense_type !== "credit_card" && !row.is_loan;
 }
 export function isCardPaid(entry: FinanceEntry, row: FinanceRow) {
   return (

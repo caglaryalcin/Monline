@@ -1,4 +1,13 @@
 {
+  "reactivate_new_amount": "Új összeg",
+  "reactivate_amount_help": "Az aktuális és a következő fizetés összege. A korábban kifizetett tételek megmaradnak.",
+  "reactivate_invalid_amount": "Adj meg érvényes összeget.",
+  "reactivate_subscription": "Előfizetés aktiválása",
+  "reactivate_subscription_help": "Add meg a fizetés napját és a következő fizetés dátumát. A fizetés rögzítése és az aktiválás együtt történik.",
+  "subscription_reactivated": "Az előfizetés aktiválva.",
+  "reactivate_invalid_dates": "Válassz érvényes múltbeli fizetési napot és jövőbeli következő fizetési dátumot.",
+  "reactivate_changed": "Az előfizetés megváltozott. Frissítsd az oldalt, és próbáld újra.",
+  "reactivate_schedule_ended": "Aktiválás előtt módosítsd a befejezési dátumot vagy a fizetési korlátot.",
   "payment_date_invalid": "Válassz érvényes fizetési dátumot.",
   "payment_edit_date_help": "A fizetés tényleges napja. A naptári esedékesség külön módosítható.",
   "subscription_not_renewed": "Az előfizetés nem lett megújítva",

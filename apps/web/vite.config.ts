@@ -85,7 +85,7 @@ export default defineConfig({
     proxy: {
       "/api": {
         target:
-          process.env.MONLINE_API_URL || `http://127.0.0.1:${process.env.MONLINE_PORT || "8080"}`,
+          process.env.MONLINE_API_URL || `http://127.0.0.1:${process.env.MONLINE_PORT || "8081"}`,
         changeOrigin: true,
       },
     },

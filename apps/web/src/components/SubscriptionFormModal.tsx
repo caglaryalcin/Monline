@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import { RemindersEditor } from "@/components/settings/notifications/RemindersEditor";
 import { BackfillPaymentsEditor } from "@/components/subscriptions/BackfillPaymentsEditor";
+import { ReactivateSubscriptionDialog } from "@/components/subscriptions/ReactivateSubscriptionDialog";
 import { SubscriptionCategorySelect } from "@/components/subscriptions/SubscriptionCategorySelect";
 import { SubscriptionPriceChangesEditor } from "@/components/subscriptions/SubscriptionPriceChangesEditor";
 import { Button } from "@/components/ui/button";
@@ -138,6 +139,7 @@ export function SubscriptionFormModal({
   const watchedNotify = watch("notify");
   const notificationMode = watch("notification_mode");
   const watchedInactive = watch("inactive");
+  const [reactivateOpen, setReactivateOpen] = useState(false);
   const watchedTrial = watch("trial_enabled");
   const legacyTrial =
     !!sub?.trial_months &&
@@ -366,7 +368,10 @@ export function SubscriptionFormModal({
   };
 
   return (
-    <Dialog open onOpenChange={dialogDismissHandler(requestClose)}>
+    <>
+    {reactivateOpen && sub && <ReactivateSubscriptionDialog subscription={sub}
+      onClose={() => setReactivateOpen(false)} onReactivated={onSaved} />}
+    <Dialog open={!reactivateOpen} onOpenChange={dialogDismissHandler(requestClose)}>
       <DialogContent
         className="flex max-w-[44rem] max-h-[90dvh] flex-col overflow-hidden"
         onPointerDownOutside={(event) => {
@@ -940,6 +945,7 @@ export function SubscriptionFormModal({
                         id="subscription-auto-renew"
                         checked={!watchedInactive && (isFiniteSchedule || field.value)}
                         onCheckedChange={(checked) => {
+                          if (checked && sub?.inactive) { setReactivateOpen(true); return; }
                           field.onChange(checked);
                           if (checked)
                             setValue("inactive", false, {
@@ -979,6 +985,7 @@ export function SubscriptionFormModal({
                       id="subscription-inactive"
                       checked={field.value}
                       onCheckedChange={(checked) => {
+                        if (!checked && sub?.inactive) { setReactivateOpen(true); return; }
                         field.onChange(checked);
                         if (checked)
                           setValue("auto_renew", false, {
@@ -1130,5 +1137,6 @@ export function SubscriptionFormModal({
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

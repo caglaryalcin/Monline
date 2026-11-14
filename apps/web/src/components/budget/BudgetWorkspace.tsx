@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { LoanPeriodDialog, LoanPeriodFields } from "@/components/LoanPeriodFields";
+import { RentPeriodDialog, RentPeriodFields } from "@/components/RentPeriodFields";
 import { StatementLink } from "@/components/StatementLink";
 import { ManualBillActions } from "@/components/subscriptions/ManualBillActions";
 import { ManualBillDialog } from "@/components/subscriptions/ManualBillDialog";
@@ -17,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PersistentDetails } from "@/components/ui/persistent-details";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFinanceCurrencyValue } from "@/contexts/FinanceCurrencyContext";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import {
@@ -27,6 +30,7 @@ import {
   financeRowTagValues,
   ROW_TAGS,
 } from "@/lib/finance";
+import { readLoanPeriod, readRentPeriod } from "@/lib/loanPeriod";
 import { spendingKey } from "@/lib/spending";
 import { toast } from "@/lib/toast";
 import { formatCurrency } from "@/lib/utils";
@@ -38,6 +42,7 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
   const { user } = useAuth();
   const userId = user?.id ?? "";
   const { t } = useTranslation();
+  const loanCurrency = useFinanceCurrencyValue();
   const today = useLocalToday();
   const [month, setMonth] = useState(today.slice(0, 7));
   const [tab, setTab] = useState("expenses");
@@ -67,7 +72,8 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
     mutationFn: (action: () => Promise<unknown>) => action(),
     onSuccess: refresh,
     onError: (error) =>
-      toast.error(t(error.message.startsWith("budget_") ? error.message : "budget_save_failed")),
+      toast.error(t(error.message.startsWith("budget_") || ["finance_loan_period_invalid", "finance_rent_period_invalid"].includes(error.message)
+        ? error.message : "budget_save_failed")),
   });
   const money = (value: number, currency = "TRY") => formatCurrency(value, currency, {});
   const amounts = (values: BudgetTotal[]) =>
@@ -82,8 +88,22 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
   const available = data ? data.opening + data.received - cashTry : 0;
   const [newName, setNewName] = useState("");
   const [newTag, setNewTag] = useState<ExpenseRowTag>("");
+  const [loanPeriodRow, setLoanPeriodRow] = useState<FinanceRow | null>(null);
+  const [rentPeriodRow, setRentPeriodRow] = useState<FinanceRow | null>(null);
   return (
     <section className="space-y-5" aria-label={t("budget_workspace")}>
+      {loanPeriodRow && <LoanPeriodDialog initial={loanPeriodRow} pending={mutation.isPending}
+        onClose={() => setLoanPeriodRow(null)} onSave={async (period) => {
+          await mutation.mutateAsync(() => financeService.save("finance_rows",
+            { ...financeRowTagValues("loan"), ...period }, loanPeriodRow.id, year));
+          setLoanPeriodRow(null);
+        }} />}
+      {rentPeriodRow && <RentPeriodDialog initial={rentPeriodRow} pending={mutation.isPending}
+        onClose={() => setRentPeriodRow(null)} onSave={async (period) => {
+          await mutation.mutateAsync(() => financeService.save("finance_rows",
+            { ...financeRowTagValues("rent"), ...period }, rentPeriodRow.id, year));
+          setRentPeriodRow(null);
+        }} />}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold">{t("budget_workspace")}</h2>
@@ -461,6 +481,7 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
                     className="flex flex-wrap items-end gap-2"
                     onSubmit={(event) => {
                       event.preventDefault();
+                      const periodForm = new FormData(event.currentTarget);
                       if (newName.trim())
                         mutation.mutate(() =>
                           financeService
@@ -470,6 +491,8 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
                                 name: newName.trim(),
                                 kind: "expense",
                                 ...financeRowTagValues(newTag),
+                                ...(newTag === "loan" ? readLoanPeriod(periodForm, loanCurrency) : {}),
+                                ...(newTag === "rent" ? readRentPeriod(periodForm, loanCurrency) : {}),
                                 notes: "",
                               },
                               undefined,
@@ -506,6 +529,8 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
                         ))}
                       </select>
                     </div>
+                    {newTag === "loan" && <LoanPeriodFields />}
+                    {newTag === "rent" && <RentPeriodFields />}
                     <Button type="submit" disabled={mutation.isPending}>
                       {t("finance_new_row")}
                     </Button>
@@ -526,6 +551,8 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
                             disabled={mutation.isPending}
                             onChange={(event) => {
                               const tag = event.currentTarget.value as ExpenseRowTag;
+                              if (tag === "loan") { setLoanPeriodRow(row); return; }
+                              if (tag === "rent") { setRentPeriodRow(row); return; }
                               mutation.mutate(() =>
                                 financeService.save(
                                   "finance_rows",
@@ -548,7 +575,7 @@ export function BudgetWorkspace({ compact = false }: { compact?: boolean }) {
                               </option>
                             ))}
                           </select>
-                          {row.expense_type !== "credit_card" && (
+                          {row.expense_type !== "credit_card" && !row.is_loan && (
                             <select
                               className={selectClass}
                               value={row.payment_card || ""}

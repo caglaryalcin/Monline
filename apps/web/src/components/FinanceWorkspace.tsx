@@ -19,7 +19,7 @@ export function FinanceWorkspace({ children }: { children: ReactNode }) {
   const currency = useFinanceCurrency({ convert: displaysLedgerCurrency });
   const statements = pathname.startsWith("/statements");
   const search = useSearch({ strict: false });
-  const debtSection = statements ? "statements" : search.tab === "loans" ? "loans" : "installments";
+  const debtSection = statements ? "statements" : search.tab === "installments" ? "installments" : "loans";
   const content = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

@@ -253,7 +253,7 @@ function spendingData(data, { trackingOnly = false } = {}) {
       continue;
     const cardPayment = row.expense_type === "credit_card";
     const cardPaid =
-      !cardPayment &&
+      !cardPayment && !row.is_loan &&
       (entry.payment_tag === "credit_card" ||
         (entry.payment_tag !== "direct" && !!row.payment_card));
     const paymentCard = cardPaid && row.payment_card

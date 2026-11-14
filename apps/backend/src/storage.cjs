@@ -346,6 +346,12 @@ class Repository {
       ["origin_row", "TEXT NOT NULL DEFAULT ''"],
       ["loan_id", "TEXT NOT NULL DEFAULT ''"],
       ["loan_principal", "REAL NOT NULL DEFAULT 0"],
+      ["loan_start_date", "TEXT NOT NULL DEFAULT ''"],
+      ["loan_end_date", "TEXT NOT NULL DEFAULT ''"],
+      ["loan_installment_amount", "REAL NOT NULL DEFAULT 0"],
+      ["rent_start_date", "TEXT NOT NULL DEFAULT ''"],
+      ["rent_end_date", "TEXT NOT NULL DEFAULT ''"],
+      ["rent_amount", "REAL NOT NULL DEFAULT 0"],
       ["is_deleted", "INTEGER NOT NULL DEFAULT 0"],
     ]) {
       if (!this.connection.prepare('PRAGMA table_info("finance_rows")').all().some((column) => column.name === field))

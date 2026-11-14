@@ -123,6 +123,12 @@ function moveSourceCalendar(app, owner, input) {
           "is_auto_carryover",
           "loan_id",
           "loan_principal",
+          "loan_start_date",
+          "loan_end_date",
+          "loan_installment_amount",
+          "rent_start_date",
+          "rent_end_date",
+          "rent_amount",
         ])
           created.set(field, original[field]);
         created.set("user", owner);

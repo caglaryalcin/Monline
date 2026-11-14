@@ -36,6 +36,8 @@ import { FinanceRowTag } from "@/components/FinanceRowTag";
 import { FinanceSalaryComparison } from "@/components/FinanceSalaryComparison";
 import { FinanceStatementLinkDialog } from "@/components/FinanceStatementLinkDialog";
 import { FinanceVerificationDialog } from "@/components/FinanceVerificationDialog";
+import { LoanPeriodDialog } from "@/components/LoanPeriodFields";
+import { RentPeriodDialog } from "@/components/RentPeriodFields";
 import { StatementLink } from "@/components/StatementLink";
 import { MerchantProviderDialog } from "@/components/subscriptions/MerchantProviderDialog";
 import { Button } from "@/components/ui/button";
@@ -178,6 +180,8 @@ export function FinancePage() {
     };
   }, [summaryTrace]);
   const [editor, setEditor] = useState<Editor | null>(null);
+  const [loanTagRows, setLoanTagRows] = useState<FinanceRow[] | null>(null);
+  const [rentTagRows, setRentTagRows] = useState<FinanceRow[] | null>(null);
   const [deletingRows, setDeletingRows] = useState<{ year: number; rows: FinanceRow[] } | null>(
     null,
   );
@@ -359,6 +363,8 @@ export function FinancePage() {
               "finance_payment_tag_in_use",
               "finance_history_conflict",
               "finance_opening_deficit_locked",
+              "finance_loan_period_invalid",
+              "finance_rent_period_invalid",
             ].includes(error.message)
             ? error.message.replace("finance_", "")
             : "error",
@@ -1092,6 +1098,8 @@ export function FinancePage() {
                               key={tag}
                               disabled={grid.busy}
                               onSelect={() => {
+                                if (tag === "loan") { setLoanTagRows([...contextTagRows]); return; }
+                                if (tag === "rent") { setRentTagRows([...contextTagRows]); return; }
                                 void run(
                                   () =>
                                     financeService.tagRows(
@@ -1360,6 +1368,18 @@ export function FinancePage() {
           </DropdownMenuContent>
         </DropdownMenu>
       )}
+      {loanTagRows && <LoanPeriodDialog initial={loanTagRows.length === 1 ? loanTagRows[0] : undefined}
+        pending={mutate.isPending || history.busy} onClose={() => setLoanTagRows(null)} onSave={async (period) => {
+          const saved = await run(() => financeService.tagRows(year,
+            loanTagRows.map((row) => ({ id: row.id, tag: financeRowTag(row) })), "loan", period), false);
+          if (saved) setLoanTagRows(null);
+        }} />}
+      {rentTagRows && <RentPeriodDialog initial={rentTagRows.length === 1 ? rentTagRows[0] : undefined}
+        pending={mutate.isPending || history.busy} onClose={() => setRentTagRows(null)} onSave={async (period) => {
+          const saved = await run(() => financeService.tagRows(year,
+            rentTagRows.map((row) => ({ id: row.id, tag: financeRowTag(row) })), "rent", period), false);
+          if (saved) setRentTagRows(null);
+        }} />}
       {deletingRows && (
         <Dialog open onOpenChange={dialogDismissHandler(() => setDeletingRows(null), history.busy)}>
           <DialogContent className="sm:max-w-md">
