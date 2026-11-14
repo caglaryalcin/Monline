@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { BudgetPeriodSelect } from "@/components/dashboard/BudgetPeriodSelect";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
+import { SubscriptionNotRenewedButton } from "@/components/subscriptions/SubscriptionNotRenewedButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InfoButton } from "@/components/ui/info-button";
@@ -198,9 +199,14 @@ export function BudgetOverviewCard({
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
+                        <div className="flex items-center gap-1.5">
+                          {entry.status !== "paid" && (
+                            <SubscriptionNotRenewedButton subscription={entry.subscription} date={entry.date} actions={quickPayments?.notRenewed} compact />
+                          )}
                         <span className="shrink-0 text-sm font-semibold tabular-nums">
                           {formatValue(entry.amount)}
                         </span>
+                        </div>
                         {entry.status !== "paid" && quickPayments?.canPay(entry.subscription, entry.date) && (
                           <Button type="button" variant="outline" size="sm" className="h-8 shrink-0 gap-1 rounded-lg px-2 text-xs"
                             aria-label={t("quick_payment_button", { name: entry.subscription.name })}

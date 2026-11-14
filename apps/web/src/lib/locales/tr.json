@@ -1,4 +1,9 @@
 {
+  "payment_date_invalid": "Geçerli bir ödeme tarihi seçin.",
+  "payment_edit_date_help": "Ödemenin gerçekte yapıldığı gündür. Takvimdeki ödeme günü ayrı olarak taşınabilir.",
+  "subscription_not_renewed": "Abonelik yenilenmedi",
+  "subscription_not_renewed_help": "Aboneliği pasife alır. Bekleyen ödemeler takvimden ve toplamlardan kalkar; ödenmiş geçmiş korunur.",
+  "subscription_not_renewed_success": "Abonelik pasife alındı.",
   "transfer_incompatible_backup": "Bu yedekte bu sürümün desteklemediği kayıtlar var. Veri kaybını önlemek için içe aktarma yapılmadı. Yedeği uyumlu sürümde geri yükleyin.",
   "transfer_invalid_scoped_backup": "Bu sayfadan dışa aktarılmış geçerli bir Monline JSON dosyası seçin. Dosya türü uyumlu olmalı; logolar ve ekler eksiksiz bulunmalıdır.",
   "quick_payment_title": "Bu ödemeyi yaptınız mı?",

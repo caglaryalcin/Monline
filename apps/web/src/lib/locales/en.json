@@ -1,4 +1,9 @@
 {
+  "payment_date_invalid": "Choose a valid payment date.",
+  "payment_edit_date_help": "The day the payment was actually made. The calendar due date can be moved separately.",
+  "subscription_not_renewed": "Subscription not renewed",
+  "subscription_not_renewed_help": "Makes the subscription inactive. Pending payments leave the calendar and totals; paid history is preserved.",
+  "subscription_not_renewed_success": "Subscription marked inactive.",
   "transfer_incompatible_backup": "This backup contains records that this version does not support. Nothing was imported to avoid data loss. Restore it using a compatible version.",
   "transfer_invalid_scoped_backup": "Choose a valid Monline JSON file exported from this page. The transfer type must match and all logos and attachments must be included.",
   "quick_payment_title": "Have you made this payment?",

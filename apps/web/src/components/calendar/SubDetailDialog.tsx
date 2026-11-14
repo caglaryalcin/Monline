@@ -17,6 +17,7 @@ import {
 import { useState } from "react";
 
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
+import { SubscriptionNotRenewedButton } from "@/components/subscriptions/SubscriptionNotRenewedButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -26,6 +27,7 @@ import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
 import { editablePaymentNotes, isRecoveredPaymentNote } from "@/lib/paymentNotes";
 import { isCredit } from "@/lib/recordTypes";
+import type { SubscriptionNotRenewedActions } from "@/lib/subscriptionNotRenewed";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import { daysUntil, formatDate, formatPrice, sanitizeHref } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -42,6 +44,7 @@ interface SubDetailDialogProps {
   mainCurrency: Currency | undefined;
   paymentTracking: boolean;
   paymentRecord: PaymentRecord | undefined;
+  notRenewed?: SubscriptionNotRenewedActions;
   onClose: () => void;
   onEdit: (s: Subscription) => void;
   onMarkAsPaid: () => void;
@@ -60,6 +63,7 @@ export function SubDetailDialog({
   currencies,
   mainCurrency,
   paymentRecord,
+  notRenewed,
   onClose,
   onEdit,
   onMarkAsPaid,
@@ -349,6 +353,7 @@ export function SubDetailDialog({
             </form>
           )}
           <div className="grid grid-cols-1 gap-2 border-t pt-4 sm:grid-cols-2 [&>button]:w-full">
+            <SubscriptionNotRenewedButton subscription={sub} date={toDateStr(date)} paid={isPaid} actions={notRenewed} />
             {!credit && isPaid && onMarkAsUnpaid && (
               <Button
                 variant="outline"

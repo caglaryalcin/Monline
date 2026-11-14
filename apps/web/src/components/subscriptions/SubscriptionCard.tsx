@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 
 import { PaymentMethodIcon } from "@/components/PaymentMethodIcon";
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
+import { SubscriptionNotRenewedButton } from "@/components/subscriptions/SubscriptionNotRenewedButton";
 import type {
   SubscriptionAutomationSetting,
   SubscriptionPriceDisplay,
@@ -198,6 +199,7 @@ function SubscriptionActions({
           <CheckCheck className="h-3.5 w-3.5" />
         </Button>
       )}
+      <SubscriptionNotRenewedButton subscription={sub} actions={quickPayments?.notRenewed} compact />
       {!credit && onToggleAutomation && (
         <>
           {cycleName !== "One-Time" && automationButton("auto_renew")}

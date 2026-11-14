@@ -1,4 +1,9 @@
 {
+  "payment_date_invalid": "Wähle ein gültiges Zahlungsdatum.",
+  "payment_edit_date_help": "Der Tag, an dem tatsächlich bezahlt wurde. Der Kalendertermin kann separat verschoben werden.",
+  "subscription_not_renewed": "Abonnement nicht verlängert",
+  "subscription_not_renewed_help": "Deaktiviert das Abonnement. Offene Zahlungen werden aus Kalender und Summen entfernt; bezahlte Einträge bleiben erhalten.",
+  "subscription_not_renewed_success": "Abonnement deaktiviert.",
   "transfer_incompatible_backup": "Diese Sicherung enthält Datensätze, die diese Version nicht unterstützt. Zum Schutz vor Datenverlust wurde nichts importiert. Verwenden Sie eine kompatible Version.",
   "transfer_invalid_scoped_backup": "Wählen Sie eine gültige Monline-JSON-Datei, die auf dieser Seite exportiert wurde. Der Übertragungstyp muss passen; Logos und Anhänge müssen vollständig sein.",
   "quick_payment_title": "Haben Sie diese Zahlung geleistet?",

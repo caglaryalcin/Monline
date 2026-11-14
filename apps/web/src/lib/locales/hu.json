@@ -1,4 +1,9 @@
 {
+  "payment_date_invalid": "Válassz érvényes fizetési dátumot.",
+  "payment_edit_date_help": "A fizetés tényleges napja. A naptári esedékesség külön módosítható.",
+  "subscription_not_renewed": "Az előfizetés nem lett megújítva",
+  "subscription_not_renewed_help": "Inaktívvá teszi az előfizetést. A függőben lévő fizetések eltűnnek a naptárból és az összesítésekből; a kifizetett tételek megmaradnak.",
+  "subscription_not_renewed_success": "Az előfizetés inaktívvá vált.",
   "transfer_incompatible_backup": "A biztonsági mentés olyan rekordokat tartalmaz, amelyeket ez a verzió nem támogat. Az adatvesztés elkerülésére semmit nem importáltunk. Használjon kompatibilis verziót.",
   "transfer_invalid_scoped_backup": "Válasszon egy erről az oldalról exportált, érvényes Monline JSON-fájlt. Az átvitel típusának egyeznie kell, és minden logót és mellékletet tartalmaznia kell.",
   "quick_payment_title": "Teljesítette ezt a fizetést?",

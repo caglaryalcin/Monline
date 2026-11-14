@@ -4,6 +4,14 @@ export function paymentOwnerId(record: PaymentRecord): string {
   return record.subscription_id || record.id;
 }
 
+/** Paused subscriptions retain confirmed history, but no unpaid expectations. */
+export function isVisibleSubscriptionPayment(
+  subscription: Pick<Subscription, "inactive" | "standalone_payment_id">,
+  record?: Pick<PaymentRecord, "paid_at">,
+): boolean {
+  return !subscription.inactive || !!subscription.standalone_payment_id || !!record?.paid_at;
+}
+
 /** Display independent payments alongside subscription charges without creating subscriptions. */
 export function withStandalonePayments(
   subscriptions: Subscription[],

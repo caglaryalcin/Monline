@@ -4,12 +4,16 @@ import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useLocalToday } from "@/hooks/useLocalToday";
 import { useLogoSearch } from "@/hooks/useLogoSearch";
+import { isValidISODate } from "@/lib/dateInput";
 import { compressImage } from "@/lib/image";
+import { editedPaymentDate, paymentDateForRecord } from "@/lib/paymentDate";
 import { editablePaymentNotes } from "@/lib/paymentNotes";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import { toast } from "@/lib/toast";
@@ -45,6 +49,10 @@ export function MarkAsPaidModal({
   const dueDate = toDateStr(date);
   const alreadyPaid = !!existingRecord?.paid_at;
   const editing = mode === "edit" || alreadyPaid;
+  const hasPaidDate = alreadyPaid || !editing;
+  const today = useLocalToday();
+  const [paidDate, setPaidDate] = useState(() => paymentDateForRecord(existingRecord?.paid_at) || today);
+  const validPaidDate = !hasPaidDate || (isValidISODate(paidDate) && paidDate >= "1970-01-01" && paidDate <= today);
   const standalone = !!sub.standalone_payment_id;
   const [paymentName, setPaymentName] = useState(existingRecord?.name || sub.name);
   const [brandName, setBrandName] = useState(existingRecord?.brand_name ?? sub.brand_name ?? "");
@@ -72,8 +80,9 @@ export function MarkAsPaidModal({
         subscription_id: sub.standalone_payment_id ? "" : sub.id,
         user: userId,
         due_date: dueDate,
-        paid_at: editing ? (existingRecord?.paid_at ?? "") : new Date().toISOString(),
-        auto_paid: editing ? (existingRecord?.auto_paid ?? false) : false,
+        ...(hasPaidDate
+          ? editedPaymentDate(paidDate, editing ? existingRecord : undefined)
+          : { paid_at: existingRecord?.paid_at ?? "", auto_paid: existingRecord?.auto_paid ?? false }),
         amount: Number.isFinite(parseFloat(amount))
           ? parseFloat(amount)
           : subscriptionAmount(sub, dueDate),
@@ -123,7 +132,9 @@ export function MarkAsPaidModal({
       onSaved();
     },
     onError: (err: unknown) => {
-      toast.error(err instanceof Error ? err.message : t("error"));
+      toast.error(err instanceof Error
+        ? ["payment_date_invalid", "payment_date_future"].includes(err.message) ? t(err.message) : err.message
+        : t("error"));
     },
   });
 
@@ -208,6 +219,22 @@ export function MarkAsPaidModal({
           )}
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border bg-card p-4 space-y-4">
+              {hasPaidDate && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="paid-date">{t("historical_paid_date")}</Label>
+                  <DatePicker
+                    id="paid-date"
+                    label={t("historical_paid_date")}
+                    value={paidDate}
+                    onChange={setPaidDate}
+                    min="1970-01-01"
+                    max={today}
+                    required
+                    disabled={mut.isPending}
+                  />
+                  <p className="text-xs text-muted-foreground">{t("payment_edit_date_help")}</p>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label htmlFor="paid-amount">{t("amount")}</Label>
                 <div className="flex items-center gap-2 rounded-xl border bg-background px-3 py-2.5 focus-within:ring-2 focus-within:ring-primary/30">
@@ -275,7 +302,7 @@ export function MarkAsPaidModal({
             </Button>
             <Button
               onClick={() => mut.mutate()}
-              disabled={mut.isPending}
+              disabled={mut.isPending || !validPaidDate}
               className="bg-green-600 text-white"
             >
               <CheckCircle2 className="h-4 w-4 mr-2" />
