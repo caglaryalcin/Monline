@@ -1,5 +1,10 @@
 export const spendingTranslations = {
   tr: {
+    loans_payment_day_edit: "Ödeme gününü düzenle",
+    loans_payment_day_set: "Ödeme günü belirle",
+    loans_payment_day_value: "Ödeme günü: {{day}}",
+    loans_payment_day_help: "{{year}} ve sonrasındaki ödenmemiş taksitlerin günü değişir. Kısa aylarda ayın son günü kullanılır. Ödenmiş taksitler ve tüm tutarlar korunur.",
+    loans_payment_day_failed: "Ödeme günü kaydedilemedi. Sayfayı yenileyip tekrar dene.",
     spending_bill_skip: "Bu ay fatura kesilmedi",
     spending_bill_skipped: "Fatura kesilmedi",
     spending_bill_skip_undo: "Geri al",
@@ -260,6 +265,11 @@ export const spendingTranslations = {
     spending_show_more: "Daha fazla göster",
   },
   en: {
+    loans_payment_day_edit: "Edit payment day",
+    loans_payment_day_set: "Set payment day",
+    loans_payment_day_value: "Payment day: {{day}}",
+    loans_payment_day_help: "Changes the day of unpaid installments from {{year}} onward. Shorter months use their last day. Paid installments and all amounts are preserved.",
+    loans_payment_day_failed: "Could not save the payment day. Refresh the page and try again.",
     spending_bill_skip: "No bill this month",
     spending_bill_skipped: "Not billed",
     spending_bill_skip_undo: "Undo",
@@ -519,6 +529,11 @@ export const spendingTranslations = {
     spending_show_more: "Show more",
   },
   de: {
+    loans_payment_day_edit: "Zahlungstag bearbeiten",
+    loans_payment_day_set: "Zahlungstag festlegen",
+    loans_payment_day_value: "Zahlungstag: {{day}}",
+    loans_payment_day_help: "Ändert den Tag offener Raten ab {{year}}. Kürzere Monate verwenden den letzten Tag. Bezahlte Raten und alle Beträge bleiben erhalten.",
+    loans_payment_day_failed: "Der Zahlungstag konnte nicht gespeichert werden. Seite neu laden und erneut versuchen.",
     spending_bill_skip: "Diesen Monat keine Rechnung",
     spending_bill_skipped: "Keine Rechnung gestellt",
     spending_bill_skip_undo: "Rückgängig",

@@ -2183,6 +2183,7 @@
       { "name": "loan_start_date", "type": "text", "hidden": false, "required": false },
       { "name": "loan_end_date", "type": "text", "hidden": false, "required": false },
       { "name": "loan_installment_amount", "type": "number", "hidden": false, "required": false },
+      { "name": "loan_payment_day", "type": "number", "hidden": false, "required": false },
       { "name": "rent_start_date", "type": "text", "hidden": false, "required": false },
       { "name": "rent_end_date", "type": "text", "hidden": false, "required": false },
       { "name": "rent_amount", "type": "number", "hidden": false, "required": false },

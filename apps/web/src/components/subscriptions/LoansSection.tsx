@@ -11,6 +11,7 @@ import { type MerchantProviderTarget, resolveMerchantLogo } from "@/lib/merchant
 import type { LoanSummary } from "@/lib/spending";
 import { cn, formatCurrency } from "@/lib/utils";
 
+import { LoanPaymentDayDialog } from "./LoanPaymentDayDialog";
 import { LoanPrincipalDialog } from "./LoanPrincipalDialog";
 import { MerchantProviderDialog } from "./MerchantProviderDialog";
 import { SubscriptionSourceBadge } from "./SubscriptionSourceBadge";
@@ -38,6 +39,7 @@ export function LoansSection({
   const { choices } = useContext(MerchantLogosContext);
   const [providerFor, setProviderFor] = useState<MerchantProviderTarget | null>(null);
   const [principalFor, setPrincipalFor] = useState<LoanSummary | null>(null);
+  const [paymentDayFor, setPaymentDayFor] = useState<LoanSummary | null>(null);
   const [expandedCompleted, toggleCompleted] = usePersistentExpandedItems(
     userId,
     "loans.completed",
@@ -182,31 +184,40 @@ export function LoansSection({
                 </Button>
               </div>
             </div>
-            <span
-              className={cn(
-                "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-muted/30 px-2.5 py-1 text-[11px] font-medium text-muted-foreground",
-                !finished && loan.total_installments > 0 && "border-emerald-500/50",
-              )}
-            >
-              {finished ? (
-                <Check className="h-3 w-3" aria-hidden="true" />
-              ) : (
-                <span
-                  className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    loan.total_installments > 0 ? "bg-emerald-500" : "bg-amber-500",
-                  )}
-                  aria-hidden="true"
-                />
-              )}
-              {t(
-                finished
-                  ? "loans_completed_status"
-                  : loan.total_installments
-                    ? "loans_in_progress"
-                    : "loans_unplanned",
-              )}
-            </span>
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <span
+                className={cn(
+                  "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-muted/30 px-2.5 py-1 text-[11px] font-medium text-muted-foreground",
+                  !finished && loan.total_installments > 0 && "border-emerald-500/50",
+                )}
+              >
+                {finished ? (
+                  <Check className="h-3 w-3" aria-hidden="true" />
+                ) : (
+                  <span
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      loan.total_installments > 0 ? "bg-emerald-500" : "bg-amber-500",
+                    )}
+                    aria-hidden="true"
+                  />
+                )}
+                {t(
+                  finished
+                    ? "loans_completed_status"
+                    : loan.total_installments
+                      ? "loans_in_progress"
+                      : "loans_unplanned",
+                )}
+              </span>
+              {!finished && <Button type="button" variant="ghost" size="sm"
+                className="h-7 gap-1.5 px-2 text-xs text-muted-foreground"
+                aria-label={`${t("loans_payment_day_edit")} · ${loan.name}`}
+                onClick={() => setPaymentDayFor(loan)}>
+                <Pencil className="h-3 w-3" aria-hidden="true" />
+                {loan.payment_day ? t("loans_payment_day_value", { day: loan.payment_day }) : t("loans_payment_day_set")}
+              </Button>}
+            </div>
           </div>
 
           <p className="text-left text-xs font-medium">
@@ -388,6 +399,8 @@ export function LoansSection({
 
   return (
     <section className="space-y-6" aria-label={t("spending_section_loans")}>
+      {paymentDayFor && <LoanPaymentDayDialog loan={paymentDayFor} year={Number(month.slice(0, 4))}
+        onClose={() => setPaymentDayFor(null)} />}
       {visible.length === 0 ? (
         <p className="rounded-2xl border bg-muted/10 p-6 text-sm text-muted-foreground">
           {t(loans.length ? "loans_no_results" : "loans_empty")}

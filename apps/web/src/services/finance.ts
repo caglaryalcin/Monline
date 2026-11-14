@@ -15,10 +15,10 @@ export type FinanceHistory = {
   before: (Required<Omit<FinanceEntry, "payment_tag" | "bill_skip">> & Pick<FinanceEntry, "payment_tag" | "bill_skip">)[];
   after: (Required<Omit<FinanceEntry, "payment_tag" | "bill_skip">> & Pick<FinanceEntry, "payment_tag" | "bill_skip">)[];
   rows?: {
-    before: (Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">> &
-      Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">)[];
-    after: (Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">> &
-      Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">)[];
+    before: (Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">> &
+      Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">)[];
+    after: (Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">> &
+      Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">)[];
   };
   transactions?: { before: FinanceCardTransaction[]; after: FinanceCardTransaction[] };
   links?: { before: FinanceStatementLink[]; after: FinanceStatementLink[] };
@@ -37,7 +37,7 @@ export const financeService = {
   removeRows: (year: number, row_ids: string[]) =>
     api.post<{ deleted_rows: number; history: FinanceHistory }>("/api/finance/rows/delete", { year, row_ids }),
   tagRows: (year: number, rows: { id: string; tag: FinanceRowTagValue }[], tag: FinanceRowTagValue,
-    period?: { loan_start_date?: string; loan_end_date?: string; loan_installment_amount?: number;
+    period?: { loan_start_date?: string; loan_end_date?: string; loan_installment_amount?: number; loan_payment_day?: number;
       rent_start_date?: string; rent_end_date?: string; rent_amount?: number }) =>
     api.post<{ tagged_rows: number; history: FinanceHistory }>("/api/finance/rows/tag", { year, rows, tag, ...period }),
   cellAction: (action: "clear" | "move", cells: FinanceCellSnapshot[], targets?: FinanceCellSnapshot[]) =>

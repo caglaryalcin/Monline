@@ -57,6 +57,7 @@ const FIELDS = {
     "loan_start_date",
     "loan_end_date",
     "loan_installment_amount",
+    "loan_payment_day",
     "rent_start_date",
     "rent_end_date",
     "rent_amount",

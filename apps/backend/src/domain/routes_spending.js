@@ -9,6 +9,25 @@ const { spendingData } = require("./lib/pure/spending.js");
 const { loadSpendingData } = require("./lib/spending-data.js");
 const { amount: validAmount } = require("./lib/pure/finance.js");
 const { loanKey, isLoanRow } = require("./lib/pure/loans.js");
+const { updateLoanPaymentDay } = require("./lib/loan-payment-day.js");
+
+routerAdd("PUT", "/api/loans/{id}/payment-day", (e) => {
+  if (!e.auth || e.auth.collection().name !== "users") throw new UnauthorizedError();
+  const { day, from_year: fromYear } = e.requestInfo().body || {};
+  if (!Number.isInteger(day) || day < 1 || day > 31 ||
+      !Number.isInteger(fromYear) || fromYear < 1970 || fromYear > 2200)
+    throw new BadRequestError("finance_loan_period_invalid");
+  const updated = repository.runInTransaction((tx) => {
+    const rows = tx.findRecordsByFilter("finance_rows", "user = {:user}", "", 0, 0, { user: e.auth.id });
+    const row = rows.find((record) => record.id === e.request.pathValue("id"));
+    if (!row || !isLoanRow(row.publicExport())) throw new NotFoundError();
+    const key = loanKey(row.getString("name"));
+    // Use the same grouping as the loan card and its existing principal editor.
+    return updateLoanPaymentDay(tx, e.auth.id, rows.filter((record) =>
+      isLoanRow(record.publicExport()) && loanKey(record.getString("name")) === key), day, fromYear);
+  });
+  return e.json(200, { payment_day: day, updated });
+});
 
 routerAdd("PUT", "/api/loans/{id}/principal", (e) => {
   if (!e.auth || e.auth.collection().name !== "users")

@@ -18,6 +18,7 @@ export function LoanPeriodFields({ initial }: { initial?: Partial<LoanPeriod> })
     ? formatNumber(currency.toDisplay(initial.loan_installment_amount)!, { maximumFractionDigits: currency.precision }) : "");
   const [start, setStart] = useState(initial?.loan_start_date || "");
   const [end, setEnd] = useState(initial?.loan_end_date || "");
+  const [paymentDay, setPaymentDay] = useState(initial?.loan_payment_day ? String(initial.loan_payment_day) : "");
   return <div className="grid gap-3 sm:grid-cols-2">
     <div className="space-y-1.5">
       <Label htmlFor="loan-start-date">{t("finance_loan_start_date")}</Label>
@@ -29,10 +30,19 @@ export function LoanPeriodFields({ initial }: { initial?: Partial<LoanPeriod> })
       <DatePicker id="loan-end-date" name="loan_end_date" label={t("finance_loan_end_date")}
         required min={start || "1970-01-01"} max="2200-12-31" value={end} onChange={setEnd} />
     </div>
-    <div className="space-y-1.5 sm:col-span-2">
+    <div className="space-y-1.5">
       <Label htmlFor="loan-installment-amount">{t("finance_loan_installment_amount")} ({currency.currency})</Label>
       <Input id="loan-installment-amount" name="loan_installment_amount" inputMode="decimal" required
         disabled={!currency.available} value={installment} onChange={(event) => setInstallment(event.target.value)} />
+    </div>
+    <div className="space-y-1.5">
+      <Label htmlFor="loan-payment-day">{t("finance_loan_payment_day")}</Label>
+      <select id="loan-payment-day" name="loan_payment_day" required
+        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+        value={paymentDay || String(Number(start.slice(8, 10)) || 1)}
+        onChange={(event) => setPaymentDay(event.target.value)}>
+        {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => <option key={day} value={day}>{day}</option>)}
+      </select>
     </div>
     <p className="text-xs text-muted-foreground sm:col-span-2">{t("finance_loan_period_help")}</p>
   </div>;

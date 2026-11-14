@@ -31,6 +31,7 @@ const fields = {
     "loan_start_date",
     "loan_end_date",
     "loan_installment_amount",
+    "loan_payment_day",
     "rent_start_date",
     "rent_end_date",
     "rent_amount",
@@ -237,18 +238,18 @@ function check(record) {
   )
     throw new BadRequestError("finance_duplicate_date");
 }
-function isLoanPrincipalUpdate(record) {
+function isLoanMetadataUpdate(record) {
   const previous = record.original();
-  // Principal belongs to the whole loan, including its legacy yearless root.
+  // Loan metadata also belongs to the legacy yearless root.
   // That root must still reject changes to its yearly ledger fields.
   return (
     record.id === previous.id &&
     record.getBool("is_loan") &&
     record.getString("kind") === "expense" &&
     record.getString("expense_type") !== "credit_card" &&
-    record.getFloat("loan_principal") !== previous.getFloat("loan_principal") &&
+    ["loan_principal", "loan_payment_day"].some((field) => record.getFloat(field) !== previous.getFloat(field)) &&
     record.collection().fields.every(
-      ({ name }) => name === "loan_principal" || record.get(name) === previous.get(name),
+      ({ name }) => ["loan_principal", "loan_payment_day"].includes(name) || record.get(name) === previous.get(name),
     )
   );
 }
@@ -266,7 +267,7 @@ for (const event of [onRecordCreate, onRecordUpdate])
       check(e.record);
       if (event === onRecordUpdate && e.record.collection().name === "finance_rows" &&
           !e.record.getBool("__monline_restore") && !e.record.getFloat("year") &&
-          !finance.isCarryoverRow(e.record.publicExport()) && !isLoanPrincipalUpdate(e.record))
+          !finance.isCarryoverRow(e.record.publicExport()) && !isLoanMetadataUpdate(e.record))
         throw new BadRequestError("finance_invalid_year");
       return e.next();
     },
@@ -361,6 +362,7 @@ function save(name, owner, body, id) {
     record.set("row_order", order);
   }
   const previousName = record.getString("name");
+  const previousPaymentDay = record.getFloat("loan_payment_day") || Number(record.getString("loan_start_date").slice(8, 10));
   if (name === "finance_rows" && body.is_rent === true && !record.getBool("is_rent") &&
       (!body.rent_start_date || !body.rent_end_date || !finance.amount(body.rent_amount, false)))
     throw new BadRequestError("finance_rent_period_invalid");
@@ -373,13 +375,15 @@ function save(name, owner, body, id) {
       (id && body.name != null && body.name !== previousName)))
     record.set("loan_id", "");
   repository.save(record);
-  if (name === "finance_rows" && record.getBool("is_loan") && Object.hasOwn(body, "loan_installment_amount"))
-    fillMonthlySchedule(owner, record, "loan");
+  if (name === "finance_rows" && record.getBool("is_loan") &&
+      (Object.hasOwn(body, "loan_installment_amount") || Object.hasOwn(body, "loan_payment_day")))
+    fillMonthlySchedule(owner, record, "loan", Object.hasOwn(body, "loan_payment_day") &&
+      previousPaymentDay !== (record.getFloat("loan_payment_day") || Number(record.getString("loan_start_date").slice(8, 10))));
   if (name === "finance_rows" && record.getBool("is_rent") && Object.hasOwn(body, "rent_amount"))
     fillMonthlySchedule(owner, record, "rent");
   return record;
 }
-function fillMonthlySchedule(owner, row, type) {
+function fillMonthlySchedule(owner, row, type, paymentDayChanged = false) {
   const start = row.getString(type + "_start_date"), end = row.getString(type + "_end_date");
   const amount = row.getFloat(type === "loan" ? "loan_installment_amount" : "rent_amount");
   const error = type === "loan" ? "finance_loan_period_invalid" : "finance_rent_period_invalid";
@@ -387,20 +391,26 @@ function fillMonthlySchedule(owner, row, type) {
       !require("./lib/pure/backfill-schedule.js").validDate(end) || start > end ||
       !finance.amount(amount, false))
     throw new BadRequestError(error);
-  const [startYear, startMonth, day] = start.split("-").map(Number);
+  const [startYear, startMonth, startDay] = start.split("-").map(Number);
+  const day = type === "loan" ? row.getFloat("loan_payment_day") || startDay : startDay;
   const months = (Number(end.slice(0, 4)) - startYear) * 12 + Number(end.slice(5, 7)) - startMonth;
   if (months > 1200) throw new BadRequestError(error);
   const root = financeYears.rootId(row.publicExport());
-  const family = new Set(own("finance_rows", owner).filter((item) =>
-    financeYears.rootId(item.publicExport()) === root).map((item) => item.id));
-  const existing = new Set(own("finance_entries", owner).filter((entry) => family.has(entry.getString("row_id")))
-    .map((entry) => entry.getString("date").slice(0, 7)));
+  const familyRows = own("finance_rows", owner).filter((item) => financeYears.rootId(item.publicExport()) === root);
+  const family = new Set(familyRows.map((item) => item.id));
+  const entries = own("finance_entries", owner).filter((entry) => family.has(entry.getString("row_id")));
+  const existing = new Set(entries.map((entry) => entry.getString("date").slice(0, 7)));
+  if (paymentDayChanged)
+    require("./lib/loan-payment-day.js").updateLoanPaymentDay(repository, owner,
+      familyRows.filter((item) => item.getBool("is_loan") && !item.getBool("is_deleted")), day, row.getFloat("year"));
   for (let index = 0; index <= months; index++) {
     const first = new Date(Date.UTC(startYear, startMonth - 1 + index, 1));
     const year = first.getUTCFullYear(), month = first.getUTCMonth() + 1;
     const prefix = first.toISOString().slice(0, 7);
     const date = prefix + "-" + String(Math.min(day, new Date(Date.UTC(year, month, 0)).getUTCDate())).padStart(2, "0");
-    if (date < "2026-01-01" || date > end || existing.has(prefix)) continue;
+    if (date < "2026-01-01" || date < start || date > end ||
+        (type === "loan" && year < row.getFloat("year"))) continue;
+    if (existing.has(prefix)) continue;
     save("finance_entries", owner, { row_id: row.id, date, amount,
       status: "planned", settled_date: "", notes: "" });
     existing.add(prefix);
@@ -599,6 +609,7 @@ routerAdd("POST", "/api/finance/restore", (e) => {
         if (row.loan_start_date === undefined) row.loan_start_date = "";
         if (row.loan_end_date === undefined) row.loan_end_date = "";
         if (row.loan_installment_amount === undefined) row.loan_installment_amount = 0;
+        if (row.loan_payment_day === undefined) row.loan_payment_day = 0;
         if (row.rent_start_date === undefined) row.rent_start_date = "";
         if (row.rent_end_date === undefined) row.rent_end_date = "";
         if (row.rent_amount === undefined) row.rent_amount = 0;
@@ -614,7 +625,7 @@ routerAdd("POST", "/api/finance/restore", (e) => {
           !record ||
           spec.fields.some(
             (key) =>
-              !["amount", "row_order", "loan_principal", "loan_installment_amount", "rent_amount", "is_loan", "is_rent", "is_auto_carryover", "year", "is_deleted"].includes(key) &&
+              !["amount", "row_order", "loan_principal", "loan_installment_amount", "loan_payment_day", "rent_amount", "is_loan", "is_rent", "is_auto_carryover", "year", "is_deleted"].includes(key) &&
               typeof record[key] !== "string",
           ) ||
           !/^[a-z0-9]{15}$/.test(record.id) ||
@@ -853,6 +864,7 @@ routerAdd("POST", "/api/finance/rows/tag", (e) => {
           rent_amount: body.rent_amount ?? row.rent_amount ?? 0 } : {}),
         ...(body.tag === "loan" ? { loan_start_date: body.loan_start_date || row.loan_start_date || "",
           loan_end_date: body.loan_end_date || row.loan_end_date || "",
+          loan_payment_day: body.loan_payment_day ?? row.loan_payment_day ?? 0,
           loan_installment_amount: body.loan_installment_amount ?? row.loan_installment_amount ?? 0 } : {}),
         ...(row.kind !== "expense" ? { kind: body.tag === "salary" ? "salary" : "income" } : {}),
         year,
@@ -1172,7 +1184,7 @@ routerAdd("POST", "/api/finance/cells", (e) => {
       } else {
         const existing = owned("finance_rows", row.row_id, owner);
         const view = yearRow(owner, existing.id, year);
-        const rowValue = (value, key) => ["row_order", "year", "loan_principal", "loan_installment_amount", "rent_amount"].includes(key)
+        const rowValue = (value, key) => ["row_order", "year", "loan_principal", "loan_installment_amount", "loan_payment_day", "rent_amount"].includes(key)
           ? value[key] ?? 0
           : ["is_loan", "is_rent", "is_auto_carryover", "is_deleted"].includes(key) ? value[key] ?? false : value[key] || "";
         if (

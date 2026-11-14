@@ -19,6 +19,7 @@ export interface FinanceRow {
   loan_start_date?: string;
   loan_end_date?: string;
   loan_installment_amount?: number;
+  loan_payment_day?: number;
   rent_start_date?: string;
   rent_end_date?: string;
   rent_amount?: number;

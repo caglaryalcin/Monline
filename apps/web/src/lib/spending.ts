@@ -71,6 +71,7 @@ export interface LoanSummary {
   provider_row_id?: string;
   name: string;
   principal_amount?: number | null;
+  payment_day?: number | null;
   start_month?: string | null;
   end_month?: string | null;
   currency: string;

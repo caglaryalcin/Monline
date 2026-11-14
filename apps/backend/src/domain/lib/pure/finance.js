@@ -43,6 +43,9 @@ function isCarryoverRow(row) {
 }
 function validate(name, value) {
   if (name === "finance_rows") {
+    // Zero is the legacy fallback to the loan start day.
+    if (value.loan_payment_day != null && (!Number.isInteger(value.loan_payment_day) ||
+        value.loan_payment_day < 0 || value.loan_payment_day > 31)) return "finance_loan_period_invalid";
     if (value.rent_amount != null && !amount(value.rent_amount)) return "finance_rent_period_invalid";
     if ((value.rent_start_date || value.rent_end_date) &&
         (!validDate(value.rent_start_date) || !validDate(value.rent_end_date) ||

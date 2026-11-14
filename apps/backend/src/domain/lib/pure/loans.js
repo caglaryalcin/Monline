@@ -100,6 +100,7 @@ function loanSummaries(data) {
         provider_row_id: row.origin_row || row.id,
         name: row.name,
         principal_amount: principalRow?.loan_principal ?? null,
+        payment_day: row.loan_payment_day || Number((row.loan_start_date || "").slice(8, 10)) || null,
         currency: "TRY",
         start_month: months[0]?.month || null,
         end_month: months.at(-1)?.month || null,
