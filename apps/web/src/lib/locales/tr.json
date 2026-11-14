@@ -1,4 +1,13 @@
 {
+  "reactivate_new_amount": "Yeni tutar",
+  "reactivate_amount_help": "Bu işlemdeki ödeme ve sonraki ödeme için kullanılacak tutar. Önceden ödenmiş kayıtlar korunur.",
+  "reactivate_invalid_amount": "Geçerli bir tutar girin.",
+  "reactivate_subscription": "Aboneliği aktifleştir",
+  "reactivate_subscription_help": "Ödeme yaptığın günü ve sonraki ödeme tarihini gir. Kaydettiğinde ödeme kaydı eklenir ve abonelik birlikte aktifleştirilir.",
+  "subscription_reactivated": "Abonelik aktifleştirildi.",
+  "reactivate_invalid_dates": "Geçerli bir geçmiş ödeme günü ve gelecekteki sonraki ödeme tarihini seç.",
+  "reactivate_changed": "Abonelik değişti. Sayfayı yenileyip tekrar dene.",
+  "reactivate_schedule_ended": "Aktifleştirmeden önce aboneliğin bitiş tarihini veya ödeme sınırını düzenle.",
   "payment_date_invalid": "Geçerli bir ödeme tarihi seçin.",
   "payment_edit_date_help": "Ödemenin gerçekte yapıldığı gündür. Takvimdeki ödeme günü ayrı olarak taşınabilir.",
   "subscription_not_renewed": "Abonelik yenilenmedi",

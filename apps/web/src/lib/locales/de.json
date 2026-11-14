@@ -1,4 +1,13 @@
 {
+  "reactivate_new_amount": "Neuer Betrag",
+  "reactivate_amount_help": "Betrag für diese und die nächste Zahlung. Bereits bezahlte Einträge bleiben erhalten.",
+  "reactivate_invalid_amount": "Einen gültigen Betrag eingeben.",
+  "reactivate_subscription": "Abonnement aktivieren",
+  "reactivate_subscription_help": "Zahlungstag und nächstes Zahlungsdatum eingeben. Beim Speichern werden Zahlung und Aktivierung zusammen gespeichert.",
+  "subscription_reactivated": "Abonnement aktiviert.",
+  "reactivate_invalid_dates": "Einen gültigen vergangenen Zahlungstag und ein zukünftiges Zahlungsdatum wählen.",
+  "reactivate_changed": "Das Abonnement wurde geändert. Seite neu laden und erneut versuchen.",
+  "reactivate_schedule_ended": "Vor der Aktivierung das Enddatum oder die Zahlungsgrenze bearbeiten.",
   "payment_date_invalid": "Wähle ein gültiges Zahlungsdatum.",
   "payment_edit_date_help": "Der Tag, an dem tatsächlich bezahlt wurde. Der Kalendertermin kann separat verschoben werden.",
   "subscription_not_renewed": "Abonnement nicht verlängert",

@@ -1,4 +1,13 @@
 {
+  "reactivate_new_amount": "New amount",
+  "reactivate_amount_help": "The amount for this payment and the next payment. Previously paid records are preserved.",
+  "reactivate_invalid_amount": "Enter a valid amount.",
+  "reactivate_subscription": "Reactivate subscription",
+  "reactivate_subscription_help": "Confirm the day you paid and the next payment date. Saving records the payment and activates the subscription together.",
+  "subscription_reactivated": "Subscription reactivated.",
+  "reactivate_invalid_dates": "Choose a valid past payment date and a future next payment date.",
+  "reactivate_changed": "The subscription changed. Refresh the page and try again.",
+  "reactivate_schedule_ended": "Edit the subscription's end date or payment limit before reactivating it.",
   "payment_date_invalid": "Choose a valid payment date.",
   "payment_edit_date_help": "The day the payment was actually made. The calendar due date can be moved separately.",
   "subscription_not_renewed": "Subscription not renewed",
