@@ -64,7 +64,8 @@ function loanSummaries(data) {
         )
           continue;
         const month = entry.date.slice(0, 7);
-        const value = byMonth.get(month) || { paid: 0, remaining: 0 };
+        const value = byMonth.get(month) || { paid: 0, remaining: 0, dates: new Set() };
+        value.dates.add(entry.date);
         value[entry.status === "settled" ? "paid" : "remaining"] += Math.round(
           entry.amount * 100,
         );
@@ -74,6 +75,7 @@ function loanSummaries(data) {
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([month, value]) => ({
           month,
+          dates: [...value.dates].sort(),
           amount: (value.paid + value.remaining) / 100,
           paid_amount: value.paid / 100,
           remaining_amount: value.remaining / 100,

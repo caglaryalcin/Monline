@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { MerchantLogosContext } from "@/contexts/MerchantLogosContext";
 import { usePersistentExpandedItems } from "@/hooks/usePersistentDisclosure";
 import { findBillProvider } from "@/lib/billProviders";
+import { displayDateInput } from "@/lib/dateInput";
 import { type MerchantProviderTarget, resolveMerchantLogo } from "@/lib/merchantLogo";
 import type { LoanSummary } from "@/lib/spending";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -247,7 +248,7 @@ export function LoansSection({
             <caption className="sr-only">{t("loans_months_for", { name: loan.name })}</caption>
             <thead hidden={!monthsExpanded} className="bg-muted/30 text-muted-foreground">
               <tr>
-                {["month", "amount", "status"].map((key) => (
+                {["month", "installment_date", "amount", "status"].map((key) => (
                   <th key={key} scope="col" className="px-4 py-2.5 font-medium">
                     {t(`loans_${key}`)}
                   </th>
@@ -257,7 +258,7 @@ export function LoansSection({
             <tbody id={`loan-months-${loan.row_id}`} hidden={!monthsExpanded}>
               {loan.months.length === 0 && (
                 <tr>
-                  <td colSpan={3} className="px-4 py-4 text-muted-foreground">
+                  <td colSpan={4} className="px-4 py-4 text-muted-foreground">
                     {t("loans_unplanned")}
                   </td>
                 </tr>
@@ -270,6 +271,9 @@ export function LoansSection({
                   <th scope="row" className="px-4 py-3 font-medium">
                     {monthName(item.month)}
                   </th>
+                  <td className="px-4 py-3 tabular-nums">
+                    {item.dates?.map(displayDateInput).join(", ") || "—"}
+                  </td>
                   <td className="px-4 py-3 tabular-nums">
                     <span
                       className={cn(
@@ -293,7 +297,7 @@ export function LoansSection({
             </tbody>
             <tfoot className="border-t bg-muted/30">
               <tr>
-                <td colSpan={3} className="whitespace-normal p-4 sm:p-5">
+                <td colSpan={4} className="whitespace-normal p-4 sm:p-5">
                   <h5 className="mb-3 text-xs font-semibold">{t("loans_summary")}</h5>
                   <dl className="grid grid-cols-2 gap-3">
                     <div className="min-w-0 space-y-1 rounded-xl border bg-background/40 p-3">

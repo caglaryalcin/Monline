@@ -61,6 +61,7 @@ export interface InstallmentPlan {
 }
 export interface LoanMonth {
   month: string;
+  dates?: string[];
   amount: number;
   paid_amount: number;
   remaining_amount: number;
