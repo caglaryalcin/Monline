@@ -8,14 +8,14 @@ import { Label } from "@/components/ui/label";
 import type { LoanSummary } from "@/lib/spending";
 import { loansService } from "@/services/loans";
 
-export function LoanPaymentDayDialog({ loan, year, onClose }: {
-  loan: LoanSummary; year: number; onClose: () => void;
+export function LoanPaymentDayDialog({ loan, onClose }: {
+  loan: LoanSummary; onClose: () => void;
 }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [day, setDay] = useState(loan.payment_day || 1);
   const mutation = useMutation({
-    mutationFn: () => loansService.savePaymentDay(loan.row_id, day, year),
+    mutationFn: () => loansService.savePaymentDay(loan.row_id, day),
     onSuccess: async () => {
       await queryClient.invalidateQueries();
       onClose();
@@ -27,7 +27,7 @@ export function LoanPaymentDayDialog({ loan, year, onClose }: {
         <DialogTitle>{t("finance_loan_payment_day")}</DialogTitle>
         <DialogDescription>
           <span className="mb-1 block font-medium text-foreground">{loan.name}</span>
-          {t("loans_payment_day_help", { year: Math.max(2026, year) })}
+          {t("loans_payment_day_help")}
         </DialogDescription>
       </DialogHeader>
       <form className="space-y-4" aria-busy={mutation.isPending} onSubmit={(event) => {

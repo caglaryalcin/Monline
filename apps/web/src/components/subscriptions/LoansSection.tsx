@@ -403,7 +403,7 @@ export function LoansSection({
 
   return (
     <section className="space-y-6" aria-label={t("spending_section_loans")}>
-      {paymentDayFor && <LoanPaymentDayDialog loan={paymentDayFor} year={Number(month.slice(0, 4))}
+      {paymentDayFor && <LoanPaymentDayDialog loan={paymentDayFor}
         onClose={() => setPaymentDayFor(null)} />}
       {visible.length === 0 ? (
         <p className="rounded-2xl border bg-muted/10 p-6 text-sm text-muted-foreground">

@@ -6,7 +6,7 @@ import { financeCurrencyQuote } from "@/lib/financeCurrency";
 import { queryKeys } from "@/lib/queryKeys";
 import { savingsUnitRate } from "@/lib/savings";
 import { currenciesService } from "@/services/currencies";
-import { savingsService } from "@/services/savings";
+import { savingsRatesRefetchInterval, savingsService } from "@/services/savings";
 
 export function useFinanceCurrency({ convert = true }: { convert?: boolean } = {}) {
   const { user } = useAuth();
@@ -26,7 +26,7 @@ export function useFinanceCurrency({ convert = true }: { convert?: boolean } = {
     queryFn: savingsService.rates,
     enabled: !!userId && needsRates,
     staleTime: 60000,
-    refetchInterval: 5 * 60 * 1000,
+    refetchInterval: savingsRatesRefetchInterval,
   });
   const rate = currencies.isSuccess && main
     ? savingsUnitRate("TRY", rates.data, currency) : null;

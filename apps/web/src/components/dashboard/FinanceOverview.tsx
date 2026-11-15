@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ArrowDownLeft, ArrowUpRight, Landmark, Lightbulb, Scale, Wallet } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
@@ -14,7 +15,7 @@ import { financeOverview, type FinanceOverviewStatement } from "@/lib/financeOve
 import { resolveLocale } from "@/lib/locale";
 import { spendingKey } from "@/lib/spending";
 import { financeService } from "@/services/finance";
-import { savingsService } from "@/services/savings";
+import { savingsRatesRefetchInterval, savingsService } from "@/services/savings";
 import { spendingService } from "@/services/spending";
 
 export function FinanceOverview() {
@@ -31,33 +32,35 @@ export function FinanceOverview() {
   const statements = useQuery({
     queryKey: ["bank-statements", userId, "overview-balances"],
     queryFn: () => client.collection("bank_statements").getFullList<FinanceOverviewStatement>({ fields: "id,period,summary", sort: "-period,-created" }),
-    enabled: enabled && needsStatements,
+    enabled,
   });
   const needsCardSpending = !!ledger.data?.finance_rows.some((row) => !row.is_deleted && row.expense_type === "credit_card");
-  const spending = useQuery({ queryKey: spendingKey(userId), queryFn: spendingService.get, enabled: enabled && needsCardSpending });
+  const spending = useQuery({ queryKey: spendingKey(userId), queryFn: spendingService.get, enabled });
   const savings = useQuery({ queryKey: ["savings", userId], queryFn: savingsService.list, enabled });
-  const needsRates = !!savings.data?.some((saving) => saving.asset !== "TRY") ||
-    !!spending.data?.installments.some((plan) => plan.row_id && plan.currency !== "TRY") ||
+  const needsSavingsRates = !!savings.data?.some((saving) => saving.asset !== "TRY");
+  const needsDebtRates = !!spending.data?.installments.some((plan) => plan.row_id && plan.currency !== "TRY") ||
     !!spending.data?.events.some((event) => event.card_row_id && event.currency !== "TRY");
+  const needsRates = needsSavingsRates || needsDebtRates;
   const rates = useQuery({
     queryKey: ["savings-rates", userId, "fixer"], queryFn: savingsService.rates,
-    enabled: enabled && needsRates, staleTime: 60000, refetchInterval: 5 * 60 * 1000,
+    enabled, staleTime: 60000, refetchInterval: savingsRatesRefetchInterval,
   });
-  const summary = financeOverview({
+  const summary = useMemo(() => financeOverview({
     month,
     ledger: ledger.isError ? undefined : ledger.data,
     savings: savings.isError ? undefined : savings.data,
     statements: needsStatements ? (statements.isError ? undefined : statements.data) : [],
     spending: spending.isError ? undefined : spending.data,
     rates: rates.data,
-  });
+  }), [month, ledger.isError, ledger.data, savings.isError, savings.data, needsStatements,
+    statements.isError, statements.data, spending.isError, spending.data, rates.data]);
   const monthLabel = new Intl.DateTimeFormat(resolveLocale(i18n), { month: "long", year: "numeric" })
     .format(new Date(`${month}-01T12:00:00`));
   const money = (value: number | null) => currency.format(value, { locale: numberLocale });
-  const rateLoading = needsRates && rates.isPending;
+  const rateLoading = needsSavingsRates && rates.isPending;
   const cashLoading = ledger.isPending || currency.pending;
   const debtLoading = ledger.isPending || (needsStatements && statements.isPending) ||
-    (needsCardSpending && spending.isPending) || (needsRates && rates.isPending) || currency.pending;
+    (needsCardSpending && spending.isPending) || (needsCardSpending && needsDebtRates && rates.isPending) || currency.pending;
   const assetLoading = savings.isPending || rateLoading || currency.pending;
   const failed = ledger.isError || savings.isError ||
     (needsStatements && statements.isError) || (needsCardSpending && spending.isError) || (needsRates && rates.isError) || currency.failed;
@@ -113,6 +116,8 @@ export function FinanceOverview() {
         </div>
         {!assetLoading && !debtLoading && (summary.assets === null || summary.debts === null) &&
           <p role="status" className="text-xs text-amber-700 dark:text-amber-400">{t("finance_workspace_incomplete")}</p>}
+        {(needsRates || currency.currency !== "TRY") && rates.data?.stale &&
+          <p role="status" className="text-xs text-amber-700 dark:text-amber-400">{t("savings_rates_stale")}</p>}
       </section>
       <div className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
         <Lightbulb aria-hidden="true" className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />

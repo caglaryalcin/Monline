@@ -13,9 +13,8 @@ const { updateLoanPaymentDay } = require("./lib/loan-payment-day.js");
 
 routerAdd("PUT", "/api/loans/{id}/payment-day", (e) => {
   if (!e.auth || e.auth.collection().name !== "users") throw new UnauthorizedError();
-  const { day, from_year: fromYear } = e.requestInfo().body || {};
-  if (!Number.isInteger(day) || day < 1 || day > 31 ||
-      !Number.isInteger(fromYear) || fromYear < 1970 || fromYear > 2200)
+  const { day } = e.requestInfo().body || {};
+  if (!Number.isInteger(day) || day < 1 || day > 31)
     throw new BadRequestError("finance_loan_period_invalid");
   const updated = repository.runInTransaction((tx) => {
     const rows = tx.findRecordsByFilter("finance_rows", "user = {:user}", "", 0, 0, { user: e.auth.id });
@@ -24,7 +23,7 @@ routerAdd("PUT", "/api/loans/{id}/payment-day", (e) => {
     const key = loanKey(row.getString("name"));
     // Use the same grouping as the loan card and its existing principal editor.
     return updateLoanPaymentDay(tx, e.auth.id, rows.filter((record) =>
-      isLoanRow(record.publicExport()) && loanKey(record.getString("name")) === key), day, fromYear);
+      isLoanRow(record.publicExport()) && loanKey(record.getString("name")) === key), day);
   });
   return e.json(200, { payment_day: day, updated });
 });

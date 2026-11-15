@@ -9,3 +9,7 @@ export const savingsService = {
   update: (id: string, value: SavingInput) => api.put<Saving>(`/api/savings/${id}`, value),
   remove: (id: string) => api.del(`/api/savings/${id}`),
 };
+
+// Re-read the saved snapshot soon after a background refresh, without extra provider calls.
+export const savingsRatesRefetchInterval = (query: { state: { data?: SavingsRates } }) =>
+  query.state.data?.refreshing ? 2000 : 5 * 60 * 1000;

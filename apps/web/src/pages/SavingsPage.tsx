@@ -48,7 +48,7 @@ import {
   savingsValue,
 } from "@/lib/savings";
 import { cn, formatCurrency, getCurrencyFractionDigits, getCurrencySymbol } from "@/lib/utils";
-import { savingsService } from "@/services/savings";
+import { savingsRatesRefetchInterval, savingsService } from "@/services/savings";
 
 export function SavingsPage() {
   const { t, i18n } = useTranslation();
@@ -71,7 +71,7 @@ export function SavingsPage() {
     queryFn: savingsService.rates,
     enabled: !!user?.id,
     staleTime: 60000,
-    refetchInterval: 5 * 60 * 1000,
+    refetchInterval: savingsRatesRefetchInterval,
   });
   const refreshRates = useMutation({
     mutationFn: savingsService.refreshRates,

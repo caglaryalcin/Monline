@@ -362,7 +362,6 @@ function save(name, owner, body, id) {
     record.set("row_order", order);
   }
   const previousName = record.getString("name");
-  const previousPaymentDay = record.getFloat("loan_payment_day") || Number(record.getString("loan_start_date").slice(8, 10));
   if (name === "finance_rows" && body.is_rent === true && !record.getBool("is_rent") &&
       (!body.rent_start_date || !body.rent_end_date || !finance.amount(body.rent_amount, false)))
     throw new BadRequestError("finance_rent_period_invalid");
@@ -377,13 +376,12 @@ function save(name, owner, body, id) {
   repository.save(record);
   if (name === "finance_rows" && record.getBool("is_loan") &&
       (Object.hasOwn(body, "loan_installment_amount") || Object.hasOwn(body, "loan_payment_day")))
-    fillMonthlySchedule(owner, record, "loan", Object.hasOwn(body, "loan_payment_day") &&
-      previousPaymentDay !== (record.getFloat("loan_payment_day") || Number(record.getString("loan_start_date").slice(8, 10))));
+    fillMonthlySchedule(owner, record, "loan", Object.hasOwn(body, "loan_payment_day"));
   if (name === "finance_rows" && record.getBool("is_rent") && Object.hasOwn(body, "rent_amount"))
     fillMonthlySchedule(owner, record, "rent");
   return record;
 }
-function fillMonthlySchedule(owner, row, type, paymentDayChanged = false) {
+function fillMonthlySchedule(owner, row, type, applyPaymentDay = false) {
   const start = row.getString(type + "_start_date"), end = row.getString(type + "_end_date");
   const amount = row.getFloat(type === "loan" ? "loan_installment_amount" : "rent_amount");
   const error = type === "loan" ? "finance_loan_period_invalid" : "finance_rent_period_invalid";
@@ -400,9 +398,9 @@ function fillMonthlySchedule(owner, row, type, paymentDayChanged = false) {
   const family = new Set(familyRows.map((item) => item.id));
   const entries = own("finance_entries", owner).filter((entry) => family.has(entry.getString("row_id")));
   const existing = new Set(entries.map((entry) => entry.getString("date").slice(0, 7)));
-  if (paymentDayChanged)
+  if (applyPaymentDay)
     require("./lib/loan-payment-day.js").updateLoanPaymentDay(repository, owner,
-      familyRows.filter((item) => item.getBool("is_loan") && !item.getBool("is_deleted")), day, row.getFloat("year"));
+      familyRows.filter((item) => item.getBool("is_loan") && !item.getBool("is_deleted")), day);
   for (let index = 0; index <= months; index++) {
     const first = new Date(Date.UTC(startYear, startMonth - 1 + index, 1));
     const year = first.getUTCFullYear(), month = first.getUTCMonth() + 1;

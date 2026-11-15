@@ -508,11 +508,24 @@ export function buildReaderViews(book: SpreadsheetWorkbook, index: LedgerIndex) 
       const { sheet, finish } = canvas(viewKey, l(viewKey), 4, [34, 16, 24, 22]);
       const meta = appearance(sheet),
         alignment = (meta.horizontal ||= {});
+      let targetRow = 0, previousMonth = "";
       for (let i = 0; i < count; i++) {
-        const sourceRow = FIRST_ROW + i,
-          targetRow = i + 1;
+        const sourceRow = FIRST_ROW + i;
         const paid = source[`E${sourceRow}`]?.v === l("paid");
         const date = link(sourceKey, `B${sourceRow}`);
+        const month = typeof date.v === "number"
+          ? new Date(Date.UTC(1899, 11, 30) + date.v * 86400000).toISOString().slice(0, 7) : "";
+        if (i > 0 && month !== previousMonth) {
+          const borders = meta.borders ||= {};
+          for (let column = 0; column < 4; column++)
+            borders[cellRef(targetRow, column)] = { color: "BFBFBF", edges: ["bottom"] };
+          // Only the reader view gains a gap; source row references stay unchanged.
+          (sheet["!rows"] ||= [])[targetRow] = { hpt: 8 };
+          targetRow++;
+        }
+        targetRow++;
+        if (targetRow > 1048576) throw new Error("spreadsheet_too_large");
+        previousMonth = month;
         date.z = "dd.mm.yyyy";
         const nameAddress = put(sheet, targetRow, 0, link(sourceKey, `A${sourceRow}`));
         const dateAddress = put(sheet, targetRow, 1, date);
@@ -543,7 +556,7 @@ export function buildReaderViews(book: SpreadsheetWorkbook, index: LedgerIndex) 
           ),
         };
       }
-      finish(count);
+      finish(targetRow);
       continue;
     }
     const { sheet, finish } = canvas(viewKey, l(viewKey), 3, [62, 4, 62]);

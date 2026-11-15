@@ -43,6 +43,7 @@ export interface SavingsRates {
   source_url: string;
   status?: "not_configured" | "unavailable" | "gold_unavailable" | null;
   stale: boolean;
+  refreshing?: boolean;
 }
 
 export function savingsPrecision(asset: SavingsAsset) {

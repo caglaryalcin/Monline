@@ -1,9 +1,10 @@
-// Change existing unpaid installments without rebuilding their amounts or paid history.
-function updateLoanPaymentDay(repository, owner, rows, day, fromYear) {
-  const cutoff = Math.max(2026, fromYear);
+const { validDate } = require("./pure/backfill-schedule.js");
+
+// A loan has one installment day across its full history. Actual paid dates stay separate.
+function updateLoanPaymentDay(repository, owner, rows, day) {
   const ids = new Set(rows.map((row) => row.id));
   for (const row of rows)
-    if ((!row.getFloat("year") || row.getFloat("year") >= cutoff) && row.getFloat("loan_payment_day") !== day) {
+    if (row.getFloat("loan_payment_day") !== day) {
       row.set("loan_payment_day", day);
       repository.save(row);
     }
@@ -13,10 +14,13 @@ function updateLoanPaymentDay(repository, owner, rows, day, fromYear) {
   for (const entry of entries) {
     const previous = entry.getString("date");
     const year = Number(previous.slice(0, 4)), month = Number(previous.slice(5, 7));
-    if (!ids.has(entry.getString("row_id")) || year < cutoff || entry.getString("status") !== "planned" ||
-        entry.getString("settled_date") || entry.getString("source_payment")) continue;
+    if (!ids.has(entry.getString("row_id")) || !validDate(previous) ||
+        !["planned", "settled"].includes(entry.getString("status"))) continue;
     const date = previous.slice(0, 7) + "-" + String(Math.min(day, new Date(Date.UTC(year, month, 0)).getUTCDate())).padStart(2, "0");
     if (date === previous) continue;
+    // Preserve the former paid-date fallback on legacy records without an explicit paid date.
+    if (entry.getString("status") === "settled" && !entry.getString("settled_date"))
+      entry.set("settled_date", previous);
     entry.set("date", date);
     repository.save(entry);
     for (const move of moves)
