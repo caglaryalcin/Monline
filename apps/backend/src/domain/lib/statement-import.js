@@ -3,6 +3,7 @@ const { nextStatementPayment } = require("./pure/statement-payment-date.js");
 const { DataRecord } = require("../../storage.cjs");
 const { validateHistoricalPayment } = require("./pure/historical-payment.js");
 const { prepareBackfill, saveBackfill } = require("./subscription-backfill.js");
+const paymentMatches = require("./statement-payment-matches.js");
 
 const normalize = (value) =>
   String(value || "")
@@ -110,6 +111,7 @@ function importStatement(app, owner, statement, body, now = new Date()) {
     }
     return { group, rows };
   });
+  const decisions = paymentMatches.readDecisions(body.payment_matches, seen);
   const today = new Date(now.getTime() - body.utc_offset_minutes * 60000)
     .toISOString()
     .slice(0, 10);
@@ -138,6 +140,9 @@ function importStatement(app, owner, statement, body, now = new Date()) {
     const payments = owned("payment_records").filter((p) =>
       subscriptionIds.has(p.getString("subscription_id")),
     );
+    const manualPayments = paymentMatches.manualPaidSnapshots(payments);
+    const reviews = [], linkedDates = new Set(), linkedPayments = new Set();
+    let requiresReview = false;
     const paymentsBySource = new Map();
     const paymentsByDay = new Map();
     function indexPayment(payment) {
@@ -355,6 +360,36 @@ function importStatement(app, owner, statement, body, now = new Date()) {
         }
         const matches =
           paymentsByDay.get(`${subscription.id}:${row.date}`) || [];
+        // Exact-date matches keep the existing import behavior. A nearby manual
+        // payment needs an explicit decision before any statement writes commit.
+        if (!matches.some((payment) => payment.getString("paid_at"))) {
+          const choice = decisions.get(paymentMatches.keyFor(pending.map((entry) => entry.row.id)));
+          const review = paymentMatches.paymentReview(statement, subscription, pending, values.amount, manualPayments);
+          if (review) {
+            reviews.push(review);
+            if (!choice || choice.review_token !== review.review_token) {
+              requiresReview = true;
+              continue;
+            }
+            if (choice.payment_id !== null) {
+              if (!review.candidates.some((candidate) => candidate.payment_id === choice.payment_id))
+                fail("statement_import_payment_changed");
+              if (linkedPayments.has(choice.payment_id)) fail("statement_import_payment_reused");
+              const existing = payments.find((payment) => payment.id === choice.payment_id);
+              if (!existing) fail("statement_import_payment_changed");
+              if (sources(existing).length) fail("statement_import_payment_reused");
+              existing.set("statement_sources", [...new Set([...sources(existing), ...markers])]);
+              tx.save(existing);
+              indexPayment(existing);
+              linkedPayments.add(existing.id);
+              linkedDates.add(`${subscription.id}:${row.date}`);
+              result.payments_skipped += pending.length;
+              continue;
+            }
+          } else if (choice?.payment_id) {
+            fail("statement_import_payment_changed");
+          }
+        }
         const markBatchConflict = () => {
           for (const entry of pending)
             markConflict(entry.row, subscription, matches);
@@ -501,6 +536,13 @@ function importStatement(app, owner, statement, body, now = new Date()) {
         });
       }
     }
+    // Report all candidate batches, including already-reviewed batches, so a
+    // stale decision can be reviewed again without losing other choices.
+    if (requiresReview) {
+      const error = new Error("statement_import_payment_review");
+      error.payment_reviews = reviews;
+      throw error;
+    }
     // Report all affected statement rows together, and roll back every write.
     if (conflicts.size) {
       const error = new Error("statement_import_conflict");
@@ -513,6 +555,7 @@ function importStatement(app, owner, statement, body, now = new Date()) {
       result.payments_skipped += backfill.payments.length - saved;
     }
     for (const { subscription, date } of scheduleAnchors.values()) {
+      if (linkedDates.has(`${subscription.id}:${date}`)) continue;
       const next = nextStatementPayment(date, today);
       if (subscription.getString("next_payment").slice(0, 10) !== next) {
         subscription.set("next_payment", next);

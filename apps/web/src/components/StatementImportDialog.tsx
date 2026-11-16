@@ -35,6 +35,7 @@ import { subscriptionsService } from "@/services/subscriptions";
 import type { Category, Currency, Cycle, PaymentMethod, Subscription } from "@/types";
 
 import { StatementHistory } from "./StatementHistory";
+import { readStatementPaymentReviews, type StatementPaymentMatch, StatementPaymentReview, type StatementPaymentReviewItem } from "./StatementPaymentReview";
 
 export interface StatementImportResult {
   subscriptions_created: number;
@@ -280,6 +281,7 @@ function ImportForm({
     );
   }, []);
   const [conflicts, setConflicts] = useState<ImportConflict[]>([]);
+  const [paymentReviews, setPaymentReviews] = useState<StatementPaymentReviewItem[]>([]);
   const formRef = useRef<HTMLDivElement>(null);
   const groupRefs = useRef(new Map<string, HTMLElement>());
   const categoryFocusKey = useRef<string | null>(null);
@@ -381,7 +383,7 @@ function ImportForm({
         ).some((s) => s.id === group.target);
       return !!group.name.trim() && !!group.cycle;
     });
-  async function transfer() {
+  async function transfer(paymentMatches: StatementPaymentMatch[] = []) {
     if (!canImport || busy) return;
     setBusy(true);
     setError("");
@@ -391,6 +393,7 @@ function ImportForm({
         `/api/statements/${statementId}/import`,
         {
           utc_offset_minutes: new Date().getTimezoneOffset(),
+          payment_matches: paymentMatches,
           paid_offsets: Object.fromEntries(
             rows
               .filter((row) => selected.has(row.id))
@@ -433,6 +436,11 @@ function ImportForm({
       onClose();
     } catch (err) {
       const code = err instanceof Error ? err.message : "";
+      if (code === "statement_import_payment_review") {
+        const reviews = readStatementPaymentReviews(err);
+        if (reviews.length) { setPaymentReviews(reviews); return; }
+      }
+      setPaymentReviews([]);
       if (code === "statement_import_conflict") {
         setConflicts(
           readConflicts(err).filter((conflict) => selected.has(conflict.transaction_id)),
@@ -445,6 +453,8 @@ function ImportForm({
         "statement_import_ambiguous",
         "statement_import_next_date",
         "statement_import_conflict",
+        "statement_import_payment_changed",
+        "statement_import_payment_reused",
         "historical_invalid_date",
         "historical_invalid_amount",
         "backfill_invalid_selection",
@@ -464,6 +474,10 @@ function ImportForm({
       setBusy(false);
     }
   }
+  if (paymentReviews.length) return <StatementPaymentReview
+    key={paymentReviews.map((review) => review.review_token).join(":")}
+    reviews={paymentReviews} busy={busy} onBack={() => { setPaymentReviews([]); setError(""); }}
+    onConfirm={(matches) => void transfer(matches)} />;
   return (
     <div ref={formRef} className="space-y-4">
       <p className="flex items-start gap-2 rounded-xl border bg-muted/20 p-3 text-sm text-muted-foreground">

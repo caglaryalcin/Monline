@@ -122,6 +122,8 @@ routerAdd(
         Array.isArray(error.conflicts)
           ? { conflicts: error.conflicts }
           : {}),
+        ...(code === "statement_import_payment_review" && Array.isArray(error.payment_reviews)
+          ? { payment_reviews: error.payment_reviews } : {}),
       });
     }
   },
