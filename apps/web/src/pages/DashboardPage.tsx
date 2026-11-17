@@ -7,8 +7,10 @@ import { BudgetOverviewCard } from "@/components/dashboard/BudgetOverviewCard";
 import { CostHistoryCard } from "@/components/dashboard/CostHistoryCard";
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
 import { useDashboardDerivedData } from "@/components/dashboard/useDashboardDerivedData";
+import { FinanceAnimationIcon } from "@/components/FinanceAnimationIcon";
 import { QuickPaymentDialog } from "@/components/QuickPaymentDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAnimationPreferences } from "@/hooks/useAnimationPreferences";
 import { useLocalToday } from "@/hooks/useLocalToday";
 import { useMonthlyBudgetData } from "@/hooks/useMonthlyBudgetData";
 import { usePaidTotals } from "@/hooks/usePaidTotals";
@@ -25,6 +27,8 @@ import { yearlyCostsService } from "@/services/yearlyCosts";
 export function DashboardPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { gifsEnabled } = useAnimationPreferences();
+  const iconClass = gifsEnabled ? "!bg-transparent !p-0" : undefined;
   const queryClient = useQueryClient();
   const userId = user?.id ?? "";
   const quickPayments = useQuickPayments();
@@ -92,7 +96,8 @@ export function DashboardPage() {
               title={t("total_weekly")}
               year={selectedYear}
               value={paid.data ? formatValue(paid.data.averageWeekly) : "-"}
-              icon={<TrendingUp className="h-6 w-6" />}
+              icon={<FinanceAnimationIcon asset="price-tag" fallback={<TrendingUp className="h-6 w-6" />} />}
+              iconClass={iconClass}
               loading={paid.isLoading}
               accent="var(--chart-2)"
             />
@@ -100,7 +105,8 @@ export function DashboardPage() {
               title={t("total_monthly")}
               year={selectedYear}
               value={paid.data ? formatValue(paid.data.averageMonthly) : "-"}
-              icon={<DollarSign className="h-6 w-6" />}
+              icon={<FinanceAnimationIcon asset="receipt" fallback={<DollarSign className="h-6 w-6" />} />}
+              iconClass={iconClass}
               loading={paid.isLoading}
               accent="var(--chart-3)"
             />
@@ -108,14 +114,16 @@ export function DashboardPage() {
               title={t("total_yearly")}
               year={selectedYear}
               value={paid.data ? formatValue(paid.data.totalYearly) : "-"}
-              icon={<Calendar className="h-6 w-6" />}
+              icon={<FinanceAnimationIcon asset="loans" fallback={<Calendar className="h-6 w-6" />} />}
+              iconClass={iconClass}
               loading={paid.isLoading}
               accent="var(--chart-4)"
             />
             <SummaryCard
               title={t("next_month_cost")}
               value={summaryData ? formatValue(summaryData.nextMonthTotal) : "-"}
-              icon={<CalendarClock className="h-6 w-6" />}
+              icon={<FinanceAnimationIcon asset="credit-card" fallback={<CalendarClock className="h-6 w-6" />} />}
+              iconClass={iconClass}
               loading={summary.isLoading}
               accent="var(--chart-1)"
             />

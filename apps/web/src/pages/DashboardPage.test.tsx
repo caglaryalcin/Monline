@@ -70,9 +70,10 @@ vi.mock("@/lib/utils", async (importOriginal) => {
 });
 
 vi.mock("@/components/dashboard/SummaryCard", () => ({
-  SummaryCard: ({ title, value }: { title: string; value: string }) => (
+  SummaryCard: ({ title, value, icon, iconClass }: { title: string; value: string; icon: React.ReactNode; iconClass?: string }) => (
     <div>
       {title}:{value}
+      <span data-summary-icon className={iconClass}>{icon}</span>
     </div>
   ),
 }));
@@ -111,6 +112,47 @@ vi.mock("@/components/dashboard/BudgetOverviewCard", () => ({
 import { DashboardPage } from "./DashboardPage";
 
 describe("DashboardPage", () => {
+  it("shows bundled animations in all four summary cards by default", () => {
+    const { Wrapper } = createQueryClientWrapper();
+    const { container } = render(<DashboardPage />, { wrapper: Wrapper });
+    const icons = [...container.querySelectorAll("[data-summary-icon]")];
+    expect(icons.map((icon) => icon.querySelector("img")?.getAttribute("src")?.split("?")[0])).toEqual([
+      "/assets/savings-price-tag.gif",
+      "/assets/savings-receipt.gif",
+      "/assets/savings-loans.gif",
+      "/assets/savings-credit-card.gif",
+    ]);
+    for (const icon of icons) {
+      expect(icon.querySelector("img")?.getAttribute("src")).toContain("?plays=3");
+      expect(icon).toHaveClass("!bg-transparent", "!p-0");
+    }
+  });
+
+  it("restores the original summary icons when Use GIFs is disabled", () => {
+    mocks.user!.disable_gifs = true;
+    const { Wrapper } = createQueryClientWrapper();
+    const { container } = render(<DashboardPage />, { wrapper: Wrapper });
+    const icons = [...container.querySelectorAll("[data-summary-icon]")];
+    expect(icons).toHaveLength(4);
+    for (const icon of icons) {
+      expect(icon.querySelector("picture, img, source")).toBeNull();
+      expect(icon.querySelector("svg")).not.toBeNull();
+      expect(icon).not.toHaveClass("!bg-transparent");
+    }
+  });
+
+  it("applies continuous playback to every dashboard animation", () => {
+    mocks.user!.loop_gifs = true;
+    const { Wrapper } = createQueryClientWrapper();
+    const { container } = render(<DashboardPage />, { wrapper: Wrapper });
+    const icons = [...container.querySelectorAll("[data-summary-icon]")];
+    expect(icons).toHaveLength(4);
+    for (const icon of icons) {
+      expect(icon.querySelector("img")?.getAttribute("src")).toContain("-loop.gif?plays=infinite");
+      expect(icon.querySelector("source")?.getAttribute("srcset")).toContain("-loop.webp?plays=infinite");
+    }
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.budgetEntries = [];

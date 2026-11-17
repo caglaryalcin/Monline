@@ -2,12 +2,14 @@ import { TrendingUp } from "lucide-react";
 import type { CSSProperties } from "react";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export function SummaryCard({
   title,
   year,
   value,
   icon,
+  iconClass,
   loading,
   trend,
   trendUp,
@@ -17,6 +19,7 @@ export function SummaryCard({
   year?: number;
   value: string;
   icon: React.ReactNode;
+  iconClass?: string;
   loading?: boolean;
   trend?: string;
   trendUp?: boolean;
@@ -29,7 +32,7 @@ export function SummaryCard({
     >
       <CardContent className="relative px-3 pb-3 pt-3 sm:px-4 sm:pt-4">
         <div className="mb-3 flex items-center gap-2 sm:gap-3">
-          <div className="summary-card-icon shrink-0 rounded-xl p-2 sm:p-2.5 [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6">
+          <div className={cn("summary-card-icon shrink-0 rounded-xl p-2 sm:p-2.5 [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6", iconClass)}>
             {icon}
           </div>
           <div className="min-w-0 flex-1">
