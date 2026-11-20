@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import {
   ArrowDownToLine,
@@ -16,6 +16,9 @@ import {
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
+import { CreditCardCalendar } from "@/components/credit-cards/CreditCardCalendar";
+import { AssignCardStatementsDialog, CreditCardEditorDialog } from "@/components/credit-cards/CreditCardDialogs";
+import { CreditCardGallery } from "@/components/credit-cards/CreditCardGallery";
 import { PageLoading } from "@/components/PageLoading";
 import { StatementBankLogo } from "@/components/StatementBankLogo";
 import { StatementDateInput } from "@/components/StatementDateInput";
@@ -35,6 +38,7 @@ import { ThemedSelect } from "@/components/ui/themed-select";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import client from "@/lib/client";
+import { type CardStatement, type CreditCard, creditCardLabel, creditCardsKey, supportedCardBank } from "@/lib/creditCards";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { queryKeys } from "@/lib/queryKeys";
 import { spendingKey } from "@/lib/spending";
@@ -66,13 +70,16 @@ import {
   validStatementDate,
 } from "@/lib/statements";
 import { createSubscriptionMatcher } from "@/lib/statementSubscriptions";
+import { toast } from "@/lib/toast";
 import { formatCurrency } from "@/lib/utils";
+import { creditCardsService } from "@/services/creditCards";
 import {
   type StatementDuplicateResult,
   statementDuplicatesService,
 } from "@/services/statementDuplicates";
 import { subscriptionsService } from "@/services/subscriptions";
 
+import { detectStatementCard, type StatementCardDetails } from "../../../backend/src/domain/lib/pure/statement-card.mjs";
 import { statementSourceRows } from "../../../backend/src/domain/lib/pure/statement-payments.mjs";
 
 const selectClass = "h-10 rounded-xl px-3 text-sm";
@@ -87,7 +94,7 @@ const localMonth = () => {
 };
 type StatementSummary = Pick<
   SavedStatement,
-  "id" | "bank" | "period" | "file_name" | "created" | "page_count"
+  "id" | "bank" | "period" | "file_name" | "file_hash" | "created" | "page_count" | "credit_card" | "card_details"
 >;
 
 function savedReviewRows(saved: SavedStatement): ReviewTransaction[] {
@@ -132,6 +139,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
   const [period, setPeriod] = useState(localMonth);
   const [lines, setLines] = useState<StatementLine[]>([]);
   const [summary, setSummary] = useState<StatementAccountSummary>({});
+  const [cardDetails, setCardDetails] = useState<StatementCardDetails>({});
   const [categoryFilter, setCategoryFilter] = useState<StatementCategory | "all">("all");
   const [rows, setRows] = useState<ReturnType<typeof prepareFullStatement>>([]);
   const [savedExcluded, setSavedExcluded] = useState<StatementTransaction[]>([]);
@@ -159,22 +167,31 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [archivePage, setArchivePage] = useState(1);
+  const [selectedCard, setSelectedCard] = useState("all");
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [cardEditor, setCardEditor] = useState<{ card?: CreditCard; fromArchive?: boolean; source?: CardStatement } | null>(null);
+  const [assignment, setAssignment] = useState<{ card?: CreditCard; source?: CardStatement } | null>(null);
+  const [deleteCard, setDeleteCard] = useState<CreditCard | null>(null);
+  const cardsQuery = useQuery({ queryKey: creditCardsKey(userId), queryFn: creditCardsService.list });
+  const cards = cardsQuery.data?.cards ?? [];
+  const uploadCard = cards.find(card => card.id === selectedCard);
   const archiveKey = ["bank-statements", userId] as const;
   const subscriptions = useQuery({
     queryKey: queryKeys.subscriptions.all(userId),
     queryFn: () => subscriptionsService.list(userId),
-    enabled: !statementId,
+    enabled: !statementId && uploadOpen,
   });
   const matchSubscription = useMemo(
     () => createSubscriptionMatcher(subscriptions.data ?? []),
     [subscriptions.data],
   );
   const archive = useQuery({
-    queryKey: [...archiveKey, archivePage],
+    queryKey: [...archiveKey, selectedCard, archivePage],
     queryFn: () =>
       client.collection("bank_statements").getList<StatementSummary>(archivePage, 12, {
         sort: "-period,-created",
-        fields: "id,bank,period,file_name,page_count,created",
+        fields: "id,bank,period,file_name,file_hash,page_count,created,credit_card,card_details",
+        filter: selectedCard === "all" ? undefined : `credit_card = "${selectedCard === "unassigned" ? "" : selectedCard}"`,
       }),
     enabled: !statementId,
   });
@@ -183,6 +200,35 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
     queryFn: () => client.collection("bank_statements").getOne<SavedStatement>(statementId!),
     enabled: !!statementId,
     retry: false,
+  });
+  const statementCard = statementId ? cards.find(card => card.id === detail.data?.credit_card) : uploadCard;
+  const cardBusy = !!busy || (!!file && !viewing) || (!!metadata && !viewing);
+  async function refreshCards() {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: creditCardsKey(userId) }),
+      queryClient.invalidateQueries({ queryKey: archiveKey }),
+    ]);
+  }
+  async function cardSaved(id: string) {
+    await refreshCards();
+    if (!statementId) { clear(); setFile(null); setPassword(""); }
+    setCardEditor(null); setAssignment(null); setSelectedCard(id); setArchivePage(1); setUploadOpen(false);
+    toast.success(t("credit_cards_saved"));
+  }
+  async function statementsAssigned(id: string) {
+    await refreshCards();
+    setAssignment(null); setSelectedCard(id); setArchivePage(1);
+    toast.success(t("credit_cards_assigned"));
+  }
+  const removeCard = useMutation({
+    mutationFn: (id: string) => creditCardsService.remove(id),
+    onSuccess: async (_result, id) => {
+      if (selectedCard === id) { setSelectedCard("unassigned"); setArchivePage(1); setUploadOpen(false); clear(); }
+      setDeleteCard(null);
+      await refreshCards();
+      toast.success(t("credit_cards_deleted"));
+    },
+    onError: () => toast.error(t("credit_cards_delete_failed")),
   });
   useEffect(() => {
     if (!detail.data) return;
@@ -196,6 +242,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
       file_name: saved.file_name,
     });
     setSummary(saved.summary || {});
+    setCardDetails(saved.card_details || {});
     setUnresolved(saved.unresolved || []);
     setRows(savedReviewRows(saved));
     setSavedExcluded(saved.excluded_transactions || []);
@@ -281,7 +328,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
   const validPeriod = /^20\d{2}-(0[1-9]|1[0-2])$/.test(period);
   const canExtract =
     !!file && fileCheck === "new" && !busy && !subscriptions.isPending && validPeriod;
-  const canSave = !!metadata && !!bank && valid && reviewed && !busy && !viewing && validPeriod;
+  const canSave = !!metadata && !!bank && valid && reviewed && !busy && !viewing && validPeriod && !!uploadCard && uploadCard.bank === bank;
   const money = (amount: number, currency: string) => formatCurrency(amount, currency, {});
   const monthLabel = (value: string) => {
     const date = new Date(`${value}-15T12:00:00`);
@@ -300,6 +347,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
     setDuplicateReview(null);
     setSavedExcluded([]);
     setSummary({});
+    setCardDetails({});
     setCategoryFilter("all");
     setLines([]);
     setUnresolved([]);
@@ -320,7 +368,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
     setFile(selected);
     setFileCheck("");
     setPassword("");
-    setBank("");
+    setBank(uploadCard ? supportedCardBank(uploadCard.bank) : "");
     setPeriod(localMonth());
     if (!selected) return;
     const operation = requestId.current;
@@ -441,6 +489,10 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
       );
       if (operation !== requestId.current) return;
       const detected = detectStatement(result.lines);
+      const detectedCard = detectStatementCard(result.lines);
+      if (uploadCard && detectedCard.last_four && detectedCard.last_four !== uploadCard.last_four) throw new Error("credit_cards_number_mismatch");
+      setCardDetails(detectedCard);
+      if (uploadCard && detected.bank && uploadCard.bank !== detected.bank) throw new Error("credit_cards_bank_mismatch");
       const selectedPeriod = detected.period || period;
       setBank(bank || detected.bank);
       setPeriod(selectedPeriod);
@@ -458,7 +510,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
       const key =
         err instanceof Error && err.name === "PasswordException"
           ? "statement_password_error"
-          : err instanceof Error && err.message.startsWith("statement_")
+          : err instanceof Error && /^(statement_|credit_cards_)/.test(err.message)
             ? err.message
             : "statement_read_failed";
       setError(t(key));
@@ -498,6 +550,8 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
       }
       const saved = await api.post<{ id: string }>("/api/statements", {
         ...metadata,
+        card_details: cardDetails,
+        credit_card: uploadCard?.id,
         bank,
         period,
         summary,
@@ -558,13 +612,14 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
       setArchivePage(1);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: archiveKey }),
+        queryClient.invalidateQueries({ queryKey: creditCardsKey(userId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.categories.all(userId) }),
         queryClient.invalidateQueries({ queryKey: spendingKey(userId) }),
       ]);
       setImportOpen(subscriptionRows.length > 0);
     } catch (err) {
       const key =
-        err instanceof Error && err.message.startsWith("statement_")
+        err instanceof Error && /^(statement_|credit_cards_)/.test(err.message)
           ? err.message
           : "statement_save_failed";
       if (key === "statement_duplicate") setDuplicateReview(null);
@@ -584,6 +639,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
       if (viewing === id) clear();
       setArchivePage(1);
       await queryClient.invalidateQueries({ queryKey: archiveKey });
+      await queryClient.invalidateQueries({ queryKey: creditCardsKey(userId) });
       await queryClient.invalidateQueries({ queryKey: spendingKey(userId) });
     } catch {
       setError(t("statement_delete_failed"));
@@ -606,6 +662,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
       setDeleteId(null);
       setArchivePage(1);
       await queryClient.invalidateQueries({ queryKey: archiveKey });
+      await queryClient.invalidateQueries({ queryKey: creditCardsKey(userId) });
     } catch {
       setError(t("statement_delete_failed"));
     } finally {
@@ -615,8 +672,31 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
 
   return (
     <div className="space-y-6">
+      {!statementId && <>
+        <CreditCardGallery data={cardsQuery.data} loading={cardsQuery.isPending} failed={cardsQuery.isError} selected={selectedCard} disabled={cardBusy || removeCard.isPending}
+          onSelect={id => { clear(); setFile(null); setPassword(""); setUploadOpen(false); setSelectedCard(id); setArchivePage(1); }}
+          onAdd={() => setCardEditor({})} onFromArchive={() => setCardEditor({ fromArchive: true })}
+          onEdit={card => setCardEditor({ card })} onDelete={setDeleteCard} onRetry={() => void cardsQuery.refetch()} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="text-lg font-semibold">{uploadCard ? creditCardLabel(uploadCard) : t(selectedCard === "unassigned" ? "credit_cards_unassigned" : "credit_cards_all")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t(uploadCard ? "credit_cards_archive_help" : selectedCard === "unassigned" ? "credit_cards_unassigned_help" : "credit_cards_select_to_upload")}</p></div>
+          {uploadCard && <div className="flex flex-wrap gap-2">
+            {!!cardsQuery.data?.unassigned_count && <Button variant="outline" className="rounded-xl" disabled={cardBusy} onClick={() => setAssignment({ card: uploadCard })}>{t("credit_cards_assign_many")}</Button>}
+            {supportedCardBank(uploadCard.bank) && <Button className="gap-2 rounded-xl" disabled={!!busy} onClick={() => {
+              clear(); setFile(null); setPassword(""); setBank(supportedCardBank(uploadCard.bank)); setUploadOpen(!uploadOpen);
+            }}>{uploadOpen ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}{t(uploadOpen ? "close" : "credit_cards_upload")}</Button>}
+          </div>}
+        </div>
+        {uploadCard && <CreditCardCalendar key={uploadCard.id} card={uploadCard} disabled={cardBusy} onEdit={() => setCardEditor({ card: uploadCard })} />}
+        {uploadCard && !supportedCardBank(uploadCard.bank) && <p className="text-sm text-muted-foreground">{t("credit_cards_unsupported_bank")}</p>}
+      </>}
       {statementId && (
         <>
+          <a href="/statements" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline">{t("credit_cards_back")}</a>
+          {detail.data && <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4">
+            <p className="text-sm">{cardsQuery.isPending ? t("loading") : cardsQuery.isError ? t("credit_cards_load_failed") : statementCard ? creditCardLabel(statementCard) : t("credit_cards_unassigned")}</p>
+            {!detail.data.credit_card && <Button variant="outline" disabled={cardsQuery.isPending || cardsQuery.isError} onClick={() => setAssignment({ source: detail.data })}>{t("credit_cards_assign")}</Button>}
+          </div>}
           {detail.isPending && (
             <Loader2 aria-label={t("loading")} className="h-5 w-5 animate-spin" />
           )}
@@ -627,13 +707,13 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
           )}
         </>
       )}
-      {!statementId && (
+      {!statementId && uploadOpen && (
         <>
           <Card className="overflow-hidden rounded-3xl">
             <CardHeader className="border-b bg-muted/20">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <FileText className="h-5 w-5 text-primary" />
-                {t("statement_upload")}
+                {t("credit_cards_upload_for", { card: uploadCard ? creditCardLabel(uploadCard) : "" })}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5 pt-6">
@@ -711,7 +791,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
                   <ThemedSelect
                     className="h-11 w-full min-w-0 rounded-xl px-3 text-sm"
                     value={bank}
-                    disabled={!!busy || !!viewing}
+                    disabled={!!busy || !!viewing || !!uploadCard}
                     onChange={(event) => {
                       setBank(event.target.value as StatementBank | "");
                       setReviewed(false);
@@ -1448,7 +1528,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <CardTitle className="text-lg">{t("statement_archive")}</CardTitle>
-              <Button
+              {selectedCard === "all" && <Button
                 variant="outline"
                 className="gap-2 rounded-xl border-destructive/40 text-destructive"
                 disabled={
@@ -1461,7 +1541,7 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
               >
                 <Trash2 className="h-4 w-4" />
                 {t("statement_delete_all")}
-              </Button>
+              </Button>}
             </div>
             <p className="text-sm text-muted-foreground">{t("statement_archive_note")}</p>
           </CardHeader>
@@ -1476,11 +1556,11 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
               <p className="text-sm text-muted-foreground">{t("statement_archive_empty")}</p>
             ) : (
               archive.data.items.map((saved) => (
-                <div key={saved.id} className="flex items-center gap-3 rounded-2xl border p-3">
+                <div key={saved.id} className="flex flex-wrap items-center gap-3 rounded-2xl border p-3">
                   <StatementBankLogo bank={saved.bank} />
                   <StatementLink
                     statementId={saved.id}
-                    className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline focus-visible:outline-ring"
+                    className="min-w-0 flex-1 basis-36 rounded-lg text-left focus-visible:outline focus-visible:outline-ring"
                   >
                     <span className="block font-medium">
                       {saved.bank ? STATEMENT_BANKS[saved.bank] : t("statement_auto_bank")} ·{" "}
@@ -1489,7 +1569,11 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
                     <span className="block truncate text-xs text-muted-foreground">
                       {saved.file_name}
                     </span>
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {cardsQuery.isPending ? t("loading") : cardsQuery.isError ? t("credit_cards_load_failed") : cards.find(card => card.id === saved.credit_card) ? creditCardLabel(cards.find(card => card.id === saved.credit_card)!) : t("credit_cards_unassigned")}
+                    </span>
                   </StatementLink>
+                  {!saved.credit_card && <Button variant="outline" size="sm" className="rounded-xl" disabled={cardBusy || cardsQuery.isPending || cardsQuery.isError} onClick={() => setAssignment({ source: saved })}>{t("credit_cards_assign")}</Button>}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -1528,6 +1612,12 @@ function StatementWorkspace({ userId, statementId }: { userId: string; statement
           </CardContent>
         </Card>
       )}
+      {cardEditor && <CreditCardEditorDialog userId={userId} {...cardEditor} onClose={() => setCardEditor(null)} onSaved={cardSaved} />}
+      {assignment && <AssignCardStatementsDialog userId={userId} cards={cards} {...assignment} onClose={() => setAssignment(null)}
+        onCreate={source => { setAssignment(null); setCardEditor({ fromArchive: true, source }); }} onSaved={statementsAssigned} />}
+      <ConfirmDialog open={!!deleteCard} onOpenChange={open => { if (!open && !removeCard.isPending) setDeleteCard(null); }}
+        title={t("credit_cards_delete")} description={t("credit_cards_delete_confirm", { card: deleteCard ? creditCardLabel(deleteCard) : "" })}
+        confirmDisabled={removeCard.isPending} onConfirm={() => { if (deleteCard) removeCard.mutate(deleteCard.id); }} />
       {importOpen && viewing && (
         <Suspense fallback={<PageLoading />}>
           <StatementImportDialog

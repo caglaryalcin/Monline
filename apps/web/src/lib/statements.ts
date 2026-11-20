@@ -1,11 +1,8 @@
-import { parseStatementOriginalAmount } from "../../../backend/src/domain/lib/pure/statement-original-amount.mjs";
+import type { StatementBank } from "@/lib/statementBanks";
 
-export const STATEMENT_BANKS = {
-  enpara: "Enpara",
-  denizbank: "DenizBank",
-  garanti: "Garanti BBVA",
-} as const;
-export type StatementBank = keyof typeof STATEMENT_BANKS;
+import type { StatementCardDetails } from "../../../backend/src/domain/lib/pure/statement-card.mjs";
+import { parseStatementOriginalAmount } from "../../../backend/src/domain/lib/pure/statement-original-amount.mjs";
+export { STATEMENT_BANKS, type StatementBank } from "@/lib/statementBanks";
 export const TRANSACTION_KINDS = ["charge", "refund", "repayment", "fee", "cash"] as const;
 export type TransactionKind = (typeof TRANSACTION_KINDS)[number];
 export interface StatementTransaction {
@@ -31,6 +28,8 @@ export interface ReviewTransaction extends StatementTransaction {
   amount_issue?: StatementAmountIssue;
 }
 export interface StatementDraft {
+  card_details?: StatementCardDetails;
+  credit_card?: string;
   bank: StatementBank | "";
   period: string;
   file_name: string;

@@ -1,5 +1,17 @@
 export const savingsTranslations = {
   tr: {
+    savings_ticker_title: "Döviz ve altın piyasası",
+    savings_ticker_ounce: "Ons altın",
+    savings_ticker_gram: "Gram altın",
+    savings_ticker_auto: "CANLI",
+    savings_ticker_waiting: "BEKLENİYOR",
+    savings_ticker_delayed: "GECİKMELİ",
+    savings_ticker_reference: "REFERANS",
+    savings_ticker_pause: "Fiyat şeridini duraklat",
+    savings_ticker_resume: "Fiyat şeridini kaydır",
+    savings_ticker_bid: "Alış fiyatları · 60 sn otomatik sorgulama",
+    savings_market_rates_help: "Birikimler Trunçgil Finans’ın yayımladığı alış fiyatlarıyla değerlenir. Altın türlerinde doğrudan piyasa fiyatı kullanılır; ons altından tahmin edilmez. Sayfa açıkken kurlar her 60 saniyede otomatik sorgulanır. Kaynağın son fiyat zamanı gösterilir; piyasa kapalıyken veya kaynak güncellenmediğinde fiyatlar aynı kalabilir. Gerçek bozdurma fiyatı banka ve kuyumcuya göre değişebilir.",
+    savings_market_fallback: "Piyasa kaynağına ulaşılamadığı için Fixer.io referans kurları kullanılıyor.",
     savings: "Birikimler",
     savings_description: "TL, döviz ve altın birikimlerinizi seçtiğiniz para biriminde takip edin.",
     savings_add: "Birikim ekle",
@@ -32,13 +44,13 @@ export const savingsTranslations = {
     savings_quantity_help: "En fazla {{decimals}} ondalık basamak kullanın.",
     savings_quantity_whole: "Miktarı tam sayı olarak girin.",
     savings_name_placeholder: "Örn. Acil durum birikimi",
-    savings_display_currency: "Gösterim para birimi",
+    savings_display_currency: "Para Birimi",
     savings_value: "{{currency}} karşılığı",
     savings_rate: "Birim referans kuru",
     savings_rate_missing: "Kur bekleniyor",
     savings_rates_refresh: "Kurları yenile",
     savings_rates_help:
-      "Tüm değerler Fixer.io referans kurlarıyla hesaplanır. Gram altın 24 ayar saf altın, çeyrek/yarım/tam altın 22 ayar ziynet, Cumhuriyet altını 22 ayar Ata olarak değerlendirilir. Altın değerleri ons fiyatı, ağırlık ve saflığa göre tahmin edilir; işçilik, piyasa primi ve alış-satış farkı dahil değildir. Kurlar mevcut kur ayarlarınızla otomatik olarak 12 saatte bir veya “Kurları yenile” ile güncellenir.",
+      "Yedek kaynak Fixer.io referans kurlarıdır. Bu kaynakta altın değerleri ons fiyatı, ağırlık ve saflığa göre tahmin edilir; işçilik, piyasa primi ve alış-satış farkı dahil değildir. Yedek kurlar mevcut API kotasını korumak için 12 saat önbellekte tutulur. Piyasa kaynağına dönüş otomatik denenir.",
     savings_gold_unavailable:
       "Fixer yanıtında XAU (ons altın) kuru bulunamadı. Altın değerleri kur alınana kadar hesaplanamıyor.",
     savings_fixer_not_configured:
@@ -65,6 +77,18 @@ export const savingsTranslations = {
     savings_entry_count: "{{count}} kayıt",
   },
   en: {
+    savings_ticker_title: "Currency and gold markets",
+    savings_ticker_ounce: "Gold / oz",
+    savings_ticker_gram: "Gold / gram",
+    savings_ticker_auto: "LIVE",
+    savings_ticker_waiting: "WAITING",
+    savings_ticker_delayed: "DELAYED",
+    savings_ticker_reference: "REFERENCE",
+    savings_ticker_pause: "Pause price ticker",
+    savings_ticker_resume: "Scroll price ticker",
+    savings_ticker_bid: "Bid prices · Automatic 60 s polling",
+    savings_market_rates_help: "Savings use bid prices published by Trunçgil Finans. Gold coins use quoted market prices rather than estimates from the ounce price. Rates are requested automatically every 60 seconds while the page is open. The source's price timestamp is shown; prices may remain unchanged when markets are closed or the source has not updated. Actual liquidation prices vary between banks and dealers.",
+    savings_market_fallback: "The market source is unavailable. Fixer.io reference rates are being used.",
     savings: "Savings",
     savings_description:
       "Track your TRY, foreign currency and gold savings in your chosen currency.",
@@ -98,13 +122,13 @@ export const savingsTranslations = {
     savings_quantity_help: "Use up to {{decimals}} decimal places.",
     savings_quantity_whole: "Enter the quantity as a whole number.",
     savings_name_placeholder: "e.g. Emergency savings",
-    savings_display_currency: "Display currency",
+    savings_display_currency: "Currency",
     savings_value: "{{currency}} equivalent",
     savings_rate: "Unit reference rate",
     savings_rate_missing: "Awaiting rate",
     savings_rates_refresh: "Refresh rates",
     savings_rates_help:
-      "All values use Fixer.io reference rates. Gram gold represents 24-karat fine gold; quarter, half and full coins represent 22-karat ziynet coins; Republic coins represent 22-karat Ata coins. Gold values are estimated from the troy-ounce price, weight and purity, excluding workmanship, premiums and buy/sell spreads. Rates use your existing exchange settings and refresh automatically every 12 hours or via Refresh rates.",
+      "The fallback source is Fixer.io reference rates. Gold values from this source are estimated from the ounce price, weight and purity, excluding workmanship, premiums and spreads. Fallback rates are cached for 12 hours to protect your API quota. The market source is retried automatically.",
     savings_gold_unavailable:
       "The Fixer response did not include XAU (troy-ounce gold). Gold values cannot be calculated until that rate is available.",
     savings_fixer_not_configured:
@@ -131,6 +155,18 @@ export const savingsTranslations = {
     savings_entry_count: "{{count}} entries",
   },
   de: {
+    savings_ticker_title: "Devisen- und Goldmarkt",
+    savings_ticker_ounce: "Gold / Unze",
+    savings_ticker_gram: "Gold / Gramm",
+    savings_ticker_auto: "LIVE",
+    savings_ticker_waiting: "WARTEN",
+    savings_ticker_delayed: "VERZÖGERT",
+    savings_ticker_reference: "REFERENZ",
+    savings_ticker_pause: "Kursband pausieren",
+    savings_ticker_resume: "Kursband bewegen",
+    savings_ticker_bid: "Ankaufspreise · Automatische Abfrage alle 60 s",
+    savings_market_rates_help: "Ersparnisse werden mit den von Trunçgil Finans veröffentlichten Ankaufspreisen bewertet. Goldmünzen verwenden direkte Marktpreise statt Schätzungen aus dem Unzenpreis. Bei geöffneter Seite werden Kurse automatisch alle 60 Sekunden abgefragt. Der Preiszeitpunkt der Quelle wird angezeigt. Bei geschlossenem Markt oder ohne neue Quelldaten können Preise gleich bleiben. Tatsächliche Ankaufspreise unterscheiden sich je nach Bank oder Händler.",
+    savings_market_fallback: "Die Marktquelle ist nicht erreichbar. Fixer.io-Referenzkurse werden verwendet.",
     savings: "Ersparnisse",
     savings_description:
       "Ersparnisse in TRY, Fremdwährungen und Gold in der gewählten Währung verfolgen.",
@@ -164,13 +200,13 @@ export const savingsTranslations = {
     savings_quantity_help: "Bis zu {{decimals}} Nachkommastellen verwenden.",
     savings_quantity_whole: "Die Menge als ganze Zahl eingeben.",
     savings_name_placeholder: "z. B. Notfallrücklage",
-    savings_display_currency: "Anzeigewährung",
+    savings_display_currency: "Währung",
     savings_value: "{{currency}}-Gegenwert",
     savings_rate: "Referenzkurs je Einheit",
     savings_rate_missing: "Kurs ausstehend",
     savings_rates_refresh: "Kurse aktualisieren",
     savings_rates_help:
-      "Alle Werte verwenden Fixer.io-Referenzkurse. Grammgold entspricht 24-karätigem Feingold; Viertel-, Halb- und Ganzgoldmünzen entsprechen 22-karätigen Ziynet-Münzen, Republikmünzen 22-karätigen Ata-Münzen. Goldwerte werden aus Feinunzenpreis, Gewicht und Reinheit geschätzt, ohne Verarbeitungskosten, Aufschläge und Handelsspannen. Die bestehenden Wechselkurseinstellungen werden verwendet; Aktualisierung automatisch alle 12 Stunden oder über Kurse aktualisieren.",
+      "Als Ersatzquelle dienen Fixer.io-Referenzkurse. Goldwerte dieser Quelle werden aus Unzenpreis, Gewicht und Reinheit geschätzt, ohne Aufschläge und Handelsspannen. Ersatzkurse werden zum Schutz des API-Kontingents 12 Stunden zwischengespeichert. Die Marktquelle wird automatisch erneut abgefragt.",
     savings_gold_unavailable:
       "Die Fixer-Antwort enthält keinen XAU-Kurs (Gold je Feinunze). Goldwerte können erst berechnet werden, wenn dieser Kurs verfügbar ist.",
     savings_fixer_not_configured:

@@ -404,7 +404,7 @@ export function DashboardYearOverview({
                 aria-label={t("history_select_year")}
                 value={historyYear}
                 onChange={(event) => setHistoryYear(Number(event.target.value))}
-                className="h-10 min-w-[6.5rem] rounded-xl px-3 text-base font-semibold"
+                className="h-10 w-[7.5rem] min-w-[7.5rem] shrink-0 gap-3 rounded-xl px-3 text-base font-semibold [&>span]:line-clamp-none [&>span]:overflow-visible [&>span]:whitespace-nowrap"
               >
                 {historyYears.map((value) => (
                   <option key={value} value={value}>

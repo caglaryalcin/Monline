@@ -52,7 +52,8 @@ const MIGRATED_COLUMNS = {
   payment_methods: ["is_main", "finance_card"],
   household: ["is_main", "account", "account_approval"],
   sharing_groups: ["pending_members"],
-  bank_statements: ["summary", "unresolved", "excluded_transactions", "tracking_hidden"],
+  bank_statements: ["summary", "unresolved", "excluded_transactions", "tracking_hidden", "card_details", "credit_card"],
+  credit_cards: ["statement_day", "statement_weekend_adjust", "network"],
   finance_rows: ["expense_type", "payment_card", "year", "origin_row", "is_deleted", "loan_id", "loan_principal"],
   finance_entries: ["bill_skip"],
   manual_bills: ["bill_skip"],
@@ -233,7 +234,7 @@ function validateDatabase(file, { allowV1Schema = false } = {}) {
       if (
         !columns.size &&
         // Additive collections are absent from backups made before they existed.
-        (["budget_matches", "calendar_moves", "sharing_groups", "savings"].includes(entry.name) ||
+        (["budget_matches", "calendar_moves", "sharing_groups", "savings", "credit_cards"].includes(entry.name) ||
           (allowV1Schema && V2_COLLECTIONS.has(entry.name)))
       )
         continue;

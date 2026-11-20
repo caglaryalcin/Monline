@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
+import type { CreditCardClosing } from "@/lib/creditCardCalendar";
+import { creditCardLabel } from "@/lib/creditCards";
 import { isCredit } from "@/lib/recordTypes";
 import { cn, formatDate, formatPrice } from "@/lib/utils";
 import type { Currency, PaymentRecord } from "@/types";
@@ -16,6 +18,7 @@ import { paymentAppearance } from "./paymentAppearance";
 import { type DayEntry, getPaymentRecord, PAYMENT_COLORS, toDateStr, toMain } from "./types";
 
 interface DayPanelProps {
+  cardClosings?: CreditCardClosing[];
   day: number;
   month: number;
   year: number;
@@ -32,6 +35,7 @@ interface DayPanelProps {
 }
 
 export function DayPanel({
+  cardClosings = [],
   day,
   month,
   year,
@@ -88,6 +92,14 @@ export function DayPanel({
           </Button>
         </div>
 
+        {cardClosings.length > 0 && <section className="space-y-3 border-b p-4" aria-label={t("credit_cards_calendar_dates")}>
+          <h3 className="text-sm font-semibold">{t("credit_cards_calendar_dates")}</h3>
+          {cardClosings.map(event => <div key={`${event.card.id}-${event.cycle_month}-${event.kind}`} className="space-y-1 text-sm">
+            <p className="flex items-center gap-2 text-xs"><span aria-hidden="true" className={cn("h-2.5 w-2.5 rounded-sm", event.kind === "payment_due" ? "bg-white ring-1 ring-inset ring-primary/40" : "bg-amber-300")} />{t(event.kind === "payment_due" ? "credit_cards_payment_due" : "credit_cards_statement_day")}</p>
+            <a href="/statements" className="font-medium text-primary underline underline-offset-2">{creditCardLabel(event.card)}</a>
+            {event.date !== event.original_date && <p className="text-xs text-muted-foreground">{formatDate(event.original_date)} → {formatDate(event.date)}</p>}
+          </div>)}
+        </section>}
         {/* Subscription list */}
         {entries.length > 0 && (
           <div className="divide-y">

@@ -1,6 +1,7 @@
 import { Edit2, Star, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { CurrencyLabel } from "@/components/CurrencyLabel";
 import { SelectionCheckbox } from "@/components/settings/shared/BulkSettingsActions";
 import { Button } from "@/components/ui/button";
 import type { Currency } from "@/types";
@@ -40,7 +41,7 @@ export function CurrencyListItem({
         )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xl font-semibold tracking-tight">{currency.code}</span>
+            <span className="text-xl font-semibold tracking-tight"><CurrencyLabel code={currency.code} /></span>
             <span className="rounded-lg bg-muted px-2.5 py-0.5 text-base font-medium text-foreground">
               {currency.symbol}
             </span>

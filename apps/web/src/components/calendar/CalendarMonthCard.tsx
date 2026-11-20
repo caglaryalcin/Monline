@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleAlert,
+  CreditCard,
   GripVertical,
 } from "lucide-react";
 import { type CSSProperties, useMemo } from "react";
@@ -21,6 +22,8 @@ import {
 import { SubscriptionLogo } from "@/components/SubscriptionLogo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import type { CreditCardClosing } from "@/lib/creditCardCalendar";
+import { creditCardLabel } from "@/lib/creditCards";
 import { resolveLocale } from "@/lib/locale";
 import { isCredit } from "@/lib/recordTypes";
 import { paymentOwnerId } from "@/lib/standalonePayments";
@@ -39,6 +42,7 @@ type CalendarCell = {
 };
 
 interface CalendarMonthCardProps {
+  closingsByDate?: Record<string, CreditCardClosing[]>;
   month: number;
   year: number;
   now: Date;
@@ -67,6 +71,7 @@ interface CalendarMonthCardProps {
 }
 
 export function CalendarMonthCard({
+  closingsByDate = {},
   month,
   year,
   now,
@@ -198,6 +203,9 @@ export function CalendarMonthCard({
               const entries =
                 entriesByDate?.[toDateStr(cellDate)] ??
                 (isOtherMonth ? [] : (entriesByDay[cell.day] ?? []));
+              const closings = closingsByDate[toDateStr(cellDate)] ?? [];
+              const hasClosing = closings.some(event => event.kind === "closing");
+              const hasDue = closings.some(event => event.kind === "payment_due");
               const columnIndex = index % 7;
               const isWeekend = columnIndex === 0 || columnIndex === 6;
               const isToday =
@@ -246,17 +254,26 @@ export function CalendarMonthCard({
                     <span
                       className={cn(
                         "inline-flex h-7 w-7 items-center justify-center text-sm font-medium transition-colors group-focus-visible:underline decoration-primary decoration-2 underline-offset-4",
-                        isToday && "rounded-full bg-primary font-bold text-primary-foreground",
+                        isToday && !closings.length && "rounded-full bg-primary font-bold text-primary-foreground",
                         !isToday &&
                           !isOtherMonth &&
                           (isPast ? "text-muted-foreground" : "text-foreground"),
                         isOtherMonth && "text-muted-foreground/40",
+                        hasDue && "rounded-lg bg-white font-bold !text-slate-900 ring-1 ring-inset ring-primary/30",
+                        hasClosing && "rounded-lg bg-amber-300 font-bold !text-amber-950",
                       )}
                     >
                       {cell.day}
                     </span>
                   </div>
 
+                  {closings.length > 0 && <div className="mb-1 space-y-1">
+                    {closings.map(event => <span key={`${event.card.id}-${event.cycle_month}-${event.kind}`} title={`${t(event.kind === "payment_due" ? "credit_cards_payment_due" : "credit_cards_statement_day")} · ${creditCardLabel(event.card)}`}
+                      className={cn("flex min-w-0 items-center justify-center gap-1 rounded-md border px-0.5 py-1 sm:justify-start sm:px-1.5", event.kind === "payment_due" ? "border-primary/30 bg-white text-slate-900" : "border-amber-400/40 bg-amber-100 text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/15 dark:text-amber-200")}>
+                      <CreditCard aria-hidden="true" className="h-3 w-3 shrink-0" /><span className="truncate text-[10px] font-medium">•• {event.card.last_four}</span>
+                      <span className="sr-only">{t(event.kind === "payment_due" ? "credit_cards_payment_due" : "credit_cards_statement_day")} · {creditCardLabel(event.card)}</span>
+                    </span>)}
+                  </div>}
                   {!loading ? (
                     <div className="space-y-1">
                       {entries.map((entry) => {
@@ -365,7 +382,7 @@ export function CalendarMonthCard({
           </div>
         </CalendarDayMenu>
       </CardContent>
-      <CalendarPaymentLegend />
+      <CalendarPaymentLegend hasStatementDays={Object.values(closingsByDate).some(events => events.some(event => event.kind === "closing"))} hasDueDays={Object.values(closingsByDate).some(events => events.some(event => event.kind === "payment_due"))} />
       {drag.preview}
     </Card>
   );

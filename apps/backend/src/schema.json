@@ -2075,9 +2075,22 @@
         "name": "tracking_hidden",
         "type": "bool",
         "hidden": false
+      },
+      {
+        "name": "credit_card",
+        "type": "relation",
+        "collectionId": "credit_cards",
+        "maxSelect": 1,
+        "hidden": false
+      },
+      {
+        "name": "card_details",
+        "type": "json",
+        "hidden": false,
+        "maxSize": 4096
       }
     ],
-    "sql": "CREATE TABLE \"bank_statements\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"bank\" TEXT NOT NULL DEFAULT '', \"file_name\" TEXT NOT NULL DEFAULT '', \"file_hash\" TEXT NOT NULL DEFAULT '', \"period\" TEXT NOT NULL DEFAULT '', \"page_count\" REAL NOT NULL DEFAULT 0, \"transactions\" TEXT DEFAULT 'null', \"created\" TEXT NOT NULL DEFAULT '', \"summary\" TEXT DEFAULT 'null', \"unresolved\" TEXT DEFAULT 'null', \"excluded_transactions\" TEXT DEFAULT 'null', \"tracking_hidden\" INTEGER NOT NULL DEFAULT 0)"
+    "sql": "CREATE TABLE \"bank_statements\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL DEFAULT '', \"bank\" TEXT NOT NULL DEFAULT '', \"file_name\" TEXT NOT NULL DEFAULT '', \"file_hash\" TEXT NOT NULL DEFAULT '', \"period\" TEXT NOT NULL DEFAULT '', \"page_count\" REAL NOT NULL DEFAULT 0, \"transactions\" TEXT DEFAULT 'null', \"created\" TEXT NOT NULL DEFAULT '', \"summary\" TEXT DEFAULT 'null', \"unresolved\" TEXT DEFAULT 'null', \"excluded_transactions\" TEXT DEFAULT 'null', \"tracking_hidden\" INTEGER NOT NULL DEFAULT 0, \"credit_card\" TEXT NOT NULL DEFAULT '', \"card_details\" TEXT DEFAULT 'null')"
   },
   {
     "name": "finance_rows",
@@ -2770,6 +2783,23 @@
       }
     ],
     "sql": "CREATE TABLE `sharing_groups` (`id` TEXT PRIMARY KEY NOT NULL, `user` TEXT NOT NULL, `name` TEXT NOT NULL, `members` JSON DEFAULT NULL, `pending_members` JSON DEFAULT NULL)"
+  },
+  {
+    "name": "credit_cards",
+    "legacyId": "credit_cards",
+    "fields": [
+      { "name": "id", "type": "text", "required": true, "min": 15, "max": 15 },
+      { "name": "user", "type": "relation", "collectionId": "users", "required": true },
+      { "name": "bank", "type": "text", "required": true, "max": 80 },
+      { "name": "name", "type": "text", "max": 80 },
+      { "name": "last_four", "type": "text", "required": true, "min": 4, "max": 4 },
+      { "name": "expiry", "type": "text", "required": true, "min": 7, "max": 7 },
+      { "name": "statement_day", "type": "number", "min": 0, "max": 31 },
+      { "name": "statement_weekend_adjust", "type": "bool" },
+      { "name": "network", "type": "text", "max": 10 },
+      { "name": "created", "type": "autodate" }
+    ],
+    "sql": "CREATE TABLE \"credit_cards\" (\"id\" TEXT PRIMARY KEY NOT NULL, \"user\" TEXT NOT NULL, \"bank\" TEXT NOT NULL, \"name\" TEXT NOT NULL DEFAULT '', \"last_four\" TEXT NOT NULL, \"expiry\" TEXT NOT NULL, \"created\" TEXT NOT NULL DEFAULT '', \"statement_day\" INTEGER NOT NULL DEFAULT 0, \"statement_weekend_adjust\" INTEGER NOT NULL DEFAULT 0, \"network\" TEXT NOT NULL DEFAULT '')"
   },
   {
     "name": "savings",

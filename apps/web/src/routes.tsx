@@ -43,6 +43,7 @@ const CalendarPage = lazyRouteComponent(() => import("@/pages/CalendarPage"), "C
 const StatisticsPage = lazyRouteComponent(() => import("@/pages/StatisticsPage"), "StatisticsPage");
 const DebtPage = lazyRouteComponent(() => import("@/pages/DebtPage"), "DebtPage");
 const SavingsPage = lazyRouteComponent(() => import("@/pages/SavingsPage"), "SavingsPage");
+const AffordabilityPage = lazyRouteComponent(() => import("@/pages/AffordabilityPage"), "AffordabilityPage");
 const StatementsPage = lazyRouteComponent(() => import("@/pages/StatementsPage"), "StatementsPage");
 const StatementDetailPage = lazyRouteComponent(
   () => import("@/pages/StatementsPage"),
@@ -162,6 +163,11 @@ const financeOverviewRoute = createRoute({
   path: "/finance/overview",
   component: FinanceOverview,
 });
+const affordabilityRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: "/finance/affordability",
+  component: AffordabilityPage,
+});
 
 const aboutRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
@@ -265,6 +271,7 @@ const routeTree = rootRoute.addChildren([
     dashboardRoute,
     financeRoute,
     financeOverviewRoute,
+    affordabilityRoute,
     aboutRoute,
     subscriptionsRoute,
     calendarRoute,

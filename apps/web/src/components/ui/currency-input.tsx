@@ -4,12 +4,13 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
 
 import { useNumberLocale } from "@/hooks/useNumberLocale";
-import { formatNumber, parseNumberInput } from "@/lib/numberFormat";
+import { formatNumber, numberFormatter, parseNumberInput } from "@/lib/numberFormat";
 import { cn, getCurrencyFractionDigits, getCurrencySymbol } from "@/lib/utils";
 
 interface CurrencyInputProps {
@@ -26,6 +27,27 @@ interface CurrencyInputProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  groupWhileEditing?: boolean;
+}
+
+function editingSeparators(locale: string) {
+  const parts = numberFormatter({}, locale).formatToParts(12345.6);
+  return {
+    decimal: parts.find(part => part.type === "decimal")?.value || ".",
+    group: parts.find(part => part.type === "group")?.value || ",",
+  };
+}
+
+function groupedEditingValue(value: string, locale: string) {
+  const { decimal, group } = editingSeparators(locale);
+  const ungrouped = value.split(group).join("");
+  const decimalIndex = ungrouped.indexOf(decimal);
+  const integer = (decimalIndex < 0 ? ungrouped : ungrouped.slice(0, decimalIndex)).replace(/[^\p{Nd}]/gu, "");
+  const fraction = decimalIndex < 0 ? "" : ungrouped.slice(decimalIndex + decimal.length).replace(/[^\p{Nd}]/gu, "");
+  const sign = value.trim().startsWith("-") ? "-" : "";
+  if (!integer && decimalIndex < 0) return sign;
+  return sign + formatNumber(parseNumberInput(integer, locale), { maximumFractionDigits: 0 }, locale)
+    + (decimalIndex < 0 ? "" : decimal + fraction);
 }
 
 export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
@@ -44,14 +66,15 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
       placeholder,
       className,
       disabled,
+      groupWhileEditing = false,
     },
     ref,
   ) {
     const locale = useNumberLocale();
     const formatRaw = useCallback(
       (value: number) =>
-        formatNumber(value, { useGrouping: false, maximumFractionDigits: 20 }, locale),
-      [locale],
+        formatNumber(value, { useGrouping: groupWhileEditing, maximumFractionDigits: 20 }, locale),
+      [locale, groupWhileEditing],
     );
     const numeric = typeof value === "string" ? parseFloat(value) || 0 : (value ?? 0);
     // Forms can distinguish a missing amount from an explicitly entered zero.
@@ -61,7 +84,14 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
     const [raw, setRaw] = useState(hasValue ? formatRaw(numeric) : "");
     const editingLocale = useRef(locale);
     const inputRef = useRef<HTMLInputElement>(null);
+    const pendingCaret = useRef<number | null>(null);
     useImperativeHandle(ref, () => inputRef.current!);
+    useLayoutEffect(() => {
+      if (focused && pendingCaret.current !== null) {
+        inputRef.current?.setSelectionRange(pendingCaret.current, pendingCaret.current);
+        pendingCaret.current = null;
+      }
+    });
 
     // Sync raw when value changes externally (e.g. form reset)
     useEffect(() => {
@@ -93,13 +123,44 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const str = e.target.value;
+      let str = e.target.value;
+      const activeLocale = focused ? editingLocale.current : locale;
+      if (groupWhileEditing) {
+        const { decimal, group } = editingSeparators(activeLocale);
+        let caret = e.target.selectionStart ?? str.length;
+        const inputType = (e.nativeEvent as InputEvent).inputType;
+        if (inputType === "insertFromPaste" && /\p{Nd}/u.test(str)) {
+          str = formatRaw(parseNumberInput(str, activeLocale));
+          caret = str.length;
+        }
+        // Deleting a separator should also delete the adjacent digit instead of restoring it.
+        if (str.length === raw.length - group.length && raw.slice(caret, caret + group.length) === group
+          && raw.slice(0, caret) + raw.slice(caret + group.length) === str) {
+          if (inputType === "deleteContentBackward" && caret > 0) {
+            str = str.slice(0, caret - 1) + str.slice(caret);
+            caret--;
+          } else if (inputType === "deleteContentForward") {
+            str = str.slice(0, caret) + str.slice(caret + 1);
+          }
+        }
+        const significant = (character: string) => /\p{Nd}/u.test(character) || character === decimal || character === "-";
+        const beforeCaret = Array.from(str.slice(0, caret)).filter(significant).length;
+        str = groupedEditingValue(str, activeLocale);
+        let remaining = beforeCaret;
+        let position = 0;
+        for (const character of str) {
+          if (remaining <= 0) break;
+          position += character.length;
+          if (significant(character)) remaining--;
+        }
+        pendingCaret.current = position;
+      }
       setRaw(str);
       if (onEmpty && !/\p{Nd}/u.test(str)) {
         onEmpty();
         return;
       }
-      const parsed = parseNumberInput(str, focused ? editingLocale.current : locale);
+      const parsed = parseNumberInput(str, activeLocale);
       onChange(parsed);
     };
 

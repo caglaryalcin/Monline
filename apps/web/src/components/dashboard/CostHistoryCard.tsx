@@ -112,7 +112,7 @@ export function CostHistoryCard({
             >
               <SelectTrigger
                 aria-label={t("history_select_year")}
-                className="h-9 w-auto min-w-[6.5rem] gap-2 rounded-xl text-base font-semibold"
+                className="h-9 w-[7.5rem] min-w-[7.5rem] shrink-0 gap-3 rounded-xl text-base font-semibold [&>span]:line-clamp-none [&>span]:overflow-visible [&>span]:whitespace-nowrap"
               >
                 <SelectValue />
               </SelectTrigger>

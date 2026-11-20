@@ -991,3 +991,41 @@ html[data-theme-changing] *::after {
   mask-composite: exclude;
   pointer-events: none;
 }
+
+.savings-market-viewport {
+  overflow: hidden;
+}
+.savings-market-track {
+  display: flex;
+  width: max-content;
+  animation: savings-market-scroll 55s linear infinite;
+}
+.savings-market-group {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2rem;
+  padding-right: 2rem;
+  margin: 0;
+  list-style: none;
+}
+.savings-market-viewport:hover .savings-market-track,
+.savings-market-viewport:focus-within .savings-market-track,
+.savings-market-viewport[data-paused="true"] .savings-market-track {
+  animation-play-state: paused;
+}
+.savings-market-viewport[data-paused="true"] {
+  overflow-x: auto;
+}
+.savings-market-viewport[data-paused="true"] [aria-hidden="true"] {
+  display: none;
+}
+@keyframes savings-market-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .savings-market-track { animation: none; }
+  .savings-market-viewport { overflow-x: auto; }
+  .savings-market-group[aria-hidden="true"] { display: none; }
+}

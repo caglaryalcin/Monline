@@ -35,6 +35,9 @@ export interface Saving {
 }
 export type SavingInput = Omit<Saving, "id">;
 export interface SavingsRates {
+  market_quotes?: { symbol: string; bid: number; ask: number; change_percent: number | null; currency: string }[];
+  valuation_side?: "bid";
+  fallback?: boolean;
   rates: Partial<Record<string, number>>;
   currency_rates?: Record<string, number>;
   as_of: string | null;

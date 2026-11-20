@@ -4,7 +4,9 @@ import { initReactI18next } from "react-i18next";
 
 import { LS_KEYS } from "@/lib/constants";
 
+import { affordabilityTranslations } from "./affordabilityTranslations";
 import { budgetTranslations } from "./budgetTranslations";
+import { creditCardTranslations } from "./creditCardTranslations";
 import { financeTranslations } from "./financeTranslations";
 import { financeWorkspaceTranslations } from "./financeWorkspaceTranslations";
 import bg from "./locales/bg.json";
@@ -45,6 +47,8 @@ i18n
           ...spreadsheetScheduleTranslations.en,
           ...savingsTranslations.en,
           ...financeWorkspaceTranslations.en,
+          ...creditCardTranslations.en,
+          ...affordabilityTranslations.en,
         },
       },
       pt_BR: { translation: pt_br },
@@ -58,6 +62,8 @@ i18n
           ...spreadsheetScheduleTranslations.de,
           ...savingsTranslations.de,
           ...financeWorkspaceTranslations.de,
+          ...creditCardTranslations.de,
+          ...affordabilityTranslations.de,
         },
       },
       es: { translation: es },
@@ -80,6 +86,8 @@ i18n
           ...spreadsheetScheduleTranslations.tr,
           ...savingsTranslations.tr,
           ...financeWorkspaceTranslations.tr,
+          ...creditCardTranslations.tr,
+          ...affordabilityTranslations.tr,
         },
       },
       uk: { translation: uk },

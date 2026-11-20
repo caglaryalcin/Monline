@@ -18,6 +18,8 @@ function refundedStatementCharges(rows) {
 function validate(input, { legacy = false } = {}) {
   if (
     !input ||
+    (input.credit_card !== undefined &&
+      (typeof input.credit_card !== "string" || (input.credit_card !== "" && !/^[a-z0-9]{15}$/.test(input.credit_card)))) ||
     !["enpara", "denizbank", "garanti"].includes(input.bank) ||
     typeof input.file_name !== "string" ||
     !input.file_name.trim() ||
@@ -213,6 +215,8 @@ function validate(input, { legacy = false } = {}) {
     invalid();
   return {
     bank: input.bank,
+    card_details: require("./pure/statement-card.mjs").validateStatementCard(input.card_details),
+    credit_card: input.credit_card || "",
     file_name: input.file_name.trim(),
     file_hash: input.file_hash,
     period: input.period,

@@ -88,7 +88,7 @@ export function financeRowsForYear(rows: FinanceRow[], year: number, data: Parti
   }).sort((a, b) => Number(!!a.is_auto_carryover) - Number(!!b.is_auto_carryover) ||
     (a.row_order || 0) - (b.row_order || 0) || loanPriority(b) - loanPriority(a));
 }
-export function isFinanceCarryoverRow(row: FinanceRow) {
+export function isFinanceCarryoverRow(row: Pick<FinanceRow, "kind" | "is_auto_carryover">) {
   return row.kind === "expense" && row.is_auto_carryover === true;
 }
 export function financeStartYear(data: FinanceData) {
@@ -106,7 +106,7 @@ export function financeStartYear(data: FinanceData) {
 }
 // Preserve historical opening-balance calculations for old manually entered
 // deficit rows. Their names do not make them protected system rows.
-export function isFinanceDeficitRow(row: FinanceRow) {
+export function isFinanceDeficitRow(row: Pick<FinanceRow, "kind" | "name" | "is_auto_carryover">) {
   const name = row.name
     .normalize("NFD")
     .toLowerCase()
@@ -211,23 +211,27 @@ export interface FinanceCardTransaction {
   notes: string;
 }
 export const cents = (amount: number) => Math.round(amount * 100);
-export function sumEntries(entries: FinanceEntry[]) {
+export function sumEntries(entries: ReadonlyArray<Pick<FinanceEntry, "amount">>) {
   return entries.reduce((sum, entry) => sum + cents(entry.amount), 0) / 100;
 }
-export function canTagPayment(row: FinanceRow) {
+export function canTagPayment(row: Pick<FinanceRow, "kind" | "expense_type" | "is_loan">) {
   return row.kind === "expense" && row.expense_type !== "credit_card" && !row.is_loan;
 }
-export function isCardPaid(entry: FinanceEntry, row: FinanceRow) {
+export function isCardPaid(entry: Pick<FinanceEntry, "payment_tag">, row: Pick<FinanceRow, "kind" | "expense_type" | "is_loan" | "payment_card">) {
   return (
     canTagPayment(row) &&
     (entry.payment_tag === "credit_card" || (entry.payment_tag !== "direct" && !!row.payment_card))
   );
 }
-export function financeMonths(data: FinanceData, year: number) {
+export interface FinanceMonthData {
+  finance_rows: Pick<FinanceRow, "id" | "kind" | "name" | "is_deleted" | "is_auto_carryover" | "expense_type" | "is_loan" | "payment_card">[];
+  finance_entries: Pick<FinanceEntry, "row_id" | "date" | "amount" | "status" | "settled_date" | "payment_tag">[];
+}
+export function financeMonths(data: FinanceMonthData, year: number) {
   const activeRows = data.finance_rows.filter((row) => !row.is_deleted);
   const rows = new Map(activeRows.map((row) => [row.id, row]));
   const carryoverRows = new Set(activeRows.filter(isFinanceDeficitRow).map((row) => row.id));
-  const entriesByMonth = new Map<string, FinanceEntry[]>();
+  const entriesByMonth = new Map<string, FinanceMonthData["finance_entries"]>();
   for (const entry of data.finance_entries) {
     const month = entry.date.slice(0, 7);
     if (!rows.has(entry.row_id) || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) continue;
@@ -248,7 +252,7 @@ export function financeMonths(data: FinanceData, year: number) {
     const expected = sumEntries(income.filter((entry) => entry.status === "planned"));
     const paid = sumEntries(expense.filter((entry) => entry.status === "settled"));
     const pending = sumEntries(expense.filter((entry) => entry.status === "planned"));
-    return { received, expected, paid, pending };
+    return { received, expected, paid, pending, expense_count: expense.length };
   };
   let previousRemaining = 0;
   const firstPeriod = [...entriesByMonth.entries()].sort(([left], [right]) => left.localeCompare(right))[0];

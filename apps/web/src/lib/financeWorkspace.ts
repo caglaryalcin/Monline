@@ -9,6 +9,7 @@ export const FINANCE_SECTIONS = [
   { key: "ledger", path: "/finance" },
   { key: "debts", path: "/debt" },
   { key: "savings", path: "/savings" },
+  { key: "affordability", path: "/finance/affordability" },
 ] as const;
 
 export function financeWorkspaceSection(pathname: string) {

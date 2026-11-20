@@ -11,6 +11,9 @@ const {
 } = require("../runtime.cjs");
 const { loadSpendingData } = require("./lib/spending-data.js");
 const { budgetData } = require("./lib/pure/budget.js");
+const { spendingData } = require("./lib/pure/spending.js");
+const { compactAffordabilitySnapshot } = require("./lib/pure/affordability-snapshot.js");
+const affordabilityCache = require("./lib/affordability-cache.js").createAffordabilityCache(repository);
 const matching = require("./lib/pure/budget-matching.js");
 const finance = require("./lib/pure/finance.js");
 function owner(e) {
@@ -25,13 +28,7 @@ function owned(name, id, user) {
 }
 function load(user) {
   const data = loadSpendingData(repository, user);
-  for (const name of [
-    "subscriptions",
-    "payment_records",
-    "currencies",
-    "payment_methods",
-    "categories",
-  ])
+  for (const name of ["categories"])
     data[name] = repository
       .findRecordsByFilter(name, "user = {:user}", "", 0, 0, { user })
       .map((record) => record.publicExport());
@@ -47,6 +44,16 @@ function today() {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date());
+}
+function outlook(data, date, preparedSpending = spendingData(data), offsets = [0, 1, 2, 3, 4, 5]) {
+  const [year, month] = date.split("-").map(Number);
+  const payment_methods = data.payment_methods.map(method => ({
+    id: method.id, name: method.name, finance_card: method.finance_card || "",
+  }));
+  return offsets.map(offset => {
+    const period = new Date(Date.UTC(year, month - 1 + offset, 1)).toISOString().slice(0, 7);
+    return { ...budgetData(data, period, date, preparedSpending), payment_methods };
+  });
 }
 function validMonth(month) {
   return (
@@ -78,6 +85,32 @@ routerAdd("GET", "/api/budget", (e) => {
         finance_card: method.finance_card || "",
       })),
     };
+  });
+  return e.json(200, result);
+});
+routerAdd("GET", "/api/budget/outlook", e => {
+  const user = owner(e), date = today();
+  const result = repository.runInTransaction(() => outlook(load(user), date));
+  return e.json(200, result);
+});
+// One owner-scoped snapshot keeps the simulator independent of other screens'
+// query lifecycles and reads all six months from the same database state.
+routerAdd("GET", "/api/budget/affordability", e => {
+  const user = owner(e), date = today();
+  const result = repository.runInTransaction(() => {
+    const revision = affordabilityCache.version(user);
+    const cached = affordabilityCache.get(user, date, revision);
+    if (cached) return cached;
+    const data = load(user);
+    const prepared = spendingData(data);
+    const counts = new Map();
+    for (const statement of data.bank_statements) counts.set(statement.credit_card || "", (counts.get(statement.credit_card || "") || 0) + 1);
+    const holdings = repository.findRecordsByFilter("savings", "user = {:user}", "name,id", 0, 0, { user }).map(record => record.publicExport());
+    const cards = repository.findRecordsByFilter("credit_cards", "user = {:user}", "created,id", 0, 0, { user })
+      .map(record => ({ ...record.publicExport(), statement_count: counts.get(record.id) || 0 }));
+    const snapshot = compactAffordabilitySnapshot(data, spendingData(data, { trackingOnly: true }),
+      outlook(data, date, prepared), holdings, cards, date, outlook(data, date, prepared, [-3, -2, -1]));
+    return affordabilityCache.set(user, date, revision, snapshot);
   });
   return e.json(200, result);
 });

@@ -13,7 +13,7 @@ function refreshRates(force) {
   return refreshPromise;
 }
 
-async function latest({ force = false } = {}) {
+async function referenceRates({ force = false } = {}) {
   const settings = require("../../server-config.cjs").exchange(repository);
   const configured = !!settings.enabled && !!String(settings.api_key || "").trim();
   const cached = exchange.cachedLatestRates(repository);
@@ -27,6 +27,9 @@ async function latest({ force = false } = {}) {
       if (force || !cached || !parseRates(cached)) await pending;
     }
   }
+  // An explicit refresh also waits when the quote was saved just before its
+  // background task finished clearing the in-flight flag.
+  if (force && configured && refreshPromise) await refreshPromise;
   const configNow = require("../../server-config.cjs").exchange(repository);
   const stillConfigured = !!configNow.enabled && !!String(configNow.api_key || "").trim();
   // Reading again also handles connection changes during an awaited request.
@@ -47,4 +50,10 @@ async function latest({ force = false } = {}) {
   };
 }
 
+async function latest(options) {
+  const market = await require("./market-rates.js").latest();
+  if (market) return market;
+  const reference = await referenceRates(options);
+  return { ...reference, fallback: true, status: reference.status === "not_configured" ? "unavailable" : reference.status };
+}
 module.exports = { latest };

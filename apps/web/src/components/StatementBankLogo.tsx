@@ -12,7 +12,7 @@ const BANK_LOGOS: Record<StatementBank, string> = {
   garanti: "/assets/logos/banks/garanti.svg",
 };
 
-export function StatementBankLogo({ bank }: { bank: StatementBank | "" }) {
+export function StatementBankLogo({ bank, className }: { bank: StatementBank | ""; className?: string }) {
   const [failedSource, setFailedSource] = useState("");
   const source = bank ? BANK_LOGOS[bank] : undefined;
   const showLogo = typeof source === "string" && source !== failedSource;
@@ -23,6 +23,7 @@ export function StatementBankLogo({ bank }: { bank: StatementBank | "" }) {
       className={cn(
         "flex h-11 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border p-2",
         showLogo ? "border-black/10 bg-white" : "border-border bg-muted/20 text-primary",
+        className,
       )}
     >
       {showLogo ? (

@@ -1,4 +1,6 @@
 {
+  "currency_choose_list": "Währung aus Liste auswählen",
+  "currency_enter_code": "Code manuell eingeben…",
   "reactivate_new_amount": "Neuer Betrag",
   "reactivate_amount_help": "Betrag für diese und die nächste Zahlung. Bereits bezahlte Einträge bleiben erhalten.",
   "reactivate_invalid_amount": "Einen gültigen Betrag eingeben.",

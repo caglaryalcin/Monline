@@ -244,7 +244,7 @@ class Repository {
       );
     if (!this.connection.prepare('PRAGMA table_info("finance_statement_links")').all().some(column => column.name === "allow_month_boundary"))
       this.connection.exec("ALTER TABLE finance_statement_links ADD COLUMN allow_month_boundary INTEGER NOT NULL DEFAULT 0");
-    for (const name of ["summary", "unresolved", "excluded_transactions"])
+    for (const name of ["summary", "unresolved", "excluded_transactions", "card_details"])
       if (
         !this.connection
           .prepare('PRAGMA table_info("bank_statements")')
@@ -254,6 +254,13 @@ class Repository {
         this.connection.exec(
           `ALTER TABLE bank_statements ADD COLUMN ${identifier(name)} TEXT DEFAULT 'null'`,
         );
+    if (!this.connection.prepare('PRAGMA table_info("bank_statements")').all().some(column => column.name === "credit_card"))
+      this.connection.exec("ALTER TABLE bank_statements ADD COLUMN credit_card TEXT NOT NULL DEFAULT ''");
+    for (const field of ["statement_day", "statement_weekend_adjust"])
+      if (!this.connection.prepare('PRAGMA table_info("credit_cards")').all().some(column => column.name === field))
+        this.connection.exec(`ALTER TABLE credit_cards ADD COLUMN ${identifier(field)} INTEGER NOT NULL DEFAULT 0`);
+    if (!this.connection.prepare('PRAGMA table_info("credit_cards")').all().some(column => column.name === "network"))
+      this.connection.exec("ALTER TABLE credit_cards ADD COLUMN network TEXT NOT NULL DEFAULT ''");
     if (
       !this.connection
         .prepare('PRAGMA table_info("bank_statements")')

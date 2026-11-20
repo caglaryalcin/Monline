@@ -19,6 +19,8 @@ function exportScope(app, userId, scope) {
   if (scope === "installments") {
     const statementIds = new Set(require("./pure/spending.js").spendingData(backup.data, { trackingOnly: true }).installments.map((plan) => plan.statement_id));
     backup.data.bank_statements = backup.data.bank_statements.filter((statement) => statementIds.has(statement.id));
+    // Scoped installment transfers retain statements without exporting card profiles.
+    for (const statement of backup.data.bank_statements) statement.credit_card = "";
     const selected = new Set(backup.data.subscriptions.filter((sub) => sub.record_type !== "credit" && sub.payment_limit > 1).map((sub) => sub.id));
     // Preserve forward replacement links without exporting unrelated subscriptions.
     for (const id of selected) {

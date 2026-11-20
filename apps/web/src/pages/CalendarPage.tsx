@@ -33,11 +33,14 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionNotRenewed } from "@/hooks/useSubscriptionNotRenewed";
+import { type CreditCardClosing,creditCardClosings } from "@/lib/creditCardCalendar";
+import { creditCardLabel, creditCardsKey } from "@/lib/creditCards";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import { queryKeys } from "@/lib/queryKeys";
 import { EMPTY_SPENDING, spendingKey } from "@/lib/spending";
 import { toast } from "@/lib/toast";
 import { categoriesService } from "@/services/categories";
+import { creditCardsService } from "@/services/creditCards";
 import { currenciesService } from "@/services/currencies";
 import { cyclesService } from "@/services/cycles";
 import { financeService } from "@/services/finance";
@@ -53,12 +56,21 @@ export function CalendarPage() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
   const queryClient = useQueryClient();
+  const creditCards = useQuery({ queryKey: creditCardsKey(userId), queryFn: creditCardsService.list,
+    enabled: !!userId, staleTime: 30000, refetchOnWindowFocus: "always" });
 
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const calendarCards = (creditCards.data?.cards ?? []).filter(card => card.statement_day && matchesCalendarSearch(creditCardLabel(card), searchTerm));
+  const cardClosings = creditCardClosings(calendarCards, year, month, true);
+  const closingsByDate = cardClosings.reduce<Record<string, CreditCardClosing[]>>((grouped, event) => {
+    (grouped[event.date] ??= []).push(event); return grouped;
+  }, {});
+  const selectedDateKey = selectedDate ? toDateStr(selectedDate) : "";
+  const selectedClosings = selectedDate ? creditCardClosings(calendarCards, selectedDate.getFullYear(), selectedDate.getMonth() + 1).filter(event => event.date === selectedDateKey) : [];
   const selectedDay =
     selectedDate?.getFullYear() === year && selectedDate.getMonth() + 1 === month
       ? selectedDate.getDate()
@@ -448,13 +460,15 @@ export function CalendarPage() {
         !subscriptionsError &&
         !spending.isError &&
         !Object.values(entriesByDate).some((entries) => entries.length > 0) &&
-        !undatedFees.length && (
+        !undatedFees.length && !cardClosings.length && (
           <p role="status" className="text-sm text-muted-foreground">
             {t("calendar_search_empty")}
           </p>
         )}
 
+      {creditCards.isError && <p role="alert" className="text-sm text-destructive">{t("credit_cards_load_failed")}</p>}
       <CalendarMonthCard
+        closingsByDate={closingsByDate}
         month={month}
         year={year}
         now={now}
@@ -503,6 +517,7 @@ export function CalendarPage() {
               <DialogDescription>{t("calendar_desc")}</DialogDescription>
             </DialogHeader>
             <DayPanel
+              cardClosings={selectedClosings}
               day={selectedDate.getDate()}
               month={selectedDate.getMonth() + 1}
               year={selectedDate.getFullYear()}

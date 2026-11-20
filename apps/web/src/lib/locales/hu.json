@@ -1,4 +1,6 @@
 {
+  "currency_choose_list": "Pénznem kiválasztása a listából",
+  "currency_enter_code": "Kód megadása kézzel…",
   "reactivate_new_amount": "Új összeg",
   "reactivate_amount_help": "Az aktuális és a következő fizetés összege. A korábban kifizetett tételek megmaradnak.",
   "reactivate_invalid_amount": "Adj meg érvényes összeget.",

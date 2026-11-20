@@ -1,4 +1,6 @@
 {
+  "currency_choose_list": "Choose currency from list",
+  "currency_enter_code": "Enter code manually…",
   "reactivate_new_amount": "New amount",
   "reactivate_amount_help": "The amount for this payment and the next payment. Previously paid records are preserved.",
   "reactivate_invalid_amount": "Enter a valid amount.",

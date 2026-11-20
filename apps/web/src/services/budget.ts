@@ -13,6 +13,7 @@ export interface BudgetEvent {
   budget_category?: string;
   card_name?: string;
   card_row_id?: string;
+  row_id?: string;
   statement_id?: string;
   statement_period?: string;
   installment?: string;
@@ -23,6 +24,8 @@ export interface BudgetEvent {
   verified_target_name?: string;
   verified_target_id?: string;
   forecast?: boolean;
+  card_paid?: boolean;
+  amount_pending?: boolean;
   manual_bill_id?: string;
   separations?: { id: string; source_id: string; name: string; valid: boolean }[];
 }
@@ -79,6 +82,7 @@ export interface BudgetView {
   issues: unknown[];
 }
 export const budgetService = {
+  outlook: (signal?: AbortSignal) => api.get<BudgetView[]>("/api/budget/outlook", { signal, timeoutMs: 15000 }),
   get: (month: string) => api.get<BudgetView>(`/api/budget?month=${encodeURIComponent(month)}`),
   match: (body: {
     month: string;

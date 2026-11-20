@@ -15,7 +15,7 @@ import { financeOverview, type FinanceOverviewStatement } from "@/lib/financeOve
 import { resolveLocale } from "@/lib/locale";
 import { spendingKey } from "@/lib/spending";
 import { financeService } from "@/services/finance";
-import { savingsRatesRefetchInterval, savingsService } from "@/services/savings";
+import { savingsRatesKey, savingsRatesRefetchInterval, savingsService } from "@/services/savings";
 import { spendingService } from "@/services/spending";
 
 export function FinanceOverview() {
@@ -42,7 +42,7 @@ export function FinanceOverview() {
     !!spending.data?.events.some((event) => event.card_row_id && event.currency !== "TRY");
   const needsRates = needsSavingsRates || needsDebtRates;
   const rates = useQuery({
-    queryKey: ["savings-rates", userId, "fixer"], queryFn: savingsService.rates,
+    queryKey: savingsRatesKey(userId), queryFn: savingsService.rates,
     enabled, staleTime: 60000, refetchInterval: savingsRatesRefetchInterval,
   });
   const summary = useMemo(() => financeOverview({

@@ -1,5 +1,6 @@
 const {
   Record,
+  BadRequestError,
   NotFoundError,
   UnauthorizedError,
   apiLimits,
@@ -7,6 +8,21 @@ const {
   routerAdd,
 } = require("../runtime.cjs");
 const domainPath = __dirname;
+routerAdd("PUT", "/api/statements/{id}/card-details", e => {
+  if (!e.auth || e.auth.collection().name !== "users") throw new UnauthorizedError();
+  return repository.runInTransaction(tx => {
+    const statement = tx.findRecordById("bank_statements", e.request.pathValue("id"));
+    if (statement.getString("user") !== e.auth.id) throw new NotFoundError();
+    const body = e.requestInfo().body;
+    if (body.file_hash !== statement.getString("file_hash")) throw new BadRequestError("credit_cards_source_pdf_mismatch");
+    let details;
+    try { details = require("./lib/pure/statement-card.mjs").validateStatementCard(body.card_details); }
+    catch { throw new BadRequestError("credit_cards_invalid_details"); }
+    statement.set("card_details", details);
+    tx.save(statement);
+    return e.json(200, details);
+  });
+}, apiLimits.bodyLimit(4096));
 routerAdd(
   "POST",
   "/api/statements/check-file",
@@ -203,8 +219,8 @@ routerAdd(
     } catch (error) {
       return e.json(error.message === "statement_duplicate" ? 409 : 400, {
         error:
-          error.message === "statement_duplicate"
-            ? "statement_duplicate"
+          error.message === "statement_duplicate" || error.message === "credit_cards_bank_mismatch"
+            ? error.message
             : "statement_save_failed",
       });
     }

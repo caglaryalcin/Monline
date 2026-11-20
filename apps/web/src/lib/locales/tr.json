@@ -1,4 +1,6 @@
 {
+  "currency_choose_list": "Listeden para birimi seç",
+  "currency_enter_code": "Kodu elle gir…",
   "reactivate_new_amount": "Yeni tutar",
   "reactivate_amount_help": "Bu işlemdeki ödeme ve sonraki ödeme için kullanılacak tutar. Önceden ödenmiş kayıtlar korunur.",
   "reactivate_invalid_amount": "Geçerli bir tutar girin.",

@@ -1,15 +1,16 @@
 import { Link, useRouterState, useSearch } from "@tanstack/react-router";
-import { ArrowLeftRight, FileText, Landmark, LayoutDashboard, PiggyBank } from "lucide-react";
+import { ArrowLeftRight, CreditCard, Landmark, LayoutDashboard, PiggyBank, ShoppingBag } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
+import { SavingsMarketTicker } from "@/components/SavingsMarketTicker";
 import { InfoButton } from "@/components/ui/info-button";
 import { FinanceCurrencyContext } from "@/contexts/FinanceCurrencyContext";
 import { useFinanceCurrency } from "@/hooks/useFinanceCurrency";
 import { FINANCE_SECTIONS, financeWorkspaceSection } from "@/lib/financeWorkspace";
 import { cn } from "@/lib/utils";
 
-const icons = { overview: LayoutDashboard, ledger: ArrowLeftRight, debts: Landmark, savings: PiggyBank };
+const icons = { overview: LayoutDashboard, ledger: ArrowLeftRight, debts: Landmark, savings: PiggyBank, affordability: ShoppingBag };
 
 export function FinanceWorkspace({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
@@ -62,7 +63,7 @@ export function FinanceWorkspace({ children }: { children: ReactNode }) {
             </Link>
             <Link to="/statements" aria-current={statements ? "page" : undefined}
               className={cn("flex items-center gap-2 rounded-lg px-3 py-1.5 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", statements ? "bg-primary text-primary-foreground" : "text-muted-foreground")}>
-              <FileText aria-hidden="true" className="h-4 w-4" />{t("bank_statements")}
+              <CreditCard aria-hidden="true" className="h-4 w-4" />{t("credit_cards_title")}
             </Link>
             {debtSection === "loans" && <InfoButton title={t("loans_calculation")}>
               <p className="mb-2 font-semibold text-foreground">{t("loans_calculation")}</p>
@@ -75,6 +76,7 @@ export function FinanceWorkspace({ children }: { children: ReactNode }) {
           {children}
         </div>
       </div>
+      {active === "savings" && <SavingsMarketTicker />}
     </section>
     </FinanceCurrencyContext.Provider>
   );

@@ -3,6 +3,7 @@ const { spendingData, isBill } = require("./spending.js");
 const { rowsForYear } = require("./finance-years.js");
 const {
   applyMatches,
+  compatible,
   eventId,
   subscriptionEvent,
 } = require("./budget-matching.js");
@@ -28,8 +29,14 @@ function category(event) {
     return "online";
   return "other";
 }
-function budgetData(data, month, today) {
-  const spending = spendingData(data);
+function budgetData(data, month, today, preparedSpending) {
+  // Each month owns its mutable matching flags and separation decisions.
+  const spending = preparedSpending ? {
+    ...preparedSpending,
+    events: preparedSpending.events.map(event => ({ ...event,
+      ...(event.separations ? { separations: event.separations.map(decision => ({ ...decision })) } : {}),
+    })),
+  } : spendingData(data);
   const events = spending.events;
   const rows = new Map(data.finance_rows.map((row) => [row.id, row]));
   const currencies = new Map(
@@ -228,6 +235,21 @@ function budgetData(data, month, today) {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, " ")
       .trim();
+  const candidateKey = (month, currency, amount) => JSON.stringify([month, currency, cents(amount)]);
+  const candidates = new Map();
+  for (const source of events) {
+    if (source.source !== "statement" || source.kind !== "expense" || source.undated || source.verified_target_id) continue;
+    for (const period of new Set([source.date.slice(0, 7), source.statement_period])) {
+      const key = candidateKey(period, source.currency, source.amount);
+      const group = candidates.get(key) || [];
+      group.push(source); candidates.set(key, group);
+    }
+  }
+  const sourceWords = new Map();
+  const wordsForSource = source => {
+    if (!sourceWords.has(source)) sourceWords.set(source, new Set(normalize(source.name).split(" ")));
+    return sourceWords.get(source);
+  };
   for (const target of events.filter(
     (event) =>
       event.source !== "statement" &&
@@ -243,17 +265,17 @@ function budgetData(data, month, today) {
           !["fatura", "faturasi", "odeme", "payment", "gider"].includes(word),
       );
     if (
-      events.some(
+      (candidates.get(candidateKey(target.date.slice(0, 7), target.currency, target.amount)) || []).some(
         (source) =>
           source.source === "statement" &&
           !source.verified_target_id &&
           !target.separations?.some(
             (decision) => decision.valid && decision.source_id === source.id,
           ) &&
-          require("./budget-matching.js").compatible(target, source) &&
+          compatible(target, source) &&
           (target.card_row_id ||
             words.some((word) =>
-              normalize(source.name).split(" ").includes(word),
+              wordsForSource(source).has(word),
             )),
       )
     ) {

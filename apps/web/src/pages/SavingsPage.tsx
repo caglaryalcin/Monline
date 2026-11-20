@@ -4,17 +4,16 @@ import {
   Coins,
   DollarSign,
   Euro,
-  Lightbulb,
   Pencil,
   PiggyBank,
   Plus,
-  RefreshCw,
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import { CurrencyLabel } from "@/components/CurrencyLabel";
 import { SummaryCard } from "@/components/dashboard/SummaryCard";
 import { FinanceAnimationIcon } from "@/components/FinanceAnimationIcon";
 import { PageLoading } from "@/components/PageLoading";
@@ -32,11 +31,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { ThemedSelect } from "@/components/ui/themed-select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFinanceCurrency } from "@/hooks/useFinanceCurrency";
 import { useNumberLocale } from "@/hooks/useNumberLocale";
-import { resolveDateLocale } from "@/lib/locale";
 import { formatNumber } from "@/lib/numberFormat";
 import {
   banknoteDenominations,
@@ -48,17 +46,16 @@ import {
   savingsValue,
 } from "@/lib/savings";
 import { cn, formatCurrency, getCurrencyFractionDigits, getCurrencySymbol } from "@/lib/utils";
-import { savingsRatesRefetchInterval, savingsService } from "@/services/savings";
+import { savingsRatesKey, savingsRatesRefetchInterval, savingsService } from "@/services/savings";
 
 export function SavingsPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const mainCurrency = useFinanceCurrency({ convert: false });
   const locale = useNumberLocale();
-  const dateLocale = resolveDateLocale(i18n, user?.country);
   const queryClient = useQueryClient();
   const key = ["savings", user?.id];
-  const ratesKey = ["savings-rates", user?.id, "fixer"];
+  const ratesKey = savingsRatesKey(user?.id);
   const [selection, setSelection] = useState<{ owner: string; currency: string } | null>(null);
   const currency =
     selection && selection.owner === user?.id ? selection.currency : mainCurrency.currency;
@@ -70,13 +67,8 @@ export function SavingsPage() {
     queryKey: ratesKey,
     queryFn: savingsService.rates,
     enabled: !!user?.id,
-    staleTime: 60000,
+    staleTime: 15000,
     refetchInterval: savingsRatesRefetchInterval,
-  });
-  const refreshRates = useMutation({
-    mutationFn: savingsService.refreshRates,
-    onSuccess: (data) => queryClient.setQueryData(ratesKey, data),
-    onError: () => toast.error(t("savings_rates_unavailable")),
   });
   const remove = useMutation({
     mutationFn: savingsService.remove,
@@ -110,7 +102,6 @@ export function SavingsPage() {
       currency,
     ]),
   ];
-  const rateAvailable = !!rates.data && Object.keys(rates.data.rates).length > 0;
   const extraCurrencies = [
     ...new Set(
       records
@@ -258,37 +249,23 @@ export function SavingsPage() {
             <Label htmlFor="savings-display-currency" className="text-xs text-muted-foreground">
               {t("savings_display_currency")}
             </Label>
-            <ThemedSelect
-              id="savings-display-currency"
+            <Select
               value={currency}
-              className="h-10 min-w-28 rounded-xl"
-              onChange={(event) =>
-                setSelection({ owner: user?.id || "", currency: event.target.value })
+              onValueChange={(code) =>
+                setSelection({ owner: user?.id || "", currency: code })
               }
             >
+              <SelectTrigger id="savings-display-currency" className="h-10 w-auto min-w-[10.5rem] gap-3 rounded-xl"><SelectValue /></SelectTrigger>
+              <SelectContent>
               {currencyOptions.map((code) => {
                 const symbol = getCurrencySymbol(code, locale);
                 return (
-                  <option key={code} value={code}>
-                    {symbol === code ? code : `${code} (${symbol})`}
-                  </option>
+                  <SelectItem key={code} value={code} textValue={`${code} ${symbol}`}><CurrencyLabel code={code} symbol={symbol} /></SelectItem>
                 );
               })}
-            </ThemedSelect>
+              </SelectContent>
+            </Select>
           </div>
-          <Button
-            variant="outline"
-            disabled={rates.isFetching || refreshRates.isPending}
-            onClick={() => refreshRates.mutate()}
-          >
-            <RefreshCw
-              className={cn(
-                "mr-2 h-4 w-4",
-                (rates.isFetching || refreshRates.isPending) && "animate-spin",
-              )}
-            />
-            {t("savings_rates_refresh")}
-          </Button>
           <Button onClick={() => setEditor({})}>
             <Plus className="mr-2 h-4 w-4" />
             {t("savings_add")}
@@ -388,55 +365,6 @@ export function SavingsPage() {
               </Button>
             </div>
           )}
-          <footer className="flex items-start gap-2 border-t pt-4 text-xs text-muted-foreground">
-            <Lightbulb
-              className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
-              aria-hidden="true"
-            />
-            <div className="min-w-0 space-y-2 leading-relaxed">
-              <p>{t("savings_rates_help")}</p>
-              <p className="flex flex-wrap gap-x-3 gap-y-1">
-                <a
-                  className="underline underline-offset-2"
-                  href="https://fixer.io/"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Fixer.io
-                </a>
-                {rates.data?.as_of && (
-                  <span>
-                    {t("savings_rates_as_of", {
-                      date: new Intl.DateTimeFormat(dateLocale, {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      }).format(new Date(rates.data.as_of)),
-                    })}
-                  </span>
-                )}
-              </p>
-              {(!rates.isPending || rateAvailable) &&
-                (!rateAvailable || rates.data?.stale || rates.isError) && (
-                  <p role="status" className="font-medium text-amber-700 dark:text-amber-400">
-                    {t(
-                      rates.data?.status === "not_configured"
-                        ? "savings_fixer_not_configured"
-                        : rateAvailable
-                          ? "savings_rates_stale"
-                          : "savings_rates_unavailable",
-                    )}
-                  </p>
-                )}
-              {rates.data?.status === "gold_unavailable" && (
-                <p role="status" className="font-medium text-amber-700 dark:text-amber-400">
-                  {t("savings_gold_unavailable")}
-                </p>
-              )}
-              {missing > 0 && (
-                <p role="status">{t("savings_missing_values", { count: missing })}</p>
-              )}
-            </div>
-          </footer>
         </>
       )}
 

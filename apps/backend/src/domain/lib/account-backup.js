@@ -39,6 +39,7 @@ const PROFILE = [
   "avatar",
 ];
 const FIELDS = {
+  credit_cards: ["bank", "name", "last_four", "expiry", "statement_day", "statement_weekend_adjust", "network", "created"],
   savings: ["name", "asset", "quantity", "notes", "banknotes"],
   finance_rows: [
     "name",
@@ -186,6 +187,8 @@ const FIELDS = {
   ],
   notification_log: ["subscription_id", "sent_date", "reminder_key"],
   bank_statements: [
+    "card_details",
+    "credit_card",
     "tracking_hidden",
     "excluded_transactions",
     "summary",
@@ -231,6 +234,7 @@ const FILE_FIELDS = {
   payment_records: ["proof", "logo"],
 };
 const RELATIONS = {
+  credit_card: "credit_cards",
   statement_id: "bank_statements",
   row_id: "finance_rows",
   currency: "currencies",
@@ -354,6 +358,7 @@ function validateBackup(backup) {
   )
     throw new Error("transfer_incompatible_backup");
   let count = 0;
+  if (backup.data.credit_cards === undefined) backup.data.credit_cards = [];
   for (const name of require("./pure/finance.js").COLLECTIONS)
     if (backup.data[name] === undefined) backup.data[name] = [];
   if (backup.data.bank_statements === undefined)
@@ -371,6 +376,10 @@ function validateBackup(backup) {
       if (!row || !/^[a-z0-9]{15}$/.test(row.id) || ids.has(row.id))
         throw new Error("transfer_invalid_backup");
       ids.add(row.id);
+      if (name === "credit_cards") {
+        try { Object.assign(row, require("./pure/credit-cards.js").validate(row)); }
+        catch { throw new Error("transfer_invalid_backup"); }
+      }
       if (name === "subscriptions") {
         try {
           row.price_changes =

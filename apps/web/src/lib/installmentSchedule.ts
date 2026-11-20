@@ -1,4 +1,4 @@
-import type { InstallmentPlan, SpendingData } from "@/lib/spending";
+import type { InstallmentPlan, SpendingData, SpendingEvent } from "@/lib/spending";
 
 export interface ScheduledInstallment extends InstallmentPlan {
   source_period: string;
@@ -16,7 +16,7 @@ const normalize = (name: string) =>
 
 /** Keep statement snapshots; extend each purchase's latest snapshot to its final installment. */
 export function installmentSchedule(
-  data: Pick<SpendingData, "installments" | "events">,
+  data: Pick<SpendingData, "installments"> & { events: Pick<SpendingEvent, "statement_id" | "bank">[] },
   currentMonth: string,
 ) {
   const sourceBanks = new Map(
