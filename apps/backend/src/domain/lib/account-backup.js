@@ -44,6 +44,8 @@ const FIELDS = {
   finance_rows: [
     "name",
     "kind",
+    "salary_basis",
+    "salary_basis_months",
     "expense_type",
     "notes",
     "source_subscription",
@@ -415,6 +417,8 @@ function validateBackup(backup) {
           throw new Error("transfer_invalid_backup");
         }
       }
+      if (name === "finance_rows" && row.salary_basis === undefined) row.salary_basis = "";
+      if (name === "finance_rows" && row.salary_basis_months === undefined) row.salary_basis_months = null;
       if (name === "finance_rows" && row.kind === "expense")
         row.expense_type = require("./pure/finance.js").normalizeExpenseType(
           row.expense_type,

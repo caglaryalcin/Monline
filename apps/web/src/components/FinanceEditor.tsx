@@ -107,6 +107,9 @@ export function FinanceEditor({
   const [rowKind, setRowKind] = useState(
     editor.type === "row" ? editor.row?.kind || editor.position?.kind || editor.kind || "expense" : "expense",
   );
+  const [salaryBasis, setSalaryBasis] = useState<"net" | "gross">(
+    editor.type === "row" && editor.row?.salary_basis === "gross" ? "gross" : "net",
+  );
   const [rowTag, setRowTag] = useState<ExpenseRowTag>(
     editor.type === "row" && editor.row?.kind === "expense"
       ? (financeRowTag(editor.row) as ExpenseRowTag)
@@ -268,6 +271,8 @@ export function FinanceEditor({
         saveRow({
           name: value("name").trim(),
           kind: rowKind,
+          salary_basis: rowKind === "salary" ? salaryBasis : "",
+          ...(rowKind !== "salary" && row?.salary_basis_months ? { salary_basis_months: null } : {}),
           notes: value("notes"),
           ...(isLoan || editor.row?.is_loan ? { is_loan: isLoan } : {}),
           ...(isLoan ? readLoanPeriod(form, currency) : {}),
@@ -293,6 +298,7 @@ export function FinanceEditor({
             ...row,
             name: value("name").trim(),
             kind: rowKind,
+            salary_basis: rowKind === "salary" ? salaryBasis : "",
             expense_type: expenseType,
             is_loan: isLoan,
             is_rent: isRent,
@@ -475,15 +481,16 @@ export function FinanceEditor({
                     "bill_type",
                     <select
                       id="finance-bill_type"
-                      value={rowKind === "salary" ? "salary" : ""}
-                      onChange={(event) =>
-                        setRowKind(event.target.value === "salary" ? "salary" : "income")
-                      }
+                      value={rowKind === "salary" ? salaryBasis === "gross" ? "salary_gross" : "salary" : ""}
+                      onChange={(event) => {
+                        setRowKind(event.target.value ? "salary" : "income");
+                        setSalaryBasis(event.target.value === "salary_gross" ? "gross" : "net");
+                      }}
                       className={financeSelectClass}
                     >
                       {INCOME_ROW_TAGS.map((tag) => (
                         <option key={tag} value={tag}>
-                          {label(tag || "bill_none")}
+                          {label(tag === "salary" ? "salary_net" : tag || "bill_none")}
                         </option>
                       ))}
                     </select>,

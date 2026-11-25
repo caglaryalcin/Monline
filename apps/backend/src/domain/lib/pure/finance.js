@@ -1,14 +1,16 @@
 const { validDate } = require("./backfill-schedule.js");
 const { BILL_TYPES, validBillType } = require("./bill-types.js");
-const ROW_TAGS = ["", "salary", "credit_card", "loan", "rent", ...BILL_TYPES];
+const ROW_TAGS = ["", "salary", "salary_gross", "credit_card", "loan", "rent", ...BILL_TYPES];
 const SALARY_TAGS = ["", "job_change", "raise", "seniority_raise", "seniority_inflation_raise"];
 function rowTag(row) {
-  if (row.kind === "salary") return "salary";
+  if (row.kind === "salary") return row.salary_basis === "gross" ? "salary_gross" : "salary";
   if (row.kind !== "expense") return "";
   return row.expense_type === "credit_card" ? "credit_card" : row.is_loan ? "loan" : row.is_rent ? "rent" : row.bill_type || "";
 }
 function rowTagValues(tag) {
   return {
+    salary_basis: tag === "salary_gross" ? "gross" : tag === "salary" ? "net" : "",
+    ...(!["salary", "salary_gross"].includes(tag) ? { salary_basis_months: null } : {}),
     expense_type: tag === "credit_card" ? "credit_card" : "",
     is_loan: tag === "loan",
     is_rent: tag === "rent",
@@ -43,6 +45,14 @@ function isCarryoverRow(row) {
 }
 function validate(name, value) {
   if (name === "finance_rows") {
+    if (value.salary_basis != null && (!["", "net", "gross"].includes(value.salary_basis) ||
+        (value.salary_basis && value.kind !== "salary"))) return "finance_invalid_row";
+    if (value.salary_basis_months != null && (
+      typeof value.salary_basis_months !== "object" || Array.isArray(value.salary_basis_months) ||
+      value.kind !== "salary" || Object.keys(value.salary_basis_months).length > 2772 ||
+      Object.entries(value.salary_basis_months).some(([month, basis]) =>
+        !/^(19[7-9]\d|20\d{2}|21\d{2}|2200)-(0[1-9]|1[0-2])$/.test(month) || !["net", "gross"].includes(basis))
+    )) return "finance_invalid_row";
     // Zero is the legacy fallback to the loan start day.
     if (value.loan_payment_day != null && (!Number.isInteger(value.loan_payment_day) ||
         value.loan_payment_day < 0 || value.loan_payment_day > 31)) return "finance_loan_period_invalid";

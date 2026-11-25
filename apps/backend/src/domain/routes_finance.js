@@ -18,6 +18,8 @@ const fields = {
   finance_rows: [
     "name",
     "kind",
+    "salary_basis",
+    "salary_basis_months",
     "expense_type",
     "notes",
     "payment_card",
@@ -596,6 +598,8 @@ routerAdd("POST", "/api/finance/restore", (e) => {
     for (const row of side)
       if (row) {
         if (row.expense_type === undefined) row.expense_type = "";
+        if (row.salary_basis === undefined) row.salary_basis = "";
+        if (row.salary_basis_months === undefined) row.salary_basis_months = null;
         if (row.payment_card === undefined) row.payment_card = "";
         if (row.bill_type === undefined) row.bill_type = "";
         if (row.row_order === undefined) row.row_order = 0;
@@ -623,7 +627,7 @@ routerAdd("POST", "/api/finance/restore", (e) => {
           !record ||
           spec.fields.some(
             (key) =>
-              !["amount", "row_order", "loan_principal", "loan_installment_amount", "loan_payment_day", "rent_amount", "is_loan", "is_rent", "is_auto_carryover", "year", "is_deleted"].includes(key) &&
+              !["salary_basis_months", "amount", "row_order", "loan_principal", "loan_installment_amount", "loan_payment_day", "rent_amount", "is_loan", "is_rent", "is_auto_carryover", "year", "is_deleted"].includes(key) &&
               typeof record[key] !== "string",
           ) ||
           !/^[a-z0-9]{15}$/.test(record.id) ||
@@ -675,7 +679,9 @@ routerAdd("POST", "/api/finance/restore", (e) => {
           wanted = expected[index].get(id);
         if (
           !!actual !== !!wanted ||
-          (actual && spec.fields.some((key) => actual.get(key) !== wanted[key]))
+          (actual && spec.fields.some((key) => key === "salary_basis_months"
+            ? JSON.stringify(Object.entries(actual.get(key) || {}).sort()) !== JSON.stringify(Object.entries(wanted[key] || {}).sort())
+            : actual.get(key) !== wanted[key]))
         )
           throw new BadRequestError("finance_history_conflict");
         if (
@@ -845,7 +851,7 @@ routerAdd("POST", "/api/finance/rows/tag", (e) => {
       const original = owned("finance_rows", expected.id, owner);
       const row = yearRow(owner, original.id, year);
       if (!row || finance.isCarryoverRow(row) ||
-          (row.kind === "expense" ? body.tag === "salary" : !["", "salary"].includes(body.tag)))
+          (row.kind === "expense" ? ["salary", "salary_gross"].includes(body.tag) : !["", "salary", "salary_gross"].includes(body.tag)))
         throw new BadRequestError("finance_invalid_row");
       if (finance.rowTag(row) !== expected.tag) throw new BadRequestError("finance_history_conflict");
       return row;
@@ -864,7 +870,7 @@ routerAdd("POST", "/api/finance/rows/tag", (e) => {
           loan_end_date: body.loan_end_date || row.loan_end_date || "",
           loan_payment_day: body.loan_payment_day ?? row.loan_payment_day ?? 0,
           loan_installment_amount: body.loan_installment_amount ?? row.loan_installment_amount ?? 0 } : {}),
-        ...(row.kind !== "expense" ? { kind: body.tag === "salary" ? "salary" : "income" } : {}),
+        ...(row.kind !== "expense" ? { kind: ["salary", "salary_gross"].includes(body.tag) ? "salary" : "income" } : {}),
         year,
       }, row.id);
       tagged_rows++;
@@ -1014,6 +1020,27 @@ routerAdd("POST", "/api/finance/opening-deficit", (e) => {
     }, opening[0]?.id);
   });
   return e.json(200, { history });
+});
+routerAdd("POST", "/api/finance/salary-basis", (e) => {
+  const owner = user(e), body = e.requestInfo().body;
+  if (!body || typeof body.row_id !== "string" || !/^[a-z0-9]{15}$/.test(body.row_id) ||
+      typeof body.month !== "string" || !/^(19[7-9]\d|20\d{2}|21\d{2}|2200)-(0[1-9]|1[0-2])$/.test(body.month) ||
+      !["", "net", "gross"].includes(body.basis))
+    throw new BadRequestError("finance_invalid_row");
+  const year = Number(body.month.slice(0, 4));
+  const { result, history } = entryChange(owner, () => {
+    const original = owned("finance_rows", body.row_id, owner);
+    const row = yearRow(owner, original.id, year);
+    if (!row || row.kind !== "salary") throw new BadRequestError("finance_invalid_row");
+    const months = { ...(row.salary_basis_months || {}) };
+    if (body.basis) months[body.month] = body.basis;
+    else delete months[body.month];
+    return save("finance_rows", owner, {
+      salary_basis_months: Object.keys(months).length ? months : null,
+      year,
+    }, row.id).publicExport();
+  });
+  return e.json(200, { row: result, history });
 });
 routerAdd("POST", "/api/finance/salary-tag", (e) => {
   const owner = user(e), body = e.requestInfo().body;
@@ -1182,7 +1209,9 @@ routerAdd("POST", "/api/finance/cells", (e) => {
       } else {
         const existing = owned("finance_rows", row.row_id, owner);
         const view = yearRow(owner, existing.id, year);
-        const rowValue = (value, key) => ["row_order", "year", "loan_principal", "loan_installment_amount", "loan_payment_day", "rent_amount"].includes(key)
+        const rowValue = (value, key) => key === "salary_basis_months"
+          ? JSON.stringify(Object.entries(value[key] || {}).sort())
+          : ["row_order", "year", "loan_principal", "loan_installment_amount", "loan_payment_day", "rent_amount"].includes(key)
           ? value[key] ?? 0
           : ["is_loan", "is_rent", "is_auto_carryover", "is_deleted"].includes(key) ? value[key] ?? false : value[key] || "";
         if (

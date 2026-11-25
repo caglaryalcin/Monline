@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, MoreHorizontal, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { FinanceQuickAmount } from "@/components/FinanceQuickAmount";
-import { FinanceRowTag } from "@/components/FinanceRowTag";
+import { FinanceRowTag, FinanceSalaryRowTag } from "@/components/FinanceRowTag";
 import { Button } from "@/components/ui/button";
 import {
   type FinanceData,
@@ -190,14 +190,16 @@ export function FinanceMobileLedger({
                         >
                           <span className="finance-mobile-ledger__name">
                             <span className="finance-mobile-ledger__name-text">{row.name}</span>
-                            {tag && (
+                            {row.kind === "salary" ? (
+                              <FinanceSalaryRowTag row={row} year={year} />
+                            ) : tag && (
                               <FinanceRowTag
                                 type={tag}
                                 label={label(
                                   tag === "credit_card"
                                     ? "credit_card"
-                                    : tag === "salary"
-                                      ? "salary"
+                                    : tag === "salary" || tag === "salary_gross"
+                                      ? tag === "salary" ? "salary_net" : "salary_gross"
                                       : tag === "loan"
                                         ? "loan"
                                         : tag === "rent"

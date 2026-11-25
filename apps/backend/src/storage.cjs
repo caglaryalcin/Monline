@@ -347,6 +347,8 @@ class Repository {
         "ALTER TABLE finance_rows ADD COLUMN is_loan INTEGER NOT NULL DEFAULT 0",
       );
     for (const [field, definition] of [
+      ["salary_basis", "TEXT NOT NULL DEFAULT ''"],
+      ["salary_basis_months", "JSON DEFAULT NULL"],
       ["is_rent", "INTEGER NOT NULL DEFAULT 0"],
       ["is_auto_carryover", "INTEGER NOT NULL DEFAULT 0"],
       ["year", "REAL NOT NULL DEFAULT 0"],

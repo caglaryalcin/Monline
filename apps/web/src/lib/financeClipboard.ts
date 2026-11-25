@@ -39,8 +39,8 @@ export interface PastedRow {
   row_id: string;
   name: string;
   kind: FinanceRow["kind"];
-  expected?: Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">> &
-    Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">;
+  expected?: Required<Omit<FinanceRow, "salary_basis" | "salary_basis_months" | "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">> &
+    Pick<FinanceRow, "salary_basis" | "salary_basis_months" | "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">;
 }
 export function selectionBounds(selection: GridSelection) {
   if (selection.cells?.length) return {

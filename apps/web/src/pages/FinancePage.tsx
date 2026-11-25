@@ -32,7 +32,8 @@ import { FinanceMobileLedger } from "@/components/FinanceMobileLedger";
 import { FinanceQuickAmount } from "@/components/FinanceQuickAmount";
 import { FinanceQuickName } from "@/components/FinanceQuickName";
 import { createFinanceQuickSavers } from "@/components/financeQuickSaves";
-import { FinanceRowTag } from "@/components/FinanceRowTag";
+import { FinanceRowTag, FinanceSalaryRowTag } from "@/components/FinanceRowTag";
+import { FinanceSalaryBasisMenu } from "@/components/FinanceSalaryBasisMenu";
 import { FinanceSalaryComparison } from "@/components/FinanceSalaryComparison";
 import { FinanceStatementLinkDialog } from "@/components/FinanceStatementLinkDialog";
 import { FinanceVerificationDialog } from "@/components/FinanceVerificationDialog";
@@ -947,6 +948,9 @@ export function FinancePage() {
           <FinanceSalaryComparison
             data={rawData}
             ownerId={yearOwner}
+            onSetSalaryBasis={(rowId, month, basis) =>
+              run(() => financeService.setMonthlySalaryBasis(rowId, month, basis), false)
+            }
             year={year}
             today={today}
             decimalPlaces={decimalPlaces}
@@ -1115,7 +1119,9 @@ export function FinancePage() {
                               }}
                             >
                               {label(
-                                tag === "salary" ||
+                                tag === "salary"
+                                  ? "salary_net"
+                                  : tag === "salary_gross" ||
                                   tag === "loan" ||
                                   tag === "credit_card" ||
                                   tag === "rent"
@@ -1170,6 +1176,19 @@ export function FinancePage() {
                   >
                     {label("edit")}
                   </DropdownMenuItem>
+                )}
+                {contextCell?.row.kind === "salary" && (
+                  <FinanceSalaryBasisMenu
+                    row={contextCell.row}
+                    month={`${year}-${String(contextCell.month).padStart(2, "0")}`}
+                    disabled={grid.busy}
+                    onSelect={(basis) => {
+                      const { row, month } = contextCell;
+                      void run(() => financeService.setMonthlySalaryBasis(
+                        row.id, `${year}-${String(month).padStart(2, "0")}`, basis,
+                      ), false);
+                    }}
+                  />
                 )}
                 {contextIsBill && contextCell && (
                   <DropdownMenuItem
@@ -1828,7 +1847,7 @@ function FinanceSection({
                       {row.name}
                     </button>
                     {row.kind === "salary" && (
-                      <FinanceRowTag type="salary" label={label("salary")} />
+                      <FinanceSalaryRowTag row={row} year={year} />
                     )}
                     {row.is_loan && <FinanceRowTag type="loan" label={label("loan")} />}
                     {row.is_rent && <FinanceRowTag type="rent" label={label("rent")} />}

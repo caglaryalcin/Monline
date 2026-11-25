@@ -71,6 +71,8 @@ const words = {
   received: ["Alındı", "Received", "Erhalten"], expected: ["Beklenen gelir", "Expected income", "Erwartete Einnahmen"],
   income: ["Gelir", "Income", "Einnahme"], expense: ["Gider", "Expense", "Ausgabe"],
   salaryType: ["Maaş", "Salary", "Gehalt"], card: ["Kredi kartı", "Credit card", "Kreditkarte"],
+  salaryNet: ["Maaş · Net", "Salary · Net", "Gehalt · Netto"],
+  salaryGross: ["Maaş · Brüt", "Salary · Gross", "Gehalt · Brutto"],
   loan: ["Kredi", "Loan", "Kredit"], rent: ["Kira", "Rent", "Miete"],
   electricity: ["Fatura - Elektrik", "Bill - Electricity", "Rechnung - Strom"],
   water: ["Fatura - Su", "Bill - Water", "Rechnung - Wasser"],

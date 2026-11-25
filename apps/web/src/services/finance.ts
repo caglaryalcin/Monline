@@ -15,10 +15,10 @@ export type FinanceHistory = {
   before: (Required<Omit<FinanceEntry, "payment_tag" | "bill_skip">> & Pick<FinanceEntry, "payment_tag" | "bill_skip">)[];
   after: (Required<Omit<FinanceEntry, "payment_tag" | "bill_skip">> & Pick<FinanceEntry, "payment_tag" | "bill_skip">)[];
   rows?: {
-    before: (Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">> &
-      Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">)[];
-    after: (Required<Omit<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">> &
-      Pick<FinanceRow, "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">)[];
+    before: (Required<Omit<FinanceRow, "salary_basis_months" | "salary_basis" | "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">> &
+      Pick<FinanceRow, "salary_basis_months" | "salary_basis" | "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">)[];
+    after: (Required<Omit<FinanceRow, "salary_basis_months" | "salary_basis" | "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">> &
+      Pick<FinanceRow, "salary_basis_months" | "salary_basis" | "payment_card" | "bill_type" | "row_order" | "is_loan" | "is_rent" | "is_auto_carryover" | "loan_id" | "loan_principal" | "rent_amount" | "rent_start_date" | "rent_end_date" | "loan_installment_amount" | "loan_payment_day" | "loan_start_date" | "loan_end_date" | "year" | "origin_row" | "is_deleted">)[];
   };
   transactions?: { before: FinanceCardTransaction[]; after: FinanceCardTransaction[] };
   links?: { before: FinanceStatementLink[]; after: FinanceStatementLink[] };
@@ -26,6 +26,8 @@ export type FinanceHistory = {
   moves?: { before: FinanceCalendarMove[]; after: FinanceCalendarMove[] };
 };
 export const financeService = {
+  setMonthlySalaryBasis: (row_id: string, month: string, basis: "net" | "gross" | "") =>
+    api.post<{ row: FinanceRow; history: FinanceHistory }>("/api/finance/salary-basis", { row_id, month, basis }),
   setBillMonthSkipped: (row_id: string, month: string, skipped: boolean, entries: FinanceEntry[]) =>
     api.post<{ updated: number; history: FinanceHistory }>("/api/finance/bill-month-status", { row_id, month, skipped, entries }),
   checkCardPayment: (row_id: string, statement_id: string, month: string, allow_month_boundary = false) =>

@@ -54,7 +54,7 @@ const MIGRATED_COLUMNS = {
   sharing_groups: ["pending_members"],
   bank_statements: ["summary", "unresolved", "excluded_transactions", "tracking_hidden", "card_details", "credit_card"],
   credit_cards: ["statement_day", "statement_weekend_adjust", "network"],
-  finance_rows: ["expense_type", "payment_card", "year", "origin_row", "is_deleted", "loan_id", "loan_principal"],
+  finance_rows: ["salary_basis", "salary_basis_months", "expense_type", "payment_card", "year", "origin_row", "is_deleted", "loan_id", "loan_principal"],
   finance_entries: ["bill_skip"],
   manual_bills: ["bill_skip"],
   notifications_config: ["ntfy_username", "ntfy_password", "delivery_settings"],

@@ -57,13 +57,17 @@ function rowsForYear(rows, year, data = {}, forNewPayment = false) {
   }
   const cards = new Map(visible.map((row) => [rootId(row), row.id]));
   const all = new Map(rows.map((row) => [row.id, row]));
+  const positions = new Map(rows.map((row, index) => [row.id, index]));
+  // A yearly copy occupies its original row's position when saved orders tie.
+  const originalPosition = (row) => positions.get(rootId(row)) ?? positions.get(row.id) ?? 0;
   const loanPriority = (row) => Number(Number(loanStartingRow(rows, row)?.year || year) < year);
   return visible.map((row) => ({
     ...row,
     row_order: loanStartingRow(rows, row)?.row_order ?? row.row_order,
     payment_card: !row.is_loan && row.payment_card ? cards.get(rootId(all.get(row.payment_card) || { id: row.payment_card })) || row.payment_card : "",
   })).sort((a, b) => Number(!!a.is_auto_carryover) - Number(!!b.is_auto_carryover) ||
-    (a.row_order || 0) - (b.row_order || 0) || loanPriority(b) - loanPriority(a));
+    (a.row_order || 0) - (b.row_order || 0) || loanPriority(b) - loanPriority(a) ||
+    originalPosition(a) - originalPosition(b));
 }
 function rowForYear(rows, id, year, data = {}, forNewPayment = false) {
   const original = rows.find((row) => row.id === id);

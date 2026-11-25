@@ -3,12 +3,15 @@ export const BILL_TYPES = ["electricity", "water", "internet", "gas", "mobile"] 
 export type BillType = (typeof BILL_TYPES)[number];
 export const ROW_TAGS = ["", "credit_card", "loan", "rent", ...BILL_TYPES] as const;
 export type ExpenseRowTag = (typeof ROW_TAGS)[number];
-export const INCOME_ROW_TAGS = ["", "salary"] as const;
-export type FinanceRowTagValue = ExpenseRowTag | "salary";
+export const INCOME_ROW_TAGS = ["", "salary", "salary_gross"] as const;
+export type FinanceRowTagValue = ExpenseRowTag | "salary" | "salary_gross";
+export type SalaryBasis = "net" | "gross";
 export interface FinanceRow {
   id: string;
   name: string;
   kind: FinanceKind;
+  salary_basis?: "" | "net" | "gross";
+  salary_basis_months?: Record<string, SalaryBasis> | null;
   expense_type?: "" | "credit_card";
   bill_type?: "" | BillType;
   is_loan?: boolean;
@@ -79,6 +82,9 @@ export function financeRowsForYear(rows: FinanceRow[], year: number, data: Parti
     }
   }
   const all = new Map(rows.map((row) => [row.id, row]));
+  const positions = new Map(rows.map((row, index) => [row.id, index]));
+  // A yearly copy occupies its original row's position when saved orders tie.
+  const originalPosition = (row: FinanceRow) => positions.get(rootId(row)) ?? positions.get(row.id) ?? 0;
   const cards = new Map(visible.map((row) => [row.origin_row || row.id, row.id]));
   const loanPriority = (row: FinanceRow) => Number((loanStartingRow(rows, row)?.year || year) < year);
   return visible.map((row) => {
@@ -86,7 +92,8 @@ export function financeRowsForYear(rows: FinanceRow[], year: number, data: Parti
     return { ...row, row_order: loanStartingRow(rows, row)?.row_order ?? row.row_order,
       payment_card: !row.is_loan && row.payment_card ? cards.get(card?.origin_row || card?.id || row.payment_card) || row.payment_card : "" };
   }).sort((a, b) => Number(!!a.is_auto_carryover) - Number(!!b.is_auto_carryover) ||
-    (a.row_order || 0) - (b.row_order || 0) || loanPriority(b) - loanPriority(a));
+    (a.row_order || 0) - (b.row_order || 0) || loanPriority(b) - loanPriority(a) ||
+    originalPosition(a) - originalPosition(b));
 }
 export function isFinanceCarryoverRow(row: Pick<FinanceRow, "kind" | "is_auto_carryover">) {
   return row.kind === "expense" && row.is_auto_carryover === true;
@@ -118,7 +125,7 @@ export function isFinanceDeficitRow(row: Pick<FinanceRow, "kind" | "name" | "is_
 }
 // Keep existing saved cards and bill/loan tags compatible with one UI selector.
 export function financeRowTag(row?: FinanceRow): FinanceRowTagValue {
-  if (row?.kind === "salary") return "salary";
+  if (row?.kind === "salary") return row.salary_basis === "gross" ? "salary_gross" : "salary";
   if (row?.kind !== "expense") return "";
   return row.expense_type === "credit_card"
     ? "credit_card"
@@ -298,8 +305,20 @@ export function salaryAt(changes: SalaryChange[], date: string) {
 }
 export const percentChange = (value: number | null, previous: number | null) =>
   value != null && previous != null && previous > 0 ? (value / previous - 1) * 100 : null;
+export function salaryBasisForMonth(row: FinanceRow, month: string): SalaryBasis {
+  return row.salary_basis_months?.[month] ?? (row.salary_basis === "gross" ? "gross" : "net");
+}
+
+export function salaryBasisForYear(row: FinanceRow, year: number): SalaryBasis | "mixed" {
+  const bases = new Set(Array.from({ length: 12 }, (_, index) =>
+    salaryBasisForMonth(row, `${year}-${String(index + 1).padStart(2, "0")}`),
+  ));
+  if (bases.size > 1) return "mixed";
+  return bases.has("gross") ? "gross" : "net";
+}
+
 export function salaryAnalysis(data: FinanceData, year: number) {
-  const salaryRows = new Set(financeRowsForYear(data.finance_rows, year, data).filter((row) => row.kind === "salary").map((row) => row.id));
+  const salaryRows = new Map(financeRowsForYear(data.finance_rows, year, data).filter((row) => row.kind === "salary").map((row) => [row.id, row]));
   const monthlyEntries = new Map<string, FinanceEntry[]>();
   for (const entry of data.finance_entries) {
     if (!salaryRows.has(entry.row_id) || !entry.date.startsWith(`${year}-`)) continue;
@@ -313,9 +332,11 @@ export function salaryAnalysis(data: FinanceData, year: number) {
     const records = monthlyEntries.get(month) || [];
     const salary = records.length ? sumEntries(records) : null;
     const reference = data.finance_benchmarks.find((item) => item.month === month);
+    const bases = new Set(records.map((entry) => salaryBasisForMonth(salaryRows.get(entry.row_id)!, month)));
     return {
       month,
       salary,
+      basis: bases.has("gross") ? bases.has("net") ? "mixed" as const : "gross" as const : "net" as const,
       received: sumEntries(records.filter((entry) => entry.status === "settled")),
       status: !records.length ? null : records.every((entry) => entry.status === "settled") ? "settled" as const
         : records.every((entry) => entry.status === "planned") ? "planned" as const : "partial" as const,
@@ -325,4 +346,28 @@ export function salaryAnalysis(data: FinanceData, year: number) {
       reference,
     };
   });
+}
+
+export function annualSalarySummary(data: FinanceData, year: number) {
+  const recorded = salaryAnalysis(data, year).filter((month) => month.salary != null);
+  const total = recorded.length
+    ? sumEntries(recorded.map((month) => ({ amount: month.salary! })))
+    : null;
+  const hasGross = recorded.some((month) => month.basis !== "net");
+  const basis = hasGross
+    ? recorded.every((month) => month.basis === "gross") ? "gross" as const : "mixed" as const
+    : "net" as const;
+  return {
+    year,
+    months: recorded.length,
+    complete: recorded.length === 12,
+    total,
+    // Always use the full calendar year, including when some months are missing.
+    average: total == null ? null : total / 12,
+    basis,
+    // A mixed year is averaged once across all months, without double-counting job changes.
+    comparisonSalary: hasGross ? total! / 12 : recorded.at(-1)?.salary ?? null,
+    comparisonComplete: recorded.length > 0 && (!hasGross || recorded.length === 12),
+    comparisonMonths: recorded.length,
+  };
 }

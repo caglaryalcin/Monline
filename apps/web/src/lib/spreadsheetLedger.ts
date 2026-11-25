@@ -26,7 +26,7 @@ export function buildLedger(book: SpreadsheetWorkbook): LedgerIndex {
   const kindLabel = (row?: FinanceRow) => row ? l(row.kind === "salary" ? "salaryType" : row.kind) : "";
   const tagLabel = (row: FinanceRow) => {
     const tag = financeRowTag(row);
-    return tag ? l(tag === "salary" ? "salaryType" : tag === "credit_card" ? "card" : tag as SpreadsheetLabel) : "";
+    return tag ? l(tag === "salary" ? "salaryNet" : tag === "salary_gross" ? "salaryGross" : tag === "credit_card" ? "card" : tag as SpreadsheetLabel) : "";
   };
   book.table("rows", [l("rowId"), l("year"), l("name"), l("type"), l("rowTag"), l("cardName"), l("carry"),
     l("loanId"), l("notes"), l("archived"), l("originRow")], rawRows.map((row) => [

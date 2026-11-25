@@ -4,6 +4,7 @@ import { type MouseEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import { FinanceSalaryBasisMenu } from "@/components/FinanceSalaryBasisMenu";
 import { FinanceSalaryCharts } from "@/components/FinanceSalaryCharts";
 import { FinanceSalaryStatus } from "@/components/FinanceSalaryStatus";
 import { FinanceSalaryTag } from "@/components/FinanceSalaryTag";
@@ -19,11 +20,13 @@ import {
 import { useFinanceCurrencyValue } from "@/contexts/FinanceCurrencyContext";
 import { dialogDismissHandler } from "@/lib/dialogDismiss";
 import {
+  annualSalarySummary,
   type FinanceData,
   financeRowsForYear,
   percentChange,
   SALARY_TAGS,
   salaryAnalysis,
+  type SalaryBasis,
   type SalaryTag,
 } from "@/lib/finance";
 import { resolveLocale } from "@/lib/locale";
@@ -55,6 +58,7 @@ export function FinanceSalaryComparison({
   onOpenLedger,
   onFetchReferences,
   onEditReference,
+  onSetSalaryBasis,
 }: {
   data: FinanceData;
   ownerId: string;
@@ -67,6 +71,7 @@ export function FinanceSalaryComparison({
   onOpenLedger: () => void;
   onFetchReferences: (years: number[]) => void;
   onEditReference: (month: number, year: number, field?: "usd" | "eur" | "minimum") => void;
+  onSetSalaryBasis: (rowId: string, month: string, basis: SalaryBasis | "") => Promise<boolean>;
 }) {
   const { t, i18n } = useTranslation();
   const financeCurrency = useFinanceCurrencyValue();
@@ -97,6 +102,10 @@ export function FinanceSalaryComparison({
       toast.success(t("finance_success"));
     },
     onError: () => toast.error(t("finance_salary_tag_failed")),
+  });
+  const basisMutation = useMutation({
+    mutationFn: ({ rowId, month, basis }: { rowId: string; month: string; basis: SalaryBasis | "" }) =>
+      onSetSalaryBasis(rowId, month, basis),
   });
   const openSalaryTags = (
     month: string,
@@ -185,13 +194,21 @@ export function FinanceSalaryComparison({
   const syncScroll = (scrollLeft: number, target: HTMLDivElement | null) => {
     if (target && target.scrollLeft !== scrollLeft) target.scrollLeft = scrollLeft;
   };
-  const summaryMonths =
-    allYears || year === currentYear
-      ? recorded.filter((month) => month.month <= today.slice(0, 7))
-      : recorded;
-  const first = summaryMonths[0];
-  const last = summaryMonths[summaryMonths.length - 1];
-  const change = first && last ? percentChange(last.salary, first.salary) : null;
+  const annualSummary = annualSalarySummary(data, year);
+  const previousAnnualSummary = annualSalarySummary(data, year - 1);
+  const change = annualSummary.comparisonComplete && previousAnnualSummary.comparisonComplete
+    ? percentChange(annualSummary.comparisonSalary, previousAnnualSummary.comparisonSalary)
+    : null;
+  const annualSummaries = (allYears ? availableYears : [year]).map((value) => {
+    const summary = value === year ? annualSummary : annualSalarySummary(data, value);
+    const previous = value === year ? previousAnnualSummary : annualSalarySummary(data, value - 1);
+    return {
+      ...summary,
+      change: summary.comparisonComplete && previous.comparisonComplete
+        ? percentChange(summary.comparisonSalary, previous.comparisonSalary)
+        : null,
+    };
+  });
   const publishedMonths = recorded.filter((month) => month.month <= today.slice(0, 7));
   const isMissingReference = (month: (typeof recorded)[number]) =>
     !month.reference?.usd || !month.reference?.eur || !month.reference?.minimum_wage;
@@ -295,6 +312,44 @@ export function FinanceSalaryComparison({
   };
   return (
     <div className="finance-salary-comparison min-w-0 space-y-4">
+      {availableYears.length > 0 && (
+        <section className="space-y-3 rounded-2xl border bg-card/30 p-4">
+          <h3 className="text-sm font-semibold">{label("salary_annual_summary")}</h3>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            {label("salary_row_basis_help")}
+          </p>
+            <div className="overflow-x-auto">
+              <table className="w-full whitespace-nowrap text-sm tabular-nums">
+                <caption className="sr-only">{label("salary_annual_summary")}</caption>
+                <thead className="border-b text-xs text-muted-foreground">
+                  <tr>
+                    <th scope="col" className="px-2 py-2 text-left">{label("salary_chart_period")}</th>
+                    <th scope="col" className="px-2 py-2 text-left">{label("salary_calculation_basis")}</th>
+                    <th scope="col" className="px-2 py-2 text-right">{label("salary_annual_total")}</th>
+                    <th scope="col" className="px-2 py-2 text-right">{label("salary_comparison_amount")}</th>
+                    <th scope="col" className="px-2 py-2 text-right">{label("salary_previous_year_change")}</th>
+                    <th scope="col" className="px-2 py-2 text-right">{label("salary_recorded_months")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {annualSummaries.map((summary) => (
+                    <tr key={summary.year} className="border-b last:border-b-0">
+                      <th scope="row" className="px-2 py-2 text-left">{summary.year}</th>
+                      <td className="px-2 py-2 text-left text-xs">{label(`salary_basis_${summary.basis}`)}</td>
+                      <td className="px-2 py-2 text-right">{summary.total == null ? "-" : currency(summary.total)}</td>
+                      <td className="px-2 py-2 text-right font-semibold">{summary.comparisonSalary == null ? "-" : currency(summary.comparisonSalary)}</td>
+                      <td className="px-2 py-2 text-right" title={label("salary_row_change_help")}>{percent(summary.change)}</td>
+                      <td className="px-2 py-2 text-right text-xs text-muted-foreground">
+                        {summary.comparisonMonths} / 12
+                        {!summary.comparisonComplete && <> · {label("salary_annual_incomplete")}</>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+        </section>
+      )}
       {!availableYears.length ? (
         <section className="space-y-4 rounded-2xl border border-dashed bg-card/30 p-6 sm:p-8">
           <Wallet className="h-8 w-8 text-muted-foreground" aria-hidden="true" />
@@ -354,7 +409,7 @@ export function FinanceSalaryComparison({
                 {!allYears && (
                   <div
                     className="space-y-0.5 border-r pr-4 text-right"
-                    title={label("salary_change_help")}
+                    title={label("salary_row_change_help")}
                   >
                     <p className="text-xs text-muted-foreground">
                       {t("finance_salary_year_change", { year })}
@@ -718,7 +773,21 @@ export function FinanceSalaryComparison({
                 {label(tagContext.referenceField === "minimum" ? "edit_minimum_wage" : "edit_rate")}
               </DropdownMenuItem>
             ) : (
-              (["", ...SALARY_TAGS] as const).map((tag) => (
+              <>
+              {financeRowsForYear(data.finance_rows, Number(tagContext.month.slice(0, 4)), data)
+                .filter((row) => row.kind === "salary")
+                .map((row, _index, rows) => (
+                  <FinanceSalaryBasisMenu
+                    key={row.id}
+                    row={row}
+                    month={tagContext.month}
+                    disabled={basisMutation.isPending}
+                    showRowName={rows.length > 1}
+                    onSelect={(basis) => basisMutation.mutate({ rowId: row.id, month: tagContext.month, basis })}
+                  />
+                ))}
+              <DropdownMenuSeparator />
+              {(["", ...SALARY_TAGS] as const).map((tag) => (
                 <DropdownMenuItem
                   key={tag || "none"}
                   disabled={tagMutation.isPending}
@@ -731,7 +800,8 @@ export function FinanceSalaryComparison({
                     <Check className="ml-auto h-4 w-4" aria-hidden="true" />
                   )}
                 </DropdownMenuItem>
-              ))
+              ))}
+              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
