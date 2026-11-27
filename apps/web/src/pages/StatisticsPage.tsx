@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { parseLocalDate } from "@/components/calendar/types";
 import { StatisticsDistributionCard } from "@/components/statistics/StatisticsDistributionCard";
 import { StatisticsPaymentsCard } from "@/components/statistics/StatisticsPaymentsCard";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,6 +60,14 @@ export function StatisticsPage() {
       }),
     ]),
   ].sort((left, right) => right - left);
+  const upcomingYears = [
+    ...new Set(
+      (recordsQuery.data ?? []).flatMap((record) => {
+        const dueYear = !record.paid_at ? parseLocalDate(record.due_date)?.getFullYear() : undefined;
+        return dueYear !== undefined && dueYear >= year && dueYear <= 2200 ? [dueYear] : [];
+      }),
+    ),
+  ];
   const payments = useMemo(() => {
     const now = new Date();
     now.setFullYear(year, month - 1, day);
@@ -121,6 +130,7 @@ export function StatisticsPage() {
             data={payments}
             year={paymentYear}
             years={years}
+            upcomingYears={upcomingYears}
             onYearChange={setPaymentYear}
             formatValue={(value) => formatPrice(value, mainSymbol, { currencyCode: mainCode })}
             isLoading={loading || recordsQuery.isPending}
@@ -146,7 +156,13 @@ export function StatisticsPage() {
               mainSymbol={mainSymbol}
               title={t("cost_by_category")}
               year={categoryYear}
-              years={categoryMode === "upcoming" ? [year + 1, ...years] : years}
+              years={
+                categoryMode === "upcoming"
+                  ? [...new Set([year + 1, ...years, ...upcomingYears])].sort(
+                      (left, right) => right - left,
+                    )
+                  : years
+              }
               onYearChange={setCategoryYear}
               periodLabel={periodLabel}
               mode={categoryMode}

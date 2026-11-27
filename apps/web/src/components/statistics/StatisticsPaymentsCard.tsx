@@ -21,6 +21,7 @@ interface StatisticsPaymentsCardProps {
   hasError?: boolean;
   year?: number;
   years?: number[];
+  upcomingYears?: number[];
   onYearChange?: (year: number) => void;
 }
 
@@ -31,6 +32,7 @@ export function StatisticsPaymentsCard({
   hasError,
   year,
   years,
+  upcomingYears,
   onYearChange,
 }: StatisticsPaymentsCardProps) {
   const { t, i18n } = useTranslation();
@@ -41,7 +43,7 @@ export function StatisticsPaymentsCard({
     year && year > currentYear ? "upcoming" : "paid",
   );
   const availableYears = mode === "upcoming"
-    ? [...new Set([currentYear + 1, ...(years ?? [year ?? currentYear])])].sort(
+    ? [...new Set([currentYear + 1, ...(years ?? [year ?? currentYear]), ...(upcomingYears ?? [])])].sort(
         (left, right) => right - left,
       )
     : years ?? [year ?? currentYear];

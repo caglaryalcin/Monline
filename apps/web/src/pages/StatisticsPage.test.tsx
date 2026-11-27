@@ -22,6 +22,7 @@ vi.mock("@/components/statistics/StatisticsDistributionCard", () => ({
     title,
     data,
     year,
+    years,
     onYearChange,
     mode,
     onModeChange,
@@ -29,6 +30,7 @@ vi.mock("@/components/statistics/StatisticsDistributionCard", () => ({
     title: string;
     data: { name: string; value: number }[];
     year: number;
+    years: number[];
     onYearChange: (value: number) => void;
     mode: string;
     onModeChange: (value: "paid" | "upcoming") => void;
@@ -50,7 +52,7 @@ vi.mock("@/components/statistics/StatisticsDistributionCard", () => ({
         value={year}
         onChange={(event) => onYearChange(Number(event.target.value))}
       >
-        {[2026, 2025].map((value) => (
+        {years.map((value) => (
           <option key={value} value={value}>
             {value}
           </option>
@@ -64,18 +66,23 @@ vi.mock("@/components/statistics/StatisticsPaymentsCard", () => ({
     data,
     year,
     onYearChange,
+    upcomingYears,
   }: {
-    data: { paid: unknown[]; upcoming: unknown[] };
+    data: { paid: unknown[]; upcoming: { total: number }[] };
     year: number;
     onYearChange: (year: number) => void;
+    upcomingYears: number[];
   }) => (
     <div>
       monthly-payments
       <span>monthly-year:{year}</span>
+      <span>monthly-planned-years:{upcomingYears.join(",")}</span>
+      <span>monthly-upcoming-total:{data.upcoming.reduce((sum, month) => sum + month.total, 0)}</span>
       <span>
         monthly-count:{data.paid.length}:{data.upcoming.length}
       </span>
       <button onClick={() => onYearChange(2025)}>monthly-previous-year</button>
+      <button onClick={() => onYearChange(2029)}>monthly-planned-year</button>
     </div>
   ),
 }));
@@ -83,6 +90,26 @@ vi.mock("@/components/statistics/StatisticsPaymentsCard", () => ({
 import { StatisticsPage } from "./StatisticsPage";
 
 describe("StatisticsPage", () => {
+  it("includes a manually planned year and matching upcoming category and payment totals", async () => {
+    mocks.subscriptions.mockResolvedValue([]);
+    mocks.payments.mockResolvedValue([{
+      id: "manual", subscription_id: "", name: "Repair", user: "user",
+      due_date: "2029-01-10", amount: 80,
+    }]);
+    const { Wrapper } = createQueryClientWrapper();
+    render(<StatisticsPage />, { wrapper: Wrapper });
+    await waitFor(() => expect(screen.getByText("monthly-planned-years:2029")).toBeInTheDocument());
+    expect(screen.queryByRole("option", { name: "2029" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "monthly-planned-year" }));
+    expect(screen.getByText("monthly-upcoming-total:80")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "upcoming-categories" }));
+    expect(screen.getByRole("option", { name: "2029" })).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("combobox", { name: "year" }), { target: { value: "2029" } });
+    expect(screen.getByText("category-total:80")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "recorded-categories" }));
+    expect(screen.getByRole("combobox", { name: "year" })).toHaveValue("2026");
+    expect(screen.queryByRole("option", { name: "2029" })).not.toBeInTheDocument();
+  });
   it("connects the year selector to actual recorded category payments", async () => {
     const now = new Date();
     const current = new Date(now.getFullYear(), now.getMonth(), 1);
