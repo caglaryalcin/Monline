@@ -364,6 +364,7 @@ routerAdd("POST", "/api/subscriptions/import", (e) => {
       );
       rec.set("payment_limit", paymentLimit);
       rec.set("payments_completed", paymentsCompleted);
+      rec.set("billing_pauses", sub.billing_pauses || []);
       rec.set("notes", notes);
       rec.set("url", url);
       if (cancellationDate) rec.set("cancellation_date", cancellationDate);
@@ -661,6 +662,7 @@ routerAdd("GET", "/api/subscriptions/export", (e) => {
       url: sub.get("url"),
       cancellation_date: sub.get("cancellation_date"),
       end_date: sub.get("end_date"),
+      billing_pauses: sub.get("billing_pauses"),
       payment_limit: sub.get("payment_limit"),
       payments_completed: sub.get("payments_completed"),
     });

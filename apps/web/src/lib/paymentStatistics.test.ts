@@ -33,6 +33,29 @@ const record = (overrides: Partial<PaymentRecord> = {}): PaymentRecord => ({
   ...overrides,
 });
 
+describe("planned pauses in payment statistics", () => {
+  const paused = { ...sub, billing_pauses: [{ from: "2026-12-01", to: "2027-03-01" }] };
+  it("omits skipped billing cycles and resumes their normal amounts", () => {
+    const result = buildPaymentStatistics([paused], currencies, [], now, 12, 12, 2027);
+    expect(result.upcoming[0].count).toBe(0);
+    expect(result.upcoming[1].count).toBe(0);
+    expect(result.upcoming[2]).toMatchObject({ total: 80, count: 1 });
+    expect(result.upcoming[2].subscriptions[0].dates).toEqual(["2027-03-05"]);
+  });
+  it("keeps all billable installments after a planned gap", () => {
+    const result = buildPaymentStatistics([{ ...paused, payment_limit: 3 }], currencies, [], now, 12, 12, 2027);
+    expect(result.upcoming.map(month => month.count)).toEqual([0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+  });
+  it("keeps confirmed history while hiding saved unpaid records in a paused period", () => {
+    const result = buildPaymentStatistics([paused], currencies, [
+      record({ due_date: "2026-12-05", amount: 50 }),
+      record({ id: "pending", due_date: "2026-12-10", paid_at: "", amount: 80 }),
+    ], now, 12, 12, 2026);
+    expect(result.paid[9]).toMatchObject({ total: 40, count: 1 });
+    expect(result.upcoming[11].count).toBe(0);
+  });
+});
+
 describe("monthly payment statistics", () => {
   it("distributes legacy automatic catch-up charges across their original months", () => {
     const records = Array.from({ length: 7 }, (_, index) => record({

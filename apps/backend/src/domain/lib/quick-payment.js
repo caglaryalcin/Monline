@@ -27,6 +27,8 @@ function quickPay(app, userId, subscriptionId, body, now = new Date()) {
     const paid = matches.find((record) => !!record.getString("paid_at"));
     if (paid) return paid;
     const existing = matches[0];
+    if (require("./pure/subscription-pauses.mjs").isBillingPaused(sub, date))
+      throw new BadRequestError("quick_payment_unavailable");
     if (!existing) {
       const day = (field) => sub.getString(field).slice(0, 10);
       if (date !== day("next_payment") || sub.get("calendar_projection_hidden") ||

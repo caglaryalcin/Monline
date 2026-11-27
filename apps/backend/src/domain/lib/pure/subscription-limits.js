@@ -65,10 +65,13 @@ function advanceFiniteSchedule(options) {
       inactive = true;
       break;
     }
-    // Persist the occurrence before its date can move out of the schedule.
-    if (options.onOccurrence) options.onOccurrence(nextPayment);
-    if (paymentLimit || endDate) paymentsCompleted += 1;
-    processed += 1;
+    // Skipped billing cycles advance the calendar without consuming paid installments.
+    const paused = options.isPaused && options.isPaused(nextPayment);
+    if (!paused) {
+      if (options.onOccurrence) options.onOccurrence(nextPayment);
+      if (paymentLimit || endDate) paymentsCompleted += 1;
+      processed += 1;
+    }
     if (paymentLimit && paymentsCompleted >= paymentLimit) {
       inactive = true;
       break;

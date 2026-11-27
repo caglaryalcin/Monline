@@ -113,6 +113,7 @@ function saveBackfill(app, subscription, payments) {
     { user: subscription.getString("user"), sub: subscription.id },
   );
   for (const payment of payments) {
+    if (!payment.paid_at && require("./pure/subscription-pauses.mjs").isBillingPaused(subscription, payment.due_date)) continue;
     const matches = existing.filter(
       (record) =>
         record.getString("due_date").slice(0, 10) === payment.due_date ||

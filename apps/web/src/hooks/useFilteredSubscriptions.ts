@@ -4,6 +4,8 @@ import type {
   SubscriptionFiltersState,
   SubscriptionSortKey,
 } from "@/components/subscriptions/subscriptionsPage.types";
+import { useLocalToday } from "@/hooks/useLocalToday";
+import { isBillingPaused } from "@/lib/subscriptionPauses";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import type { Subscription } from "@/types";
 
@@ -26,9 +28,11 @@ export function useFilteredSubscriptions({
   disabledToBottom,
   hideDisabled,
 }: UseFilteredSubscriptionsParams) {
+  const today = useLocalToday();
   return useMemo(() => {
+    const disabled = (subscription: Subscription) => subscription.inactive || isBillingPaused(subscription, today);
     let result = [...subscriptions];
-    if (hideDisabled) result = result.filter((subscription) => !subscription.inactive);
+    if (hideDisabled) result = result.filter((subscription) => !disabled(subscription));
 
     if (searchTerm) {
       const query = searchTerm.toLowerCase();
@@ -40,9 +44,9 @@ export function useFilteredSubscriptions({
     }
 
     if (filters.state === "active") {
-      result = result.filter((subscription) => !subscription.inactive);
+      result = result.filter((subscription) => !disabled(subscription));
     } else if (filters.state === "inactive") {
-      result = result.filter((subscription) => subscription.inactive);
+      result = result.filter((subscription) => disabled(subscription));
     }
 
     if (filters.categories.length > 0) {
@@ -71,16 +75,16 @@ export function useFilteredSubscriptions({
       } else if (sort === "date") {
         comparison = (left.next_payment || "").localeCompare(right.next_payment || "");
       } else if (sort === "status") {
-        comparison = Number(left.inactive) - Number(right.inactive);
+        comparison = Number(disabled(left)) - Number(disabled(right));
       }
 
       return sortDir === "asc" ? comparison : -comparison;
     });
 
     if (disabledToBottom) {
-      result.sort((left, right) => Number(left.inactive) - Number(right.inactive));
+      result.sort((left, right) => Number(disabled(left)) - Number(disabled(right)));
     }
 
     return result;
-  }, [subscriptions, searchTerm, filters, sort, sortDir, disabledToBottom, hideDisabled]);
+  }, [subscriptions, searchTerm, filters, sort, sortDir, disabledToBottom, hideDisabled, today]);
 }

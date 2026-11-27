@@ -344,6 +344,7 @@ routerAdd("GET", "/api/external/subscriptions", function (e) {
         cycle: cycleName,
         next_payment: sub.get("next_payment"),
         end_date: sub.get("end_date") || null,
+        billing_pauses: sub.get("billing_pauses"),
         payment_limit: sub.get("payment_limit") || null,
         payments_completed: sub.get("payments_completed") || 0,
         auto_renew: sub.get("auto_renew"),
@@ -474,7 +475,8 @@ routerAdd("GET", "/api/external/subscriptions/{id}", function (e) {
       cycle: cycleName,
       next_payment: sub.get("next_payment"),
       end_date: sub.get("end_date") || null,
-      payment_limit: sub.get("payment_limit") || null,
+      billing_pauses: sub.get("billing_pauses"),
+        payment_limit: sub.get("payment_limit") || null,
       payments_completed: sub.get("payments_completed") || 0,
       auto_renew: sub.get("auto_renew"),
       inactive: sub.get("inactive"),
@@ -691,6 +693,7 @@ routerAdd("POST", "/api/external/subscriptions", function (e) {
       endDate || paymentLimit ? true : body.auto_renew === true,
     );
     record.set("end_date", endDate);
+    record.set("billing_pauses", body.billing_pauses || []);
     record.set("payment_limit", paymentLimit);
     record.set("payments_completed", paymentsCompleted);
     record.set("notify", body.notify === true);
@@ -813,6 +816,7 @@ routerAdd("GET", "/api/external/statistics", function (e) {
     for (var i = 0; i < subs.length; i++) {
       var sub = subs[i];
       if (!recordTypes.isExpense(sub.get("record_type"))) continue;
+      if (require("./lib/pure/subscription-pauses.mjs").isBillingPaused(sub, require("./lib/date-helpers.js").formatLocalDate(new Date()))) continue;
       activeCount++;
       var cycleMultiplier = 1;
       try {
@@ -1639,6 +1643,7 @@ routerAdd("PUT", "/api/external/subscriptions/{id}", function (e) {
     if (body.inactive !== undefined)
       record.set("inactive", body.inactive === true);
     record.set("end_date", proposedEndDate);
+    if (body.billing_pauses !== undefined) record.set("billing_pauses", body.billing_pauses);
     record.set("payment_limit", proposedPaymentLimit);
     record.set("payments_completed", proposedCompleted);
     if (proposedEndDate || proposedPaymentLimit) record.set("auto_renew", true);
@@ -2610,6 +2615,7 @@ routerAdd("POST", "/api/external/subscriptions/batch", function (e) {
       record.set("cycle", String(item.cycle_id));
       record.set("next_payment", itemNextPayment);
       record.set("end_date", itemEndDate);
+      record.set("billing_pauses", item.billing_pauses || []);
       record.set("payment_limit", itemPaymentLimit);
       record.set("payments_completed", itemCompleted);
       record.set(

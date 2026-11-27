@@ -1487,5 +1487,15 @@
   "use_gifs": "GIF-ek használata",
   "use_gifs_desc": "Animált ikonok megjelenítése. Kikapcsolva az eredeti ikonok láthatók.",
   "loop_gifs": "Folyamatos lejátszás",
-  "loop_gifs_desc": "Az animációk folyamatos lejátszása. Kikapcsolva minden animáció háromszor játszódik le, majd megáll."
+  "loop_gifs_desc": "Az animációk folyamatos lejátszása. Kikapcsolva minden animáció háromszor játszódik le, majd megáll.",
+  "billing_pauses_title": "Tervezett szünetek",
+  "billing_pauses_help": "Számlázási időszakok kihagyása az előfizetés törlése nélkül. A 0 a következő fizetésnél kezdődik. A számlázás a záró dátumon folytatódik. A módosítások alkalmazásához mentse az előfizetést.",
+  "billing_pauses_after": "Hány számlázási időszak után kezdődjön?",
+  "billing_pauses_duration": "Kihagyandó számlázási időszakok száma",
+  "billing_pauses_range": "Szünet kezdete: {{from}}; folytatás: {{to}}",
+  "billing_pauses_add": "Szünet hozzáadása",
+  "billing_pauses_remove": "A(z) {{date}} napján kezdődő szünet eltávolítása",
+  "billing_pauses_until": "Szüneteltetve eddig: {{date}}",
+  "billing_pauses_invalid": "Adjon meg érvényes időszakszámokat és dátumokat (legfeljebb 1200 időszak).",
+  "billing_pauses_overlap": "Ez a szünet átfed egy meglévő szünettel."
 }

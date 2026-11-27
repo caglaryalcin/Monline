@@ -8,6 +8,7 @@ import { RemindersEditor } from "@/components/settings/notifications/RemindersEd
 import { BackfillPaymentsEditor } from "@/components/subscriptions/BackfillPaymentsEditor";
 import { ReactivateSubscriptionDialog } from "@/components/subscriptions/ReactivateSubscriptionDialog";
 import { SubscriptionCategorySelect } from "@/components/subscriptions/SubscriptionCategorySelect";
+import { SubscriptionPauseEditor } from "@/components/subscriptions/SubscriptionPauseEditor";
 import { SubscriptionPriceChangesEditor } from "@/components/subscriptions/SubscriptionPriceChangesEditor";
 import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
@@ -46,6 +47,7 @@ import { displayDateInput } from "@/lib/dateInput";
 import { compressImage } from "@/lib/image";
 import { lastWeekdayOfMonth } from "@/lib/lastWeekday";
 import { ONE_TIME_CYCLE } from "@/lib/recordTypes";
+import type { BillingPause } from "@/lib/subscriptionPauses";
 import { automaticStartDate, nextPaymentDate } from "@/lib/subscriptionStartDate";
 import { toast } from "@/lib/toast";
 import { paymentAccountsService } from "@/services/paymentAccounts";
@@ -145,6 +147,7 @@ export function SubscriptionFormModal({
   const notificationMode = watch("notification_mode");
   const watchedInactive = watch("inactive");
   const [reactivateOpen, setReactivateOpen] = useState(false);
+  const [billingPauses, setBillingPauses] = useState<BillingPause[]>(sub?.billing_pauses ?? []);
   const watchedTrial = watch("trial_enabled");
   const legacyTrial =
     !!sub?.trial_months &&
@@ -273,6 +276,7 @@ export function SubscriptionFormModal({
         notification_reminders:
           !isCredit && data.notification_mode === "custom" ? data.notification_reminders : null,
         inactive: data.inactive,
+        billing_pauses: isCredit || cycles.find(cycle => cycle.id === data.cycle)?.name === "One-Time" ? [] : billingPauses,
         auto_mark_paid: isCredit ? false : data.auto_mark_paid,
         cancellation_date: data.cancellation_date || null,
         // Empty string is intentional: Monline clears optional date fields
@@ -337,7 +341,7 @@ export function SubscriptionFormModal({
       if (logoToUpload) {
         const formData = new FormData();
         Object.entries(body).forEach(([k, v]) => {
-          if (["notification_reminders", "price_changes"].includes(k)) {
+          if (["notification_reminders", "price_changes", "billing_pauses"].includes(k)) {
             formData.append(k, JSON.stringify(v));
           } else if (v !== null && v !== undefined)
             formData.append(
@@ -367,7 +371,7 @@ export function SubscriptionFormModal({
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("unknown_error");
       toast.error(
-        /^(backfill_|historical_|subscription_reminders_|price_changes_)/.test(msg) ? t(msg) : msg,
+        /^(backfill_|historical_|subscription_reminders_|price_changes_|billing_pauses_)/.test(msg) ? t(msg) : msg,
       );
     }
   };
@@ -1074,6 +1078,19 @@ export function SubscriptionFormModal({
               )}
             </div>
 
+            {!isCredit && watchedCycleName && watchedCycleName !== "One-Time" && (
+              <SubscriptionPauseEditor
+                subscription={{ ...sub, next_payment: watchedNextPayment, frequency: watchedFrequency,
+                  billing_anchor_day: sub?.next_payment.slice(0, 10) === watchedNextPayment ? sub?.billing_anchor_day : undefined,
+                  billing_calendar: billingCalendar,
+                  trial_months: watchedTrial && legacyTrial ? sub?.trial_months : 0,
+                  trial_duration: watchedTrial && !legacyTrial ? Number(watch("trial_duration")) : 0,
+                  trial_unit: watch("trial_unit"),
+                  trial_start_date: watchedTrial ? (!sub ? watchedNextPayment : watch("trial_start_date")) : "",
+                } as Subscription}
+                cycleName={watchedCycleName} value={billingPauses} onChange={setBillingPauses}
+              />
+            )}
             {watchedNotify && !isCredit && (
               <div className="space-y-3 rounded-2xl border bg-muted/20 p-4">
                 <Label htmlFor="subscription-notification-mode">

@@ -292,6 +292,7 @@ class Repository {
     for (const [field, definition] of [
       ["trial_months", "INTEGER NOT NULL DEFAULT 0"],
       ["price_changes", "JSON DEFAULT NULL"],
+      ["billing_pauses", "JSON DEFAULT NULL"],
       ["trial_duration", "INTEGER NOT NULL DEFAULT 0"],
       ["trial_unit", "TEXT NOT NULL DEFAULT ''"],
       ["trial_start_date", "TEXT NOT NULL DEFAULT ''"],
@@ -599,6 +600,13 @@ class Repository {
             throw new BadRequestError("price_changes_future_only");
         }
         record.set("price_changes", priceChanges);
+        try {
+          const pauses = require("./domain/lib/pure/subscription-pauses.mjs").validateBillingPauses(record.get("billing_pauses"));
+          if (pauses.length && (record.getString("record_type") === "credit" ||
+              this.findRecordById("cycles", record.getString("cycle")).getString("name") === "One-Time"))
+            throw new Error("billing_pauses_invalid");
+          record.set("billing_pauses", pauses);
+        } catch (error) { throw new BadRequestError(error.message === "billing_pauses_overlap" ? error.message : "billing_pauses_invalid"); }
         const months = Number(record.get("trial_months") || 0);
         if (!Number.isInteger(months) || months < 0 || months > 120 ||
             (months > 0 && record.getString("record_type") === "credit"))

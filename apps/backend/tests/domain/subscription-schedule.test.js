@@ -28,6 +28,34 @@ function payments() {
     { sub: sub.id },
   );
 }
+
+it("skips planned billing gaps, resumes automatically and does not consume installment limits", () => {
+  sub.set("payment_limit", 3);
+  sub.set("billing_pauses", [{ from: "2026-11-01", to: "2027-02-01" }]);
+  app.save(sub);
+  advanceDueSubscriptions(app, "2027-03-23");
+  expect(payments().map(record => record.get("due_date"))).toEqual([
+    "2026-10-23", "2027-02-23", "2027-03-23",
+  ]);
+  expect(app.findRecordById("subscriptions", sub.id).publicExport()).toMatchObject({
+    payments_completed: 3, inactive: true,
+  });
+  advanceDueSubscriptions(app, "2027-04-23");
+  expect(payments()).toHaveLength(3);
+});
+
+it("rejects overlapping pause plans without changing the saved schedule", () => {
+  sub.set("billing_pauses", [{ from: "2026-11-01", to: "2027-02-01" }]);
+  app.save(sub);
+  sub.set("billing_pauses", [
+    { from: "2026-11-01", to: "2027-02-01" },
+    { from: "2027-01-01", to: "2027-03-01" },
+  ]);
+  expect(() => app.save(sub)).toThrow("billing_pauses_overlap");
+  expect(app.findRecordById("subscriptions", sub.id).get("billing_pauses")).toEqual([
+    { from: "2026-11-01", to: "2027-02-01" },
+  ]);
+});
 beforeEach(() => {
   directory = mkdtempSync(path.join(os.tmpdir(), "monline-schedule-"));
   app = new Repository(directory);

@@ -9,6 +9,7 @@ function saveScheduledPayment(
   markPaid,
   details = {},
 ) {
+  if (require("./pure/subscription-pauses.mjs").isBillingPaused(subscription, dueDate)) return false;
   const tomorrow = new Date(dueDate + "T00:00:00.000Z");
   tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
   const existing = app.findRecordsByFilter(

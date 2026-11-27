@@ -5,6 +5,7 @@ import { localToday } from "@/lib/backfillPayments";
 import { upcomingMonthCosts } from "@/lib/nextMonthCost";
 import { queryKeys } from "@/lib/queryKeys";
 import { currentMonthKey, isCredit, isDateInMonth } from "@/lib/recordTypes";
+import { isBillingPaused } from "@/lib/subscriptionPauses";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import { toMonthly } from "@/lib/utils";
 import { currenciesService } from "@/services/currencies";
@@ -62,6 +63,7 @@ export function useSummaryData(userId: string) {
         continue;
       }
 
+      if (isBillingPaused(sub, today)) continue;
       expenseCount += 1;
       const cycleName = sub.expand?.cycle?.name ?? "Monthly";
       const monthly = toMonthly(subscriptionAmount(sub, today), cycleName, sub.frequency || 1);

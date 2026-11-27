@@ -112,7 +112,8 @@ cronAdd("sendNotifications", "0 * * * *", async () => {
       const grouped = {};
       for (const sub of reminder.subscriptions) {
         if (!recordTypes.isExpense(sub.get("record_type"))) continue;
-        const nextPayment = sub.getString("next_payment").slice(0, 10);
+        const cycleName = repository.findRecordById("cycles", sub.getString("cycle")).getString("name");
+        const nextPayment = require("./lib/pure/subscription-pauses.mjs").nextUnpausedBillingDate(sub, cycleName);
         if (nextPayment !== targetDateStr) continue;
 
         // Dedup: skip if already sent for this slot today
@@ -379,6 +380,8 @@ cronAdd("overduePaymentReminders", "0 9 * * *", async () => {
       const user = repository.findRecordById("users", userId);
       if (!user.get("payment_tracking")) continue;
       const dueDate = sub.get("next_payment").split(" ")[0].split("T")[0];
+
+      if (require("./lib/pure/subscription-pauses.mjs").isBillingPaused(sub, dueDate)) continue;
 
       // Check if already paid
       const paid = repository.findRecordsByFilter(

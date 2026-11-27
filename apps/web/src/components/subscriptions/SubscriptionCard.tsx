@@ -30,11 +30,13 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useLocalToday } from "@/hooks/useLocalToday";
 import { localToday } from "@/lib/backfillPayments";
 import { formatBillingPeriod } from "@/lib/billingPeriods";
 import { categoryLabel } from "@/lib/categoryLabel";
 import type { QuickPaymentActions } from "@/lib/quickPayment";
 import { isCredit } from "@/lib/recordTypes";
+import { billingPauseOn, nextUnpausedBillingDate } from "@/lib/subscriptionPauses";
 import { automaticStartDate } from "@/lib/subscriptionStartDate";
 import { isTrialDate, subscriptionAmount } from "@/lib/subscriptionTrial";
 import {
@@ -447,8 +449,10 @@ export function SubscriptionCard({
       {credit ? t("one_time") : periodLabel}
     </p>
   ) : null;
-  const days = daysUntil(sub.next_payment);
-  const nextPaymentDay = sub.next_payment?.slice(0, 10) || "";
+  const currentPause = billingPauseOn(sub, useLocalToday());
+  const pauseBadge = currentPause && !sub.inactive ? <Badge variant="secondary">{t("billing_pauses_until", { date: formatDate(currentPause.to) })}</Badge> : null;
+  const nextPaymentDay = nextUnpausedBillingDate(sub, cycleName);
+  const days = daysUntil(nextPaymentDay);
   const periodStart = automaticStartDate(nextPaymentDay, cycleName, sub.frequency || 1, sub.billing_calendar);
   const progress = showProgress ? subscriptionProgress(periodStart, nextPaymentDay) : 0;
   const remainingLabel =
@@ -462,12 +466,12 @@ export function SubscriptionCard({
       <Switch
         type="button"
         className={cn("shadow-sm", !statusPending && "disabled:opacity-100")}
-        checked={!sub.inactive}
+        checked={!sub.inactive && !currentPause}
         onCheckedChange={onToggleActive}
-        disabled={statusDisabled || statusPending}
+        disabled={statusDisabled || statusPending || !!currentPause}
         aria-label={`${sub.name}: ${t("active")}`}
         aria-busy={statusPending}
-        title={t(sub.inactive ? "subscription_activate" : "subscription_deactivate")}
+        title={currentPause ? t("billing_pauses_until", { date: formatDate(currentPause.to) }) : t(sub.inactive ? "subscription_activate" : "subscription_deactivate")}
       />
     ) : null;
 
@@ -498,6 +502,7 @@ export function SubscriptionCard({
                   {t("credit_income")}
                 </Badge>
               ) : null}
+              {pauseBadge}
               {sub.inactive ? (
                 <span className="shrink-0 rounded-md border bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   {t("inactive_label")}
@@ -626,6 +631,7 @@ export function SubscriptionCard({
                 {categoryLabel(category, t)}
               </span>
             )}
+            {pauseBadge}
             {sub.inactive && (
               <span className="text-[10px] uppercase font-bold tracking-wider rounded-md border bg-muted text-muted-foreground px-1.5 py-0.5">
                 {t("inactive_label")}
@@ -666,7 +672,7 @@ export function SubscriptionCard({
       </div>
 
       <div className="space-y-3">
-        {sub.next_payment && !sub.inactive && (
+        {nextPaymentDay && !sub.inactive && (
           <div className="flex items-center justify-between text-sm bg-background/50 border rounded-xl px-3 py-2">
             <span className="text-muted-foreground flex items-center gap-1.5">
               <Calendar className="w-4 h-4" /> {t(credit ? "received_on" : "next_payment")}

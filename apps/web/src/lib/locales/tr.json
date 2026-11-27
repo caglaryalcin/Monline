@@ -1364,5 +1364,15 @@
   "use_gifs": "GIF kullan",
   "use_gifs_desc": "Hareketli ikonları göster. Kapalı olduğunda eski ikonlar görüntülenir.",
   "loop_gifs": "Sürekli oynat",
-  "loop_gifs_desc": "Animasyonlar sürekli oynasın. Kapalı olduğunda her animasyon üç kez oynar ve durur."
+  "loop_gifs_desc": "Animasyonlar sürekli oynasın. Kapalı olduğunda her animasyon üç kez oynar ve durur.",
+  "billing_pauses_title": "Planlı duraklatmalar",
+  "billing_pauses_help": "Aboneliği silmeden fatura dönemlerini atlayın. 0, sıradaki ödemeden başlatır. Bitiş tarihinde ödemeler devam eder; değişiklikleri uygulamak için aboneliği kaydedin.",
+  "billing_pauses_after": "Kaç fatura dönemi sonra başlasın?",
+  "billing_pauses_duration": "Kaç fatura dönemi atlansın?",
+  "billing_pauses_range": "{{from}} itibarıyla duraklatılır; {{to}} tarihinde devam eder",
+  "billing_pauses_add": "Duraklatma ekle",
+  "billing_pauses_remove": "{{date}} başlangıçlı duraklatmayı kaldır",
+  "billing_pauses_until": "{{date}} tarihine kadar duraklatıldı",
+  "billing_pauses_invalid": "Geçerli dönem sayıları ve tarihler girin (en fazla 1200 dönem).",
+  "billing_pauses_overlap": "Bu aralık mevcut bir duraklatmayla çakışıyor."
 }

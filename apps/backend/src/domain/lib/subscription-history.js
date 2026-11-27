@@ -257,7 +257,7 @@ function buildHistoryResponse(app, subscription) {
     paymentLimit: subscription.get("payment_limit"),
     // A subscription is not billed while it is paused, so those stretches are
     // skipped instead of being replayed as payments that never happened.
-    pausedRanges: historyMath.buildPausedRanges(events),
+    pausedRanges: [...historyMath.buildPausedRanges(events), ...(subscription.get("billing_pauses") || [])],
     advanceDate: (date, cycle, frequency, anchor) => historyDates.advanceDate(date, cycle, frequency, anchor, subscription.get("billing_calendar")),
   });
   var paid = historyMath.summarizePaidRecords(

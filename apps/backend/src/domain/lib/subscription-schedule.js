@@ -41,6 +41,7 @@ function advanceSubscription(app, subscriptionId, today, advance = true) {
         const trial = require("./pure/subscription-trial.mjs").nextTrialPaymentDate(sub, date.toISOString().slice(0, 10), day, cycle);
         return trial ? new Date(trial + "T00:00:00Z") : advanceDate(date, cycle, frequency, day, sub.get("billing_calendar"));
       },
+      isPaused: (date) => require("./pure/subscription-pauses.mjs").isBillingPaused(sub, date),
       onOccurrence: (date) => {
         if (!start || date >= start)
           saveScheduledPayment(tx, sub, date, markPaid);

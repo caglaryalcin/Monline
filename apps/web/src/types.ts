@@ -168,6 +168,8 @@ export interface Subscription {
   notify_days_before: number;
   /** Null/absent inherits this account's default schedule; an array overrides it. */
   notification_reminders?: NotificationReminder[] | null;
+  /** Saved billing gaps; billing resumes on each exclusive end date. */
+  billing_pauses?: { from: string; to: string }[] | null;
   inactive: boolean;
   auto_mark_paid?: boolean;
   cancellation_date?: string;

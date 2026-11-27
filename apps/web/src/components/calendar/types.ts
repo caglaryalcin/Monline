@@ -2,6 +2,7 @@ import { lastWeekdayOfMonth } from "@/lib/lastWeekday";
 import { isCredit } from "@/lib/recordTypes";
 import { paymentOwnerId } from "@/lib/standalonePayments";
 import { automaticLogoUrls } from "@/lib/subscriptionLogo";
+import { isBillingPaused } from "@/lib/subscriptionPauses";
 import { isTrialDate, nextTrialPaymentDate } from "@/lib/subscriptionTrial";
 import { subscriptionsService } from "@/services/subscriptions";
 import type { Currency, Cycle, PaymentRecord, Subscription } from "@/types";
@@ -127,7 +128,7 @@ export function getOccurrencesInMonth(
   const cycleName = sub.expand?.cycle?.name ?? cycles.find((cycle) => cycle.id === sub.cycle)?.name;
   return projectedDatesInMonth(sub, year, month, cycles).filter((date) => {
     const day = toDateStr(date);
-    if (moved.has(day)) return false;
+    if (moved.has(day) || isBillingPaused(sub, day)) return false;
     // A saved occurrence keeps its date when the owner's holiday preferences change.
     return cycleName !== "Last-Weekday" || isTrialDate(sub, day) || !records.some((record) => {
       const origin = record.scheduled_date || toDateOnly(record.due_date);
@@ -261,8 +262,8 @@ function projectedDatesInMonth(
     if (cursor >= rangeStart) results.push(new Date(cursor));
     const next = add(cursor);
     if (next.getTime() <= cursor.getTime()) break;
+    if (paymentLimit && !isBillingPaused(sub, toDateStr(cursor))) occurrenceIndex += 1;
     cursor = next;
-    if (paymentLimit) occurrenceIndex += 1;
   }
 
   return results;
