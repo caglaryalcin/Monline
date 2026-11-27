@@ -1,4 +1,4 @@
-import { parseLocalDate, toDateStr } from "@/components/calendar/types";
+import { getPaymentRecord, parseLocalDate, toDateStr } from "@/components/calendar/types";
 import { buildMonthlyBudget } from "@/lib/monthlyBudget";
 import { recordedPayments } from "@/lib/recordedPayments";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
@@ -74,8 +74,8 @@ export function buildPaymentStatistics(
   const upcoming =
     yearOffset === undefined ? makeMonths(0, upcomingMonths) : makeMonths(yearOffset, 12);
   const today = toDateStr(now);
-  const confirmedRecords = records.filter((record) => {
-    if (!record.paid_at) return false;
+  const calendarRecords = records.filter((record) => {
+    if (!record.paid_at) return true;
     const timestamp = new Date(record.paid_at.replace(" ", "T"));
     return Number.isFinite(timestamp.getTime()) && timestamp <= now;
   });
@@ -91,27 +91,26 @@ export function buildPaymentStatistics(
     }
     addPaymentToMonth(month, payment.subscription, payment.amount, undefined, toDateStr(date));
   }
-  // A recurring cycle alone does not authorize future renewals. Keep dated
-  // one-time charges, but only project recurring subscriptions that renew.
-  const upcomingSubscriptions = subscriptions.filter(
-    (subscription) => subscription.auto_renew || subscription.expand?.cycle?.name === "One-Time",
-  );
   for (const month of upcoming) {
     const [year, number] = month.name.split("/").map(Number);
     for (const entry of buildMonthlyBudget(
-      upcomingSubscriptions,
+      subscriptions,
       currencies,
-      confirmedRecords,
+      calendarRecords,
       true,
       new Date(year, number - 1, 1),
     )) {
       const next = parseLocalDate(entry.subscription.next_payment);
-      // Start at the actual next billing date, never back-project an already advanced schedule.
+      const savedPayment = getPaymentRecord(calendarRecords, entry.subscription.id, entry.date);
+      const canProject =
+        entry.subscription.auto_renew || entry.subscription.expand?.cycle?.name === "One-Time";
+      // Saved charges authorize only their own date, even outside the current
+      // renewal schedule. Unrecorded renewals still start at next_payment.
       if (
-        entry.subscription.inactive ||
-        !next ||
+        (entry.subscription.inactive && !entry.subscription.standalone_payment_id) ||
+        !parseLocalDate(entry.date) ||
+        (!savedPayment && (!canProject || !next || entry.date < toDateStr(next))) ||
         entry.date < today ||
-        entry.date < toDateStr(next) ||
         !Number.isFinite(entry.amount) ||
         entry.amount < 0 ||
         entry.status === "paid" ||

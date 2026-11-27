@@ -7,6 +7,7 @@ import {
   isFinanceDeficitRow,
 } from "@/lib/finance";
 import { buildPaymentStatistics, type MonthlyPaymentTotal } from "@/lib/paymentStatistics";
+import { paymentOwnerId } from "@/lib/standalonePayments";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
 interface LedgerPaymentTotal {
@@ -86,7 +87,7 @@ export function buildFinancePaymentStatistics({
     const row = rowForEntry(entry.row_id, entry.date);
     if (!row || isFinanceDeficitRow(row) || !Number.isFinite(entry.amount)) continue;
     const record = recordsById.get(entry.source_payment ?? "");
-    const subscription = record?.subscription_id || row.source_subscription;
+    const subscription = record ? paymentOwnerId(record) : row.source_subscription;
     if (!subscription) continue;
     // A moved or early-settled ledger charge replaces its original occurrence too.
     for (const date of [entry.date, record?.due_date, record?.scheduled_date]) {

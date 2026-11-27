@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { parseLocalDate } from "@/components/calendar/types";
 import { FinancialStatistics } from "@/components/statistics/FinancialStatistics";
 import { StatisticsDistributionCard } from "@/components/statistics/StatisticsDistributionCard";
 import { StatisticsPaymentsCard } from "@/components/statistics/StatisticsPaymentsCard";
@@ -74,6 +75,15 @@ export function StatisticsPage() {
   const paymentYears = [
     ...new Set([...years, ...ledgerYears.filter((value) => value <= year)]),
   ].sort((left, right) => right - left);
+  const upcomingYears = [
+    ...new Set([
+      ...ledgerYears,
+      ...(recordsQuery.data ?? []).flatMap((record) => {
+        const dueYear = !record.paid_at ? parseLocalDate(record.due_date)?.getFullYear() : undefined;
+        return dueYear !== undefined && dueYear >= year && dueYear <= 2200 ? [dueYear] : [];
+      }),
+    ]),
+  ];
   const payments = useMemo(() => {
     const now = new Date();
     now.setFullYear(year, month - 1, day);
@@ -162,7 +172,7 @@ export function StatisticsPage() {
                 data={payments}
                 year={paymentYear}
                 years={paymentYears}
-                upcomingYears={ledgerYears}
+                upcomingYears={upcomingYears}
                 onYearChange={setPaymentYear}
                 formatValue={(value) => formatPrice(value, mainSymbol, { currencyCode: mainCode })}
                 isLoading={
@@ -197,7 +207,7 @@ export function StatisticsPage() {
                   year={categoryYear}
                   years={
                     categoryMode === "upcoming"
-                      ? [...new Set([...paymentYears, year + 1, ...ledgerYears])].sort(
+                      ? [...new Set([...paymentYears, year + 1, ...upcomingYears])].sort(
                           (left, right) => right - left,
                         )
                       : years
