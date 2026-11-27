@@ -7,6 +7,7 @@ const {
   eventId,
   subscriptionEvent,
 } = require("./budget-matching.js");
+const { isBillingPaused } = require("./subscription-pauses.mjs");
 const { advanceDate } = require("../date-helpers.js");
 const { occurrenceIsAllowed } = require("./subscription-limits.js");
 const cents = (value) => Math.round(value * 100);
@@ -112,12 +113,12 @@ function budgetData(data, month, today, preparedSpending) {
       for (
         let guard = 0;
         guard < 5000 && date.slice(0, 7) <= month;
-        guard++, index++
+        guard++
       ) {
         if (!occurrenceIsAllowed(date, sub.end_date, index, sub.payment_limit))
           break;
         if (
-          date.startsWith(month) &&
+          date.startsWith(month) && !isBillingPaused(sub, date) &&
           (!sub.calendar_projection_from || date >= sub.calendar_projection_from.slice(0, 10)) &&
           !records.some(
             (record) =>
@@ -157,6 +158,7 @@ function budgetData(data, month, today, preparedSpending) {
           .toISOString()
           .slice(0, 10);
         if (next <= date) break;
+        if (!isBillingPaused(sub, date)) index++;
         date = next;
       }
     }

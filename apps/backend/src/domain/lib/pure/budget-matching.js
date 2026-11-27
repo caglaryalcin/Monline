@@ -19,6 +19,7 @@ function subscriptionEvent(record, data) {
   if (
     (record.subscription_id && !sub) ||
     (sub?.inactive && !record.paid_at) ||
+    (!record.paid_at && require("./subscription-pauses.mjs").isBillingPaused(sub, record.due_date)) ||
     sub?.record_type === "credit" ||
     !currency ||
     !(record.name || sub?.name)

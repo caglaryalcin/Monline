@@ -1,3 +1,4 @@
+import { isBillingPaused } from "@/lib/subscriptionPauses";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
 export function paymentOwnerId(record: PaymentRecord): string {
@@ -6,9 +7,10 @@ export function paymentOwnerId(record: PaymentRecord): string {
 
 /** Paused subscriptions retain confirmed history, but no unpaid expectations. */
 export function isVisibleSubscriptionPayment(
-  subscription: Pick<Subscription, "inactive" | "standalone_payment_id">,
-  record?: Pick<PaymentRecord, "paid_at">,
+  subscription: Pick<Subscription, "inactive" | "standalone_payment_id" | "billing_pauses">,
+  record?: Pick<PaymentRecord, "paid_at"> & Partial<Pick<PaymentRecord, "due_date" | "scheduled_date">>,
 ): boolean {
+  if (!record?.paid_at && isBillingPaused(subscription, record?.due_date || "")) return false;
   return !subscription.inactive || !!subscription.standalone_payment_id || !!record?.paid_at;
 }
 

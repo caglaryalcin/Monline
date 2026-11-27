@@ -16,6 +16,7 @@ import {
   subscriptionSection,
 } from "@/lib/spending";
 import { type SavedStatement, STATEMENT_BANKS } from "@/lib/statements";
+import { isBillingPaused } from "@/lib/subscriptionPauses";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
@@ -397,7 +398,7 @@ export function dashboardYearPayments({
     }
     for (const date of dates) {
       const record = getPaymentRecord(saved, subscription.id, date);
-      if (record?.paid_at) continue;
+      if (record?.paid_at || isBillingPaused(subscription, date)) continue;
       const currencyId = record?.currency || subscription.currency;
       add(
         "online",

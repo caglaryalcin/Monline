@@ -122,7 +122,7 @@ export function ManualBillDialog({
             />
           </div>
           <div className="flex gap-3">
-            <div className="flex-1 space-y-2">
+            <div className="flex min-w-0 flex-1 flex-col gap-2">
               <Label htmlFor="manual-bill-amount">{t("statement_amount")}</Label>
               <Input
                 id="manual-bill-amount"
@@ -133,11 +133,11 @@ export function ManualBillDialog({
                 onChange={(event) => setAmount(event.target.value)}
               />
             </div>
-            <div className="space-y-2">
+            <div className="flex w-28 shrink-0 flex-col gap-2">
               <Label htmlFor="manual-bill-currency">{t("currency")}</Label>
               <select
                 id="manual-bill-currency"
-                className="h-10 rounded-md border bg-background px-3 text-sm"
+                className="h-10 w-full rounded-md border bg-background px-3 text-sm"
                 value={currency}
                 disabled={mutation.isPending}
                 onChange={(event) => setCurrency(event.target.value)}

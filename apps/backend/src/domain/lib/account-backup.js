@@ -107,6 +107,7 @@ const FIELDS = {
     "brand_name",
     "price",
     "price_changes",
+    "billing_pauses",
     "trial_months",
     "trial_duration",
     "trial_unit",
@@ -384,6 +385,7 @@ function validateBackup(backup) {
       }
       if (name === "subscriptions") {
         try {
+          row.billing_pauses = require("./pure/subscription-pauses.mjs").validateBillingPauses(row.billing_pauses);
           row.price_changes =
             require("./pure/subscription-prices.mjs").validatePriceChanges(
               row.price_changes,

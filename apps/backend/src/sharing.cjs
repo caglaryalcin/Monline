@@ -592,6 +592,7 @@ function registerSharingApi(app, repository, auth) {
             "price",
             "trial_months",
             "price_changes",
+            "billing_pauses",
             "trial_duration",
             "trial_unit",
             "trial_start_date",

@@ -1440,5 +1440,15 @@
   "use_gifs": "GIFs verwenden",
   "use_gifs_desc": "Animierte Symbole anzeigen. Wenn deaktiviert, werden die ursprünglichen Symbole angezeigt.",
   "loop_gifs": "Kontinuierlich abspielen",
-  "loop_gifs_desc": "Animationen dauerhaft abspielen. Wenn deaktiviert, wird jede Animation dreimal abgespielt und dann angehalten."
+  "loop_gifs_desc": "Animationen dauerhaft abspielen. Wenn deaktiviert, wird jede Animation dreimal abgespielt und dann angehalten.",
+  "billing_pauses_title": "Geplante Pausen",
+  "billing_pauses_help": "Abrechnungszyklen überspringen, ohne das Abonnement zu löschen. 0 beginnt mit der nächsten Zahlung. Die Abrechnung wird am Enddatum fortgesetzt. Speichere das Abonnement, um die Änderungen anzuwenden.",
+  "billing_pauses_after": "Nach wie vielen Abrechnungszyklen beginnen?",
+  "billing_pauses_duration": "Zu überspringende Abrechnungszyklen",
+  "billing_pauses_range": "Pausiert ab {{from}}; Fortsetzung am {{to}}",
+  "billing_pauses_add": "Pause hinzufügen",
+  "billing_pauses_remove": "Pause ab {{date}} entfernen",
+  "billing_pauses_until": "Pausiert bis {{date}}",
+  "billing_pauses_invalid": "Gültige Zykluszahlen und Daten eingeben (bis zu 1200 Zyklen).",
+  "billing_pauses_overlap": "Diese Pause überschneidet sich mit einer bestehenden Pause."
 }

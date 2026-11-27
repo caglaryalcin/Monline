@@ -26,6 +26,7 @@ cronAdd("storeYearlyCost", "0 3 1 * *", () => {
     );
     for (const sub of subs) {
       if (!recordTypes.isExpense(sub.get("record_type"))) continue;
+      if (require("./lib/pure/subscription-pauses.mjs").isBillingPaused(sub, dateHelpers.formatLocalDate(now))) continue;
       const price = require("./lib/pure/subscription-trial.mjs").subscriptionAmount(sub, dateHelpers.formatLocalDate(now));
       const frequency = sub.get("frequency") || 1;
       let cycleName = "Monthly";

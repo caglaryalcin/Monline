@@ -1,6 +1,7 @@
 import { getPaymentRecord, parseLocalDate, toDateOnly, toDateStr } from "@/components/calendar/types";
 import { isCredit } from "@/lib/recordTypes";
 import type { SubscriptionNotRenewedActions } from "@/lib/subscriptionNotRenewed";
+import { isBillingPaused } from "@/lib/subscriptionPauses";
 import { subscriptionAmount } from "@/lib/subscriptionTrial";
 import type { Currency, PaymentRecord, Subscription } from "@/types";
 
@@ -38,7 +39,7 @@ export function quickPaymentTarget(
     ...own.map((record) => toDateOnly(record.due_date)), anchor,
   ])].sort();
   for (const date of dates) {
-    if (!parseLocalDate(date) || date > cutoff) continue;
+    if (!parseLocalDate(date) || date > cutoff || isBillingPaused(subscription, date)) continue;
     const record = getPaymentRecord(own, subscription.id, date);
     if (record?.paid_at) continue;
     if (!record) {

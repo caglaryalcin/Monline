@@ -16,6 +16,7 @@ function projectedOccurrence(app, sub, date) {
     sub.getString("record_type") === "credit"
   )
     return false;
+  if (require("./pure/subscription-pauses.mjs").isBillingPaused(sub, date)) return false;
   let cursor = sub.getString("next_payment").slice(0, 10);
   const start = sub.getString("start_date").slice(0, 10);
   const end = [sub.getString("end_date"), sub.getString("cancellation_date")]
@@ -58,7 +59,7 @@ function projectedOccurrence(app, sub, date) {
   const anchor =
     sub.getFloat("billing_anchor_day") || Number(cursor.slice(8, 10));
   let index = sub.getFloat("payments_completed");
-  for (let guard = 0; guard < 5000 && cursor <= date; guard++, index++) {
+  for (let guard = 0; guard < 5000 && cursor <= date; guard++) {
     if (!occurrenceIsAllowed(cursor, end, index, sub.getFloat("payment_limit")))
       return false;
     if (cursor === date) return true;
@@ -73,6 +74,7 @@ function projectedOccurrence(app, sub, date) {
       .toISOString()
       .slice(0, 10);
     if (next <= cursor) return false;
+    if (!require("./pure/subscription-pauses.mjs").isBillingPaused(sub, cursor)) index++;
     cursor = next;
   }
   return false;

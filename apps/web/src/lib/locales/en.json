@@ -1440,5 +1440,15 @@
   "use_gifs": "Use GIFs",
   "use_gifs_desc": "Show animated icons. When turned off, the original icons are displayed.",
   "loop_gifs": "Play continuously",
-  "loop_gifs_desc": "Keep animations playing. When turned off, each animation plays three times and stops."
+  "loop_gifs_desc": "Keep animations playing. When turned off, each animation plays three times and stops.",
+  "billing_pauses_title": "Planned pauses",
+  "billing_pauses_help": "Skip billing cycles without deleting the subscription. 0 starts at the next payment. Billing resumes on the end date; save the subscription to apply changes.",
+  "billing_pauses_after": "Start after this many billing cycles",
+  "billing_pauses_duration": "Billing cycles to skip",
+  "billing_pauses_range": "Paused from {{from}}; resumes {{to}}",
+  "billing_pauses_add": "Add pause",
+  "billing_pauses_remove": "Remove pause starting {{date}}",
+  "billing_pauses_until": "Paused until {{date}}",
+  "billing_pauses_invalid": "Enter valid billing cycle counts and dates (up to 1200 cycles).",
+  "billing_pauses_overlap": "This pause overlaps an existing pause."
 }
