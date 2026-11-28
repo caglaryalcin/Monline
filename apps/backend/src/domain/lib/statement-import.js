@@ -140,18 +140,31 @@ function importStatement(app, owner, statement, body, now = new Date()) {
     const payments = owned("payment_records").filter((p) =>
       subscriptionIds.has(p.getString("subscription_id")),
     );
-    const manualPayments = paymentMatches.manualPaidSnapshots(payments);
-    const reviews = [], linkedDates = new Set(), linkedPayments = new Set();
+    // Compare with the transaction's original state so retries review the same
+    // candidates even when an earlier batch has already moved a payment.
+    const paidPayments = paymentMatches.paidSnapshots(payments);
+    const reviews = [],
+      linkedPayments = new Set();
     let requiresReview = false;
     const paymentsBySource = new Map();
     const paymentsByDay = new Map();
+    const indexedDays = new Map();
     function indexPayment(payment) {
       if (payment.getString("paid_at"))
         for (const key of sources(payment)) paymentsBySource.set(key, payment);
       const key = `${payment.getString("subscription_id")}:${payment.getString("due_date").slice(0, 10)}`;
+      const previousKey = indexedDays.get(payment.id);
+      if (previousKey && previousKey !== key)
+        paymentsByDay.set(
+          previousKey,
+          (paymentsByDay.get(previousKey) || []).filter(
+            (record) => record.id !== payment.id,
+          ),
+        );
       const day = paymentsByDay.get(key) || [];
       if (!day.includes(payment)) day.push(payment);
       paymentsByDay.set(key, day);
+      indexedDays.set(payment.id, key);
     }
     payments.forEach(indexPayment);
     const cycles = tx.findRecordsByFilter("cycles");
@@ -360,11 +373,24 @@ function importStatement(app, owner, statement, body, now = new Date()) {
         }
         const matches =
           paymentsByDay.get(`${subscription.id}:${row.date}`) || [];
-        // Exact-date matches keep the existing import behavior. A nearby manual
-        // payment needs an explicit decision before any statement writes commit.
-        if (!matches.some((payment) => payment.getString("paid_at"))) {
-          const choice = decisions.get(paymentMatches.keyFor(pending.map((entry) => entry.row.id)));
-          const review = paymentMatches.paymentReview(statement, subscription, pending, values.amount, manualPayments);
+        // Extending an explicitly combined day is already a deliberate choice.
+        // Otherwise every existing payment in this calendar month needs review,
+        // including exact-day matches and charges from other statements.
+        const extendsCombinedDay =
+          combineDates.has(row.date) &&
+          matches.length === 1 &&
+          sources(matches[0]).some((key) => key.startsWith(documentPrefix));
+        if (!extendsCombinedDay) {
+          const choice = decisions.get(
+            paymentMatches.keyFor(pending.map((entry) => entry.row.id)),
+          );
+          const review = paymentMatches.paymentReview(
+            statement,
+            subscription,
+            pending,
+            values.amount,
+            paidPayments,
+          );
           if (review) {
             reviews.push(review);
             if (!choice || choice.review_token !== review.review_token) {
@@ -372,18 +398,41 @@ function importStatement(app, owner, statement, body, now = new Date()) {
               continue;
             }
             if (choice.payment_id !== null) {
-              if (!review.candidates.some((candidate) => candidate.payment_id === choice.payment_id))
+              if (
+                !review.candidates.some(
+                  (candidate) => candidate.payment_id === choice.payment_id,
+                )
+              )
                 fail("statement_import_payment_changed");
-              if (linkedPayments.has(choice.payment_id)) fail("statement_import_payment_reused");
-              const existing = payments.find((payment) => payment.id === choice.payment_id);
+              if (linkedPayments.has(choice.payment_id))
+                fail("statement_import_payment_reused");
+              const existing = payments.find(
+                (payment) => payment.id === choice.payment_id,
+              );
               if (!existing) fail("statement_import_payment_changed");
-              if (sources(existing).length) fail("statement_import_payment_reused");
-              existing.set("statement_sources", [...new Set([...sources(existing), ...markers])]);
+              const previousDate = existing.getString("due_date").slice(0, 10);
+              if (
+                previousDate !== row.date &&
+                !existing.getString("scheduled_date")
+              )
+                existing.set("scheduled_date", previousDate);
+              existing.set("due_date", values.due_date);
+              existing.set("paid_at", values.paid_at);
+              existing.set("auto_paid", false);
+              existing.set("statement_sources", [
+                ...new Set([...sources(existing), ...markers]),
+              ]);
               tx.save(existing);
               indexPayment(existing);
               linkedPayments.add(existing.id);
-              linkedDates.add(`${subscription.id}:${row.date}`);
               result.payments_skipped += pending.length;
+              continue;
+            }
+            // A separate choice must never fall through to exact-date dedup.
+            // The calendar represents one total per subscription and day.
+            if (matches.some((payment) => payment.getString("paid_at"))) {
+              for (const entry of pending)
+                markConflict(entry.row, subscription, matches);
               continue;
             }
           } else if (choice?.payment_id) {
@@ -555,7 +604,6 @@ function importStatement(app, owner, statement, body, now = new Date()) {
       result.payments_skipped += backfill.payments.length - saved;
     }
     for (const { subscription, date } of scheduleAnchors.values()) {
-      if (linkedDates.has(`${subscription.id}:${date}`)) continue;
       const next = nextStatementPayment(date, today);
       if (subscription.getString("next_payment").slice(0, 10) !== next) {
         subscription.set("next_payment", next);

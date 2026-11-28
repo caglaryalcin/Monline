@@ -1,28 +1,38 @@
 // The rest of the interface falls back to English for languages without these keys.
 export const statementTranslations = {
   tr: {
-    statement_payment_review_title: "Takvimde benzer ödeme bulundu",
-    statement_payment_review_help: "Ekstre hareketini mevcut takvim ödemesiyle karşılaştır. Aynı ödeme dersen yeni kayıt açılmaz; mevcut tutar, ödeme tarihi ve sonraki ödeme planı korunur. Ekstre hareketi bu kayda bağlanır.",
+    statement_payment_month_warning:
+      "{{platform}} için {{month}} döneminde {{count}} ekstre işlemi seçili. Aynı ayda birden fazla ödeme var; tarih ve tutarları kontrol et. Gerçekten ayrı harcamalarsa ayrı kayıtlar olarak aktarılır.",
+    statement_payment_review_title: "Aynı ayda aynı platform için ödeme bulundu",
+    statement_payment_review_help:
+      "Bu platform için aynı ayda kayıtlı ödeme var. Aynı ödemeyse mevcut kaydı seç; yeni kayıt açılmaz, işlem ve ödenme tarihi ekstre tarihine güncellenir. Sonraki ödeme günü de ekstreye göre belirlenir. Mevcut tutar korunur. Gerçekten ayrı bir harcamaysa ayrı ödeme olarak kaydet.",
     statement_payment_review_statement: "Ekstre hareketi",
     statement_payment_review_question: "Bu hareket takvimdeki ödemeyle aynı mı?",
     statement_payment_review_same: "Evet, takvimdeki bu ödeme",
     statement_payment_review_separate: "Hayır, bu ayrı bir ödeme",
-    statement_payment_review_amount_diff: "Tutarlar farklı. Eşleştirirsen takvimdeki mevcut tutar korunacak.",
-    statement_payment_review_required: "Devam etmek için her hareketin aynı mı, ayrı mı olduğunu seç.",
+    statement_payment_review_amount_diff:
+      "Tutarlar farklı. Eşleştirirsen takvimdeki mevcut tutar korunacak.",
+    statement_payment_review_required:
+      "Devam etmek için her hareketin aynı mı, ayrı mı olduğunu seç.",
     statement_payment_review_back: "Aktarıma geri dön",
     statement_payment_review_confirm: "Seçimleri onayla ve aktar",
-    statement_import_payment_changed: "Takvimdeki ödeme değişmiş. Aktarımı yeniden başlatıp güncel kaydı karşılaştır.",
-    statement_import_payment_reused: "Aynı takvim ödemesi birden fazla ayrı harekete bağlanamaz. Seçimleri kontrol et; gerekiyorsa aynı günkü hareketleri birleştir.",
+    statement_import_payment_changed:
+      "Takvimdeki ödeme değişmiş. Aktarımı yeniden başlatıp güncel kaydı karşılaştır.",
+    statement_import_payment_reused:
+      "Aynı takvim ödemesi birden fazla ayrı harekete bağlanamaz. Seçimleri kontrol et; gerekiyorsa aynı günkü hareketleri birleştir.",
     statement_duplicates_title: "Benzer harcamalar bulundu!",
-    statement_duplicates_short_help: "Yükleyeceğin işlemleri mevcut kayıtlarla karşılaştır. Hiçbir kayıt otomatik çıkarılmaz.",
+    statement_duplicates_short_help:
+      "Yükleyeceğin işlemleri mevcut kayıtlarla karşılaştır. Hiçbir kayıt otomatik çıkarılmaz.",
     statement_duplicates_review_count: "Kontrol et: {{count}} eşleşme",
     statement_duplicates_transaction: "{{number}}. işlem",
     statement_duplicates_record_count: "{{count}} ayrı kayıt karşılaştırılıyor",
     statement_duplicates_review_heading: "Aynı ödeme tekrar kaydediliyor olabilir.",
-    statement_duplicates_legitimate_help: "Eğer bu harcama aynı gün gerçekten {{count}} kez yapıldıysa",
+    statement_duplicates_legitimate_help:
+      "Eğer bu harcama aynı gün gerçekten {{count}} kez yapıldıysa",
     statement_duplicates_legitimate_action: "kontrol etmene gerek yok, kaydet!",
     statement_duplicates_installment_count: "{{count}} işlem farklı taksit olabilir",
-    statement_duplicates_installment_help: "Bunlar farklı aylara ait taksitler. Ek bir işlem yapman gerekmiyor; seçili kayıtlar normal şekilde kaydedilecek.",
+    statement_duplicates_installment_help:
+      "Bunlar farklı aylara ait taksitler. Ek bir işlem yapman gerekmiyor; seçili kayıtlar normal şekilde kaydedilecek.",
     statement_duplicates_compared_records: "Benzer kayıt",
     statement_duplicates_amount: "Tutar",
     statement_duplicates_same_amount: "Tutar aynı",
@@ -71,14 +81,20 @@ export const statementTranslations = {
     statement_verification_check_movement: "Dönemin net hareketi",
     statement_verification_from_summary: "PDF özetinden hesaplanan",
     statement_verification_issue_no_source_rows: "Karşılaştırılabilecek işlem satırı bulunamadı.",
-    statement_verification_issue_invalid_source_rows: "Bazı işlem tutarları PDF kaynak satırıyla doğrulanamadı.",
-    statement_verification_issue_conflicting_source_rows: "Aynı PDF satırına ait birbiriyle çelişen kayıtlar var.",
-    statement_verification_issue_unsupported_currency: "TL dışındaki işlemler için toplam doğrulaması yapılamadı.",
+    statement_verification_issue_invalid_source_rows:
+      "Bazı işlem tutarları PDF kaynak satırıyla doğrulanamadı.",
+    statement_verification_issue_conflicting_source_rows:
+      "Aynı PDF satırına ait birbiriyle çelişen kayıtlar var.",
+    statement_verification_issue_unsupported_currency:
+      "TL dışındaki işlemler için toplam doğrulaması yapılamadı.",
     statement_verification_issue_invalid_summary: "PDF özetindeki bazı tutarlar geçerli değil.",
-    statement_verification_issue_unread_source_rows: "PDF’nin bazı işlem satırları veya sayfaları okunamadı.",
-    statement_verification_issue_incomplete_summary: "Karşılaştırma için PDF’de yeterli özet bilgisi bulunamadı.",
+    statement_verification_issue_unread_source_rows:
+      "PDF’nin bazı işlem satırları veya sayfaları okunamadı.",
+    statement_verification_issue_incomplete_summary:
+      "Karşılaştırma için PDF’de yeterli özet bilgisi bulunamadı.",
     statement_verification_override: "Doğrulamadan kaydetme seçeneği",
-    statement_verification_confirm: "Otomatik toplam doğrulaması yapılamadığını biliyorum; kontrol ettiğim seçili işlemleri kaydetmeyi onaylıyorum.",
+    statement_verification_confirm:
+      "Otomatik toplam doğrulaması yapılamadığını biliyorum; kontrol ettiğim seçili işlemleri kaydetmeyi onaylıyorum.",
     statement_refunds_matched_short: "{{count}} iade harcamayla eşleşti",
     statement_refund_exact_match: "Harcamayla eşleşti: {{date}} · {{amount}}",
     statement_excluded_help:
@@ -109,7 +125,8 @@ export const statementTranslations = {
     statement_refund_group_rows: "İşlemler ({{count}})",
     statement_refund_original_amount: "Özgün döviz tutarı: {{amount}}",
     statement_refund_installment_match: "Taksitle eşleşti: {{date}} · {{installment}} · {{amount}}",
-    statement_refund_currency_match: "Döviz tutarıyla eşleşti: {{original}} · {{date}} · {{amount}}",
+    statement_refund_currency_match:
+      "Döviz tutarıyla eşleşti: {{original}} · {{date}} · {{amount}}",
     statement_refund_rounding_net: "Harcama − iade: {{amount}}. Tutar farkı toplamda korunur.",
     statement_unmatched_refunds_help:
       "Bu iadeler ana işlem tablosundan ayrı tutulur. Seçili olanlar net toplamdan düşülür ve ekstreyle kaydedilir. Kısmi iadeler bir harcamayı otomatik olarak kaldırmaz.",
@@ -189,8 +206,7 @@ export const statementTranslations = {
     statement_import_next: "Sonraki ödeme tarihi",
     statement_import_next_month:
       "Ay ve yıl, aktarım yaptığın tarihin bir sonraki ayından alınır. Gün, seçili en son harcamadan korunur; o gün yoksa ayın son günü kullanılır.",
-    statement_import_schedule_note:
-      "Ekstre kaydedildi. Harcamalar Takvim’de gösteriliyor.",
+    statement_import_schedule_note: "Ekstre kaydedildi. Harcamalar Takvim’de gösteriliyor.",
     statement_import_existing_note:
       "Mevcut aboneliğinin fiyatı ve aktif/pasif durumu korunur. Seçtiğin kategori ve ödeme yöntemi aboneliğe kaydedilir. Seçilen geçmiş ödemeler eklenir; sonraki ödeme tarihi mevcut ayın bir sonraki ayına güncellenir.",
     statement_import_date_range: "Ödeme tarihi geçerli olmalı ve bugünden sonra olmamalıdır.",
@@ -262,8 +278,7 @@ export const statementTranslations = {
     statement_progress: "{{current}} / {{total}} sayfa okunuyor…",
     statement_review: "Ekstreyi incele",
     statement_saved_list: "Kaydedilen işlem listesi",
-    statement_review_note:
-      "Kaydetmeden önce işlemleri ve tutarları kontrol et.",
+    statement_review_note: "Kaydetmeden önce işlemleri ve tutarları kontrol et.",
     statement_refunds_removed_short: "{{count}} tam iade listeden çıkarıldı",
     statement_refunds_review_short: "{{count}} iadeyi incele",
     statement_balance_formula_title: "Ekstre borcu nasıl hesaplanıyor?",
@@ -296,7 +311,8 @@ export const statementTranslations = {
     statement_kind_charge: "Harcama",
     statement_kind_refund: "İade / alacak",
     statement_kind_repayment: "Kart borcu ödemesi",
-    statement_repayment_no_calendar: "Takvim’e aktarılmaz; Gelir/Gider’deki kart ödemesi esas alınır.",
+    statement_repayment_no_calendar:
+      "Takvim’e aktarılmaz; Gelir/Gider’deki kart ödemesi esas alınır.",
     statement_kind_fee: "Ücret / faiz / vergi",
     statement_kind_cash: "Nakit avans",
     statement_unresolved: "{{count}} işlem satırının tutarı veya tarihi okunamadı",
@@ -327,8 +343,7 @@ export const statementTranslations = {
     statement_no_rows: "İşlem bulunamadı. Okunamayan satırları kontrol et veya elle işlem ekle.",
     statement_invalid_rows:
       "Seçili işlemlerin tarih, tutar, kategori ve para birimi bilgilerini kontrol et.",
-    statement_duplicate:
-      "Bu ekstre zaten kayıtlı. Ekstre arşivinden açabilirsin.",
+    statement_duplicate: "Bu ekstre zaten kayıtlı. Ekstre arşivinden açabilirsin.",
     statement_save_failed: "İşlem listesi kaydedilemedi. Tekrar dene.",
     statement_load_failed: "Ekstre arşivi yüklenemedi.",
     statement_delete_failed: "Ekstre listesi silinemedi.",
@@ -337,28 +352,38 @@ export const statementTranslations = {
       "Ödeme dönemine göre eksik tarihler oluşturulur. Tutarlar son seçili ekstre ödemesinden alınır; her tutarı kontrol edip değiştirebilir veya tarihi çıkarabilirsin. Onayladığın ödemeler ödendi olarak eklenir. Ekstredeki ve daha önce ödenmiş tarihler tekrar eklenmez.",
   },
   en: {
-    statement_payment_review_title: "A similar calendar payment was found",
-    statement_payment_review_help: "Compare the statement charge with the existing calendar payment. If they are the same, no new payment is created; its amount, paid date and next payment schedule are preserved. The charge is linked to that record.",
+    statement_payment_month_warning:
+      "{{count}} statement charges for {{platform}} are selected in {{month}}. There is more than one payment in this month; compare their dates and amounts. Genuinely separate charges will be imported as separate records.",
+    statement_payment_review_title: "A payment for this platform exists in the same month",
+    statement_payment_review_help:
+      "This platform already has a payment in the same month. If it is the same payment, select the existing record: no new payment is created, and its transaction and paid dates are updated to the statement date. The next payment day also follows the statement. The existing amount is preserved. Save a genuinely different charge as a separate payment.",
     statement_payment_review_statement: "Statement charge",
     statement_payment_review_question: "Is this charge the same as a calendar payment?",
     statement_payment_review_same: "Yes, this calendar payment",
     statement_payment_review_separate: "No, this is a separate payment",
-    statement_payment_review_amount_diff: "The amounts differ. Linking keeps the existing calendar amount.",
-    statement_payment_review_required: "Choose whether each charge is the same payment or a separate payment to continue.",
+    statement_payment_review_amount_diff:
+      "The amounts differ. Linking keeps the existing calendar amount.",
+    statement_payment_review_required:
+      "Choose whether each charge is the same payment or a separate payment to continue.",
     statement_payment_review_back: "Back to import",
     statement_payment_review_confirm: "Confirm choices and import",
-    statement_import_payment_changed: "The calendar payment has changed. Restart the import and compare the current record.",
-    statement_import_payment_reused: "A calendar payment cannot be linked to multiple separate charges. Check your choices or combine charges from the same day.",
+    statement_import_payment_changed:
+      "The calendar payment has changed. Restart the import and compare the current record.",
+    statement_import_payment_reused:
+      "A calendar payment cannot be linked to multiple separate charges. Check your choices or combine charges from the same day.",
     statement_duplicates_title: "Similar purchases found!",
-    statement_duplicates_short_help: "Compare incoming transactions with existing records. No records are removed automatically.",
+    statement_duplicates_short_help:
+      "Compare incoming transactions with existing records. No records are removed automatically.",
     statement_duplicates_review_count: "Review: {{count}} matches",
     statement_duplicates_transaction: "Transaction {{number}}",
     statement_duplicates_record_count: "Comparing {{count}} separate records",
     statement_duplicates_review_heading: "These payments may be recorded twice.",
-    statement_duplicates_legitimate_help: "If you really made this purchase {{count}} times on the same day,",
+    statement_duplicates_legitimate_help:
+      "If you really made this purchase {{count}} times on the same day,",
     statement_duplicates_legitimate_action: "no review is needed - save!",
     statement_duplicates_installment_count: "Possible other installments: {{count}}",
-    statement_duplicates_installment_help: "These installments belong to different months. No action is needed; selected records will be saved normally.",
+    statement_duplicates_installment_help:
+      "These installments belong to different months. No action is needed; selected records will be saved normally.",
     statement_duplicates_compared_records: "Similar record",
     statement_duplicates_amount: "Amount",
     statement_duplicates_same_amount: "Same amount",
@@ -407,15 +432,22 @@ export const statementTranslations = {
     statement_verification_check_balance: "Statement closing balance",
     statement_verification_check_movement: "Net movement for the period",
     statement_verification_from_summary: "Calculated from the PDF summary",
-    statement_verification_issue_no_source_rows: "No source transactions were found for comparison.",
-    statement_verification_issue_invalid_source_rows: "Some transaction amounts could not be verified against their PDF source.",
-    statement_verification_issue_conflicting_source_rows: "Conflicting records refer to the same PDF source row.",
-    statement_verification_issue_unsupported_currency: "Totals could not be verified for non-TRY transactions.",
+    statement_verification_issue_no_source_rows:
+      "No source transactions were found for comparison.",
+    statement_verification_issue_invalid_source_rows:
+      "Some transaction amounts could not be verified against their PDF source.",
+    statement_verification_issue_conflicting_source_rows:
+      "Conflicting records refer to the same PDF source row.",
+    statement_verification_issue_unsupported_currency:
+      "Totals could not be verified for non-TRY transactions.",
     statement_verification_issue_invalid_summary: "Some PDF summary amounts are invalid.",
-    statement_verification_issue_unread_source_rows: "Some PDF transaction rows or pages could not be read.",
-    statement_verification_issue_incomplete_summary: "The PDF does not contain enough summary information for comparison.",
+    statement_verification_issue_unread_source_rows:
+      "Some PDF transaction rows or pages could not be read.",
+    statement_verification_issue_incomplete_summary:
+      "The PDF does not contain enough summary information for comparison.",
     statement_verification_override: "Option to save without verification",
-    statement_verification_confirm: "I understand that automatic totals verification was unavailable and confirm saving the selected transactions I reviewed.",
+    statement_verification_confirm:
+      "I understand that automatic totals verification was unavailable and confirm saving the selected transactions I reviewed.",
     statement_refunds_matched_short: "Refunds matched to purchases: {{count}}",
     statement_refund_exact_match: "Matched purchase: {{date}} · {{amount}}",
     statement_excluded_help:
@@ -425,7 +457,8 @@ export const statementTranslations = {
     statement_reconciliation_pdf: "PDF total",
     statement_reconciliation_calculated: "Transaction total",
     statement_reconciliation_source_rows: "Included source rows: {{count}}",
-    statement_reconciliation_cancelled: "Fully refunded purchases of {{amount}} were not added again.",
+    statement_reconciliation_cancelled:
+      "Fully refunded purchases of {{amount}} were not added again.",
     statement_reconciliation_override: "Option to save with this difference",
     statement_reconciliation_confirm:
       "I checked this difference against the PDF and confirm saving only the selected transactions as shown.",
@@ -438,16 +471,20 @@ export const statementTranslations = {
     statement_refund_returned_info: "Purchase refunded.",
     statement_refund_installment_info: "Installment refund matched.",
     statement_refund_difference_info: "Refund matched; the amount difference is preserved.",
-    statement_refund_proximity_info: "Matched by a later date and a similar TRY amount; the difference is preserved.",
+    statement_refund_proximity_info:
+      "Matched by a later date and a similar TRY amount; the difference is preserved.",
     statement_refund_merchant_info: "Purchases and refunds for the same store in this statement.",
     statement_refund_charge_total: "Purchases",
     statement_refund_refund_total: "Refunds",
     statement_refund_remaining: "Net spending",
     statement_refund_group_rows: "Transactions ({{count}})",
     statement_refund_original_amount: "Original currency amount: {{amount}}",
-    statement_refund_installment_match: "Matched installment: {{date}} · {{installment}} · {{amount}}",
-    statement_refund_currency_match: "Matched original currency amount: {{original}} · {{date}} · {{amount}}",
-    statement_refund_rounding_net: "Charge − refund: {{amount}}. The amount difference is preserved in totals.",
+    statement_refund_installment_match:
+      "Matched installment: {{date}} · {{installment}} · {{amount}}",
+    statement_refund_currency_match:
+      "Matched original currency amount: {{original}} · {{date}} · {{amount}}",
+    statement_refund_rounding_net:
+      "Charge − refund: {{amount}}. The amount difference is preserved in totals.",
     statement_unmatched_refunds_help:
       "These refunds are kept outside the main transaction table. Selected refunds reduce net spending and are saved with the statement. Partial refunds do not automatically remove a purchase.",
     statement_category_digital: "Digital / Subscriptions",
@@ -526,8 +563,7 @@ export const statementTranslations = {
     statement_import_next: "Next payment date",
     statement_import_next_month:
       "The month and year come from the month after the import date. The day is kept from the latest selected charge, or the last day of the month if necessary.",
-    statement_import_schedule_note:
-      "Statement saved. Its spending is shown in Calendar.",
+    statement_import_schedule_note: "Statement saved. Its spending is shown in Calendar.",
     statement_import_existing_note:
       "Your existing subscription’s price and active/inactive status are kept. Your category and payment method selections are saved to the subscription. Selected historical payments are added, and the next payment date is updated to the month after the current month.",
     statement_import_date_range: "The payment date must be valid and cannot be after today.",
@@ -600,8 +636,7 @@ export const statementTranslations = {
     statement_progress: "Reading page {{current}} of {{total}}…",
     statement_review: "Review statement",
     statement_saved_list: "Saved transaction list",
-    statement_review_note:
-      "Check transactions and amounts before saving.",
+    statement_review_note: "Check transactions and amounts before saving.",
     statement_refunds_removed_short: "Full refunds removed: {{count}}",
     statement_refunds_review_short: "Review refunds: {{count}}",
     statement_balance_formula_title: "How is the statement balance calculated?",
@@ -635,7 +670,8 @@ export const statementTranslations = {
     statement_kind_charge: "Purchase",
     statement_kind_refund: "Refund / credit",
     statement_kind_repayment: "Card repayment",
-    statement_repayment_no_calendar: "Not added to Calendar; the card payment in Income/Expenses is used.",
+    statement_repayment_no_calendar:
+      "Not added to Calendar; the card payment in Income/Expenses is used.",
     statement_kind_fee: "Fee / interest / tax",
     statement_kind_cash: "Cash advance",
     statement_unresolved: "Could not read the amount or date of {{count}} transaction rows",
@@ -669,8 +705,7 @@ export const statementTranslations = {
       "No transactions found. Check the unresolved lines or add a transaction manually.",
     statement_invalid_rows:
       "Check the dates, amounts, categories and currencies of the selected transactions.",
-    statement_duplicate:
-      "This statement is already saved. Open it from the statement archive.",
+    statement_duplicate: "This statement is already saved. Open it from the statement archive.",
     statement_save_failed: "Could not save the transaction list. Please try again.",
     statement_load_failed: "Could not load the statement archive.",
     statement_delete_failed: "Could not delete the statement list.",
@@ -679,28 +714,38 @@ export const statementTranslations = {
       "Missing dates follow the billing cycle. Amounts start from the latest selected statement charge; review, edit or exclude each one. Confirmed entries are marked paid. Statement dates and previously paid dates are not added again.",
   },
   de: {
-    statement_payment_review_title: "Ähnliche Kalenderzahlung gefunden",
-    statement_payment_review_help: "Vergleiche die Abrechnungsbuchung mit der Kalenderzahlung. Bei derselben Zahlung wird kein neuer Eintrag erstellt; Betrag, Zahlungsdatum und nächster Zahlungstermin bleiben erhalten. Die Buchung wird mit dem Eintrag verknüpft.",
+    statement_payment_month_warning:
+      "{{count}} Abrechnungsbuchungen für {{platform}} sind für {{month}} ausgewählt. In diesem Monat gibt es mehrere Zahlungen; prüfe Datum und Betrag. Tatsächlich getrennte Buchungen werden separat importiert.",
+    statement_payment_review_title: "Zahlung für diese Plattform im selben Monat gefunden",
+    statement_payment_review_help:
+      "Für diese Plattform gibt es bereits eine Zahlung im selben Monat. Ist es dieselbe Zahlung, wähle den vorhandenen Eintrag: Es wird keine neue Zahlung erstellt, und Buchungs- und Zahlungsdatum werden auf das Datum der Abrechnung gesetzt. Auch der nächste Zahlungstag richtet sich nach der Abrechnung. Der vorhandene Betrag bleibt erhalten. Eine tatsächlich andere Buchung kannst du separat speichern.",
     statement_payment_review_statement: "Abrechnungsbuchung",
     statement_payment_review_question: "Ist diese Buchung dieselbe Zahlung wie im Kalender?",
     statement_payment_review_same: "Ja, diese Kalenderzahlung",
     statement_payment_review_separate: "Nein, dies ist eine separate Zahlung",
-    statement_payment_review_amount_diff: "Die Beträge unterscheiden sich. Beim Verknüpfen bleibt der Kalenderbetrag erhalten.",
-    statement_payment_review_required: "Wähle für jede Buchung, ob es dieselbe oder eine separate Zahlung ist.",
+    statement_payment_review_amount_diff:
+      "Die Beträge unterscheiden sich. Beim Verknüpfen bleibt der Kalenderbetrag erhalten.",
+    statement_payment_review_required:
+      "Wähle für jede Buchung, ob es dieselbe oder eine separate Zahlung ist.",
     statement_payment_review_back: "Zurück zum Import",
     statement_payment_review_confirm: "Auswahl bestätigen und importieren",
-    statement_import_payment_changed: "Die Kalenderzahlung wurde geändert. Starte den Import neu und vergleiche den aktuellen Eintrag.",
-    statement_import_payment_reused: "Eine Kalenderzahlung kann nicht mit mehreren separaten Buchungen verknüpft werden. Prüfe die Auswahl oder fasse Buchungen vom selben Tag zusammen.",
+    statement_import_payment_changed:
+      "Die Kalenderzahlung wurde geändert. Starte den Import neu und vergleiche den aktuellen Eintrag.",
+    statement_import_payment_reused:
+      "Eine Kalenderzahlung kann nicht mit mehreren separaten Buchungen verknüpft werden. Prüfe die Auswahl oder fasse Buchungen vom selben Tag zusammen.",
     statement_duplicates_title: "Ähnliche Ausgaben gefunden!",
-    statement_duplicates_short_help: "Vergleiche neue Umsätze mit vorhandenen Einträgen. Es wird nichts automatisch entfernt.",
+    statement_duplicates_short_help:
+      "Vergleiche neue Umsätze mit vorhandenen Einträgen. Es wird nichts automatisch entfernt.",
     statement_duplicates_review_count: "Prüfen: {{count}} Vergleiche",
     statement_duplicates_transaction: "Umsatz {{number}}",
     statement_duplicates_record_count: "{{count}} separate Einträge werden verglichen",
     statement_duplicates_review_heading: "Diese Zahlungen könnten doppelt erfasst werden.",
-    statement_duplicates_legitimate_help: "Wenn du diesen Einkauf am selben Tag tatsächlich {{count}} Mal getätigt hast,",
+    statement_duplicates_legitimate_help:
+      "Wenn du diesen Einkauf am selben Tag tatsächlich {{count}} Mal getätigt hast,",
     statement_duplicates_legitimate_action: "musst du nichts prüfen – speichern!",
     statement_duplicates_installment_count: "Mögliche weitere Raten: {{count}}",
-    statement_duplicates_installment_help: "Diese Raten gehören zu unterschiedlichen Monaten. Es ist nichts zu tun; ausgewählte Einträge werden normal gespeichert.",
+    statement_duplicates_installment_help:
+      "Diese Raten gehören zu unterschiedlichen Monaten. Es ist nichts zu tun; ausgewählte Einträge werden normal gespeichert.",
     statement_duplicates_compared_records: "Ähnlicher Eintrag",
     statement_duplicates_amount: "Betrag",
     statement_duplicates_same_amount: "Gleicher Betrag",
@@ -751,22 +796,31 @@ export const statementTranslations = {
     statement_reconciliation_pdf: "PDF-Summe",
     statement_reconciliation_calculated: "Umsatzsumme",
     statement_reconciliation_source_rows: "Berücksichtigte Quellzeilen: {{count}}",
-    statement_reconciliation_cancelled: "Vollständig erstattete Einkäufe von {{amount}} wurden nicht erneut addiert.",
+    statement_reconciliation_cancelled:
+      "Vollständig erstattete Einkäufe von {{amount}} wurden nicht erneut addiert.",
     statement_reconciliation_report_issue: "Fehler auf GitHub melden",
     statement_totals_unverified: "Die PDF-Summen konnten nicht geprüft werden.",
     statement_verification_check_summary_balance: "Berechnung der PDF-Zusammenfassung",
     statement_verification_check_balance: "Abrechnungssaldo",
     statement_verification_check_movement: "Nettobewegung des Zeitraums",
     statement_verification_from_summary: "Aus der PDF-Zusammenfassung berechnet",
-    statement_verification_issue_no_source_rows: "Keine ursprünglichen Umsätze zum Vergleich gefunden.",
-    statement_verification_issue_invalid_source_rows: "Einige Umsatzbeträge konnten nicht mit ihrer PDF-Quelle abgeglichen werden.",
-    statement_verification_issue_conflicting_source_rows: "Widersprüchliche Einträge beziehen sich auf dieselbe PDF-Zeile.",
-    statement_verification_issue_unsupported_currency: "Summen für Umsätze außerhalb von TRY konnten nicht geprüft werden.",
-    statement_verification_issue_invalid_summary: "Einige Beträge der PDF-Zusammenfassung sind ungültig.",
-    statement_verification_issue_unread_source_rows: "Einige PDF-Umsatzzeilen oder Seiten konnten nicht gelesen werden.",
-    statement_verification_issue_incomplete_summary: "Die PDF enthält nicht genügend Summeninformationen für einen Vergleich.",
+    statement_verification_issue_no_source_rows:
+      "Keine ursprünglichen Umsätze zum Vergleich gefunden.",
+    statement_verification_issue_invalid_source_rows:
+      "Einige Umsatzbeträge konnten nicht mit ihrer PDF-Quelle abgeglichen werden.",
+    statement_verification_issue_conflicting_source_rows:
+      "Widersprüchliche Einträge beziehen sich auf dieselbe PDF-Zeile.",
+    statement_verification_issue_unsupported_currency:
+      "Summen für Umsätze außerhalb von TRY konnten nicht geprüft werden.",
+    statement_verification_issue_invalid_summary:
+      "Einige Beträge der PDF-Zusammenfassung sind ungültig.",
+    statement_verification_issue_unread_source_rows:
+      "Einige PDF-Umsatzzeilen oder Seiten konnten nicht gelesen werden.",
+    statement_verification_issue_incomplete_summary:
+      "Die PDF enthält nicht genügend Summeninformationen für einen Vergleich.",
     statement_verification_override: "Ohne Prüfung speichern",
-    statement_verification_confirm: "Ich weiß, dass die automatische Summenprüfung nicht möglich war, und bestätige das Speichern der ausgewählten, geprüften Umsätze.",
+    statement_verification_confirm:
+      "Ich weiß, dass die automatische Summenprüfung nicht möglich war, und bestätige das Speichern der ausgewählten, geprüften Umsätze.",
     statement_refunds_matched_short: "Zugeordnete Erstattungen: {{count}}",
     statement_refund_exact_match: "Zugeordneter Einkauf: {{date}} · {{amount}}",
     statement_reconciliation_override: "Trotz Differenz speichern",
@@ -780,17 +834,22 @@ export const statementTranslations = {
     statement_refund_net: "Netto {{amount}}",
     statement_refund_returned_info: "Einkauf erstattet.",
     statement_refund_installment_info: "Ratenerstattung zugeordnet.",
-    statement_refund_difference_info: "Erstattung zugeordnet; die Betragsdifferenz bleibt erhalten.",
-    statement_refund_proximity_info: "Über späteres Datum und ähnlichen TRY-Betrag zugeordnet; die Differenz bleibt erhalten.",
-    statement_refund_merchant_info: "Einkäufe und Erstattungen desselben Händlers in dieser Abrechnung.",
+    statement_refund_difference_info:
+      "Erstattung zugeordnet; die Betragsdifferenz bleibt erhalten.",
+    statement_refund_proximity_info:
+      "Über späteres Datum und ähnlichen TRY-Betrag zugeordnet; die Differenz bleibt erhalten.",
+    statement_refund_merchant_info:
+      "Einkäufe und Erstattungen desselben Händlers in dieser Abrechnung.",
     statement_refund_charge_total: "Einkäufe",
     statement_refund_refund_total: "Erstattungen",
     statement_refund_remaining: "Verbleibende Ausgaben",
     statement_refund_group_rows: "Umsätze ({{count}})",
     statement_refund_original_amount: "Ursprünglicher Fremdwährungsbetrag: {{amount}}",
     statement_refund_installment_match: "Zugeordnete Rate: {{date}} · {{installment}} · {{amount}}",
-    statement_refund_currency_match: "Über Originalbetrag zugeordnet: {{original}} · {{date}} · {{amount}}",
-    statement_refund_rounding_net: "Belastung − Erstattung: {{amount}}. Die Betragsdifferenz bleibt in den Summen erhalten.",
+    statement_refund_currency_match:
+      "Über Originalbetrag zugeordnet: {{original}} · {{date}} · {{amount}}",
+    statement_refund_rounding_net:
+      "Belastung − Erstattung: {{amount}}. Die Betragsdifferenz bleibt in den Summen erhalten.",
     statement_unmatched_refunds_help:
       "Diese Erstattungen stehen außerhalb der Haupttabelle. Ausgewählte Erstattungen reduzieren die Nettoausgaben und werden gespeichert. Teilerstattungen entfernen einen Einkauf nicht automatisch.",
     statement_category_digital: "Digital / Abonnements",
@@ -945,8 +1004,7 @@ export const statementTranslations = {
     statement_progress: "Seite {{current}} von {{total}} wird gelesen…",
     statement_review: "Abrechnung prüfen",
     statement_saved_list: "Gespeicherte Umsatzliste",
-    statement_review_note:
-      "Prüfe Umsätze und Beträge vor dem Speichern.",
+    statement_review_note: "Prüfe Umsätze und Beträge vor dem Speichern.",
     statement_refunds_removed_short: "Entfernte vollständige Erstattungen: {{count}}",
     statement_refunds_review_short: "Erstattungen prüfen: {{count}}",
     statement_balance_formula_title: "Wie wird der Abrechnungssaldo berechnet?",
@@ -980,7 +1038,8 @@ export const statementTranslations = {
     statement_kind_charge: "Einkauf",
     statement_kind_refund: "Erstattung / Gutschrift",
     statement_kind_repayment: "Kartenrückzahlung",
-    statement_repayment_no_calendar: "Nicht im Kalender; maßgeblich ist die Kartenzahlung in Einnahmen/Ausgaben.",
+    statement_repayment_no_calendar:
+      "Nicht im Kalender; maßgeblich ist die Kartenzahlung in Einnahmen/Ausgaben.",
     statement_kind_fee: "Gebühr / Zinsen / Steuer",
     statement_kind_cash: "Bargeldvorschuss",
     statement_unresolved:
@@ -1014,8 +1073,7 @@ export const statementTranslations = {
     statement_no_rows:
       "Keine Umsätze gefunden. Prüfe die ungelesenen Zeilen oder füge einen Umsatz hinzu.",
     statement_invalid_rows: "Prüfe Datum, Betrag, Kategorie und Währung der ausgewählten Umsätze.",
-    statement_duplicate:
-      "Diese Abrechnung ist bereits gespeichert. Öffne sie im Archiv.",
+    statement_duplicate: "Diese Abrechnung ist bereits gespeichert. Öffne sie im Archiv.",
     statement_save_failed:
       "Die Umsatzliste konnte nicht gespeichert werden. Bitte erneut versuchen.",
     statement_load_failed: "Das Abrechnungsarchiv konnte nicht geladen werden.",

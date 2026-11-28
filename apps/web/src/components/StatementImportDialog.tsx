@@ -35,7 +35,12 @@ import { subscriptionsService } from "@/services/subscriptions";
 import type { Category, Currency, Cycle, PaymentMethod, Subscription } from "@/types";
 
 import { StatementHistory } from "./StatementHistory";
-import { readStatementPaymentReviews, type StatementPaymentMatch, StatementPaymentReview, type StatementPaymentReviewItem } from "./StatementPaymentReview";
+import {
+  readStatementPaymentReviews,
+  type StatementPaymentMatch,
+  StatementPaymentReview,
+  type StatementPaymentReviewItem,
+} from "./StatementPaymentReview";
 
 export interface StatementImportResult {
   subscriptions_created: number;
@@ -383,6 +388,20 @@ function ImportForm({
         ).some((s) => s.id === group.target);
       return !!group.name.trim() && !!group.cycle;
     });
+  const monthlyPayments = new Map<
+    string,
+    { platform: string; currency: string; month: string; count: number }
+  >();
+  for (const row of rows) {
+    if (!selected.has(row.id)) continue;
+    const platform = row.subscription_service || row.merchant;
+    const month = row.date.slice(0, 7);
+    const key = JSON.stringify([normalize(platform), row.currency, month]);
+    const current = monthlyPayments.get(key);
+    if (current) current.count++;
+    else monthlyPayments.set(key, { platform, currency: row.currency, month, count: 1 });
+  }
+  const monthlyWarnings = [...monthlyPayments.values()].filter((item) => item.count > 1);
   async function transfer(paymentMatches: StatementPaymentMatch[] = []) {
     if (!canImport || busy) return;
     setBusy(true);
@@ -438,7 +457,10 @@ function ImportForm({
       const code = err instanceof Error ? err.message : "";
       if (code === "statement_import_payment_review") {
         const reviews = readStatementPaymentReviews(err);
-        if (reviews.length) { setPaymentReviews(reviews); return; }
+        if (reviews.length) {
+          setPaymentReviews(reviews);
+          return;
+        }
       }
       setPaymentReviews([]);
       if (code === "statement_import_conflict") {
@@ -474,12 +496,30 @@ function ImportForm({
       setBusy(false);
     }
   }
-  if (paymentReviews.length) return <StatementPaymentReview
-    key={paymentReviews.map((review) => review.review_token).join(":")}
-    reviews={paymentReviews} busy={busy} onBack={() => { setPaymentReviews([]); setError(""); }}
-    onConfirm={(matches) => void transfer(matches)} />;
+  if (paymentReviews.length)
+    return (
+      <StatementPaymentReview
+        key={paymentReviews.map((review) => review.review_token).join(":")}
+        reviews={paymentReviews}
+        busy={busy}
+        onBack={() => {
+          setPaymentReviews([]);
+          setError("");
+        }}
+        onConfirm={(matches) => void transfer(matches)}
+      />
+    );
   return (
     <div ref={formRef} className="space-y-4">
+      {monthlyWarnings.map((warning) => (
+        <p
+          key={JSON.stringify([warning.platform, warning.currency, warning.month])}
+          role="alert"
+          className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-300"
+        >
+          {t("statement_payment_month_warning", warning)}
+        </p>
+      ))}
       <p className="flex items-start gap-2 rounded-xl border bg-muted/20 p-3 text-sm text-muted-foreground">
         <Check
           className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"

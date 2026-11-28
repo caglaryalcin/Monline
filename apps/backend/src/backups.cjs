@@ -40,6 +40,7 @@ const MIGRATED_COLUMNS = {
     "payer",
   ],
   subscriptions: [
+    "billing_pauses",
     "brand_name",
     "sharing",
     "notification_reminders",
