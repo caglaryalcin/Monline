@@ -4,6 +4,8 @@ const { DataRecord } = require("../../storage.cjs");
 const { validateHistoricalPayment } = require("./pure/historical-payment.js");
 const { prepareBackfill, saveBackfill } = require("./subscription-backfill.js");
 
+const paymentMatches = require("./statement-payment-matches.js");
+
 const normalize = (value) =>
   String(value || "")
     .normalize("NFKD")
@@ -99,6 +101,7 @@ function importStatement(app, owner, statement, body, now = new Date()) {
     }
     return { group, rows };
   });
+  const decisions = paymentMatches.readDecisions(body.payment_matches, seen);
   const today = new Date(now.getTime() - body.utc_offset_minutes * 60000)
     .toISOString()
     .slice(0, 10);
@@ -127,15 +130,31 @@ function importStatement(app, owner, statement, body, now = new Date()) {
     const payments = owned("payment_records").filter((p) =>
       subscriptionIds.has(p.getString("subscription_id")),
     );
+    // Compare with the transaction's original state so retries review the same
+    // candidates even when an earlier batch has already moved a payment.
+    const paidPayments = paymentMatches.paidSnapshots(payments);
+    const reviews = [],
+      linkedPayments = new Set();
+    let requiresReview = false;
     const paymentsBySource = new Map();
     const paymentsByDay = new Map();
+    const indexedDays = new Map();
     function indexPayment(payment) {
       if (payment.getString("paid_at"))
         for (const key of sources(payment)) paymentsBySource.set(key, payment);
       const key = `${payment.getString("subscription_id")}:${payment.getString("due_date").slice(0, 10)}`;
+      const previousKey = indexedDays.get(payment.id);
+      if (previousKey && previousKey !== key)
+        paymentsByDay.set(
+          previousKey,
+          (paymentsByDay.get(previousKey) || []).filter(
+            (record) => record.id !== payment.id,
+          ),
+        );
       const day = paymentsByDay.get(key) || [];
       if (!day.includes(payment)) day.push(payment);
       paymentsByDay.set(key, day);
+      indexedDays.set(payment.id, key);
     }
     payments.forEach(indexPayment);
     const cycles = tx.findRecordsByFilter("cycles");
@@ -344,6 +363,72 @@ function importStatement(app, owner, statement, body, now = new Date()) {
         }
         const matches =
           paymentsByDay.get(`${subscription.id}:${row.date}`) || [];
+        // Extending an explicitly combined day is already a deliberate choice.
+        // Otherwise every existing payment in this calendar month needs review,
+        // including exact-day matches and charges from other statements.
+        const extendsCombinedDay =
+          combineDates.has(row.date) &&
+          matches.length === 1 &&
+          sources(matches[0]).some((key) => key.startsWith(documentPrefix));
+        if (!extendsCombinedDay) {
+          const choice = decisions.get(
+            paymentMatches.keyFor(pending.map((entry) => entry.row.id)),
+          );
+          const review = paymentMatches.paymentReview(
+            statement,
+            subscription,
+            pending,
+            values.amount,
+            paidPayments,
+          );
+          if (review) {
+            reviews.push(review);
+            if (!choice || choice.review_token !== review.review_token) {
+              requiresReview = true;
+              continue;
+            }
+            if (choice.payment_id !== null) {
+              if (
+                !review.candidates.some(
+                  (candidate) => candidate.payment_id === choice.payment_id,
+                )
+              )
+                fail("statement_import_payment_changed");
+              if (linkedPayments.has(choice.payment_id))
+                fail("statement_import_payment_reused");
+              const existing = payments.find(
+                (payment) => payment.id === choice.payment_id,
+              );
+              if (!existing) fail("statement_import_payment_changed");
+              const previousDate = existing.getString("due_date").slice(0, 10);
+              if (
+                previousDate !== row.date &&
+                !existing.getString("scheduled_date")
+              )
+                existing.set("scheduled_date", previousDate);
+              existing.set("due_date", values.due_date);
+              existing.set("paid_at", values.paid_at);
+              existing.set("auto_paid", false);
+              existing.set("statement_sources", [
+                ...new Set([...sources(existing), ...markers]),
+              ]);
+              tx.save(existing);
+              indexPayment(existing);
+              linkedPayments.add(existing.id);
+              result.payments_skipped += pending.length;
+              continue;
+            }
+            // A separate choice must never fall through to exact-date dedup.
+            // The calendar represents one total per subscription and day.
+            if (matches.some((payment) => payment.getString("paid_at"))) {
+              for (const entry of pending)
+                markConflict(entry.row, subscription, matches);
+              continue;
+            }
+          } else if (choice?.payment_id) {
+            fail("statement_import_payment_changed");
+          }
+        }
         const markBatchConflict = () => {
           for (const entry of pending)
             markConflict(entry.row, subscription, matches);
@@ -489,6 +574,13 @@ function importStatement(app, owner, statement, body, now = new Date()) {
           })),
         });
       }
+    }
+    // Report all candidate batches, including already-reviewed batches, so a
+    // stale decision can be reviewed again without losing other choices.
+    if (requiresReview) {
+      const error = new Error("statement_import_payment_review");
+      error.payment_reviews = reviews;
+      throw error;
     }
     // Report all affected statement rows together, and roll back every write.
     if (conflicts.size) {

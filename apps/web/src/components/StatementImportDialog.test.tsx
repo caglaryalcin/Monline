@@ -75,6 +75,69 @@ function openImport(subscriptions: Subscription[], rows = [row]) {
   );
 }
 
+describe("monthly payment review", () => {
+  it("warns about selected charges on different days of the same month", async () => {
+    openImport([], [row, { ...row, id: "row-2", date: "2026-01-01" }]);
+    expect(await screen.findByRole("alert")).toHaveTextContent("statement_payment_month_warning");
+  });
+
+  it("does not warn for statement charges in different months", async () => {
+    openImport([], [row, { ...row, id: "row-2", date: "2026-02-01" }]);
+    await screen.findByRole("heading", { name: "Netflix" });
+    expect(screen.queryByText("statement_payment_month_warning")).not.toBeInTheDocument();
+  });
+
+  it("requires an explicit choice and submits the selected existing payment", async () => {
+    const user = userEvent.setup();
+    const review = {
+      transaction_ids: [row.id],
+      review_token: "a".repeat(64),
+      subscription_name: "Netflix",
+      date: row.date,
+      amount: row.amount,
+      currency: "TRY",
+      candidates: [
+        { payment_id: "payment-1", date: "2026-01-01", amount: row.amount, currency: "TRY" },
+      ],
+    };
+    const post = vi
+      .spyOn(api, "post")
+      .mockRejectedValueOnce(
+        Object.assign(new Error("statement_import_payment_review"), {
+          response: { payment_reviews: [review] },
+        }),
+      )
+      .mockResolvedValueOnce({
+        subscriptions_created: 0,
+        payments_imported: 0,
+        payments_skipped: 1,
+      });
+    openImport([
+      {
+        id: "netflix",
+        name: "Netflix",
+        currency: "try",
+        category: "cat-streaming",
+      } as Subscription,
+    ]);
+    await user.click(await screen.findByRole("button", { name: "statement_import_submit" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("statement_payment_review_title");
+    const confirm = screen.getByRole("button", { name: "statement_payment_review_confirm" });
+    expect(confirm).toBeDisabled();
+    expect(post).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole("radio", { name: /statement_payment_review_same/ }));
+    await user.click(confirm);
+    expect(post).toHaveBeenLastCalledWith(
+      "/api/statements/statement-1/import",
+      expect.objectContaining({
+        payment_matches: [
+          { transaction_ids: [row.id], review_token: review.review_token, payment_id: "payment-1" },
+        ],
+      }),
+    );
+  });
+});
+
 beforeAll(() => {
   Element.prototype.hasPointerCapture = () => false;
   Element.prototype.setPointerCapture = () => {};

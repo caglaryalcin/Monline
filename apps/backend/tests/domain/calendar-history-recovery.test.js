@@ -28,6 +28,8 @@ function records(id = sub.id) {
   );
 }
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-10-23T12:00:00Z"));
   directory = mkdtempSync(path.join(os.tmpdir(), "monline-history-upgrade-"));
   app = new Repository(directory);
   user = create("users", {
@@ -59,6 +61,7 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
+  vi.useRealTimers();
   app.connection.close();
   rmSync(directory, { recursive: true, force: true });
 });

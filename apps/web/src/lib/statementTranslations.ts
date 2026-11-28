@@ -1,6 +1,26 @@
 // The rest of the interface falls back to English for languages without these keys.
 export const statementTranslations = {
   tr: {
+    statement_payment_month_warning:
+      "{{platform}} için {{month}} döneminde {{count}} ekstre işlemi seçili. Aynı ayda birden fazla ödeme var; tarih ve tutarları kontrol et. Gerçekten ayrı harcamalarsa ayrı kayıtlar olarak aktarılır.",
+    statement_payment_review_title: "Aynı ayda aynı platform için ödeme bulundu",
+    statement_payment_review_help:
+      "Bu platform için aynı ayda kayıtlı ödeme var. Aynı ödemeyse mevcut kaydı seç; yeni kayıt açılmaz, işlem ve ödenme tarihi ekstre tarihine güncellenir. Sonraki ödeme günü de ekstreye göre belirlenir. Mevcut tutar korunur. Gerçekten ayrı bir harcamaysa ayrı ödeme olarak kaydet.",
+    statement_payment_review_statement: "Ekstre hareketi",
+    statement_payment_review_question: "Bu hareket takvimdeki ödemeyle aynı mı?",
+    statement_payment_review_same: "Evet, takvimdeki bu ödeme",
+    statement_payment_review_separate: "Hayır, bu ayrı bir ödeme",
+    statement_payment_review_amount_diff:
+      "Tutarlar farklı. Eşleştirirsen takvimdeki mevcut tutar korunacak.",
+    statement_payment_review_required:
+      "Devam etmek için her hareketin aynı mı, ayrı mı olduğunu seç.",
+    statement_payment_review_back: "Aktarıma geri dön",
+    statement_payment_review_confirm: "Seçimleri onayla ve aktar",
+    statement_import_payment_changed:
+      "Takvimdeki ödeme değişmiş. Aktarımı yeniden başlatıp güncel kaydı karşılaştır.",
+    statement_import_payment_reused:
+      "Aynı takvim ödemesi birden fazla ayrı harekete bağlanamaz. Seçimleri kontrol et; gerekiyorsa aynı günkü hareketleri birleştir.",
+
     statement_delete_all: "Tüm ekstreleri sil",
     statement_delete_all_note:
       "Tüm sayfalardaki ekstre arşivinin tamamı kalıcı olarak silinecek. Abonelikler ve takvime aktarılmış ödemeler korunacak. Emin misiniz?",
@@ -164,6 +184,26 @@ export const statementTranslations = {
       "Ödeme dönemine göre eksik tarihler oluşturulur. Tutarlar son seçili ekstre ödemesinden alınır; her tutarı kontrol edip değiştirebilir veya tarihi çıkarabilirsin. Onayladığın ödemeler ödendi olarak eklenir. Ekstredeki ve daha önce ödenmiş tarihler tekrar eklenmez.",
   },
   en: {
+    statement_payment_month_warning:
+      "{{count}} statement charges for {{platform}} are selected in {{month}}. There is more than one payment in this month; compare their dates and amounts. Genuinely separate charges will be imported as separate records.",
+    statement_payment_review_title: "A payment for this platform exists in the same month",
+    statement_payment_review_help:
+      "This platform already has a payment in the same month. If it is the same payment, select the existing record: no new payment is created, and its transaction and paid dates are updated to the statement date. The next payment day also follows the statement. The existing amount is preserved. Save a genuinely different charge as a separate payment.",
+    statement_payment_review_statement: "Statement charge",
+    statement_payment_review_question: "Is this charge the same as a calendar payment?",
+    statement_payment_review_same: "Yes, this calendar payment",
+    statement_payment_review_separate: "No, this is a separate payment",
+    statement_payment_review_amount_diff:
+      "The amounts differ. Linking keeps the existing calendar amount.",
+    statement_payment_review_required:
+      "Choose whether each charge is the same payment or a separate payment to continue.",
+    statement_payment_review_back: "Back to import",
+    statement_payment_review_confirm: "Confirm choices and import",
+    statement_import_payment_changed:
+      "The calendar payment has changed. Restart the import and compare the current record.",
+    statement_import_payment_reused:
+      "A calendar payment cannot be linked to multiple separate charges. Check your choices or combine charges from the same day.",
+
     statement_delete_all: "Delete all statements",
     statement_delete_all_note:
       "Permanently delete the entire statement archive, across all pages? Subscriptions and payments already imported into the calendar will be kept.",
@@ -332,6 +372,26 @@ export const statementTranslations = {
       "Missing dates follow the billing cycle. Amounts start from the latest selected statement charge; review, edit or exclude each one. Confirmed entries are marked paid. Statement dates and previously paid dates are not added again.",
   },
   de: {
+    statement_payment_month_warning:
+      "{{count}} Abrechnungsbuchungen für {{platform}} sind für {{month}} ausgewählt. In diesem Monat gibt es mehrere Zahlungen; prüfe Datum und Betrag. Tatsächlich getrennte Buchungen werden separat importiert.",
+    statement_payment_review_title: "Zahlung für diese Plattform im selben Monat gefunden",
+    statement_payment_review_help:
+      "Für diese Plattform gibt es bereits eine Zahlung im selben Monat. Ist es dieselbe Zahlung, wähle den vorhandenen Eintrag: Es wird keine neue Zahlung erstellt, und Buchungs- und Zahlungsdatum werden auf das Datum der Abrechnung gesetzt. Auch der nächste Zahlungstag richtet sich nach der Abrechnung. Der vorhandene Betrag bleibt erhalten. Eine tatsächlich andere Buchung kannst du separat speichern.",
+    statement_payment_review_statement: "Abrechnungsbuchung",
+    statement_payment_review_question: "Ist diese Buchung dieselbe Zahlung wie im Kalender?",
+    statement_payment_review_same: "Ja, diese Kalenderzahlung",
+    statement_payment_review_separate: "Nein, dies ist eine separate Zahlung",
+    statement_payment_review_amount_diff:
+      "Die Beträge unterscheiden sich. Beim Verknüpfen bleibt der Kalenderbetrag erhalten.",
+    statement_payment_review_required:
+      "Wähle für jede Buchung, ob es dieselbe oder eine separate Zahlung ist.",
+    statement_payment_review_back: "Zurück zum Import",
+    statement_payment_review_confirm: "Auswahl bestätigen und importieren",
+    statement_import_payment_changed:
+      "Die Kalenderzahlung wurde geändert. Starte den Import neu und vergleiche den aktuellen Eintrag.",
+    statement_import_payment_reused:
+      "Eine Kalenderzahlung kann nicht mit mehreren separaten Buchungen verknüpft werden. Prüfe die Auswahl oder fasse Buchungen vom selben Tag zusammen.",
+
     statement_delete_all: "Alle Abrechnungen löschen",
     statement_delete_all_note:
       "Das gesamte Abrechnungsarchiv auf allen Seiten endgültig löschen? Abonnements und bereits importierte Kalenderzahlungen bleiben erhalten.",

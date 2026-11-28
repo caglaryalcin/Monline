@@ -202,6 +202,7 @@ function validateDatabase(file) {
                 ].includes(field.name)) ||
               (entry.name === "subscriptions" &&
                 [
+                  "billing_pauses",
                   "payment_account",
                   "brand_name",
                   "sharing",

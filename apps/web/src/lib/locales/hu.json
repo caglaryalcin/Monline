@@ -1497,5 +1497,18 @@
   "billing_pauses_remove": "A(z) {{date}} napján kezdődő szünet eltávolítása",
   "billing_pauses_until": "Szüneteltetve eddig: {{date}}",
   "billing_pauses_invalid": "Adjon meg érvényes időszakszámokat és dátumokat (legfeljebb 1200 időszak).",
-  "billing_pauses_overlap": "Ez a szünet átfed egy meglévő szünettel."
+  "billing_pauses_overlap": "Ez a szünet átfed egy meglévő szünettel.",
+  "statement_payment_month_warning": "{{count}} kivonattétel van kijelölve ehhez: {{platform}}, ebben a hónapban: {{month}}. Ugyanabban a hónapban több fizetés található; ellenőrizze a dátumokat és az összegeket. A valóban különálló kiadások külön bejegyzésként kerülnek importálásra.",
+  "statement_payment_review_title": "Ugyanahhoz a platformhoz fizetés található ugyanabban a hónapban",
+  "statement_payment_review_help": "Ehhez a platformhoz már van fizetés ugyanabban a hónapban. Ha ugyanaz a fizetés, válassza a meglévő bejegyzést: nem jön létre új fizetés, a tranzakció és a fizetés dátuma a kivonat dátumára módosul. A következő fizetési nap is a kivonatot követi. A meglévő összeg megmarad. A valóban eltérő kiadás külön fizetésként menthető.",
+  "statement_payment_review_statement": "Kivonattétel",
+  "statement_payment_review_question": "Ez a tétel megegyezik a naptárban szereplő fizetéssel?",
+  "statement_payment_review_same": "Igen, ez a naptárban szereplő fizetés",
+  "statement_payment_review_separate": "Nem, ez külön fizetés",
+  "statement_payment_review_amount_diff": "Az összegek eltérnek. Összekapcsoláskor a naptárban szereplő összeg marad meg.",
+  "statement_payment_review_required": "A folytatáshoz minden tételnél válassza ki, hogy azonos vagy külön fizetés.",
+  "statement_payment_review_back": "Vissza az importáláshoz",
+  "statement_payment_review_confirm": "Választások megerősítése és importálás",
+  "statement_import_payment_changed": "A naptárban szereplő fizetés módosult. Indítsa újra az importálást, és hasonlítsa össze az aktuális bejegyzést.",
+  "statement_import_payment_reused": "Egy naptári fizetés nem kapcsolható több különálló tételhez. Ellenőrizze a választást, vagy vonja össze az azonos napi tételeket."
 }
